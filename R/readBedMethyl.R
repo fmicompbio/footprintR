@@ -49,6 +49,9 @@ readBedMethyl <- function(fnames, nrows = Inf, seqlens = NULL, verbose = FALSE) 
         stop("`seqlens` needs to be a named vector with lengths for unique sequence names.")
     }
     .assertScalar(x = verbose, type = "logical")
+    if (any(grepl("[.](gz|bz2)$", fnames))) {
+        .assertPackagesAvailable("R.utils")
+    }
 
     # get sample names
     if (!is.null(names(fnames))) {
