@@ -106,7 +106,7 @@ readBedMethyl <- function(fnames, nrows = Inf, seqlens = NULL, verbose = FALSE) 
 
     # create summarized experiment
     se <- SummarizedExperiment(
-        assays = list(N_mod = nmod, N_valid = nval),
+        assays = list(Nmod = nmod, Nvalid = nval),
         rowRanges = gpos)
 
     # collapse to unique names
