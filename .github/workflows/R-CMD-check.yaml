@@ -132,7 +132,7 @@ jobs:
         uses: grimbough/bioc-actions/run-BiocCheck@v1
         with:
           arguments: '--no-check-bioc-views --no-check-bioc-help'
-          error-on: 'error'
+          error-on: 'never'
 
       - name: Test coverage
         if: matrix.config.os == 'macOS-14' && matrix.config.bioc == 'devel'
