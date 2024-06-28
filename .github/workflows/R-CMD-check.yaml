@@ -21,7 +21,7 @@ jobs:
           - { os: windows-latest, bioc: 'devel', deploy: 'no'}
           - { os: macOS-12, bioc: 'devel', deploy: 'yes'}
           - { os: macOS-14, bioc: 'devel', deploy: 'no'}
-          - { os: ubuntu-latest, r: 'devel', image: 'bioconductor/bioconductor_docker:devel', deploy: 'no'}
+          - { os: ubuntu-latest, image: 'bioconductor/bioconductor_docker:devel', deploy: 'no'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
