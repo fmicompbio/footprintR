@@ -17,6 +17,7 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl("error"))
     expect_error(readBedMethyl(fname1, nrows = -1))
     expect_error(readBedMethyl(fname1, seqlens = "error"))
+    expect_error(readBedMethyl(fname1, seqlens = c(100)))
     expect_error(readBedMethyl(fname1, verbose = "error"))
 
     # expected results
