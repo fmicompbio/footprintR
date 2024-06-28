@@ -31,7 +31,7 @@
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
 #'     \code{\link[data.table]{fread}} for the function used to read the input files
 #'
-#' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment assayNames
 #' @importFrom data.table fread
 #' @importFrom GenomicRanges GPos match sort
 #' @importFrom scuttle aggregateAcrossCells
