@@ -26,7 +26,8 @@ column in the returned object.}
 
 \item{modbase}{Character scalar defining the modified base to read. Useful
 for reading \code{bedMethyl} that contain multiple types of modified
-bases. If \code{NULL} (the default), rows in the input file are read.}
+bases. If \code{NULL} (the default), all rows in the input file are
+retained.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
 

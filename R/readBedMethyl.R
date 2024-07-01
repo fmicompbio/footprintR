@@ -16,7 +16,8 @@
 #'     column in the returned object. 
 #' @param modbase Character scalar defining the modified base to read. Useful
 #'     for reading \code{bedMethyl} that contain multiple types of modified
-#'     bases. If \code{NULL} (the default), rows in the input file are read.
+#'     bases. If \code{NULL} (the default), all rows in the input file are 
+#'     retained.
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param seqlens \code{NULL} or a named vector of sequence lengths for genomic
 #'     sequences (chromosomes). Useful to set the sorting order of sequence names.
