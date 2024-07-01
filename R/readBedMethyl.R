@@ -9,9 +9,11 @@
 #'     separately and become one of the columns in the returned
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
 #'     If \code{fnames} is a named vector, the names are used as column names in
-#'     the returned object. If several elements of \code{fnames} have identical
+#'     the returned object. Otherwise, the column names will be \code{s1}, ..., 
+#'     \code{sN}, where \code{N} is the length of \code{fnames}. 
+#'     If several elements of \code{fnames} have identical
 #'     names, the data from the corresponding files are summed into a single
-#'     column in the returned object.
+#'     column in the returned object. 
 #' @param modbase Character scalar defining the modified base to read. Useful
 #'     for reading \code{bedMethyl} that contain multiple types of modified
 #'     bases. If \code{NULL} (the default), rows in the input file are read.
