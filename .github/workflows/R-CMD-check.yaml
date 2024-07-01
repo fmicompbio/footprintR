@@ -69,6 +69,15 @@ jobs:
           key: ${{ env.cache-version }}-${{ matrix.config.os }}-bioc-${{ matrix.config.bioc }}-${{ hashFiles('depends.Rds') }}
           restore-keys: ${{ env.cache-version }}-${{ matrix.config.os }}-bioc-${{ matrix.config.bioc }}-
 
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        env:
+          RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          pak-version: devel
+
       # - name: Install Linux system dependencies
       #   if: runner.os == 'Linux'
       #   env:
