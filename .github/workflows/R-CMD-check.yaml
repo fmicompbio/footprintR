@@ -47,8 +47,8 @@ jobs:
       - name: Set R Library on Linux
         if: runner.os == 'Linux'
         run: |
-          mkdir -p /__w/_temp/Library
-          echo ".libPaths('/__w/_temp/Library')" > ~/.Rprofile
+          mkdir ~/RLibrary
+          echo ".libPaths('~/RLibrary')" > ~/.Rprofile
 
       - name: Install remotes
         run: |
