@@ -44,11 +44,12 @@ jobs:
         uses: r-lib/actions/setup-pandoc@v2
         if: matrix.config.image == null
 
-      - name: Set R Library on Linux
+      - name: Set R Library on Linux and install BiocManager
         if: runner.os == 'Linux'
         run: |
           mkdir ~/RLibrary
           echo ".libPaths('~/RLibrary')" > ~/.Rprofile
+          Rscript -e "install.packages('BiocManager')"
 
       - name: Install remotes
         run: |
