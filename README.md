@@ -15,7 +15,7 @@ and for visualization..
 Current contributors include:
 
 - [Panagiotis Papasaikas](https://github.com/ppapasaikas)
-- Sebastien Smallwood
+- [Sebastien Smallwood](https://github.com/smalseba)
 - [Charlotte Soneson](https://github.com/csoneson)
 - [Michael Stadler](https://github.com/mbstadler)
 
