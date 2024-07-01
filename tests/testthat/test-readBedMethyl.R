@@ -21,9 +21,10 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, verbose = "error"))
 
     # expected results
+    se0 <- readBedMethyl(fnames = fname1, modbase = 'x')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, verbose = TRUE)
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', verbose = TRUE)
         )
     )
     se2 <- readBedMethyl(fnames = c(s2 = fname2))
@@ -33,10 +34,12 @@ test_that("readBedMethyl works", {
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
         )
     )
+    expect_s4_class(se0, "SummarizedExperiment")
     expect_s4_class(se1, "SummarizedExperiment")
     expect_s4_class(se2, "SummarizedExperiment")
     expect_s4_class(se12, "SummarizedExperiment")
     expect_s4_class(se11, "SummarizedExperiment")
+    expect_identical(dim(se0), c(0L, 1L))
     expect_identical(dim(se1), c(10000L, 1L))
     expect_identical(dim(se2), c(10000L, 1L))
     expect_identical(dim(se12), c(12020L, 2L))
