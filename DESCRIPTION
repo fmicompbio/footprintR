@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R: c(
     person("Michael", "Stadler", email = "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
-    person("Charlotte", "Soneson", email = "charlottesoneson@gmail.com",
+    person("Charlotte", "Soneson", email = "charlotte.soneson@fmi.ch",
         role = "aut", comment = c(ORCID = "0000-0003-3833-2169")),
     person("Panagiotis", "Papasaikas", email = "panagiotis.papasaikas@fmi.ch",
            role = "aut", comment = c(ORCID = "0000-0002-1640-7636")),
