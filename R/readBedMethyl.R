@@ -21,15 +21,16 @@
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param seqlens \code{NULL} or a named vector of sequence lengths for genomic
 #'     sequences (chromosomes). Useful to set the sorting order of sequence names.
-#' @param sequence.context A numeric scalar giving the size of the sequence
-#'     context to be extracted from the reference (\code{sequence.reference}
-#'     argument). The context will be centered on the modified base. If
-#'     \code{sequence.context = 0} (the default), no sequence context will
-#'     be extracted.
+#' @param sequence.context.width A numeric scalar giving the width of the
+#'     sequence context to be extracted from the reference
+#'     (\code{sequence.reference} argument). The context will be centered on the
+#'     modified base. If \code{sequence.context.width = 0} (the default), no
+#'     sequence context will be extracted.
 #' @param sequence.reference A character scalar either giving the name of a
 #'     \code{BSgenome} package, or the path to a fasta formatted file with
-#'     reference sequences. The sequence context (see \code{sequence.context}
-#'     argument) will be extracted from these sequences.
+#'     reference sequences. The sequence context (see
+#'     \code{sequence.context.width} argument) will be extracted from these
+#'     sequences.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -60,7 +61,7 @@ readBedMethyl <- function(fnames,
                           modbase = NULL,
                           nrows = Inf,
                           seqlens = NULL,
-                          sequence.context = 0,
+                          sequence.context.width = 0,
                           sequence.reference = NULL,
                           verbose = FALSE) {
     # digest arguments
@@ -74,7 +75,7 @@ readBedMethyl <- function(fnames,
     if (!is.null(seqlens) && (is.null(names(seqlens)) || any(duplicated(names(seqlens))))) {
         stop("`seqlens` needs to be a named vector with lengths for unique sequence names.")
     }
-    .assertScalar(x = sequence.context, type = "numeric", rngIncl = c(0, 100))
+    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 100))
     .assertScalar(x = sequence.reference, type = "character", allowNULL = TRUE)
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
@@ -135,15 +136,15 @@ readBedMethyl <- function(fnames,
     }
 
     # add sequence context
-    if (sequence.context > 0) {
+    if (sequence.context.width > 0) {
         if (verbose) {
             message("extracting sequence contexts")
         }
         if (is.null(sequence.reference)) {
-            stop("`sequence.reference` cannot be NULL to extract `sequence.context`")
+            stop("`sequence.reference` cannot be NULL to extract sequence context")
         }
         grcontext <- resize(as(gpos, "GRanges"),
-                            width = sequence.context,
+                            width = sequence.context.width,
                             fix = "center")
         if (file.exists(sequence.reference)) {
             gnm <- Biostrings::readDNAStringSet(sequence.reference)

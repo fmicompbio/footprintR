@@ -29,9 +29,9 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, nrows = -1))
     expect_error(readBedMethyl(fname1, seqlens = "error"))
     expect_error(readBedMethyl(fname1, seqlens = c(100)))
-    expect_error(readBedMethyl(fname1, sequence.context = -1))
-    expect_error(readBedMethyl(fname1, sequence.context = 1, sequence.reference = NULL))
-    expect_error(readBedMethyl(fname1, sequence.context = 1, sequence.reference = "error"))
+    expect_error(readBedMethyl(fname1, sequence.context.width = -1))
+    expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = NULL))
+    expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = "error"))
     expect_error(readBedMethyl(fname1, verbose = "error"))
 
     # expected results
@@ -43,11 +43,11 @@ test_that("readBedMethyl works", {
     )
     suppressMessages(
         expect_message(
-            se2 <- readBedMethyl(fnames = c(s2 = fname2), sequence.context = 1, sequence.reference = ref, verbose = TRUE)
+            se2 <- readBedMethyl(fnames = c(s2 = fname2), sequence.context.width = 1, sequence.reference = ref, verbose = TRUE)
         )
     )
 
-    se12 <- readBedMethyl(fnames = c(fname1, fname2), sequence.context = 1, sequence.reference = "BSgenome.Mmusculus.footprintR.reference")
+    se12 <- readBedMethyl(fnames = c(fname1, fname2), sequence.context.width = 1, sequence.reference = "BSgenome.Mmusculus.footprintR.reference")
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
