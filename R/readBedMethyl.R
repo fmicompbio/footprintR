@@ -95,8 +95,9 @@ readBedMethyl <- function(fnames, modbase = NULL, nrows = Inf,
     }
 
     # create GPos objects for each input
+    # (convert 0-based start from bed format to 1-based start in GenomicRanges)
     gposL <- lapply(dfL, function(df) {
-        GenomicRanges::GPos(seqnames = df$chr, pos = df$start,
+        GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
                             strand = df$strand, seqlengths = seqlens)
     })
 
