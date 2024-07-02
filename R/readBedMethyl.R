@@ -112,7 +112,8 @@ readBedMethyl <- function(fnames, modbase = NULL, nrows = Inf,
                     length(gpos), " unique ones")
         }
     } else {
-        gpos <- gposL[[1]]
+        gpos <- GenomicRanges::sort(gposL[[1]])
+    }
     }
 
     # create assays
