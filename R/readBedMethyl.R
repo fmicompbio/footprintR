@@ -9,15 +9,15 @@
 #'     separately and become one of the columns in the returned
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
 #'     If \code{fnames} is a named vector, the names are used as column names in
-#'     the returned object. Otherwise, the column names will be \code{s1}, ..., 
-#'     \code{sN}, where \code{N} is the length of \code{fnames}. 
+#'     the returned object. Otherwise, the column names will be \code{s1}, ...,
+#'     \code{sN}, where \code{N} is the length of \code{fnames}.
 #'     If several elements of \code{fnames} have identical
 #'     names, the data from the corresponding files are summed into a single
-#'     column in the returned object. 
-#' @param modbase Character scalar defining the modified base to read. Useful
-#'     for reading \code{bedMethyl} that contain multiple types of modified
-#'     bases. If \code{NULL} (the default), all rows in the input file are 
-#'     retained.
+#'     column in the returned object.
+#' @param modbase Character vector defining the modified base (or bases) to
+#'     read. Useful for reading a subset of the data from \code{bedMethyl} files
+#'     that contain multiple types of modified bases. If \code{NULL} (the
+#'     default), all rows in the input file are read.
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param seqlens \code{NULL} or a named vector of sequence lengths for genomic
 #'     sequences (chromosomes). Useful to set the sorting order of sequence names.
@@ -51,7 +51,7 @@ readBedMethyl <- function(fnames, modbase = NULL, nrows = Inf,
     if (any(i <- !file.exists(fnames))) {
         stop("not all `fnames` exist: ", paste(fnames[i], collapse = ", "))
     }
-    .assertScalar(x = modbase, type = "character", allowNULL = TRUE)
+    .assertVector(x = modbase, type = "character", allowNULL = TRUE)
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = seqlens, type = "numeric", allowNULL = TRUE)
     if (!is.null(seqlens) && (is.null(names(seqlens)) || any(duplicated(names(seqlens))))) {
@@ -90,7 +90,7 @@ readBedMethyl <- function(fnames, modbase = NULL, nrows = Inf,
             message("filtering modifications (retaining '", modbase, "'")
         }
         dfL <- lapply(dfL, function(df) {
-            df[df$modbase == modbase, ]
+            df[df$modbase %in% modbase, ]
         })
     }
 

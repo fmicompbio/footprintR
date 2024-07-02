@@ -24,10 +24,10 @@ If several elements of \code{fnames} have identical
 names, the data from the corresponding files are summed into a single
 column in the returned object.}
 
-\item{modbase}{Character scalar defining the modified base to read. Useful
-for reading \code{bedMethyl} that contain multiple types of modified
-bases. If \code{NULL} (the default), all rows in the input file are
-retained.}
+\item{modbase}{Character vector defining the modified base (or bases) to
+read. Useful for reading a subset of the data from \code{bedMethyl} files
+that contain multiple types of modified bases. If \code{NULL} (the
+default), all rows in the input file are read.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
 
