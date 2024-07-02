@@ -49,7 +49,8 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment assayNames
 #' @importFrom data.table fread
-#' @importFrom GenomicRanges GPos match sort
+#' @importFrom GenomicRanges GPos match sort resize
+#' @importFrom S4Vectors mcols mcols<-
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet
 #' @importFrom BSgenome getSeq

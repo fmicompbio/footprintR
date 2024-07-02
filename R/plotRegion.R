@@ -39,6 +39,7 @@
 #' @examples
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+#'
 #' se <- readBedMethyl(bmfile, sequence.context = 3, sequence.reference = reffile)
 #'
 #' plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "GCH")
@@ -49,7 +50,7 @@
 #' @seealso \code{\link{readBedMethyl}} for reading footprinting data.
 #'
 #' @importFrom BiocGenerics start
-#' @importFrom SummarizedExperiment assayNames
+#' @importFrom SummarizedExperiment assay assayNames rowData
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels
 #' @importFrom IRanges IRanges subsetByOverlaps runmean
