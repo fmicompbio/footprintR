@@ -19,8 +19,10 @@
 #'     that contain multiple types of modified bases. If \code{NULL} (the
 #'     default), all rows in the input file are read.
 #' @param nrows Only read \code{nrows} rows of the input file.
-#' @param seqlens \code{NULL} or a named vector of sequence lengths for genomic
-#'     sequences (chromosomes). Useful to set the sorting order of sequence names.
+#' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{SeqInfo}} object
+#'     containing information about the set of genomic sequences (chromosomes).
+#'     Alternatively, a named numeric vector with genomic sequence names and
+#'     lengths. Useful to set the sorting order of sequence names.
 #' @param sequence.context.width A numeric scalar giving the width of the
 #'     sequence context to be extracted from the reference
 #'     (\code{sequence.reference} argument). The context will be centered on the
@@ -55,13 +57,13 @@
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet
 #' @importFrom BSgenome getSeq
-#' @importFrom methods as
+#' @importFrom methods as is
 #'
 #' @export
 readBedMethyl <- function(fnames,
                           modbase = NULL,
                           nrows = Inf,
-                          seqlens = NULL,
+                          seqinfo = NULL,
                           sequence.context.width = 0,
                           sequence.reference = NULL,
                           verbose = FALSE) {
@@ -72,9 +74,12 @@ readBedMethyl <- function(fnames,
     }
     .assertVector(x = modbase, type = "character", allowNULL = TRUE)
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
-    .assertScalar(x = seqlens, type = "numeric", allowNULL = TRUE)
-    if (!is.null(seqlens) && (is.null(names(seqlens)) || any(duplicated(names(seqlens))))) {
-        stop("`seqlens` needs to be a named vector with lengths for unique sequence names.")
+    if (!is.null(seqinfo)) {
+        if (!is(seqinfo, "Seqinfo") &&
+            (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
+            stop("`seqinfo` must be `NULL`, a `Seqinfo` object or a named",
+                 " numeric vector with genomic sequence lengths.")
+        }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 100))
     .assertScalar(x = sequence.reference, type = "character", allowNULL = TRUE)
@@ -119,7 +124,7 @@ readBedMethyl <- function(fnames,
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
     gposL <- lapply(dfL, function(df) {
         GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
-                            strand = df$strand, seqlengths = seqlens)
+                            strand = df$strand, seqinfo = seqinfo)
     })
 
     # create combined GPos

@@ -8,7 +8,7 @@ readBedMethyl(
   fnames,
   modbase = NULL,
   nrows = Inf,
-  seqlens = NULL,
+  seqinfo = NULL,
   sequence.context.width = 0,
   sequence.reference = NULL,
   verbose = FALSE
@@ -33,8 +33,10 @@ default), all rows in the input file are read.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
 
-\item{seqlens}{\code{NULL} or a named vector of sequence lengths for genomic
-sequences (chromosomes). Useful to set the sorting order of sequence names.}
+\item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{SeqInfo}} object
+containing information about the set of genomic sequences (chromosomes).
+Alternatively, a named numeric vector with genomic sequence names and
+lengths. Useful to set the sorting order of sequence names.}
 
 \item{sequence.context.width}{A numeric scalar giving the width of the
 sequence context to be extracted from the reference

@@ -27,8 +27,9 @@ test_that("readBedMethyl works", {
     # invalid arguments
     expect_error(readBedMethyl("error"))
     expect_error(readBedMethyl(fname1, nrows = -1))
-    expect_error(readBedMethyl(fname1, seqlens = "error"))
-    expect_error(readBedMethyl(fname1, seqlens = c(100)))
+    expect_error(readBedMethyl(fname1, seqinfo = "error"))
+    expect_error(readBedMethyl(fname1, seqinfo = c(100)))
+    expect_error(readBedMethyl(fname1, seqinfo = c(chr2 = 1000)))
     expect_error(readBedMethyl(fname1, sequence.context.width = -1))
     expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = NULL))
     expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = "error"))
