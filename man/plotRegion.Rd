@@ -33,7 +33,7 @@ visualization.}
 if \code{k = 0} (the default), no smoothing will be performed and the
 smoothed line is not shown.}
 
-\item{select.sequence.context}{A character vector with sequence context(s)
+\item{sequence.context}{A character vector with sequence context(s)
 to plot. Only positions that match one of the provided sequence
 contexts will be included in the plot. Sequence contexts can be provided
 using IUPAC redundancy codes. The sequence contexts of modified bases are
@@ -43,7 +43,7 @@ the \code{sequence.context} and \code{sequence.reference} arguments of
 \code{\link{readBedMethyl}} when it was generated.}
 }
 \value{
-A \code{\link[ggplot2]{SummarizedExperiment}} object
+A \code{\link[ggplot2]{ggplot}} object
 with genomic positions in rows and samples (the unique names of
 \code{fnames}) in the columns.
 }
