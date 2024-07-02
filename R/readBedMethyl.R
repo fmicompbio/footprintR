@@ -55,6 +55,7 @@
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet
 #' @importFrom BSgenome getSeq
+#' @importFrom methods as
 #'
 #' @export
 readBedMethyl <- function(fnames,
