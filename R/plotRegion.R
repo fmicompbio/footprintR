@@ -18,7 +18,8 @@
 #' @param min.coverage A numeric scalar giving the minimum coverage. sites that
 #'     have \code{Nvalid} values below this will not be included in the
 #'     visualization.
-#' @param k.smooth A numeric scalar giving the number of neighboring positions.
+#' @param k.smooth A numeric scalar giving the number of neighboring positions
+#'     over which to calculate a running median and show as smooth line(s).
 #'     if \code{k = 0} (the default), no smoothing will be performed and the
 #'     smoothed line is not shown.
 #' @param sequence.context A character vector with sequence context(s)
@@ -55,8 +56,8 @@
 #' @importFrom SummarizedExperiment assay assayNames rowData
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels
-#' @importFrom IRanges IRanges subsetByOverlaps runmean
-#' @importFrom S4Vectors Rle
+#' @importFrom IRanges IRanges subsetByOverlaps
+#' @importFrom stats runmed
 #' @importFrom dplyr filter mutate arrange group_by ungroup
 #' @importFrom Biostrings vcountPattern
 #' @import ggplot2
@@ -95,19 +96,20 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
     df <- data.frame(
         position = start(se),
         sample = rep(colnames(se), each = nrow(se)),
+        coverage = as.vector(assay(se, "Nvalid")),
         fraction_modified = as.vector(assay(se, "Nmod") /
                                           assay(se, "Nvalid")))
     if (min.coverage > 0) {
         df <- df |>
-            dplyr::filter(as.vector(assay(se, "Nvalid") >= min.coverage))
+            dplyr::filter(.data[["coverage"]] >= min.coverage)
     }
     if (k.smooth > 0) {
         df <- df |>
             dplyr::group_by(sample) |>
             dplyr::arrange(position) |>
-            dplyr::mutate(fraction_modified_smooth = as.vector(
-                IRanges::runmean(Rle(fraction_modified),
-                                 k = k.smooth, endrule = "constant"))) |>
+            dplyr::mutate(fraction_modified_smooth = stats::runmed(
+                x = .data[["fraction_modified"]],
+                k = k.smooth, endrule = "constant")) |>
             dplyr::ungroup()
     }
 

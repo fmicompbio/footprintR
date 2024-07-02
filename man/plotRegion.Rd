@@ -29,7 +29,8 @@ visualized.}
 have \code{Nvalid} values below this will not be included in the
 visualization.}
 
-\item{k.smooth}{A numeric scalar giving the number of neighboring positions.
+\item{k.smooth}{A numeric scalar giving the number of neighboring positions
+over which to calculate a running median and show as smooth line(s).
 if \code{k = 0} (the default), no smoothing will be performed and the
 smoothed line is not shown.}
 
