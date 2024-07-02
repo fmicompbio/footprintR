@@ -19,15 +19,24 @@ Description: Provides tools for working with single-molecule footprinting data
     functions to manipulate such objects and for visualization.
 Imports:
     methods,
+    BiocGenerics,
+    IRanges,
+    S4Vectors,
     GenomicRanges,
+    GenomeInfoDb,
     SummarizedExperiment,
+    Biostrings,
+    BSgenome,
     data.table,
-    scuttle
+    scuttle,
+    dplyr,
+    ggplot2
 Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
     R.utils,
+    withr,
     BiocManager
 URL: https://github.com/fmicompbio/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
