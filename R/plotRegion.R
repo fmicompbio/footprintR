@@ -37,10 +37,12 @@
 #' @author Michael Stadler
 #'
 #' @examples
-#' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
+#' bmfiles <- system.file("extdata",
+#'                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
+#'                        package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
-#' se <- readBedMethyl(bmfile, sequence.context = 3, sequence.reference = reffile)
+#' se <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
 #'
 #' plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "GCH")
 #' plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "HCG")
@@ -58,6 +60,7 @@
 #' @importFrom dplyr filter mutate arrange group_by ungroup
 #' @importFrom Biostrings vcountPattern
 #' @import ggplot2
+#' @importFrom rlang .data
 #'
 #' @export
 plotRegion <- function(se, region = NULL, min.coverage = 0,
@@ -92,8 +95,8 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
     df <- data.frame(
         position = start(se),
         sample = rep(colnames(se), each = nrow(se)),
-        fraction_protected = 1 - as.vector(assay(se, "Nmod") /
-                                               assay(se, "Nvalid")))
+        fraction_modified = as.vector(assay(se, "Nmod") /
+                                          assay(se, "Nvalid")))
     if (min.coverage > 0) {
         df <- df |>
             dplyr::filter(as.vector(assay(se, "Nvalid") >= min.coverage))
@@ -102,23 +105,26 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
         df <- df |>
             dplyr::group_by(sample) |>
             dplyr::arrange(position) |>
-            dplyr::mutate(fraction_protected_smooth = as.vector(
-                IRanges::runmean(Rle(fraction_protected),
+            dplyr::mutate(fraction_modified_smooth = as.vector(
+                IRanges::runmean(Rle(fraction_modified),
                                  k = k.smooth, endrule = "constant"))) |>
             dplyr::ungroup()
     }
 
     # create plot
-    p <- ggplot(df, aes(position, fraction_protected, colour = sample)) +
+    p <- ggplot(df, aes(.data[["position"]], .data[["fraction_modified"]],
+                        colour = .data[["sample"]])) +
         geom_point(alpha = ifelse(k.smooth > 0, 0.2, 1)) +
         labs(x = paste0("Position on ", seqlevels(region)[1]),
-             y = "Fraction protected",
+             y = "Fraction modified",
              colour = "Sample") +
         theme_bw()
     if (k.smooth > 0) {
         p <- p + geom_line(
             inherit.aes = FALSE,
-            mapping = aes(position, fraction_protected_smooth, colour = sample))
+            mapping = aes(.data[["position"]],
+                          .data[["fraction_modified_smooth"]],
+                          colour = .data[["sample"]]))
     }
     if (!is.null(sequence.context)) {
         p <- p + labs(caption = paste0("Sequence contexts: ",

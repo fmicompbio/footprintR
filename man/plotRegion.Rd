@@ -53,10 +53,12 @@ This function will visualize collapsed single-molecule footprinting data
 \code{\link{readBedMethyl}}.
 }
 \examples{
-bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
+bmfiles <- system.file("extdata",
+                       c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
+                       package = "footprintR")
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
-se <- readBedMethyl(bmfile, sequence.context = 3, sequence.reference = reffile)
+se <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
 
 plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "GCH")
 plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "HCG")

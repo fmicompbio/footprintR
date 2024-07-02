@@ -30,6 +30,7 @@ Imports:
     data.table,
     scuttle,
     dplyr,
+    rlang,
     ggplot2
 Suggests:
     rmarkdown,
