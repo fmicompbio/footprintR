@@ -9,6 +9,8 @@ readBedMethyl(
   modbase = NULL,
   nrows = Inf,
   seqlens = NULL,
+  sequence.context = 0,
+  sequence.reference = NULL,
   verbose = FALSE
 )
 }
@@ -33,6 +35,17 @@ default), all rows in the input file are read.}
 
 \item{seqlens}{\code{NULL} or a named vector of sequence lengths for genomic
 sequences (chromosomes). Useful to set the sorting order of sequence names.}
+
+\item{sequence.context}{A numeric scalar giving the size of the sequence
+context to be extracted from the reference (\code{sequence.reference}
+argument). The context will be centered on the modified base. If
+\code{sequence.context = 0} (the default), no sequence context will
+be extracted.}
+
+\item{sequence.reference}{A character scalar either giving the name of a
+\code{BSgenome} package, or the path to a fasta formatted file with
+reference sequences. The sequence context (see \code{sequence.context}
+argument) will be extracted from these sequences.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
