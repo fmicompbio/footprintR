@@ -3,6 +3,9 @@ suppressPackageStartupMessages({
     library(footprintR)
     library(SummarizedExperiment)
     library(GenomicRanges)
+    library(Biostrings)
+    library(BSgenome)
+    library(withr)
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -12,12 +15,23 @@ test_that("readBedMethyl works", {
     # example data
     fname1 <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
     fname2 <- system.file("extdata", "modkit_pileup_2.bed.gz", package = "footprintR")
+    ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+
+    # temporarilly install custom BSgenome package
+    bsgnmfile <- system.file("extdata", "BSgenome.Mmusculus.footprintR.reference_0.1.0.tar.gz", package = "footprintR")
+    rlibdir <- tempfile(pattern = "Rlib")
+    dir.create(rlibdir)
+    local_libpaths(new = rlibdir, action = "prefix")
+    install.packages(bsgnmfile, lib.loc = rlibdir, repos = NULL)
 
     # invalid arguments
     expect_error(readBedMethyl("error"))
     expect_error(readBedMethyl(fname1, nrows = -1))
     expect_error(readBedMethyl(fname1, seqlens = "error"))
     expect_error(readBedMethyl(fname1, seqlens = c(100)))
+    expect_error(readBedMethyl(fname1, sequence.context = -1))
+    expect_error(readBedMethyl(fname1, sequence.context = 1, sequence.reference = NULL))
+    expect_error(readBedMethyl(fname1, sequence.context = 1, sequence.reference = "error"))
     expect_error(readBedMethyl(fname1, verbose = "error"))
 
     # expected results
@@ -27,8 +41,13 @@ test_that("readBedMethyl works", {
             se1 <- readBedMethyl(fnames = fname1, modbase = 'm', verbose = TRUE)
         )
     )
-    se2 <- readBedMethyl(fnames = c(s2 = fname2))
-    se12 <- readBedMethyl(fnames = c(fname1, fname2))
+    suppressMessages(
+        expect_message(
+            se2 <- readBedMethyl(fnames = c(s2 = fname2), sequence.context = 1, sequence.reference = ref, verbose = TRUE)
+        )
+    )
+
+    se12 <- readBedMethyl(fnames = c(fname1, fname2), sequence.context = 1, sequence.reference = "BSgenome.Mmusculus.footprintR.reference")
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
@@ -68,4 +87,7 @@ test_that("readBedMethyl works", {
                      assay(se12, "Nvalid")[i2to12, 2, drop = FALSE])
     expect_identical(sum(assay(se12, "Nmod")), sum(assay(se11, "Nmod")))
     expect_identical(sum(assay(se12, "Nvalid")), sum(assay(se11, "Nvalid")))
+    expect_true("sequence.context" %in% colnames(rowData(se2)))
+    expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
+                 c(844L, 7535L, 801L, 820L))
 })
