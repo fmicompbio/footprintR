@@ -50,7 +50,7 @@
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
 #'     \code{\link[data.table]{fread}} for the function used to read the input files
 #'
-#' @importFrom SummarizedExperiment SummarizedExperiment assayNames
+#' @import SummarizedExperiment
 #' @importFrom data.table fread
 #' @importFrom GenomicRanges GPos match sort resize
 #' @importFrom S4Vectors mcols mcols<-
