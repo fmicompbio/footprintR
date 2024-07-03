@@ -106,7 +106,7 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
     if (k.smooth > 0) {
         df <- df |>
             dplyr::group_by(sample) |>
-            dplyr::arrange(position) |>
+            dplyr::arrange(.data[["position"]]) |>
             dplyr::mutate(fraction_modified_smooth = stats::runmed(
                 x = .data[["fraction_modified"]],
                 k = k.smooth, endrule = "constant")) |>
