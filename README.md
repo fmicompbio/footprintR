@@ -58,6 +58,6 @@ plotRegion(se)
 -->
 
 <!-- badges: start -->
-Github Actions (multiple OS): [![R build status](https://github.com/fmicompbio/footprintR/workflows/R-CMD-check/badge.svg)](https://github.com/fmicompbio/footprintR/actions) [![Codecov.io coverage status](https://codecov.io/github/fmicompbio/footprintR/coverage.svg?branch=master)](https://codecov.io/github/fmicompbio/footprintR)
+Github Actions (multiple OS): [![R build status](https://github.com/fmicompbio/footprintR/workflows/R-CMD-check/badge.svg)](https://github.com/fmicompbio/footprintR/actions) [![codecov](https://codecov.io/gh/fmicompbio/footprintR/graph/badge.svg?token=KBRN93XYOP)](https://codecov.io/gh/fmicompbio/footprintR)
 <!-- badges: end -->
 
