@@ -33,7 +33,7 @@ default), all rows in the input file are read.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
 
-\item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{SeqInfo}} object
+\item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}

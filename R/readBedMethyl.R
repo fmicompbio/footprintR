@@ -19,7 +19,7 @@
 #'     that contain multiple types of modified bases. If \code{NULL} (the
 #'     default), all rows in the input file are read.
 #' @param nrows Only read \code{nrows} rows of the input file.
-#' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{SeqInfo}} object
+#' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
