@@ -22,7 +22,12 @@ test_that("readBedMethyl works", {
     rlibdir <- tempfile(pattern = "Rlib")
     dir.create(rlibdir)
     local_libpaths(new = rlibdir, action = "prefix")
-    install.packages(bsgnmfile, lib.loc = rlibdir, repos = NULL)
+    install.packages(bsgnmfile, lib.loc = rlibdir, repos = NULL,
+                     quiet = TRUE, verbose = FALSE)
+    suppressPackageStartupMessages(suppressWarnings(
+        library(BSgenome.Mmusculus.footprintR.reference, lib.loc = rlibdir, quietly = TRUE)
+    ))
+    gnm <- Biostrings::readDNAStringSet(ref)
 
     # invalid arguments
     expect_error(readBedMethyl("error"))
@@ -33,13 +38,14 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, sequence.context.width = -1))
     expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = NULL))
     expect_error(readBedMethyl(fname1, sequence.context.width = 1, sequence.reference = "error"))
+    expect_error(readBedMethyl(fname1, ncpu = "error"))
     expect_error(readBedMethyl(fname1, verbose = "error"))
 
     # expected results
     se0 <- readBedMethyl(fnames = fname1, modbase = 'x')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', verbose = TRUE)
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 2, sequence.reference = gnm, verbose = TRUE)
         )
     )
     suppressMessages(
@@ -48,7 +54,7 @@ test_that("readBedMethyl works", {
         )
     )
 
-    se12 <- readBedMethyl(fnames = c(fname1, fname2), sequence.context.width = 1, sequence.reference = "BSgenome.Mmusculus.footprintR.reference")
+    se12 <- readBedMethyl(fnames = c(fname1, fname2), sequence.context.width = 1, sequence.reference = BSgenome.Mmusculus.footprintR.reference)
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
@@ -91,4 +97,8 @@ test_that("readBedMethyl works", {
     expect_true("sequence.context" %in% colnames(rowData(se2)))
     expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
                  c(844L, 7535L, 801L, 820L))
+
+    # clean up
+    detach("package:BSgenome.Mmusculus.footprintR.reference", unload = TRUE,
+           character.only = TRUE)
 })

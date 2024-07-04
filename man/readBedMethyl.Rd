@@ -11,6 +11,7 @@ readBedMethyl(
   seqinfo = NULL,
   sequence.context.width = 0,
   sequence.reference = NULL,
+  ncpu = 1L,
   verbose = FALSE
 )
 }
@@ -44,11 +45,14 @@ sequence context to be extracted from the reference
 modified base. If \code{sequence.context.width = 0} (the default), no
 sequence context will be extracted.}
 
-\item{sequence.reference}{A character scalar either giving the name of a
-\code{BSgenome} package, or the path to a fasta formatted file with
-reference sequences. The sequence context (see
-\code{sequence.context.width} argument) will be extracted from these
-sequences.}
+\item{sequence.reference}{A \code{\link[BSgenome]{BSgenome}} object, or a
+character scalar giving the path to a fasta formatted file with reference
+sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
+The sequence context (see \code{sequence.context.width} argument) will be
+extracted from these sequences.}
+
+\item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
+to use for some of the steps in \code{readBedMethyl()}.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
