@@ -45,7 +45,7 @@ test_that("readBedMethyl works", {
     se0 <- readBedMethyl(fnames = fname1, modbase = 'x')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 2,
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 1,
                                  sequence.reference = gnm, verbose = TRUE)
         )
     )
