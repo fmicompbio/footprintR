@@ -28,11 +28,13 @@
 #'     (\code{sequence.reference} argument). The context will be centered on the
 #'     modified base. If \code{sequence.context.width = 0} (the default), no
 #'     sequence context will be extracted.
-#' @param sequence.reference A character scalar either giving the name of a
-#'     \code{BSgenome} package, or the path to a fasta formatted file with
-#'     reference sequences. The sequence context (see
-#'     \code{sequence.context.width} argument) will be extracted from these
-#'     sequences.
+#' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
+#'     character scalar giving the path to a fasta formatted file with reference
+#'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
+#'     The sequence context (see \code{sequence.context.width} argument) will be
+#'     extracted from these sequences.
+#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
+#'     to use for some of the steps in \code{readBedMethyl()}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -82,7 +84,19 @@ readBedMethyl <- function(fnames,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 100))
-    .assertScalar(x = sequence.reference, type = "character", allowNULL = TRUE)
+    if (sequence.context.width > 0) {
+        if (is.null(sequence.reference)) {
+            stop("`sequence.reference` must be provided if `sequence.context.width`",
+                 " is not zero.")
+        } else if (!is(sequence.reference, "BSgenome") &&
+                   !is(sequence.reference, "DNAStringSet") &&
+                   !(is.character(sequence.reference) && file.exists(sequence.reference))) {
+            stop("`sequence.reference` must be either a BSgenome object, ",
+                 "a DNAStringSet object, or a path to a fasta file.")
+        }
+
+    }
+    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, parallel::detectCores()))
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
@@ -146,21 +160,14 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("extracting sequence contexts")
         }
-        if (is.null(sequence.reference)) {
-            stop("`sequence.reference` cannot be NULL to extract sequence context")
-        }
         grcontext <- resize(as(gpos, "GRanges"),
                             width = sequence.context.width,
                             fix = "center")
-        if (file.exists(sequence.reference)) {
+        if (is.character(sequence.reference)) {
             gnm <- Biostrings::readDNAStringSet(sequence.reference)
             names(gnm) <- sub(" .*$", "", names(gnm))
-        } else if (requireNamespace(sequence.reference, quietly = TRUE)) {
-            library(sequence.reference, character.only = TRUE)
-            gnm <- get(sequence.reference)
         } else {
-            stop("`sequence.reference` has to be either a path to a fasta file",
-                 " or the name of an installed BSgenome package")
+            gnm <- sequence.reference
         }
         seqcontext <- getSeq(gnm, grcontext)
         mcols(gpos)$sequence.context <- seqcontext
