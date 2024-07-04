@@ -45,7 +45,8 @@ test_that("readBedMethyl works", {
     se0 <- readBedMethyl(fnames = fname1, modbase = 'x')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 2, sequence.reference = gnm, verbose = TRUE)
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 2,
+                                 sequence.reference = gnm, verbose = TRUE)
         )
     )
     suppressMessages(
@@ -60,11 +61,13 @@ test_that("readBedMethyl works", {
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
         )
     )
+    seN <- readBedMethyl(fnames = fname1, sequence.context.width = 10, sequence.reference = gnm)
     expect_s4_class(se0, "SummarizedExperiment")
     expect_s4_class(se1, "SummarizedExperiment")
     expect_s4_class(se2, "SummarizedExperiment")
     expect_s4_class(se12, "SummarizedExperiment")
     expect_s4_class(se11, "SummarizedExperiment")
+    expect_s4_class(seN, "SummarizedExperiment")
     expect_identical(dim(se0), c(0L, 1L))
     expect_identical(dim(se1), c(10000L, 1L))
     expect_identical(dim(se2), c(10000L, 1L))
@@ -97,6 +100,8 @@ test_that("readBedMethyl works", {
     expect_true("sequence.context" %in% colnames(rowData(se2)))
     expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
                  c(844L, 7535L, 801L, 820L))
+    expect_true(all(width(rowData(seN)$sequence.context) == 10L))
+    expect_identical(as.character(rowData(seN)$sequence.context[[nrow(seN)]]), "TCCCCTTTCN")
 
     # clean up
     detach("package:BSgenome.Mmusculus.footprintR.reference", unload = TRUE,

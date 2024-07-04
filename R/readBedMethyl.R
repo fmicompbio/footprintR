@@ -54,10 +54,11 @@
 #'
 #' @import SummarizedExperiment
 #' @importFrom data.table fread
-#' @importFrom GenomicRanges GPos match sort resize
+#' @importFrom GenomicRanges GPos match sort resize trim
+#' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom S4Vectors mcols mcols<-
 #' @importFrom scuttle aggregateAcrossCells
-#' @importFrom Biostrings readDNAStringSet
+#' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
 #' @importFrom parallel mclapply detectCores
@@ -171,7 +172,22 @@ readBedMethyl <- function(fnames,
         } else {
             gnm <- sequence.reference
         }
-        seqcontext <- getSeq(gnm, grcontext)
+        if (is.null(seqinfo)) {
+            seqlengths(gpos) <- seqlengths(gnm)
+        }
+        Npre <- pmax(0L, 1L - start(grcontext))
+        Npost <- pmax(0L, end(grcontext) - seqlengths(gnm)[as.character(seqnames(grcontext))])
+        if (any(Npre > 0) || any(Npost > 0)) {
+            suppressWarnings(seqlengths(grcontext) <- seqlengths(gnm))
+            grcontext <- GenomicRanges::trim(grcontext)
+            seqcontext <- DNAStringSet(
+                x = paste0(strrep("N", Npre),
+                           getSeq(gnm, grcontext),
+                           strrep("N", Npost)),
+                use.names = FALSE)
+        } else {
+            seqcontext <- getSeq(gnm, grcontext)
+        }
         mcols(gpos)$sequence.context <- seqcontext
     }
 
