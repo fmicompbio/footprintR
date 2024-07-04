@@ -60,6 +60,7 @@
 #' @importFrom Biostrings readDNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
+#' @importFrom parallel mclapply detectCores
 #'
 #' @export
 readBedMethyl <- function(fnames,
@@ -68,6 +69,7 @@ readBedMethyl <- function(fnames,
                           seqinfo = NULL,
                           sequence.context.width = 0,
                           sequence.reference = NULL,
+                          ncpu = 1L,
                           verbose = FALSE) {
     # digest arguments
     .assertVector(x = fnames, type = "character")
@@ -119,7 +121,7 @@ readBedMethyl <- function(fnames,
         }
         data.table::fread(
             file = fname, sep = "\t", nrows = nrows, header = FALSE,
-            nThread = 1, data.table = FALSE, verbose = FALSE,
+            nThread = ncpu, data.table = FALSE, verbose = FALSE,
             col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
             select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
     })
@@ -127,19 +129,19 @@ readBedMethyl <- function(fnames,
     # filter by `modbase`
     if (!is.null(modbase)) {
         if (verbose) {
-            message("filtering modifications (retaining '", modbase, "'")
+            message("filtering modifications (retaining ", paste(modbase, collapse = ", "), ")")
         }
-        dfL <- lapply(dfL, function(df) {
+        dfL <- parallel::mclapply(dfL, function(df) {
             df[df$modbase %in% modbase, ]
-        })
+        }, mc.cores = ncpu)
     }
 
     # create GPos objects for each input
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
-    gposL <- lapply(dfL, function(df) {
+    gposL <- parallel::mclapply(dfL, function(df) {
         GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
                             strand = df$strand, seqinfo = seqinfo)
-    })
+    }, mc.cores = ncpu)
 
     # create combined GPos
     if (length(dfL) > 1) {
