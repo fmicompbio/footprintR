@@ -1,6 +1,6 @@
 pandoc: 3.1.11
 pkgdown: 2.0.9.9000
-pkgdown_sha: c2346de7171f1e71ffa494d40a3e18cfcdeaaaf5
+pkgdown_sha: c1485b494b9d669527cd342daf939aca6948c54f
 articles:
   using-footprintR: using-footprintR.html
-last_built: 2024-07-03T14:00Z
+last_built: 2024-07-04T08:05Z

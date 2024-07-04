@@ -69,6 +69,7 @@
 <span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sequence.context.width <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  sequence.reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ncpu <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -117,11 +118,16 @@ sequence context will be extracted.</p></dd>
 
 
 <dt id="arg-sequence-reference">sequence.reference<a class="anchor" aria-label="anchor" href="#arg-sequence-reference"></a></dt>
-<dd><p>A character scalar either giving the name of a
-<code>BSgenome</code> package, or the path to a fasta formatted file with
-reference sequences. The sequence context (see
-<code>sequence.context.width</code> argument) will be extracted from these
-sequences.</p></dd>
+<dd><p>A <code><a href="https://rdrr.io/pkg/BSgenome/man/BSgenome-class.html" class="external-link">BSgenome</a></code> object, or a
+character scalar giving the path to a fasta formatted file with reference
+sequences, or a <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code> object.
+The sequence context (see <code>sequence.context.width</code> argument) will be
+extracted from these sequences.</p></dd>
+
+
+<dt id="arg-ncpu">ncpu<a class="anchor" aria-label="anchor" href="#arg-ncpu"></a></dt>
+<dd><p>A numeric scalar giving the number of parallel CPU threads to
+to use for some of the steps in <code>readBedMethyl()</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
