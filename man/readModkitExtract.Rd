@@ -60,7 +60,7 @@ contains one assay (\code{mod_prob}) with modification probabilities for
 each position in each read. Unobserved read/position combinations are
 represented by a zero, while all values that are 'implicitly' called by
 modkit (with a modification probability less than 5\%) are represented with
-a value of 0.2.
+a value of 0.02.
 }
 \author{
 Charlotte Soneson
