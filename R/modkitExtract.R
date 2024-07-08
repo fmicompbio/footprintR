@@ -80,11 +80,11 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
     # digest arguments
     .assertScalar( x=modkit_bin, type = "character")
     if (!file.exists(modkit_bin)) {
-        stop("modkit binary not present at: ", modkit_bin)
+        stop("modkit binary not present at: ", normalizePath(modkit_bin))
     }
     .assertScalar(x = bamfile, type = "character", allowNULL = TRUE)
     if (!file.exists(bamfile)) {
-        stop("BAM file not found at: ", bamfile)
+        stop("BAM file not found at: ", normalizePath(bamfile))
     }
     
     .assertScalar(x = num_reads, type = "numeric", allowNULL= TRUE)
@@ -128,7 +128,7 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
     #Prepare --log-fileparh argument
     if(!is.null(out_log_file)){
         pass_ARGS <- c(pass_ARGS, paste("--log-filepath",out_log_file, sep=" ") )
-        print(c( "Specified path to run log:", out_log_file) )
+        print(c( "Specified path to run log:", normalizePath(out_log_file) ))
         if (file.exists(out_log_file)){
             print("Watning: Specified `out_log_file` already exists. The log will be appened to the existing file")
         }
@@ -141,7 +141,7 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
     #Prepare separately --read-calls-path argument
     if(!is.null(out_read_calls) ){
         pass_out_read_calls <- paste('--read-calls-path',out_read_calls,sep=" ")
-        print(c( "Specified path to read-calls table:", out_read_calls) )
+        print(c( "Specified path to read-calls table:", normalizePath(out_read_calls) ) )
     } else{
         pass_out_read_calls <- NULL
     }
@@ -152,7 +152,7 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
         pass_out_extract_table <-  'null'
     } else{
         pass_out_extract_table <- out_extract_table
-        print(c( "Specified path to extract table:", out_extract_table) )
+        print(c( "Specified path to extract table:", normalizePath(out_extract_table) ))
     }
     
 
@@ -240,3 +240,4 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
     )
     
 }
+
