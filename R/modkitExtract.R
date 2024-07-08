@@ -3,23 +3,23 @@
 #' @description
 #' This function is a wrapper around the `modkit extract` sub-command to extract read-level base modification information
 #' from modBAM files into tab-separated values table(s).
-#' For more information on available `modkit extract` arguments and output tables specifciation see https://nanoporetech.github.io/modkit/intro_extract.html
+#' For more information on available `modkit extract` arguments and output tables specification see https://nanoporetech.github.io/modkit/intro_extract.html
 #'
-#' @param modkit_bin Character vector specifying the path of the \code{modkit}
+#' @param modkit_bin Character vector specifying the path to the \code{modkit}
 #'     binary. 
 #' @param bamfile Character vector specifying the path to a \code{modBAM}
-#'     file. An indexed BAM files can significanly speed up certain extract
+#'     file. An indexed BAM file can significanly speed up certain extract
 #'     operations.
 #' @param regions A \code{\link[GRanges]{GRanges}} object specifying which genomic regions to extract the reads from.
 #'     Note that the reads are not trimmed to the boundaries of the specified ranges.
 #'     As a result returned positions will typically extend out of the specified regions
 #' @param num_reads Number of reads to  extract. Note that this is extracted reads per specified genomic range.
 #'     When N genomic ranges are specified the number of extracted reads will be at most num_reads x N
-#' @param out_extract_table Character vector specifying the path for the `extract table`. Can be NULL 
+#' @param out_extract_table Character vector specifying the path for the `extract table` output. Can be NULL 
 #'     if only a `read-calls` table is needed.
-#' @param out_read_calls Character vector specifying the path for the `read-calls table`. Can be NULL 
-#'     if only an `extract tabe` is needed.
-#' @param out_log_file Character vector specifying the path to file to write the command run log. Can be NULL 
+#' @param out_read_calls Character vector specifying the path for the `read-calls table` output. Can be NULL 
+#'     if only an `extract table` is needed.
+#' @param out_log_file Character vector specifying the path for the the command run log output. Can be NULL 
 #'     if no log file is needed (not recommended).
 #' @param modkit_args Character vector with additional `modkit extract` arguments. 
 #'     Please refer to the `modkit extract` documentation for a complete list of possible arguments.
@@ -27,7 +27,7 @@
 #'     This temporary directory is only created when multiple genomic regions are specified
 #'
 #' @return A named character vector specifying the paths to the generated table and log files.
-#'     Has slots for 'extract-table', 'read-calls' and 'run-log'.
+#'     Has slots for 'extract-table', 'read-calls' and 'run-log'. An `NA` is returned for non-generated output.
 #'
 #' @author Panagiotis Papapasaikas
 #'
@@ -114,7 +114,7 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
     
     
     #character vector of arguments to be passed to modkit.
-    #first argument should always be the modkit command. In this case 'extract'
+    #first argument should always be the modkit sub-command. In this case 'extract'
     pass_ARGS <- c('extract', '--suppress-progress')
     
     #Prepare --num-reads argument
@@ -125,12 +125,12 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
         }
     }
     
-    #Prepare --log-fileparh argument
+    #Prepare --log-filepath argument
     if(!is.null(out_log_file)){
         pass_ARGS <- c(pass_ARGS, paste("--log-filepath",out_log_file, sep=" ") )
         print(c( "Specified path to run log:", normalizePath(out_log_file, mustWork=FALSE) ))
         if (file.exists(out_log_file)){
-            print("Watning: Specified `out_log_file` already exists. The log will be appened to the existing file")
+            print("Warning: Specified `out_log_file` already exists. The log will be appened to the existing file")
         }
     }
     
