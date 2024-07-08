@@ -67,8 +67,8 @@
 #'
 #' @export
 #' 
-modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modkit/modkit_v0.3.0_centos7_x86_64/dist/modkit",
-                          bamfile=NULL,
+modkitExtract <- function(modkit_bin="",
+                          bamfile="",
                           regions=NULL,
                           num_reads=NULL,
                           out_extract_table = NULL,
@@ -78,11 +78,11 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
                           tempdir_base=tempdir() ) {
     
     # digest arguments
-    .assertScalar( x=modkit_bin, type = "character")
+    .assertScalar( x=modkit_bin, type = "character", allowNULL = FALSE)
     if (!file.exists(modkit_bin)) {
         stop("modkit binary not present at: ", normalizePath(modkit_bin))
     }
-    .assertScalar(x = bamfile, type = "character", allowNULL = TRUE)
+    .assertScalar(x = bamfile, type = "character", allowNULL = FALSE)
     if (!file.exists(bamfile)) {
         stop("BAM file not found at: ", normalizePath(bamfile))
     }
