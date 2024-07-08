@@ -75,7 +75,7 @@ modkitExtract <- function(modkit_bin="/tungstenfs/groups/gbioinfo/Appz/ONT_modki
                           out_read_calls = NULL,
                           out_log_file=NULL,
                           modkit_args=NULL,
-                          tempdir_base=tmpdir() ) {
+                          tempdir_base=tempdir() ) {
     
     # digest arguments
     .assertScalar( x=modkit_bin, type = "character")
