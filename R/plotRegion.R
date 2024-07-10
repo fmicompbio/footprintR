@@ -120,7 +120,8 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
         labs(x = paste0("Position on ", seqlevels(region)[1]),
              y = "Fraction modified",
              colour = "Sample") +
-        theme_bw()
+        theme_bw() +
+        theme(legend.position = "bottom")
     if (k.smooth > 0) {
         p <- p + geom_line(
             inherit.aes = FALSE,
