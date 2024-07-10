@@ -41,8 +41,9 @@ bases around the center of the regions defined in \code{x} from
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
 # define some regions at the end of the reference sequence
-regions <- GRanges("chr1", IRanges(start = 6957060 - c(4, 2, 0),
-                                   width = 1, names = c("a","b","c")))
+regions <- GenomicRanges::GRanges(
+    "chr1", IRanges(start = 6957060 - c(4, 2, 0),
+    width = 1, names = c("a","b","c")))
 
 # extract sequence context (note the padding with N's)
 seqContext(regions, 7, reffile)
