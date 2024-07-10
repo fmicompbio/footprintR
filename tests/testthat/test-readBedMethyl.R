@@ -61,7 +61,7 @@ test_that("readBedMethyl works", {
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2), verbose = TRUE)
         )
     )
-    seN <- readBedMethyl(fnames = fname1, sequence.context.width = 10, sequence.reference = gnm)
+    expect_warning(seN <- readBedMethyl(fnames = fname1, sequence.context.width = 10, sequence.reference = gnm))
     expect_s4_class(se0, "SummarizedExperiment")
     expect_s4_class(se1, "SummarizedExperiment")
     expect_s4_class(se2, "SummarizedExperiment")
@@ -100,8 +100,9 @@ test_that("readBedMethyl works", {
     expect_true("sequence.context" %in% colnames(rowData(se2)))
     expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
                  c(844L, 7535L, 801L, 820L))
-    expect_true(all(width(rowData(seN)$sequence.context) == 10L))
-    expect_identical(as.character(rowData(seN)$sequence.context[[nrow(seN)]]), "TCCCCTTTCN")
+    expect_true("sequence.context" %in% colnames(rowData(seN)))
+    expect_true(all(width(rowData(seN)$sequence.context) == 11L))
+    expect_identical(as.character(rowData(seN)$sequence.context[[nrow(seN)]]), "TCCCCTTTCNN")
 
     # clean up
     detach("package:BSgenome.Mmusculus.footprintR.reference", unload = TRUE,

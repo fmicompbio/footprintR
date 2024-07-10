@@ -41,8 +41,9 @@ lengths. Useful to set the sorting order of sequence names.}
 
 \item{sequence.context.width}{A numeric scalar giving the width of the
 sequence context to be extracted from the reference
-(\code{sequence.reference} argument). The context will be centered on the
-modified base. If \code{sequence.context.width = 0} (the default), no
+(\code{sequence.reference} argument). This must be an odd number
+so that the sequence can be centered on the modified base.
+If \code{sequence.context.width = 0} (the default), no
 sequence context will be extracted.}
 
 \item{sequence.reference}{A \code{\link[BSgenome]{BSgenome}} object, or a

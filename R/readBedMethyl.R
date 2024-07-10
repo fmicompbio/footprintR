@@ -25,8 +25,9 @@
 #'     lengths. Useful to set the sorting order of sequence names.
 #' @param sequence.context.width A numeric scalar giving the width of the
 #'     sequence context to be extracted from the reference
-#'     (\code{sequence.reference} argument). The context will be centered on the
-#'     modified base. If \code{sequence.context.width = 0} (the default), no
+#'     (\code{sequence.reference} argument). This must be an odd number
+#'     so that the sequence can be centered on the modified base.
+#'     If \code{sequence.context.width = 0} (the default), no
 #'     sequence context will be extracted.
 #' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
 #'     character scalar giving the path to a fasta formatted file with reference
@@ -86,7 +87,7 @@ readBedMethyl <- function(fnames,
                  " numeric vector with genomic sequence lengths.")
         }
     }
-    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 100))
+    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
     if (sequence.context.width > 0) {
         if (is.null(sequence.reference)) {
             stop("`sequence.reference` must be provided if `sequence.context.width`",
@@ -96,6 +97,11 @@ readBedMethyl <- function(fnames,
                    !(is.character(sequence.reference) && file.exists(sequence.reference))) {
             stop("`sequence.reference` must be either a BSgenome object, ",
                  "a DNAStringSet object, or a path to a fasta file.")
+        }
+        if (sequence.context.width %% 2 == 0) {
+            sequence.context.width <- sequence.context.width + 1
+            warning("`sequence.context.width` was increased to ", sequence.context.width,
+                    " (must be an odd number)")
         }
 
     }
