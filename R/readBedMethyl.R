@@ -23,24 +23,20 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
-#' @param sequence.context.width A numeric scalar giving the width of the
-#'     sequence context to be extracted from the reference
-#'     (\code{sequence.reference} argument). This must be an odd number
-#'     so that the sequence can be centered on the modified base.
-#'     If \code{sequence.context.width = 0} (the default), no
-#'     sequence context will be extracted.
-#' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
-#'     character scalar giving the path to a fasta formatted file with reference
-#'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-#'     The sequence context (see \code{sequence.context.width} argument) will be
-#'     extracted from these sequences.
+#' @param sequence.context.width,sequence.reference Define the sequence
+#'     context to be extracted around modified bases. By default (
+#'     \code{sequence.context.width = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+#'     See \code{\link{seqContext}} for details.
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
 #'     to use for some of the steps in \code{readBedMethyl()}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with genomic positions in rows and samples (the unique names of
-#'     \code{fnames}) in the columns.
+#'     \code{fnames}) in the columns. If \code{sequence.context.width != 0},
+#'     \code{rowData(x)$sequence.context} will be a \code{\link[Biostrings]{DNAStringSet}}
+#'     object with the extracted sequences.
 #'
 #' @author Michael Stadler
 #'
@@ -51,7 +47,8 @@
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
 #'     [`bedMethyl` format description](https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output),
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
-#'     \code{\link[data.table]{fread}} for the function used to read the input files
+#'     \code{\link[data.table]{fread}} for the function used to read the input files,
+#'     \code{\link{seqContext}} used to extract the sequence context.
 #'
 #' @import SummarizedExperiment
 #' @importFrom data.table fread
@@ -88,23 +85,6 @@ readBedMethyl <- function(fnames,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
-    if (sequence.context.width > 0) {
-        if (is.null(sequence.reference)) {
-            stop("`sequence.reference` must be provided if `sequence.context.width`",
-                 " is not zero.")
-        } else if (!is(sequence.reference, "BSgenome") &&
-                   !is(sequence.reference, "DNAStringSet") &&
-                   !(is.character(sequence.reference) && file.exists(sequence.reference))) {
-            stop("`sequence.reference` must be either a BSgenome object, ",
-                 "a DNAStringSet object, or a path to a fasta file.")
-        }
-        if (sequence.context.width %% 2 == 0) {
-            sequence.context.width <- sequence.context.width + 1
-            warning("`sequence.context.width` was increased to ", sequence.context.width,
-                    " (must be an odd number)")
-        }
-
-    }
     .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, parallel::detectCores()))
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
@@ -169,32 +149,10 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("extracting sequence contexts")
         }
-        grcontext <- resize(as(gpos, "GRanges"),
-                            width = sequence.context.width,
-                            fix = "center")
-        if (is.character(sequence.reference)) {
-            gnm <- Biostrings::readDNAStringSet(sequence.reference)
-            names(gnm) <- sub(" .*$", "", names(gnm))
-        } else {
-            gnm <- sequence.reference
-        }
-        if (is.null(seqinfo)) {
-            seqlengths(gpos) <- seqlengths(gnm)
-        }
-        Npre <- pmax(0L, 1L - start(grcontext))
-        Npost <- pmax(0L, end(grcontext) - seqlengths(gnm)[as.character(seqnames(grcontext))])
-        if (any(Npre > 0) || any(Npost > 0)) {
-            suppressWarnings(seqlengths(grcontext) <- seqlengths(gnm))
-            grcontext <- GenomicRanges::trim(grcontext)
-            seqcontext <- DNAStringSet(
-                x = paste0(strrep("N", Npre),
-                           getSeq(gnm, grcontext),
-                           strrep("N", Npost)),
-                use.names = FALSE)
-        } else {
-            seqcontext <- getSeq(gnm, grcontext)
-        }
-        mcols(gpos)$sequence.context <- seqcontext
+        mcols(gpos)$sequence.context <- seqContext(
+            x = as(gpos, "GRanges"),
+            sequence.context.width = sequence.context.width,
+            sequence.reference = sequence.reference)
     }
 
     # create assays

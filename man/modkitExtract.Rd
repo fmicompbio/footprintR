@@ -74,11 +74,11 @@ modkit_args=c(
 
 
 # Produce both  `extract table` and `read calls` files for multiple GRanges
-modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
+modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
 # Produce only  `extract table` file
-modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
+modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
 # Produce only  `read calls` file
-modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
+modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
 }
 
 

@@ -39,18 +39,11 @@ containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
 
-\item{sequence.context.width}{A numeric scalar giving the width of the
-sequence context to be extracted from the reference
-(\code{sequence.reference} argument). This must be an odd number
-so that the sequence can be centered on the modified base.
-If \code{sequence.context.width = 0} (the default), no
-sequence context will be extracted.}
-
-\item{sequence.reference}{A \code{\link[BSgenome]{BSgenome}} object, or a
-character scalar giving the path to a fasta formatted file with reference
-sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-The sequence context (see \code{sequence.context.width} argument) will be
-extracted from these sequences.}
+\item{sequence.context.width, sequence.reference}{Define the sequence
+context to be extracted around modified bases. By default (
+\code{sequence.context.width = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+See \code{\link{seqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readBedMethyl()}.}
@@ -60,7 +53,9 @@ to use for some of the steps in \code{readBedMethyl()}.}
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples (the unique names of
-\code{fnames}) in the columns.
+\code{fnames}) in the columns. If \code{sequence.context.width != 0},
+\code{rowData(x)$sequence.context} will be a \code{\link[Biostrings]{DNAStringSet}}
+object with the extracted sequences.
 }
 \description{
 This function will read collapsed single-molecule footprinting data
@@ -75,7 +70,8 @@ readBedMethyl(bmfile)
 \href{https://nanoporetech.github.io/modkit}{\code{modkit} software},
 \href{https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output}{\code{bedMethyl} format description},
 \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
-\code{\link[data.table]{fread}} for the function used to read the input files
+\code{\link[data.table]{fread}} for the function used to read the input files,
+\code{\link{seqContext}} used to extract the sequence context.
 }
 \author{
 Michael Stadler
