@@ -109,21 +109,12 @@ Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.</p></dd>
 
 
-<dt id="arg-sequence-context-width">sequence.context.width<a class="anchor" aria-label="anchor" href="#arg-sequence-context-width"></a></dt>
-<dd><p>A numeric scalar giving the width of the
-sequence context to be extracted from the reference
-(<code>sequence.reference</code> argument). This must be an odd number
-so that the sequence can be centered on the modified base.
-If <code>sequence.context.width = 0</code> (the default), no
-sequence context will be extracted.</p></dd>
-
-
-<dt id="arg-sequence-reference">sequence.reference<a class="anchor" aria-label="anchor" href="#arg-sequence-reference"></a></dt>
-<dd><p>A <code><a href="https://rdrr.io/pkg/BSgenome/man/BSgenome-class.html" class="external-link">BSgenome</a></code> object, or a
-character scalar giving the path to a fasta formatted file with reference
-sequences, or a <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code> object.
-The sequence context (see <code>sequence.context.width</code> argument) will be
-extracted from these sequences.</p></dd>
+<dt id="arg-sequence-context-width-sequence-reference">sequence.context.width, sequence.reference<a class="anchor" aria-label="anchor" href="#arg-sequence-context-width-sequence-reference"></a></dt>
+<dd><p>Define the sequence
+context to be extracted around modified bases. By default (
+<code>sequence.context.width = 0</code>), no sequence context will be
+extracted, otherwise it will be returned in <code>rowData(x)$sequence.context</code>.
+See <code><a href="seqContext.html">seqContext</a></code> for details.</p></dd>
 
 
 <dt id="arg-ncpu">ncpu<a class="anchor" aria-label="anchor" href="#arg-ncpu"></a></dt>
@@ -139,14 +130,17 @@ to use for some of the steps in <code>readBedMethyl()</code>.</p></dd>
     <h2>Value</h2>
     <p>A <code><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">SummarizedExperiment</a></code> object
 with genomic positions in rows and samples (the unique names of
-<code>fnames</code>) in the columns.</p>
+<code>fnames</code>) in the columns. If <code>sequence.context.width != 0</code>,
+<code>rowData(x)$sequence.context</code> will be a <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code>
+object with the extracted sequences.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
     <div class="dont-index"><p><a href="https://nanoporetech.github.io/modkit" class="external-link"><code>modkit</code> software</a>,
 <a href="https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output" class="external-link"><code>bedMethyl</code> format description</a>,
 <code><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">SummarizedExperiment</a></code> for the returned object type,
-<code><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">fread</a></code> for the function used to read the input files</p></div>
+<code><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">fread</a></code> for the function used to read the input files,
+<code><a href="seqContext.html">seqContext</a></code> used to extract the sequence context.</p></div>
     </div>
     <div id="author">
     <h2>Author</h2>
