@@ -4,7 +4,7 @@
 \alias{sumOverRegions}
 \title{Sum number of modified and total reads for each region.}
 \usage{
-sumOverRegions(se, regions, verbose = FALSE, ...)
+sumOverRegions(se, regions, keepZero = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
@@ -14,6 +14,11 @@ returned by \code{\link{readBedMethyl}}.}
 \item{regions}{A \code{\link[GenomicRegions]{GRanges}} object with target
 regions.}
 
+\item{keepZero}{Logical scalar. If \code{FALSE} (the default), only elements
+from \code{regions} that contain at least one feature from \code{se} will
+be returned. If \code{TRUE}, all elements of \code{regions} will be
+returned, potentially with zero counts.}
+
 \item{verbose}{A logical scalar. If \code{TRUE}, report on progress.}
 
 \item{...}{Additional parameters for \code{\link[scuttle]{aggregateAcrossFeatures}},
@@ -21,7 +26,8 @@ such as \code{BPPARAM} to run the summing in parallel.}
 }
 \value{
 A \code{\link[SummarizedExepriment]{RangedSummarizedExperiment}}
-with \code{length(regions)} rows and \code{ncol(se)} columns.
+with up to \code{length(regions)} rows (exactly \code{length(regions)}
+rows if \code{keepZero = TRUE}) and \code{ncol(se)} columns.
 \code{colData(se)}, but not \code{rowData(se)} will be preserved.
 }
 \description{
