@@ -76,7 +76,7 @@ sumOverRegions <- function(se, regions, keepZero = FALSE, verbose = FALSE, ...) 
     # keep zeros if requested
     if (keepZero) {
         if (verbose) {
-            "filling in zero count regions"
+            message("filling in zero count regions")
         }
         assayList <- lapply(assays(tmp), function(x) {
             xx <- matrix(data = 0, nrow = length(regions), ncol = ncol(se),

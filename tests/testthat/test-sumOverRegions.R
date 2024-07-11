@@ -26,7 +26,9 @@ test_that("sumOverRegions works", {
     expect_message(expect_message(expect_message(
         s2 <- sumOverRegions(se = se, regions = regions2, verbose = TRUE, BPPARAM = BiocParallel::MulticoreParam(1L))
     )))
-    s3 <- sumOverRegions(se = se, regions = regions2, keepZero = TRUE)
+    expect_message(expect_message(expect_message(expect_message(
+        s3 <- sumOverRegions(se = se, regions = regions2, keepZero = TRUE, verbose = TRUE)
+    ))))
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
     expect_s4_class(s3, "RangedSummarizedExperiment")
