@@ -39,7 +39,8 @@ Suggests:
     testthat (>= 3.0.0),
     R.utils,
     withr,
-    BiocManager
+    BiocManager,
+    BiocParallel
 URL: https://github.com/fmicompbio/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
 Encoding: UTF-8
