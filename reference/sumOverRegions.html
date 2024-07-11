@@ -64,7 +64,7 @@ and sums the counts for all features that overlap provided regions.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sumOverRegions</span><span class="op">(</span><span class="va">se</span>, <span class="va">regions</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sumOverRegions</span><span class="op">(</span><span class="va">se</span>, <span class="va">regions</span>, keepZero <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -82,6 +82,13 @@ returned by <code><a href="readBedMethyl.html">readBedMethyl</a></code>.</p></dd
 regions.</p></dd>
 
 
+<dt id="arg-keepzero">keepZero<a class="anchor" aria-label="anchor" href="#arg-keepzero"></a></dt>
+<dd><p>Logical scalar. If <code>FALSE</code> (the default), only elements
+from <code>regions</code> that contain at least one feature from <code>se</code> will
+be returned. If <code>TRUE</code>, all elements of <code>regions</code> will be
+returned, potentially with zero counts.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>A logical scalar. If <code>TRUE</code>, report on progress.</p></dd>
 
@@ -94,7 +101,8 @@ such as <code>BPPARAM</code> to run the summing in parallel.</p></dd>
     <div id="value">
     <h2>Value</h2>
     <p>A <code>RangedSummarizedExperiment</code>
-with <code>length(regions)</code> rows and <code>ncol(se)</code> columns.
+with up to <code>length(regions)</code> rows (exactly <code>length(regions)</code>
+rows if <code>keepZero = TRUE</code>) and <code>ncol(se)</code> columns.
 <code>colData(se)</code>, but not <code>rowData(se)</code> will be preserved.</p>
     </div>
     <div id="see-also">
