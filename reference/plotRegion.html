@@ -69,6 +69,7 @@ readBedMethyl."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/l
 <span>  region <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min.coverage <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  k.smooth <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  point_size <span class="op">=</span> <span class="fl">1.5</span>,</span>
 <span>  sequence.context <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -104,6 +105,11 @@ visualization.</p></dd>
 over which to calculate a running median and show as smooth line(s).
 if <code>k = 0</code> (the default), no smoothing will be performed and the
 smoothed line is not shown.</p></dd>
+
+
+<dt id="arg-point-size">point_size<a class="anchor" aria-label="anchor" href="#arg-point-size"></a></dt>
+<dd><p>A numeric scalar giving the size of points. This will
+be passed to the <code>size</code> argument of <code><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></code>.</p></dd>
 
 
 <dt id="arg-sequence-context">sequence.context<a class="anchor" aria-label="anchor" href="#arg-sequence-context"></a></dt>
