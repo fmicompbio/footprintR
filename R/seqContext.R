@@ -5,7 +5,7 @@
 #' bases around the center of the regions defined in \code{x} from
 #' \code{sequence.reference}.
 #'
-#' @param x A \code{\link[GenomicRanges]{GRanges}} object defineing the regions
+#' @param x A \code{\link[GenomicRanges]{GRanges}} object defining the regions
 #'     of interest. The extracted sequences will correspond to the regions
 #'     defined as \code{resize(x, width = sequence.context.width, fix = "center"}.
 #' @param sequence.context.width A numeric scalar giving the width of the

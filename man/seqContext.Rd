@@ -7,7 +7,7 @@
 seqContext(x, sequence.context.width, sequence.reference)
 }
 \arguments{
-\item{x}{A \code{\link[GenomicRanges]{GRanges}} object defineing the regions
+\item{x}{A \code{\link[GenomicRanges]{GRanges}} object defining the regions
 of interest. The extracted sequences will correspond to the regions
 defined as \code{resize(x, width = sequence.context.width, fix = "center"}.}
 
