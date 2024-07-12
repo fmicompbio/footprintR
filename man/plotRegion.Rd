@@ -9,6 +9,7 @@ plotRegion(
   region = NULL,
   min.coverage = 0,
   k.smooth = 0,
+  point_size = 1.5,
   sequence.context = NULL
 )
 }
@@ -33,6 +34,9 @@ visualization.}
 over which to calculate a running median and show as smooth line(s).
 if \code{k = 0} (the default), no smoothing will be performed and the
 smoothed line is not shown.}
+
+\item{point_size}{A numeric scalar giving the size of points. This will
+be passed to the \code{size} argument of \code{\link[ggplot2]{geom_point}}.}
 
 \item{sequence.context}{A character vector with sequence context(s)
 to plot. Only positions that match one of the provided sequence

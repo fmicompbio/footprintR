@@ -50,11 +50,11 @@
 #'
 #'
 #' # Produce both  `extract table` and `read calls` files for multiple GRanges
-#' modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
+#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
 #' # Produce only  `extract table` file
-#' modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
+#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
 #' # Produce only  `read calls` file
-#' modkitExtract(bamfile = BAMF,num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
+#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
 #' }
 #' 
 #'
@@ -79,12 +79,16 @@ modkitExtract <- function(modkit_bin="",
     
     # digest arguments
     .assertScalar( x=modkit_bin, type = "character", allowNULL = FALSE)
-    if (!file.exists(modkit_bin)) {
-        stop("modkit binary not present at: ", normalizePath(modkit_bin))
+    modkitFAIL <- suppressWarnings(system( paste0(modkit_bin, " --version") ,intern=FALSE,ignore.stdout =   TRUE, ignore.stderr = TRUE ))
+    if (  modkitFAIL  ) {
+        stop("A valid path to a modkit executable  has not been provided")
+    }else{
+    print(paste0("Using ", system( paste0 (modkit_bin," --version"),  intern=TRUE))  )    
     }
+    
     .assertScalar(x = bamfile, type = "character", allowNULL = FALSE)
     if (!file.exists(bamfile)) {
-        stop("BAM file not found at: ", normalizePath(bamfile))
+        stop("BAM file not found at: ", normalizePath(bamfile,mustWork = FALSE))
     }
     
     .assertScalar(x = num_reads, type = "numeric", allowNULL= TRUE)

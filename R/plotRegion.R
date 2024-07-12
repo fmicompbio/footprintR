@@ -22,6 +22,8 @@
 #'     over which to calculate a running median and show as smooth line(s).
 #'     if \code{k = 0} (the default), no smoothing will be performed and the
 #'     smoothed line is not shown.
+#' @param point_size A numeric scalar giving the size of points. This will
+#'     be passed to the \code{size} argument of \code{\link[ggplot2]{geom_point}}.
 #' @param sequence.context A character vector with sequence context(s)
 #'     to plot. Only positions that match one of the provided sequence
 #'     contexts will be included in the plot. Sequence contexts can be provided
@@ -65,7 +67,8 @@
 #'
 #' @export
 plotRegion <- function(se, region = NULL, min.coverage = 0,
-                       k.smooth = 0, sequence.context = NULL) {
+                       k.smooth = 0, point_size = 1.5,
+                       sequence.context = NULL) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (!all(c("Nmod", "Nvalid") %in% assayNames(se))) {
@@ -81,6 +84,7 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
     }
     .assertScalar(x = min.coverage, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = k.smooth, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = point_size, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
 
     # subset `se`
@@ -116,11 +120,12 @@ plotRegion <- function(se, region = NULL, min.coverage = 0,
     # create plot
     p <- ggplot(df, aes(.data[["position"]], .data[["fraction_modified"]],
                         colour = .data[["sample"]])) +
-        geom_point(alpha = ifelse(k.smooth > 0, 0.2, 1)) +
+        geom_point(alpha = ifelse(k.smooth > 0, 0.2, 1), size = point_size) +
         labs(x = paste0("Position on ", seqlevels(region)[1]),
              y = "Fraction modified",
              colour = "Sample") +
-        theme_bw()
+        theme_bw() +
+        theme(legend.position = "bottom")
     if (k.smooth > 0) {
         p <- p + geom_line(
             inherit.aes = FALSE,
