@@ -32,7 +32,9 @@ Imports:
     parallel,
     dplyr,
     rlang,
-    ggplot2
+    ggplot2,
+    SparseArray,
+    Matrix
 Suggests:
     rmarkdown,
     knitr,
