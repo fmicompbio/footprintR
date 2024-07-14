@@ -97,6 +97,7 @@ readModkitExtract <- function(fnames,
                  " numeric vector with genomic sequence lengths.")
         }
     }
+    .assertScalar(x = ncpu, type = "numeric")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
@@ -143,12 +144,17 @@ readModkitExtract <- function(fnames,
         # set zeros to small value for unmodified positions
         # (dorado omits base modification probabilities less than 0.05)
         tmp$mod_prob[tmp$call_code == "-" & tmp$mod_prob == 0] <- 0.02
-        # filter
+        # record filter threshold implied by modkit
+        mod_fail_idx <- which(tmp$fail & tmp$call_code == modbase[nm])
+        unmod_fail_idx <- which(tmp$fail & tmp$call_code == "-")
         modkit_threshold[[nm]] <- structure(
-            c(max(tmp$call_prob[tmp$fail & tmp$call_code == modbase[nm]]),
-              max(tmp$call_prob[tmp$fail & tmp$call_code == "-"])),
+            c(ifelse(length(mod_fail_idx) > 0,
+                     max(tmp$call_prob[mod_fail_idx]), -Inf),
+              ifelse(length(unmod_fail_idx) > 0,
+                     max(tmp$call_prob[unmod_fail_idx]), -Inf)),
             names = c(modbase[nm], "-")
         )
+        # filter
         if (!is.null(filter)) {
             if (is.character(filter) && filter == "modkit") {
                 tmp <- tmp[!tmp$fail, ]
