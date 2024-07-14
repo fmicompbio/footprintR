@@ -3,6 +3,7 @@
 export(modkitExtract)
 export(plotRegion)
 export(readBedMethyl)
+export(readModkitExtract)
 export(seqContext)
 export(sumOverRegions)
 import(GenomicRanges)

@@ -64,6 +64,7 @@
 #' @importFrom BiocGenerics pos strand do.call cbind
 #' @importFrom GenomeInfoDb seqnames
 #'
+#' @export
 readModkitExtract <- function(fnames,
                               modbase,
                               filter = NULL,
