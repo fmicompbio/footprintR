@@ -62,6 +62,20 @@ represented by a zero, while all values that are 'implicitly' called by
 modkit (with a modification probability less than 5\%) are represented with
 a value of 0.02.
 }
+\examples{
+extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
+                        package = "footprintR")
+## ... no filtering
+readModkitExtract(extrfile, modbase = "m", filter = NULL)
+## ... modkit filtering
+readModkitExtract(extrfile, modbase = "m", filter = "modkit")
+
+}
+\seealso{
+\href{https://nanoporetech.github.io/modkit}{\code{modkit} software},
+\code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
+\code{\link[data.table]{fread}} for the function used to read the input files
+}
 \author{
 Charlotte Soneson
 }

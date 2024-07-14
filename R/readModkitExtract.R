@@ -42,6 +42,18 @@
 #'
 #' @author Charlotte Soneson
 #'
+#' @examples
+#' extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
+#'                         package = "footprintR")
+#' ## ... no filtering
+#' readModkitExtract(extrfile, modbase = "m", filter = NULL)
+#' ## ... modkit filtering
+#' readModkitExtract(extrfile, modbase = "m", filter = "modkit")
+#'
+#' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
+#'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
+#'     \code{\link[data.table]{fread}} for the function used to read the input files
+#'
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowRanges
 #' @importFrom data.table fread
 #' @importFrom parallel mclapply
