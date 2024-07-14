@@ -26,6 +26,9 @@ test_that("readModkitExtract works", {
                  "'modbase' must be of class 'character'")
     expect_error(readModkitExtract(fnames, modbase = c("m", "a")),
                  "'modbase' must have length 4")
+    expect_error(readModkitExtract(fnames, modbase = c(s1 = "m", s2 = "m",
+                                                       s3 = "a", s4 = "a")),
+                 "names of `modbase` and `fnames` don't agree")
     expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
                                    filter = "error"),
                  "All values in 'filter' must be one of")
@@ -67,6 +70,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = TRUE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6432, 10)) ## number of unique positions
+    expect_equal(rme$sample, rep("s1_5mC", 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
@@ -84,12 +88,13 @@ test_that("readModkitExtract works", {
     expect_equal(sum(SummarizedExperiment::assay(rme) > 0), 18531) ## number of rows in the original file
 
     # ... single file, manual filtering
-    rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
+    rme <- readModkitExtract(fnames = fnames[["s1_5mC"]], modbase = "m",
                              filter = c(`m` = 0.6, `-` = 0.5),
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6415, 10)) ## number of unique positions
+    expect_equal(rme$sample, rep("s1", 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
@@ -113,6 +118,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(5893, 10)) ## number of unique positions
+    expect_equal(rme$sample, rep("s1_5mC", 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
@@ -137,6 +143,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 30)) ## number of unique positions
+    expect_equal(rme$sample, rep(c("s1_5mC", "s2_5mC", "s1_6mA"), each = 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
@@ -158,12 +165,13 @@ test_that("readModkitExtract works", {
     # ... multiple files, manual filtering
     rme <- readModkitExtract(fnames = fnames[c("s1_5mC", "s2_5mC",
                                                "s1_6mA")],
-                             modbase = c("m", "m", "a"),
+                             modbase = c(s1_6mA = "a", s1_5mC = "m", s2_5mC = "m"),
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18615, 30)) ## number of unique positions
+    expect_equal(rme$sample, rep(c("s1_5mC", "s2_5mC", "s1_6mA"), each = 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
@@ -193,6 +201,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(17459, 30)) ## number of unique positions
+    expect_equal(rme$sample, rep(c("s1_5mC", "s2_5mC", "s1_6mA"), each = 10))
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme), "SVT_SparseMatrix")
