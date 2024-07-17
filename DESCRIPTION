@@ -33,6 +33,7 @@ Imports:
     dplyr,
     rlang,
     ggplot2,
+    patchwork,
     SparseArray,
     Matrix
 Suggests:

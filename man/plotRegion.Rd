@@ -7,36 +7,57 @@
 plotRegion(
   se,
   region = NULL,
-  min.coverage = 0,
-  k.smooth = 0,
-  point_size = 1.5,
+  tracks.reads = NULL,
+  tracks.summary = list(FracMod = "Point"),
+  modbaseSpace = FALSE,
   sequence.context = NULL
 )
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with collapsed single-molecule footprinting data (positions in rows and
-samples in columns, with assays \code{Nmod} and \code{Nvalid}).
-Typically, this is obtained by a call to \code{\link{readBedMethyl}}.}
+with read-level or collapsed single-molecule footprinting data (positions
+in rows and reads or samples in columns).}
 
 \item{region}{A \code{\link[GenomicRanges]{GRanges}} object with a single
-region that specifies the genomic region to visualize. Alternatively,
-the region can be specified as a character scalar (e.g. "chr1:12000-13000")
-that can be coerced into a \code{GRanges} object. If \code{NULL} (the
-default), all the data on the first sequence in \code{se} will be
-visualized.}
+region. Only data from \code{se} overlapping this region will be plotted.
+Alternatively, the region can be specified as a character scalar (e.g.
+"chr1:1200-1300") that can be coerced into a \code{GRanges} object. If
+\code{NULL} (the default), all the data on the first sequence in
+\code{se} will be visualized.}
 
-\item{min.coverage}{A numeric scalar giving the minimum coverage. sites that
-have \code{Nvalid} values below this will not be included in the
-visualization.}
+\item{tracks.reads}{A named list where the names correspond to assay names
+of read-level assays in \code{se} and the values are character vectors
+with the plot types to make for each assay. Currently supported plot
+types are:
+\itemize{
+\item \code{"Lollipop"}: Lollipop plot (filled circles with the
+color representing the values in the assay).
+\item \code{"Heatmap"}: Heatmap plot (tiles with the color
+represeting the values in the assay).
+}
+If \code{NULL}, do not plot any read-level tracks.}
 
-\item{k.smooth}{A numeric scalar giving the number of neighboring positions
-over which to calculate a running median and show as smooth line(s).
-if \code{k = 0} (the default), no smoothing will be performed and the
-smoothed line is not shown.}
+\item{tracks.summary}{A named list where the names correspond to assay names
+of summarized data in \code{se} and the values are character vectors with
+plot types to make for each assay. Currently supported plot types are:
+\itemize{
+\item \code{Point}: A point plot displaying values in the assay.
+\item \code{Smooth}: A smoothed line plot displaying values in the
+assay.
+\item \code{PointSmooth}: A point and smoothed line plot displaying
+values in the assay.
+}
+If \code{NULL}, do not plot any summary data tracks.
+A special case is the track name \code{"FracMod"}: If \code{se} does not
+contain an assay of that name, but \code{"Nmod"} and \code{"Nvalid"}
+assays are available, \code{"FracMod"} will be calculated from
+\code{assay(se, "Nmod") / assay(se, "Nvalid")}.}
 
-\item{point_size}{A numeric scalar giving the size of points. This will
-be passed to the \code{size} argument of \code{\link[ggplot2]{geom_point}}.}
+\item{modbaseSpace}{A logical scalar. If \code{TRUE}, the x-axis will be
+shown in the space of modified bases and contain only the positions at
+which there are modified bases in the data without any gaps between them.
+If \code{FALSE}, the x-axis will show the genomic coordinate on which
+the modified bases are typically irregularly spaced.}
 
 \item{sequence.context}{A character vector with sequence context(s)
 to plot. Only positions that match one of the provided sequence
@@ -45,35 +66,57 @@ using IUPAC redundancy codes. The sequence contexts of modified bases are
 obtained from \code{rowData(se)$sequence.context} and thus requires that
 \code{se} contains the appropriate information, for example by setting
 the \code{sequence.context} and \code{sequence.reference} arguments of
-\code{\link{readBedMethyl}} when it was generated.}
+\code{\link{readBedMethyl}} when it was generated, or by adding it using
+\code{\link{seqContext}}.}
 }
 \value{
-A \code{\link[ggplot2]{ggplot}} object
-with genomic positions in rows and samples (the unique names of
-\code{fnames}) in the columns.
+A \code{\link[ggplot2]{ggplot}} object with tracks selected by
+\code{tracks.reads} and \code{tracks.summary}.
 }
 \description{
-This function will visualize collapsed single-molecule footprinting data
-(reads combined per genomic position), such as data imported using
-\code{\link{readBedMethyl}}.
+This function will visualize read-level or collapsed single-molecule
+footprinting data, such as data imported using \code{\link{readModkitExtract}}
+or \code{\link{readBedMethyl}}.
 }
 \examples{
+# summarized data (5mC)
 bmfiles <- system.file("extdata",
                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
                        package = "footprintR")
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
-se <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
+seA <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
 
-plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "GCH")
-plotRegion(se, region = "chr1:6940000-6955000", sequence.context = "HCG")
-plotRegion(se, region = "chr1:6948000-6952000",
-           min.coverage = 10, k.smooth = 7, sequence.context = "GCH")
+plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
+plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
+
+plotRegion(seA, region = "chr1:6940000-6955000",
+           tracks.summary = list(Nvalid = "Smooth"))
+
+# read-level data (6mA)
+extractfiles <- system.file("extdata",
+                            c("modkit_extract_rc_6mA_1.tsv.gz",
+                              "modkit_extract_rc_6mA_2.tsv.gz"),
+                            package = "footprintR")
+seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+
+plotRegion(seB, region = "chr1:6935800-6935900",
+           tracks.summary = NULL,
+           tracks.reads = list(mod_prob = "Lollipop"))
+plotRegion(seB, region = "chr1:6935800-6935900",
+           tracks.summary = NULL,
+           tracks.reads = list(mod_prob = "Heatmap"))
+
+plotRegion(seB, region = "chr1:6935400-6935450",
+           tracks.summary = NULL,
+           tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
+           modbaseSpace = TRUE)
 
 }
 \seealso{
-\code{\link{readBedMethyl}} for reading footprinting data.
+\code{\link{readModkitExtract}} and \code{\link{readBedMethyl}} for
+reading read-level and summarized footprinting data.
 }
 \author{
-Michael Stadler
+Charlotte Soneson, Michael Stadler
 }
