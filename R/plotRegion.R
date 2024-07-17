@@ -518,7 +518,7 @@ plotRegion <- function(se,
 #'
 #' @description
 #' Returns ordered read identifiers (\code{colnames(x)} such that they follow
-#' \code{hclust(as.dist(1-cor(X)))$order}, where \code{X} is
+#' \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X} is
 #' \code{assay(x, aname)} with zero values set to \code{NA} and overaged over
 #' windows of \code{window_width} nucleotides.
 #'
@@ -553,9 +553,8 @@ plotRegion <- function(se,
     XX <- XX / YY
     # calculate distances between reads
     suppressWarnings(
-        D <- stats::as.dist(1 - abs(
-            stats::cor(XX, method = "pearson",
-                       use = "pairwise.complete")))
+        D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
+                                                    use = "pairwise.complete")))
     )
     D[is.na(D)] <- 1.0
     # cluster reads and return order
