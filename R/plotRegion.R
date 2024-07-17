@@ -442,17 +442,18 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics start colnames
 #' @importFrom SummarizedExperiment colData assay
+#' @importFrom SparseArray nzwhich nzvals
 #'
 #' @noRd
 #' @keywords internal
 .preparePlotdataReads <- function(x, aname, modbaseSpace = FALSE) {
     assaydat <- SummarizedExperiment::assay(x, aname)
-    i <- which(as.matrix(assaydat != 0), arr.ind = TRUE)
+    i <- nzwhich(assaydat, arr.ind = TRUE)
     df <- data.frame(
-        position = start(x)[i[,"row"]],
-        read = factor(colnames(x)[i[,"col"]], levels = colnames(x)),
-        sample = colData(x)[["sample"]][i[,"col"]],
-        value = assaydat[i])
+        position = start(x)[i[,1]],
+        read = factor(colnames(x)[i[,2]], levels = colnames(x)),
+        sample = colData(x)[["sample"]][i[,2]],
+        value = nzvals(assaydat))
     if (modbaseSpace) {
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,
