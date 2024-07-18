@@ -54,7 +54,7 @@ library(footprintR)
 library(SummarizedExperiment)
 ```
 
-### Read data
+### Read summary data from bed files
 
 The example is using small experimental datasets that are provided as part of
 the package. Here we get the file names for this data:
