@@ -32,7 +32,7 @@ test_that("summarizeOverReads works", {
     s3 <- summarizeOverReads(se = se1, statistics = "FracMod", keep.reads = TRUE)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
-    expect_s4_class(s3, "RangedSummarizedExperiment")
+    expect_s4_class(s3, "SummarizedExperiment")
     expect_identical(dim(s1), c(nrow(se), length(unique(se$sample))))
     expect_identical(dim(s2), c(nrow(se), length(unique(se$sample))))
     expect_identical(dim(s3), c(nrow(se), length(unique(se$sample))))
