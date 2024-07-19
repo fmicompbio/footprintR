@@ -5,15 +5,16 @@
 \title{Call \verb{modkit extract} to extract read-level base modifications from modBAM files}
 \usage{
 modkitExtract(
-  modkit_bin = "",
-  bamfile = "",
+  modkit_bin,
+  bamfile,
   regions = NULL,
   num_reads = NULL,
   out_extract_table = NULL,
   out_read_calls = NULL,
   out_log_file = NULL,
   modkit_args = NULL,
-  tempdir_base = tempdir()
+  tempdir_base = tempdir(),
+  verbose = TRUE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ complete list of possible arguments.}
 \item{tempdir_base}{Character scalar specifying the path to create the
 \code{modkit_temp} directory. This temporary directory is only created when
 multiple genomic regions are specified.}
+
+\item{verbose}{A logical scalar. If \code{TRUE}, report on progress.}
 }
 \value{
 A character vector with the elements "extract-table", "read-calls"

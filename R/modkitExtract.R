@@ -34,6 +34,7 @@
 #' @param tempdir_base Character scalar specifying the path to create the
 #'     `modkit_temp` directory. This temporary directory is only created when
 #'     multiple genomic regions are specified.
+#' @param verbose A logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A character vector with the elements "extract-table", "read-calls"
 #'     and "run-log", specifying the paths to the generated table, call and log
@@ -84,7 +85,8 @@ modkitExtract <- function(modkit_bin,
                           out_read_calls = NULL,
                           out_log_file = NULL,
                           modkit_args = NULL,
-                          tempdir_base = tempdir()) {
+                          tempdir_base = tempdir(),
+                          verbose = TRUE) {
 
     # digest arguments
     # --------------------------------------------------------------------------
@@ -95,7 +97,9 @@ modkitExtract <- function(modkit_bin,
     if (modkitFAIL != 0) {
         stop("A valid path to a modkit executable  has not been provided")
     } else {
-        message("Using ", system(paste0(modkit_bin, " --version"), intern=TRUE))
+        if (verbose) {
+            message("Using ", system(paste0(modkit_bin, " --version"), intern=TRUE))
+        }
     }
 
     .assertScalar(x = bamfile, type = "character")
@@ -114,6 +118,8 @@ modkitExtract <- function(modkit_bin,
     .assertScalar(x = out_log_file, type = "character", allowNULL = TRUE)
 
     .assertScalar(x = tempdir_base, type = "character")
+
+    .assertScalar(x = verbose, type = "logical")
 
     # Convert GRanges to `chr:start-end` format
     if (!is.null(regions)){
@@ -150,9 +156,12 @@ modkitExtract <- function(modkit_bin,
 
     # Prepare separately --read-calls-path argument
     if (!is.null(out_read_calls)) {
-        pass_out_read_calls <- paste('--read-calls-path', out_read_calls, sep = " ")
-        message("Specified path to read-calls table: ",
-                normalizePath(out_read_calls, mustWork = FALSE))
+        pass_out_read_calls <- paste('--read-calls-path', out_read_calls,
+                                     sep = " ")
+        if (verbose) {
+            message("Specified path to read-calls table: ",
+                    normalizePath(out_read_calls, mustWork = FALSE))
+        }
     } else {
         pass_out_read_calls <- NULL
     }
@@ -162,8 +171,10 @@ modkitExtract <- function(modkit_bin,
         pass_out_extract_table <-  'null'
     } else{
         pass_out_extract_table <- out_extract_table
-        message("Specified path to extract table: ",
-                normalizePath(out_extract_table, mustWork = FALSE))
+        if (verbose) {
+            message("Specified path to extract table: ",
+                    normalizePath(out_extract_table, mustWork = FALSE))
+        }
     }
 
 
