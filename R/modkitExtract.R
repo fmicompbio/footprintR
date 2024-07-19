@@ -91,8 +91,8 @@ modkitExtract <- function(modkit_bin,
     modkitFAIL <- suppressWarnings(system( paste0(modkit_bin, " --version") ,intern=FALSE,ignore.stdout =   TRUE, ignore.stderr = TRUE ))
     if (  modkitFAIL  ) {
         stop("A valid path to a modkit executable  has not been provided")
-    }else{
-    print(paste0("Using ", system( paste0 (modkit_bin," --version"),  intern=TRUE))  )
+    } else {
+        message("Using ", system(paste0(modkit_bin, " --version"), intern=TRUE))
     }
 
     .assertScalar(x = bamfile, type = "character", allowNULL = FALSE)
