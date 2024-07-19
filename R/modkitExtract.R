@@ -87,20 +87,25 @@ modkitExtract <- function(modkit_bin,
                           tempdir_base = tempdir()) {
 
     # digest arguments
-    .assertScalar( x=modkit_bin, type = "character", allowNULL = FALSE)
-    modkitFAIL <- suppressWarnings(system( paste0(modkit_bin, " --version") ,intern=FALSE,ignore.stdout =   TRUE, ignore.stderr = TRUE ))
-    if (  modkitFAIL  ) {
+    # --------------------------------------------------------------------------
+    .assertScalar(x = modkit_bin, type = "character")
+    modkitFAIL <- suppressWarnings(
+        system(paste0(modkit_bin, " --version"), intern = FALSE,
+               ignore.stdout = TRUE, ignore.stderr = TRUE))
+    if (modkitFAIL != 0) {
         stop("A valid path to a modkit executable  has not been provided")
     } else {
         message("Using ", system(paste0(modkit_bin, " --version"), intern=TRUE))
     }
 
-    .assertScalar(x = bamfile, type = "character", allowNULL = FALSE)
+    .assertScalar(x = bamfile, type = "character")
     if (!file.exists(bamfile)) {
-        stop("BAM file not found at: ", normalizePath(bamfile,mustWork = FALSE))
+        stop("BAM file not found at: ", normalizePath(bamfile, mustWork = FALSE))
     }
 
-    .assertScalar(x = num_reads, type = "numeric", allowNULL= TRUE)
+    .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
+
+    .assertScalar(x = num_reads, type = "numeric", allowNULL = TRUE)
 
     .assertScalar(x = out_read_calls, type = "character", allowNULL = TRUE)
 
@@ -110,35 +115,28 @@ modkitExtract <- function(modkit_bin,
 
     .assertScalar(x = tempdir_base, type = "character")
 
-
-
-
-    if (!is.null(regions) && !inherits(regions,"GRanges")){
-        stop("`regions` should be a GRanges object")
-    }
-
-    #Convert GRanges to `chr:start-end` format
+    # Convert GRanges to `chr:start-end` format
     if (!is.null(regions)){
         regions_char <- as.character(reduce(GRanges(regions, strand="*")))
     }
 
 
-
-
-
-    #character vector of arguments to be passed to modkit.
-    #first argument should always be the modkit sub-command. In this case 'extract'
+    # Generate character vector of arguments to be passed to modkit.
+    # --------------------------------------------------------------------------
+    # first argument should always be the modkit sub-command (here: 'extract')
     pass_ARGS <- c('extract', '--suppress-progress')
 
-    #Prepare --num-reads argument
-    if(!is.null(num_reads)){
-        pass_ARGS <- c(pass_ARGS, paste("--num-reads",num_reads, sep=" ") )
-        if (is.null(regions)){
-            pass_ARGS <- c(pass_ARGS, "--ignore-index") #in absence of a specified region --num-reads is only respected iff bam index is ignored
+    # Prepare --num-reads argument
+    if (!is.null(num_reads)) {
+        pass_ARGS <- c(pass_ARGS, paste("--num-reads", num_reads, sep=" "))
+        if (is.null(regions)) {
+            # in absence of a specified region, --num-reads is only respected
+            #    if bam index is ignored
+            pass_ARGS <- c(pass_ARGS, "--ignore-index")
         }
     }
 
-    #Prepare --log-filepath argument
+    # Prepare --log-filepath argument
     if(!is.null(out_log_file)){
         pass_ARGS <- c(pass_ARGS, paste("--log-filepath",out_log_file, sep=" ") )
         print(c( "Specified path to run log:", normalizePath(out_log_file, mustWork=FALSE) ))
@@ -147,9 +145,8 @@ modkitExtract <- function(modkit_bin,
         }
     }
 
-    #combine function exposed args with user-passed modkit args:
-    pass_ARGS <- c(pass_ARGS,modkit_args)
-
+    # combine function exposed args with user-passed modkit args:
+    pass_ARGS <- c(pass_ARGS, modkit_args)
 
     # Prepare separately --read-calls-path argument
     if (!is.null(out_read_calls)) {
@@ -160,8 +157,7 @@ modkitExtract <- function(modkit_bin,
         pass_out_read_calls <- NULL
     }
 
-
-    #Prepare <OUT_PATH> argument
+    # Prepare <OUT_PATH> argument
     if(is.null(out_extract_table) ){
         pass_out_extract_table <-  'null'
     } else{
@@ -171,9 +167,9 @@ modkitExtract <- function(modkit_bin,
     }
 
 
-    #Execute system modkit command(s):
-
-    if (is.null(regions)){
+    # Execute system modkit command(s):
+    # --------------------------------------------------------------------------
+    if (is.null(regions)) {
         system2(
             modkit_bin,
             args=c(
@@ -186,19 +182,17 @@ modkitExtract <- function(modkit_bin,
         )
     }
 
-
-
-    if (!is.null(regions) & length(regions)==1 ){
+    if (!is.null(regions) && length(regions) == 1) {
         system2(
             modkit_bin,
-            args=c(
+            args = c(
                 pass_ARGS,
-                paste('--region',regions_char,sep=" "),
+                paste('--region', regions_char, sep=" "),
                 pass_out_read_calls,
                 bamfile,
                 pass_out_extract_table
             ),
-            wait=TRUE
+            wait = TRUE
         )
     }
 
@@ -208,48 +202,60 @@ modkitExtract <- function(modkit_bin,
         dir.create(tempdir, showWarnings = TRUE)
         file.remove(list.files(tempdir, full.names = TRUE))
 
-        for(region in regions_char ){
+        for (region in regions_char) {
 
-            temp_out_extract_table <- ifelse(is.null(out_extract_table),'null', tempfile(pattern=region, fileext= '.etbl', tmpdir = tempdir )   )
-            temp_out_read_calls <- tempfile(pattern=region, fileext= '.rdcl', tmpdir = tempdir )
-            temp_pass_out_read_calls <- if(is.null(out_read_calls)) NULL else {paste('--read-calls-path',temp_out_read_calls,sep=" " )}
+            temp_out_extract_table <- ifelse(is.null(out_extract_table),
+                                             'null',
+                                             tempfile(pattern = region,
+                                                      fileext = '.etbl',
+                                                      tmpdir = tempdir))
+            temp_out_read_calls <- tempfile(pattern = region,
+                                            fileext = '.rdcl',
+                                            tmpdir = tempdir)
+            temp_pass_out_read_calls <- if (is.null(out_read_calls)) NULL else {
+                paste('--read-calls-path', temp_out_read_calls, sep=" ") }
 
             system2(
                 modkit_bin,
-                args=c(
+                args = c(
                     pass_ARGS,
-                    paste('--region',region,sep=" "),
+                    paste('--region', region, sep = " "),
                     temp_pass_out_read_calls,
                     bamfile,
                     temp_out_extract_table
                 ),
-                wait=TRUE
+                wait = TRUE
             )
-
         }
 
-        #Combine temporary outputs and cleanup:
-        if (!is.null(out_extract_table)){
-            system( paste0 ("head -1 ", temp_out_extract_table, " > ", pass_out_extract_table ) )
-            system ( paste0( "cat ", tempdir, "/*.etbl | grep -v '^read_id' | sort -u >> ", pass_out_extract_table) )
+        # Combine temporary outputs and cleanup:
+        if (!is.null(out_extract_table)) {
+            system(paste0("head -1 ", temp_out_extract_table, " > ",
+                          pass_out_extract_table))
+            system(paste0("cat ", tempdir,
+                          "/*.etbl | grep -v '^read_id' | sort -u >> ",
+                          pass_out_extract_table))
         }
 
-        if (!is.null(out_read_calls)){
-            system( paste0 ("head -1 ", temp_out_read_calls, " > ", out_read_calls ) )
-            system (paste0( "cat ", tempdir, "/*.rdcl | grep -v '^read_id' | sort -u >> ", out_read_calls ) )
+        if (!is.null(out_read_calls)) {
+            system(paste0("head -1 ", temp_out_read_calls, " > ",
+                          out_read_calls))
+            system(paste0("cat ", tempdir,
+                          "/*.rdcl | grep -v '^read_id' | sort -u >> ",
+                          out_read_calls))
         }
-
-
 
         unlink(tempdir, recursive=TRUE)
     }
 
-
-    return( c('extract-table'=ifelse(is.null(out_extract_table),NA,normalizePath(out_extract_table)) ,
-              'read-calls'=ifelse(is.null(out_read_calls),NA,normalizePath(out_read_calls)) ,
-              'run-log'=ifelse(is.null(out_log_file),NA,normalizePath(out_log_file))
-    )
-    )
-
+    # return results
+    # --------------------------------------------------------------------------
+    return(c('extract-table' = ifelse(is.null(out_extract_table),
+                                      NA, normalizePath(out_extract_table)),
+              'read-calls' = ifelse(is.null(out_read_calls),
+                                    NA, normalizePath(out_read_calls)),
+              'run-log' = ifelse(is.null(out_log_file),
+                                 NA, normalizePath(out_log_file))
+    ))
 }
 
