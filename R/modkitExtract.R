@@ -151,11 +151,12 @@ modkitExtract <- function(modkit_bin,
     pass_ARGS <- c(pass_ARGS,modkit_args)
 
 
-    #Prepare separately --read-calls-path argument
-    if(!is.null(out_read_calls) ){
-        pass_out_read_calls <- paste('--read-calls-path',out_read_calls,sep=" ")
-        print(c( "Specified path to read-calls table:", normalizePath(out_read_calls, mustWork=FALSE) ) )
-    } else{
+    # Prepare separately --read-calls-path argument
+    if (!is.null(out_read_calls)) {
+        pass_out_read_calls <- paste('--read-calls-path', out_read_calls, sep = " ")
+        message("Specified path to read-calls table: ",
+                normalizePath(out_read_calls, mustWork = FALSE))
+    } else {
         pass_out_read_calls <- NULL
     }
 
@@ -165,9 +166,9 @@ modkitExtract <- function(modkit_bin,
         pass_out_extract_table <-  'null'
     } else{
         pass_out_extract_table <- out_extract_table
-        print(c( "Specified path to extract table:", normalizePath(out_extract_table, mustWork=FALSE) ))
+        message("Specified path to extract table: ",
+                normalizePath(out_extract_table, mustWork = FALSE))
     }
-
 
 
     #Execute system modkit command(s):
