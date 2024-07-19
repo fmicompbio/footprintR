@@ -76,8 +76,8 @@
 #' @import GenomicRanges
 #'
 #' @export
-modkitExtract <- function(modkit_bin = "",
-                          bamfile = "",
+modkitExtract <- function(modkit_bin,
+                          bamfile,
                           regions = NULL,
                           num_reads = NULL,
                           out_extract_table = NULL,
