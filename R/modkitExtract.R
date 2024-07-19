@@ -201,11 +201,9 @@ modkitExtract <- function(modkit_bin,
         )
     }
 
-
-
-    if (!is.null(regions) & length(regions) > 1 ){
-        #Prepare tempdir:
-        tempdir <- paste0(tempdir_base,"/modkit_temp" )
+    if (!is.null(regions) && length(regions) > 1) {
+        # Prepare tempdir:
+        tempdir <- file.path(tempdir_base, "modkit_temp")
         dir.create(tempdir, showWarnings = TRUE)
         file.remove(list.files(tempdir, full.names = TRUE))
 
