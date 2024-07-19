@@ -68,14 +68,9 @@ tables specification see https://nanoporetech.github.io/modkit/intro_extract.htm
 }
 \examples{
 \dontrun{
+GR <- as(c("chr1:12340678-12345678", "chr2:12340678-12345678"), "GRanges")
 
-suppressWarnings(
-   GR <- c( GRanges("chr1:12340678-12345678"),
-            GRanges("chr2:12340678-12345678")
-   )
-)
-
-modkit_args=c(
+further_args <- c(
    '-t 8', '--force',
    '--mapped-only', '--edge-filter 100',
    '-p  0.2',
@@ -83,22 +78,26 @@ modkit_args=c(
    '--mod-threshold a:0.5'
 )
 
-
-# Produce both  `extract table` and `read calls` files for multiple GRanges
-modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
-# Produce only  `extract table` file
-modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
-# Produce only  `read calls` file
-modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
+# Produce both `extract table` and `read calls` files for multiple GRanges
+modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+              regions = GR[1:2], out_extract_table = "test.etbl",
+              out_read_calls = "test.rdcl", modkit_args = further_args)
+# Produce only `extract table` file
+modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+              regions = GR[1], out_extract_table = "test.etbl",
+              out_read_calls = NULL, modkit_args = further_args)
+# Produce only `read calls` file
+modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+              regions = GR[1], out_extract_table = NULL,
+              out_read_calls = "test.rdcl", modkit_args = further_args)
 }
-
-
 
 }
 \seealso{
 \href{https://nanoporetech.github.io/modkit}{\code{modkit} software},
-\href{https://nanoporetech.github.io/modkit/intro_extract.html}{\verb{modkit extract} documentation and tabulated output formats specification },
-\code{\link[GRanges]{GRanges}} for the object used to specify genomic regions,
+\href{https://nanoporetech.github.io/modkit/intro_extract.html}{\verb{modkit extract} documentation and tabulated output formats specification},
+\code{\link[GenomicRanges]{GRanges}} for the object used to specify
+genomic regions.
 }
 \author{
 Panagiotis Papapasaikas

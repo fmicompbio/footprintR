@@ -44,14 +44,9 @@
 #'
 #' @examples
 #' \dontrun{
+#' GR <- as(c("chr1:12340678-12345678", "chr2:12340678-12345678"), "GRanges")
 #'
-#' suppressWarnings(
-#'    GR <- c( GRanges("chr1:12340678-12345678"),
-#'             GRanges("chr2:12340678-12345678")
-#'    )
-#' )
-#'
-#' modkit_args=c(
+#' further_args <- c(
 #'    '-t 8', '--force',
 #'    '--mapped-only', '--edge-filter 100',
 #'    '-p  0.2',
@@ -59,34 +54,37 @@
 #'    '--mod-threshold a:0.5'
 #' )
 #'
-#'
-#' # Produce both  `extract table` and `read calls` files for multiple GRanges
-#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1:2], out_extract_table = "test.etbl",out_read_calls = "test.rdcl",modkit_args=modkit_args )
-#' # Produce only  `extract table` file
-#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = "test.etbl",out_read_calls = NULL,modkit_args=modkit_args )
-#' # Produce only  `read calls` file
-#' modkitExtract(modkit=modkit_bin_PATH, bamfile = BAMF, num_reads = 10,regions=GR[1], out_extract_table = NULL,out_read_calls = "test.rdcl",modkit_args=modkit_args )
+#' # Produce both `extract table` and `read calls` files for multiple GRanges
+#' modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+#'               regions = GR[1:2], out_extract_table = "test.etbl",
+#'               out_read_calls = "test.rdcl", modkit_args = further_args)
+#' # Produce only `extract table` file
+#' modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+#'               regions = GR[1], out_extract_table = "test.etbl",
+#'               out_read_calls = NULL, modkit_args = further_args)
+#' # Produce only `read calls` file
+#' modkitExtract(modkit = modkit_bin_PATH, bamfile = BAMF, num_reads = 10,
+#'               regions = GR[1], out_extract_table = NULL,
+#'               out_read_calls = "test.rdcl", modkit_args = further_args)
 #' }
 #'
-#'
-#'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
-#'     [`modkit extract` documentation and tabulated output formats specification ](https://nanoporetech.github.io/modkit/intro_extract.html),
-#'     \code{\link[GRanges]{GRanges}} for the object used to specify genomic regions,
+#'     [`modkit extract` documentation and tabulated output formats specification](https://nanoporetech.github.io/modkit/intro_extract.html),
+#'     \code{\link[GenomicRanges]{GRanges}} for the object used to specify
+#'     genomic regions.
 #'
 #' @import GenomicRanges
 #'
 #' @export
-#'
-modkitExtract <- function(modkit_bin="",
-                          bamfile="",
-                          regions=NULL,
-                          num_reads=NULL,
+modkitExtract <- function(modkit_bin = "",
+                          bamfile = "",
+                          regions = NULL,
+                          num_reads = NULL,
                           out_extract_table = NULL,
                           out_read_calls = NULL,
-                          out_log_file=NULL,
-                          modkit_args=NULL,
-                          tempdir_base=tempdir() ) {
+                          out_log_file = NULL,
+                          modkit_args = NULL,
+                          tempdir_base = tempdir()) {
 
     # digest arguments
     .assertScalar( x=modkit_bin, type = "character", allowNULL = FALSE)
