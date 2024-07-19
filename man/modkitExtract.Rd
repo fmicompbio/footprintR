@@ -2,7 +2,7 @@
 % Please edit documentation in R/modkitExtract.R
 \name{modkitExtract}
 \alias{modkitExtract}
-\title{Wrapper around the \verb{modkit extract} command to extract read-level base modification information from modBAM files into tab-separated values table(s)}
+\title{Call \verb{modkit extract} to extract read-level base modifications from modBAM files}
 \usage{
 modkitExtract(
   modkit_bin = "",
@@ -17,49 +17,60 @@ modkitExtract(
 )
 }
 \arguments{
-\item{modkit_bin}{Character vector specifying the path to the \code{modkit}
+\item{modkit_bin}{Character scalar specifying the path to the \code{modkit}
 binary.}
 
-\item{bamfile}{Character vector specifying the path to a \code{modBAM}
-file. An indexed BAM file can significanly speed up certain extract
+\item{bamfile}{Character scalar specifying the path to a \code{modBAM}
+file. An indexed BAM file can significantly speed up certain extract
 operations.}
 
-\item{regions}{A \code{\link[GRanges]{GRanges}} object specifying which genomic regions to extract the reads from.
-Note that the reads are not trimmed to the boundaries of the specified ranges.
-As a result returned positions will typically extend out of the specified regions}
+\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
+genomic regions to extract the reads from. Note that the reads are not
+trimmed to the boundaries of the specified ranges. As a result, returned
+positions will typically extend out of the specified regions.}
 
-\item{num_reads}{Number of reads to  extract. Note that this is extracted reads per specified genomic range.
-When N genomic ranges are specified the number of extracted reads will be at most num_reads x N}
+\item{num_reads}{Number of reads to extract per specified genomic region.
+When \code{N} genomic ranges are specified, the total number of extracted
+reads will be at most \code{num_reads * N}.}
 
-\item{out_extract_table}{Character vector specifying the path for the \verb{extract table} output. Can be NULL
-if only a \code{read-calls} table is needed.}
+\item{out_extract_table}{Character scalar specifying the path for the
+\verb{extract table} output. Can be \code{NULL} if only a \code{read-calls}
+table is needed.}
 
-\item{out_read_calls}{Character vector specifying the path for the \verb{read-calls table} output. Can be NULL
-if only an \verb{extract table} is needed.}
+\item{out_read_calls}{Character scalar specifying the path for the
+\verb{read-calls table} output. Can be \code{NULL} if only an \verb{extract table}
+is needed.}
 
-\item{out_log_file}{Character vector specifying the path for the the command run log output. Can be NULL
-if no log file is needed (not recommended).}
+\item{out_log_file}{Character scalar specifying the path for the the command
+run log output. Can be \code{NULL} if no log file is needed (not
+recommended).}
 
-\item{modkit_args}{Character vector with additional \verb{modkit extract} arguments.
-Please refer to the \verb{modkit extract} documentation for a complete list of possible arguments.}
+\item{modkit_args}{Character vector with additional \verb{modkit extract}
+arguments. Please refer to the \verb{modkit extract} documentation for a
+complete list of possible arguments.}
 
-\item{tempdir_base}{Character vector specifying the path to create the \code{modkit_temp} directory.
-This temporary directory is only created when multiple genomic regions are specified}
+\item{tempdir_base}{Character scalar specifying the path to create the
+\code{modkit_temp} directory. This temporary directory is only created when
+multiple genomic regions are specified.}
 }
 \value{
-A named character vector specifying the paths to the generated table and log files.
-Has slots for 'extract-table', 'read-calls' and 'run-log'. An \code{NA} is returned for non-generated output.
+A character vector with the elements "extract-table", "read-calls"
+and "run-log", specifying the paths to the generated table, call and log
+files, respectively. An \code{NA} value indicates that a given output
+was not generated.
 }
 \description{
-This function is a wrapper around the \verb{modkit extract} sub-command to extract read-level base modification information
-from modBAM files into tab-separated values table(s).
-For more information on available \verb{modkit extract} arguments and output tables specification see https://nanoporetech.github.io/modkit/intro_extract.html
+This function is a wrapper around the \verb{modkit extract} sub-command to extract
+read-level base modification information from modBAM files into tab-separated
+values table(s).
+For more information on available \verb{modkit extract} arguments and output
+tables specification see https://nanoporetech.github.io/modkit/intro_extract.html
 }
 \examples{
 \dontrun{
 
 suppressWarnings(
-   GR <- c( GRanges("chr1:12340678-12345678"), 
+   GR <- c( GRanges("chr1:12340678-12345678"),
             GRanges("chr2:12340678-12345678")
    )
 )
