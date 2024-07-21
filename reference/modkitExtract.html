@@ -72,7 +72,7 @@ tables specification see https://nanoporetech.github.io/modkit/intro_extract.htm
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">modkitExtract</span><span class="op">(</span></span>
-<span>  <span class="va">modkit_bin</span>,</span>
+<span>  modkit_bin <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">bamfile</span>,</span>
 <span>  regions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  num_reads <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -91,7 +91,8 @@ tables specification see https://nanoporetech.github.io/modkit/intro_extract.htm
 
 <dl><dt id="arg-modkit-bin">modkit_bin<a class="anchor" aria-label="anchor" href="#arg-modkit-bin"></a></dt>
 <dd><p>Character scalar specifying the path to the <code>modkit</code>
-binary.</p></dd>
+binary. If <code>NULL</code>, <code>modkit</code> will be searched on the path using
+<code><a href="https://rdrr.io/r/base/Sys.which.html" class="external-link">Sys.which</a></code>.</p></dd>
 
 
 <dt id="arg-bamfile">bamfile<a class="anchor" aria-label="anchor" href="#arg-bamfile"></a></dt>
