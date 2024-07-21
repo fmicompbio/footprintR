@@ -8,7 +8,7 @@
 #' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     object with assays \code{"Nmod"} and \code{"Nvalid"}, typically
 #'     returned by \code{\link{readBedMethyl}}.
-#' @param regions A \code{\link[GenomicRegions]{GRanges}} object with target
+#' @param regions A \code{\link[GenomicRanges]{GRanges}} object with target
 #'     regions.
 #' @param keepZero Logical scalar. If \code{FALSE} (the default), only elements
 #'     from \code{regions} that contain at least one feature from \code{se} will
@@ -18,7 +18,7 @@
 #' @param ... Additional parameters for \code{\link[scuttle]{aggregateAcrossFeatures}},
 #'     such as \code{BPPARAM} to run the summing in parallel.
 #'
-#' @return A \code{\link[SummarizedExepriment]{RangedSummarizedExperiment}}
+#' @return A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     with up to \code{length(regions)} rows (exactly \code{length(regions)}
 #'     rows if \code{keepZero = TRUE}) and \code{ncol(se)} columns.
 #'     \code{colData(se)}, but not \code{rowData(se)} will be preserved.

@@ -11,7 +11,7 @@ sumOverRegions(se, regions, keepZero = FALSE, verbose = FALSE, ...)
 object with assays \code{"Nmod"} and \code{"Nvalid"}, typically
 returned by \code{\link{readBedMethyl}}.}
 
-\item{regions}{A \code{\link[GenomicRegions]{GRanges}} object with target
+\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object with target
 regions.}
 
 \item{keepZero}{Logical scalar. If \code{FALSE} (the default), only elements
@@ -25,7 +25,7 @@ returned, potentially with zero counts.}
 such as \code{BPPARAM} to run the summing in parallel.}
 }
 \value{
-A \code{\link[SummarizedExepriment]{RangedSummarizedExperiment}}
+A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 with up to \code{length(regions)} rows (exactly \code{length(regions)}
 rows if \code{keepZero = TRUE}) and \code{ncol(se)} columns.
 \code{colData(se)}, but not \code{rowData(se)} will be preserved.
