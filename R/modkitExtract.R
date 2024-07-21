@@ -149,10 +149,13 @@ modkitExtract <- function(modkit_bin = NULL,
 
     # Prepare --log-filepath argument
     if(!is.null(out_log_file)){
-        pass_ARGS <- c(pass_ARGS, paste("--log-filepath",out_log_file, sep=" ") )
-        print(c( "Specified path to run log:", normalizePath(out_log_file, mustWork=FALSE) ))
+        pass_ARGS <- c(pass_ARGS, paste("--log-filepath", out_log_file, sep=" "))
+        if (verbose) {
+            message("Specified path to run log: ", normalizePath(out_log_file, mustWork=FALSE))
+        }
         if (file.exists(out_log_file)){
-            print("Warning: Specified `out_log_file` already exists. The log will be appened to the existing file")
+            warning("Specified `out_log_file` already exists.",
+                    " The log will be appened to the existing file.")
         }
     }
 
