@@ -91,14 +91,12 @@ modkitExtract <- function(modkit_bin,
     # digest arguments
     # --------------------------------------------------------------------------
     .assertScalar(x = modkit_bin, type = "character")
-    modkitFAIL <- suppressWarnings(
-        system(paste0(modkit_bin, " --version"), intern = FALSE,
-               ignore.stdout = TRUE, ignore.stderr = TRUE))
-    if (modkitFAIL != 0) {
-        stop("A valid path to a modkit executable  has not been provided")
+    modkit_version <- .modkitVersion(modkit_bin = modkit_bin)
+    if (is.na(modkit_version)) {
+        stop("'modkit' was not found on the path or via 'modkit_bin'.")
     } else {
         if (verbose) {
-            message("Using ", system(paste0(modkit_bin, " --version"), intern=TRUE))
+            message("Using ", modkit_version)
         }
     }
 
