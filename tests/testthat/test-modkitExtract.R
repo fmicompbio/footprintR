@@ -112,6 +112,7 @@ test_that("modkitExtract works", {
 
         # ... one bamfile, no regions
         res2 <- modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
+                              num_reads = 3,
                               regions = NULL,
                               out_extract_table = tmp_tab,
                               out_read_calls = NULL,
@@ -121,7 +122,7 @@ test_that("modkitExtract works", {
                                  `read-calls` = NA,
                                  `run-log` = normalizePath(tmp_log)))
         lns <- readLines(tmp_tab)
-        expect_length(lns, 33300L)
+        expect_length(lns, 12349L)
         expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
         lns <- readLines(tmp_log)
         expect_true(grepl("INFO.+processed", lns[length(lns)]))
@@ -130,13 +131,16 @@ test_that("modkitExtract works", {
         # ... one bamfile, two regions
         res3 <- modkitExtract(modkit_bin = NULL, bamfile = modbamfile2,
                               regions = regs,
-                              out_extract_table = NULL,
+                              out_extract_table = tmp_tab,
                               out_read_calls = tmp_calls,
                               out_log_file = NULL,
                               verbose = FALSE)
-        expect_identical(res3, c(`extract-table` = NA,
+        expect_identical(res3, c(`extract-table` = normalizePath(tmp_tab),
                                  `read-calls` = normalizePath(tmp_calls),
                                  `run-log` = NA))
+        lns <- readLines(tmp_tab)
+        expect_length(lns, 9816L)
+        expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
         lns <- readLines(tmp_calls)
         expect_length(lns, 9929L)
         expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
