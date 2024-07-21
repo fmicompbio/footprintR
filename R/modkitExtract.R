@@ -8,7 +8,8 @@
 #' tables specification see https://nanoporetech.github.io/modkit/intro_extract.html
 #'
 #' @param modkit_bin Character scalar specifying the path to the \code{modkit}
-#'     binary.
+#'     binary. If \code{NULL}, \code{modkit} will be searched on the path using
+#'     \code{\link{Sys.which}}.
 #' @param bamfile Character scalar specifying the path to a \code{modBAM}
 #'     file. An indexed BAM file can significantly speed up certain extract
 #'     operations.
@@ -77,7 +78,7 @@
 #' @import GenomicRanges
 #'
 #' @export
-modkitExtract <- function(modkit_bin,
+modkitExtract <- function(modkit_bin = NULL,
                           bamfile,
                           regions = NULL,
                           num_reads = NULL,
@@ -90,7 +91,12 @@ modkitExtract <- function(modkit_bin,
 
     # digest arguments
     # --------------------------------------------------------------------------
-    .assertScalar(x = modkit_bin, type = "character")
+    .assertScalar(x = verbose, type = "logical")
+
+    .assertScalar(x = modkit_bin, type = "character", allowNULL = TRUE)
+    if (is.null(modkit_bin)) {
+        modkit_bin <- Sys.which(names = "modkit")
+    }
     modkit_version <- .modkitVersion(modkit_bin = modkit_bin)
     if (is.na(modkit_version)) {
         stop("'modkit' was not found on the path or via 'modkit_bin'.")
