@@ -100,8 +100,13 @@ test_that("modkitExtract works", {
         expect_true(grepl("INFO.+processed", lns[length(lns)]))
 
         se1 <- readModkitExtract(tmp_calls, modbase = "a")
-        se2 <- getReadDataForRegion(bamfile = modbamfile, region = reg,
-                                    arglist.readModkitExtract = list(modbase = "a"))
+        suppressMessages(
+            expect_message(
+                se2 <- getReadDataForRegion(bamfile = modbamfile, region = reg,
+                                            arglist.readModkitExtract = list(modbase = "a"),
+                                            verbose = TRUE)
+            )
+        )
         expect_identical(se1, se2)
         unlink(c(tmp_tab, tmp_calls, tmp_log))
 
