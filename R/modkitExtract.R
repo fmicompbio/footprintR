@@ -308,7 +308,7 @@ modkitExtract <- function(modkit_bin = NULL,
     }
     res <- tryCatch(
         expr = system2(command = modkit_bin, args = "--version",
-                       stdout = TRUE, stderr = NULL),
+                       stdout = TRUE, stderr = TRUE),
         error = function(e) NA
     )
     return(res)
