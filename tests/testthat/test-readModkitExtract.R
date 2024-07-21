@@ -65,9 +65,12 @@ test_that("readModkitExtract works", {
 
     # expected results
     # ... single file, no filtering
-    rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
-                             filter = NULL, nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = TRUE)
+    suppressMessages(
+        expect_message(
+            rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
+                                     filter = NULL, nrows = Inf, seqinfo = NULL,
+                                     ncpu = 1L, verbose = TRUE)
+    ))
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6432, 10)) ## number of unique positions
     expect_equal(rme$sample, rep("s1_5mC", 10))
