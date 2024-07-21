@@ -35,6 +35,13 @@ jobs:
       - name: checkout branch
         uses: actions/checkout@v4
 
+      - name: Set up modkit
+        run: |
+            cargo install --git https://github.com/nanoporetech/modkit.git
+            ls -al
+            modkit --version
+        shell: bash
+
       - name: Set up R and install BiocManager
         uses: grimbough/bioc-actions/setup-bioc@v1
         if: matrix.config.image == null
