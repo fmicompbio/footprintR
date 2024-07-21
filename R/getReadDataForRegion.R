@@ -106,6 +106,9 @@ getReadDataForRegion <- function(bamfile,
         on.exit(expr = unlink(arglist.modkitExtract[["out_read_calls"]]),
                 add = FALSE)
     }
+    if (!"verbose" %in% names(arglist.modkitExtract)) {
+        arglist.modkitExtract[["verbose"]] <- verbose
+    }
     arglist.modkitExtract[["bamfile"]] <- bamfile
     arglist.modkitExtract[["regions"]] <- region
     outs <- do.call(modkitExtract, arglist.modkitExtract)
