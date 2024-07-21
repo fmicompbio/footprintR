@@ -30,30 +30,39 @@ test_that("modkitExtract works", {
         regs <- as(c("chr1:6940000-6942400", "chr1:6942600-6950000"), "GRanges")
 
         # invalid arguments
-        expect_error(modkitExtract(modkit_bin = "error"))
-        expect_error(modkitExtract(bamfile = "error", verbose = FALSE))
+        expect_error(modkitExtract(modkit_bin = "error"), "was not found")
+        expect_error(modkitExtract(bamfile = "error", verbose = FALSE),
+                     "BAM file not found")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
-                                   regions = "error", verbose = FALSE))
+                                   regions = "error", verbose = FALSE),
+                     "must be of class 'GRanges'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, num_reads = "error",
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'numeric'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, out_extract_table = 1L,
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'character'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, out_read_calls = 2L,
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'character'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, out_log_file = 3L,
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'character'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, modkit_args = 4L,
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'character'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                                    regions = reg, tempdir_base = 5L,
-                                   verbose = FALSE))
+                                   verbose = FALSE),
+                     "must be of class 'character'")
         expect_error(modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
-                                   regions = reg, verbose = "error"))
+                                   regions = reg, verbose = "error"),
+                     "must be of class 'logical'")
 
         # expected results
         tmp_tab <- tempfile()
