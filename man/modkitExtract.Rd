@@ -5,7 +5,7 @@
 \title{Call \verb{modkit extract} to extract read-level base modifications from modBAM files}
 \usage{
 modkitExtract(
-  modkit_bin,
+  modkit_bin = NULL,
   bamfile,
   regions = NULL,
   num_reads = NULL,
@@ -19,7 +19,8 @@ modkitExtract(
 }
 \arguments{
 \item{modkit_bin}{Character scalar specifying the path to the \code{modkit}
-binary.}
+binary. If \code{NULL}, \code{modkit} will be searched on the path using
+\code{\link{Sys.which}}.}
 
 \item{bamfile}{Character scalar specifying the path to a \code{modBAM}
 file. An indexed BAM file can significantly speed up certain extract
