@@ -178,21 +178,28 @@ modkitExtract <- function(modkit_bin,
 
     # Execute system modkit command(s):
     # --------------------------------------------------------------------------
+    if (verbose) {
+        console_out <- "" # send stdout/stderr to console
+    } else {
+        console_out <- FALSE # capture stdout/stderr
+    }
     if (is.null(regions)) {
-        system2(
+        res <- system2(
             modkit_bin,
-            args=c(
+            args = c(
                 pass_ARGS,
                 pass_out_read_calls,
                 bamfile,
                 pass_out_extract_table
             ),
-            wait=TRUE
+            stdout = console_out,
+            stderr = console_out,
+            wait = TRUE
         )
     }
 
     if (!is.null(regions) && length(regions) == 1) {
-        system2(
+        res <- system2(
             modkit_bin,
             args = c(
                 pass_ARGS,
@@ -201,6 +208,8 @@ modkitExtract <- function(modkit_bin,
                 bamfile,
                 pass_out_extract_table
             ),
+            stdout = console_out,
+            stderr = console_out,
             wait = TRUE
         )
     }
@@ -224,7 +233,7 @@ modkitExtract <- function(modkit_bin,
             temp_pass_out_read_calls <- if (is.null(out_read_calls)) NULL else {
                 paste('--read-calls-path', temp_out_read_calls, sep=" ") }
 
-            system2(
+            res <- system2(
                 modkit_bin,
                 args = c(
                     pass_ARGS,
@@ -233,6 +242,8 @@ modkitExtract <- function(modkit_bin,
                     bamfile,
                     temp_out_extract_table
                 ),
+                stdout = console_out,
+                stderr = console_out,
                 wait = TRUE
             )
         }
