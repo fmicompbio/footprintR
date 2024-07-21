@@ -121,9 +121,10 @@ modkitExtract <- function(modkit_bin = NULL,
 
     .assertScalar(x = out_log_file, type = "character", allowNULL = TRUE)
 
+    .assertVector(x = modkit_args, type = "character", allowNULL = TRUE)
+
     .assertScalar(x = tempdir_base, type = "character")
 
-    .assertScalar(x = verbose, type = "logical")
 
     # Convert GRanges to `chr:start-end` format
     if (!is.null(regions)){
