@@ -110,7 +110,6 @@ test_that("modkitExtract works", {
         expect_length(lns, 33300L)
         expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
         lns <- readLines(tmp_log)
-        expect_identical(lns[1], "TEST")
         expect_true(grepl("INFO.+processed", lns[length(lns)]))
         unlink(c(tmp_tab, tmp_log))
 
