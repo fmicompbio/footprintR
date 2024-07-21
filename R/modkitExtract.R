@@ -270,3 +270,27 @@ modkitExtract <- function(modkit_bin,
     ))
 }
 
+## helper functions used above -------------------------------------------------
+
+#' Get the modkit version.
+#'
+#' @param modkit_bin Character scalar specifying the path to the \code{modkit}
+#'     binary. If NULL, try to find the \code{modkit} binary on the path.
+#'
+#' @return A string with the return value of \code{modit --version}, or
+#'     \code{NA} if the binary is not found.
+#'
+#' @noRd
+#' @keywords internal
+.modkitVersion <- function(modkit_bin = NULL) {
+    .assertScalar(x = modkit_bin, type = "character", allowNULL = TRUE)
+    if (is.null(modkit_bin)) {
+        modkit_bin <- Sys.which(names = "modkit")
+    }
+    res <- tryCatch(
+        expr = system2(command = modkit_bin, args = "--version",
+                       stdout = TRUE, stderr = NULL),
+        error = function(e) NA
+    )
+    return(res)
+}
