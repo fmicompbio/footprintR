@@ -19,6 +19,7 @@ test_that("plotRegion works", {
     assayNames(se0) <- c("assay1", "assay2")
     fname3 <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     seR <- readModkitExtract(fnames = fname3, modbase = 'a')
+    seR2 <- summarizeOverReads(se = seR, keep.reads = TRUE)
 
     # invalid arguments
     expect_error(plotRegion(se = "error"))
@@ -43,6 +44,9 @@ test_that("plotRegion works", {
     p7 <- plotRegion(se = seR, modbaseSpace = TRUE,
                      tracks.reads = list(mod_prob = c("Heatmap")),
                      tracks.summary = NULL)
+    p8 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
+                     tracks.summary = list(FracMod = "Smooth"),
+                     tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")))
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
     expect_s3_class(p3, "ggplot")
@@ -50,6 +54,7 @@ test_that("plotRegion works", {
     expect_s3_class(p5, "ggplot")
     expect_s3_class(p6, "ggplot")
     expect_s3_class(p7, "ggplot")
+    expect_s3_class(p8, "ggplot")
     expect_identical(nrow(p1$data), 4006L)
     expect_identical(nrow(p2$data), 24040L)
     expect_identical(nrow(p3$data), 20000L)
@@ -58,6 +63,7 @@ test_that("plotRegion works", {
     expect_identical(p4$data, p5$data)
     expect_identical(nrow(p6$data), 29104L)
     expect_identical(nrow(p7$data), 29104L)
+    expect_identical(nrow(p8$data), 117L)
 
     # make sure the plotting works
     tmpplot <- tempfile(fileext = ".png")
@@ -68,5 +74,6 @@ test_that("plotRegion works", {
     expect_identical(ggsave(filename = tmpplot, plot = p5, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p6, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p7, width = 6, height = 6), tmpplot)
+    expect_identical(ggsave(filename = tmpplot, plot = p8, width = 6, height = 6), tmpplot)
     unlink(tmpplot)
 })
