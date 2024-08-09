@@ -451,11 +451,18 @@ plotRegion <- function(se,
 #' @keywords internal
 .preparePlotdataReads <- function(x, aname, modbaseSpace = FALSE) {
     assaydat <- SummarizedExperiment::assay(x, aname)
+    if (!is.null(dim(assaydat[1,1]))) {
+        # `aname` columns are grouped reads -> flatten
+        sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
+        assaydat <- as.matrix(assaydat)
+    } else {
+        sample_ids <- SummarizedExperiment::colData(x)[["sample"]]
+    }
     i <- nzwhich(assaydat, arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,1]],
-        read = factor(colnames(x)[i[,2]], levels = colnames(x)),
-        sample = colData(x)[["sample"]][i[,2]],
+        read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
+        sample = sample_ids[i[,2]],
         value = nzvals(assaydat))
     if (modbaseSpace) {
         df$position <- factor(df$position,
@@ -478,14 +485,15 @@ plotRegion <- function(se,
 .summarizePlotdataPerRead <- function(df) {
     df |>
         dplyr::group_by(.data[["read"]]) |>
-        dplyr::summarise(start = ifelse(is.factor(.data[["position"]]),
-                                        levels(.data[["position"]])[1],
-                                        min(.data[["position"]])),
-                         end = ifelse(is.factor(.data[["position"]]),
-                                      levels(.data[["position"]])[nlevels(.data[["position"]])],
-                                      max(.data[["position"]])),
-                         sample = unique(.data[["sample"]]),
-                         .groups = "drop")
+        dplyr::summarise(
+            start = ifelse(is.factor(.data[["position"]]),
+                           levels(.data[["position"]])[1],
+                           min(.data[["position"]])),
+            end = ifelse(is.factor(.data[["position"]]),
+                         levels(.data[["position"]])[nlevels(.data[["position"]])],
+                         max(.data[["position"]])),
+            sample = unique(.data[["sample"]]),
+            .groups = "drop")
 }
 
 #' Create data.frame from SummarizedExperiment for summary-level data
@@ -544,7 +552,11 @@ plotRegion <- function(se,
 #' @keywords internal
 .orderReads <- function(x, aname, window_width = 25) {
     # extract assay matrix and set zero to NA
-    X <- as.matrix(SummarizedExperiment::assay(x, aname))
+    X <- SummarizedExperiment::assay(x, aname)
+    if (!is.null(dim(X[1,1]))) {
+        # `aname` columns are grouped reads -> flatten
+        X <- as.matrix(X)
+    }
     Y <- X != 0
     # group positions into bins of window_width
     bin <- findInterval(x = start(x),
@@ -563,7 +575,7 @@ plotRegion <- function(se,
     D[is.na(D)] <- 1.0
     # cluster reads and return order
     cl <- stats::hclust(D, method = "ward.D2")
-    return(colnames(x)[cl$order])
+    return(colnames(X)[cl$order])
 }
 
 #' Return a base ggplot2 plot (no geometries yet) for read-level data
