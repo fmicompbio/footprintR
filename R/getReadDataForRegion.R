@@ -93,7 +93,7 @@ getReadDataForRegion <- function(bamfile,
     if (length(arglist.filterReadData) > 0L && is.null(names(arglist.filterReadData))) {
         stop("`arglist.filterReadData` must be NULL or a named list.")
     }
-    .assertScalar(x = "mod_prob", type = "character")
+    .assertScalar(x = assay.type, type = "character")
     .assertScalar(x = verbose, type = "logical")
 
     # extract data from `bamfile`
