@@ -192,6 +192,11 @@ plotRegion <- function(se,
     }
 
     ## assemble composite plot
+    if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
+        for (i in seq.int(length(pL) - 1L)) {
+            pL[[i]] <- pL[[i]] + ggplot2::labs(x = ggplot2::element_blank())
+        }
+    }
     p <- patchwork::wrap_plots(pL, ncol = 1)
     if (!is.null(sequence.context)) {
         p <- p + ggplot2::labs(caption = paste0("Sequence contexts: ",
