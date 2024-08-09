@@ -389,6 +389,9 @@ plotRegion <- function(se,
                       colour = "Sample") +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "right")
+    if (is.numeric(df$position)) {
+        p <- p + ggplot2::coord_cartesian(xlim = range(df$position))
+    }
 
     # add points
     if (doPoint) {
@@ -602,6 +605,9 @@ plotRegion <- function(se,
                        panel.grid.minor = element_blank())
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
+    } else {
+        p0 <- p0 + ggplot2::coord_cartesian(xlim = range(df$position))
     }
+
     return(p0)
 }
