@@ -108,7 +108,7 @@ example, you can summarize the reads in each sample using `summarizeOverReads()`
 ## Summarize read-level data
 
 Summarized data can be obtained from the read-level data by calculating
-a summary on the reads from each sample:
+a per-position summary over the reads in each sample:
 
 ```{r summarise-read-level-to-collapsed}
 se_summary <- summarizeOverReads(se, keep.reads = TRUE,
@@ -135,9 +135,25 @@ we get in addition also the read-level assay from the input object
 (`mod_prob`) in which the reads are grouped by sample:
 
 ```{r collapsed-assays}
+# read-level data is retained in "mod_prob" assay
 assayNames(se_summary)
 
+# ... which groups the reads by sample
 assay(se_summary, "mod_prob")
+
+# this means that the number of columns in "se_summary"
+# is lower than in "se" (the number of samples instead
+# of the number of reads)
+dim(se)
+dim(se_summary)
+
+# the same is true for the assay "mod_prob" in "se" and
+# "se_summary", however all read level data is still
+# there and you can convert the assay back to ungrouped
+# reads using as.matrix()
+dim(assay(se, "mod_prob"))
+dim(assay(se_summary, "mod_prob"))
+dim(as.matrix(assay(se_summary, "mod_prob")))
 ```
 
 ## Plot data
@@ -166,7 +182,7 @@ plotRegion(se, region = "chr1:6932700-6932800",
 ```
 
 The x-axis in these plots is in "base-space", meaning that it shows the
-genomic coordinate on which the modified bases are irregularly spaced.
+coordinates of genomic bases on which modifications are irregularly spaced.
 Alternatively, we can also generate these plot in "modbase-space", in which
 only modified bases are shown and the gaps between them are removed:
 
@@ -181,6 +197,17 @@ plotRegion(se, region = "chr1:6932700-6932800",
            tracks.reads = list(mod_prob = "Lollipop"),
            modbaseSpace = TRUE)
 ```
+
+As mentioned above, the read-level data is still contained in the
+summary object `se_summary`, so we can plot both summary-level
+and read-level data simultaneously with this object as input:
+
+```{r plot-summary-and-read-level, fig.width=8, fig.height=10}
+plotRegion(se_summary, region = "chr1:6932700-6932800",
+           tracks.summary = list(FracMod = c("Smooth")),
+           tracks.reads = list(mod_prob = c("Heatmap", "Lollipop")))
+```
+
 ## Session info
 
 ```{r session-info}
