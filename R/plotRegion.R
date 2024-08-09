@@ -153,9 +153,9 @@ plotRegion <- function(se,
     pL <- list()
     ## ... summary tracks
     for (aname in names(tracks.summary)) {
-        if (aname == "FracMod" && !"FracMod" %in% assayNames(se)) {
+        if (aname == "FracMod" && !"FracMod" %in% SummarizedExperiment::assayNames(se)) {
             if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
-                assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
+                assay(se, "FracMod") <- SummarizedExperiment::assay(se, "Nmod") / SummarizedExperiment::assay(se, "Nvalid")
             } else {
                 stop("Cannot plot 'FracMod' - need either an assay called ",
                      "'FracMod' or both 'Nmod' and 'Nvalid' assays")
@@ -194,8 +194,8 @@ plotRegion <- function(se,
     ## assemble composite plot
     p <- patchwork::wrap_plots(pL, ncol = 1)
     if (!is.null(sequence.context)) {
-        p <- p + labs(caption = paste0("Sequence contexts: ",
-                                       paste(sequence.context, collapse = ", ")))
+        p <- p + ggplot2::labs(caption = paste0("Sequence contexts: ",
+                               paste(sequence.context, collapse = ", ")))
     }
 
     # return
@@ -458,7 +458,7 @@ plotRegion <- function(se,
     } else {
         sample_ids <- SummarizedExperiment::colData(x)[["sample"]]
     }
-    i <- nzwhich(assaydat, arr.ind = TRUE)
+    i <- SparseArray::nzwhich(assaydat, arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,1]],
         read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
@@ -616,7 +616,7 @@ plotRegion <- function(se,
                        panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank())
     if (is.factor(df$position)) {
-        p0 <- p0 + theme(axis.text.x = element_blank())
+        p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
     } else {
         p0 <- p0 + ggplot2::coord_cartesian(xlim = range(df$position))
     }
