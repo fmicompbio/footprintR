@@ -151,19 +151,6 @@ plotRegion <- function(se,
 
     ## create plots
     pL <- list()
-    ## ... read-level tracks
-    for (aname in names(tracks.reads)) {
-        for (ptype in tracks.reads[[aname]]) {
-            pname <- paste0(aname, "_", ptype)
-            pL[[pname]] <- switch(
-                ptype,
-                Lollipop = .plotReadsLollipop(x = se, aname = aname,
-                                              modbaseSpace = modbaseSpace),
-                Heatmap = .plotReadsHeatmap(x = se, aname = aname,
-                                            modbaseSpace = modbaseSpace)
-            )
-        }
-    }
     ## ... summary tracks
     for (aname in names(tracks.summary)) {
         if (aname == "FracMod" && !"FracMod" %in% assayNames(se)) {
@@ -187,6 +174,19 @@ plotRegion <- function(se,
                 PointSmooth = .plotSummaryPointSmooth(x = se, aname = aname,
                                                       modbaseSpace = modbaseSpace,
                                                       arglistPoint = list(alpha = 0.2))
+            )
+        }
+    }
+    ## ... read-level tracks
+    for (aname in names(tracks.reads)) {
+        for (ptype in tracks.reads[[aname]]) {
+            pname <- paste0(aname, "_", ptype)
+            pL[[pname]] <- switch(
+                ptype,
+                Lollipop = .plotReadsLollipop(x = se, aname = aname,
+                                              modbaseSpace = modbaseSpace),
+                Heatmap = .plotReadsHeatmap(x = se, aname = aname,
+                                            modbaseSpace = modbaseSpace)
             )
         }
     }
