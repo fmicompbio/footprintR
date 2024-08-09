@@ -589,7 +589,7 @@ plotRegion <- function(se,
                                y = .data[["read"]],
                                fill = .data[["value"]])) +
         ggplot2::scale_fill_gradient(low = "white", high = "black",
-                                     na.value = "beige") +
+                                     na.value = "beige", limits = c(0, 1)) +
         ggplot2::facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
         ggplot2::labs(x = ifelse(is.numeric(df$position),
                                  paste0("Position on ", chr),
