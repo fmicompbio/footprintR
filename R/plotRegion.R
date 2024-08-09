@@ -384,19 +384,8 @@ plotRegion <- function(se,
                                   modbaseSpace = modbaseSpace)
 
     # create base plot
-    p <- ggplot2::ggplot(
-        data = df,
-        mapping = aes(x = .data[["position"]],
-                      y = .data[["value"]],
-                      colour = .data[["sample"]])) +
-        ggplot2::labs(x = paste0("Position on ", unique(seqnames(x))[1]),
-                      y = aname,
-                      colour = "Sample") +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "right")
-    if (is.numeric(df$position)) {
-        p <- p + ggplot2::coord_cartesian(xlim = range(df$position))
-    }
+    p <- .createBaseplotSummary(df = df, aname = aname,
+                                chr = unique(seqnames(x))[1])
 
     # add points
     if (doPoint) {
@@ -405,10 +394,10 @@ plotRegion <- function(se,
 
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
-        compute_smooth <- function (data) {
+        compute_smooth <- function(data) {
             ok <- is.finite(data[["value"]])
             smooth <- stats::smooth.spline(
-                x= data[["position"]][ok],
+                x = data[["position"]][ok],
                 y = data[["value"]][ok],
                 keep.data = FALSE,
                 spar = spar.smooth)
@@ -583,6 +572,44 @@ plotRegion <- function(se,
     return(colnames(X)[cl$order])
 }
 
+#' Return a base ggplot2 plot (no geometries yet) for summary-level data
+#'
+#' @param df A \code{\link{data.frame}} with the plot data (typically
+#'     created by \code{\link{.preparePlotdataSummary}}.
+#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param chr A character scaler with the sequence name that is being plotted
+#'     (will be used to label the x-axis).
+#'
+#' @import ggplot2
+#' @importFrom scales label_number
+#' @importFrom rlang .data
+#'
+#' @noRd
+#' @keywords internal
+.createBaseplotSummary <- function(df, aname, chr) {
+    p0 <- ggplot2::ggplot(
+        data = df,
+        mapping = aes(x = .data[["position"]],
+                      y = .data[["value"]],
+                      colour = .data[["sample"]])) +
+        ggplot2::labs(x = paste0("Position on ", chr),
+                      y = aname,
+                      colour = "Sample") +
+        ggplot2::theme_bw() +
+        ggplot2::theme(legend.position = "right")
+
+    if (is.numeric(df$position)) {
+        rng <- range(df$position)
+        acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+        p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
+            scale_x_continuous(labels = scales::label_number(
+                accuracy = acc,
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+    }
+
+    return(p0)
+}
+
 #' Return a base ggplot2 plot (no geometries yet) for read-level data
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
@@ -592,6 +619,7 @@ plotRegion <- function(se,
 #'     (will be used to label the x-axis).
 #'
 #' @import ggplot2
+#' @importFrom scales label_number
 #' @importFrom rlang .data
 #' @importFrom BiocGenerics colnames
 #' @importFrom SummarizedExperiment assay
@@ -618,12 +646,20 @@ plotRegion <- function(se,
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "right",
                        axis.text.y = element_blank(),
+                       axis.ticks.y = element_blank(),
                        panel.grid.major = element_blank(),
                        panel.grid.minor = element_blank())
+
     if (is.factor(df$position)) {
         p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
+
     } else {
-        p0 <- p0 + ggplot2::coord_cartesian(xlim = range(df$position))
+        rng <- range(df$position)
+        acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+        p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
+            scale_x_continuous(labels = scales::label_number(
+                accuracy = acc,
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
     }
 
     return(p0)

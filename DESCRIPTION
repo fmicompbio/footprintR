@@ -33,6 +33,7 @@ Imports:
     dplyr,
     rlang,
     ggplot2,
+    scales,
     patchwork,
     purrr,
     SparseArray,
