@@ -505,7 +505,6 @@ plotRegion <- function(se,
 #'     (will be used to label the x-axis).
 #'
 #' @import ggplot2
-#' @importFrom scales label_number
 #' @importFrom rlang .data
 #'
 #' @noRd
@@ -523,12 +522,7 @@ plotRegion <- function(se,
         ggplot2::theme(legend.position = "right")
 
     if (is.numeric(df$position)) {
-        rng <- range(df$position)
-        acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
-        p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
-            scale_x_continuous(labels = scales::label_number(
-                accuracy = acc,
-                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+        p0 <- .addCoordAxisFormat(p0)
     }
 
     return(p0)
@@ -539,11 +533,10 @@ plotRegion <- function(se,
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataReads}}.
 #' @param aname A character or numerical scalar selecting the assay to plot.
-#' @param chr A character scaler with the sequence name that is being plotted
+#' @param chr A character scalar with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
 #'
 #' @import ggplot2
-#' @importFrom scales label_number
 #' @importFrom rlang .data
 #' @importFrom BiocGenerics colnames
 #' @importFrom SummarizedExperiment assay
@@ -578,12 +571,7 @@ plotRegion <- function(se,
         p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
 
     } else {
-        rng <- range(df$position)
-        acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
-        p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
-            scale_x_continuous(labels = scales::label_number(
-                accuracy = acc,
-                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+        p0 <- .addCoordAxisFormat(p0)
     }
 
     return(p0)
@@ -655,12 +643,36 @@ plotRegion <- function(se,
     YY <- scuttle::sumCountsAcrossFeatures(x = Y, ids = bin)
     XX <- XX / YY
     # calculate distances between reads
-    suppressWarnings(
+    suppressWarnings({
         D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
                                                     use = "pairwise.complete")))
-    )
+    })
     D[is.na(D)] <- 1.0
     # cluster reads and return order
     cl <- stats::hclust(D, method = "ward.D2")
     return(colnames(X)[cl$order])
+}
+
+#' Add formatting for base-space x-axis to ggplot object
+#'
+#' @description
+#' Add limits and axis label formatting for a base-space x-axis with
+#' genomic coordinates to a ggplot object.
+#'
+#' @param p0 A \code{ggplot} object to which to add the axis formatting.
+#'     x-axis values are assumed to be in \code{p0$data$position}.
+#'
+#' @import ggplot2
+#' @importFrom scales label_number
+#'
+#' @noRd
+#' @keywords internal
+.addCoordAxisFormat <- function(p0) {
+    rng <- range(p0$data$position)
+    acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+    p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
+        ggplot2::scale_x_continuous(labels = scales::label_number(
+            accuracy = acc,
+            scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+    return(p0)
 }
