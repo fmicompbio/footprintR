@@ -41,6 +41,12 @@ test_that("getReadDataForRegion works", {
     expect_error(getReadDataForRegion(bamfile = modbamfile, region = reg,
                                       arglist.filterReadData = list("nonames")),
                  "must be NULL or a named list")
+    expect_error(getReadDataForRegion(bamfile = modbamfile, region = reg,
+                                      assay.type = FALSE),
+                 "must be of class 'character'")
+    expect_error(getReadDataForRegion(bamfile = modbamfile, region = reg,
+                                      verbose = "error"),
+                 "must be of class 'logical'")
 
     # expected results
     # these are tested conditionally if `modkit` is available in the PATH
