@@ -558,14 +558,18 @@ plotRegion <- function(se,
                                  paste0("Modified positions in ", chr,
                                         ":", levels(df$position)[1], "-",
                                         levels(df$position)[nlevels(df$position)])),
-                      y = "Read",
+                      y = "Reads",
                       fill = aname) +
         ggplot2::theme_bw() +
         ggplot2::theme(legend.position = "right",
                        axis.text.y = element_blank(),
                        axis.ticks.y = element_blank(),
                        panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank())
+                       panel.grid.minor = element_blank(),
+                       strip.background.x = element_blank(),
+                       strip.text.x = element_text(hjust = 0,
+                                                   margin = ggplot2::margin(
+                                                       t = 0, r = 0, b = 2, l = 0)))
 
     if (is.factor(df$position)) {
         p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
