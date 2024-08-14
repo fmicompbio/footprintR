@@ -108,7 +108,8 @@ readModBam <- function(bamfile,
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
-            row.names = read_name_unique
+            row.names = read_name_unique,
+            sample = rep("s1", length(read_name_unique))
         ),
         metadata = list()
     )

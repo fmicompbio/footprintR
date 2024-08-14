@@ -1,12 +1,13 @@
 #include <htslib/sam.h>
 #include <string>
 #include <vector>
+#include <cstdlib>
 #include <Rcpp.h>
 // using namespace Rcpp;
 
 // Helper functions
 // -----------------------------------------------------------------------------
-
+// convert aligned read position to reference sequence position
 std::vector<int> read_to_reference_pos(const bam1_t *alignment, const std::vector<int> &read_positions) {
     const uint32_t *cigar = bam_get_cigar(alignment);  // CIGAR array
     int ref_pos = alignment->core.pos;  // Reference position (0-based)
@@ -80,6 +81,57 @@ std::vector<int> read_to_reference_pos(const bam1_t *alignment, const std::vecto
     return ref_positions;
 }
 
+// create the complement of a base
+char complement(char n) {
+    switch(n) {
+    case 'A':
+    case 'a':
+        return 'T';
+    case 'T':
+    case 't':
+        return 'A';
+    case 'G':
+    case 'g':
+        return 'C';
+    case 'C':
+    case 'c':
+        return 'G';
+    case 'N':
+    case 'n':
+    default:
+        return 'N';
+    }
+}
+
+// get unmodified base corresponding to a modified base `b`
+char get_unmodified_base(char b) {
+    switch (b) {
+    case 'm':
+    case 'h':
+    case 'f':
+    case 'c':
+    case 'C':
+        return 'C';
+    case 'g':
+    case 'e':
+    case 'b':
+    case 'T':
+        return 'T';
+    case 'U':
+        return 'U';
+    case 'a':
+    case 'A':
+        return 'A';
+    case 'o':
+    case 'G':
+        return 'G';
+    case 'n':
+    case 'N':
+    default:
+        return 'N';
+    }
+}
+
 
 //' Read base modifications from a bam file.
 //'
@@ -115,8 +167,7 @@ Rcpp::List read_modbam(std::string inname_str,
                        char modbase,
                        bool verbose = false) {
     // variable declarations
-    int c = 0, i = 0, j = 0, r = 0, impl = 0;
-    // int pos = 0;
+    int c = 0, i = 0, j = 0, r = 0, impl = 0, qseq_len = 0, pos = 0, strand = 0;
     samFile *infile = NULL;
     sam_hdr_t *in_samhdr = NULL;
     bam1_t *bamdata = NULL;
@@ -125,12 +176,12 @@ Rcpp::List read_modbam(std::string inname_str,
     hts_idx_t *idx = NULL;
     hts_itr_t *iter = NULL;
     unsigned int regcnt = 0, alncnt = 0;
-    char canonical = '0', **regions_c = NULL;
+    char unmodbase = '0', canonical = '0', **regions_c = NULL, *qseq = NULL;
 
     std::vector<std::string> read_name;
     std::vector<char> modified_base;
     std::vector<char> canonical_base;
-    std::vector<char> strand;
+    std::vector<char> strand_vec;
     std::vector<std::string> ref_name;
     std::vector<int> read_position;
     std::vector<int> ref_position;
@@ -138,37 +189,8 @@ Rcpp::List read_modbam(std::string inname_str,
 
     const char* inname = inname_str.c_str();
 
-    // // get unmodified base corresponding to modbase
-    // switch (modbase) {
-    // case 'm':
-    // case 'h':
-    // case 'f':
-    // case 'c':
-    // case 'C':
-    //     canonical = 'C';
-    //     break;
-    // case 'g':
-    // case 'e':
-    // case 'b':
-    // case 'T':
-    //     canonical = 'T';
-    //     break;
-    // case 'U':
-    //     canonical = 'U';
-    //     break;
-    // case 'a':
-    // case 'A':
-    //     canonical = 'A';
-    //     break;
-    // case 'o':
-    // case 'G':
-    //     canonical = 'G';
-    //     break;
-    // case 'n':
-    // case 'N':
-    // default:
-    //     canonical = 'N';
-    // }
+    // get expected unmodified base corresponding to `modbase`
+    unmodbase = get_unmodified_base(modbase);
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
@@ -223,9 +245,23 @@ Rcpp::List read_modbam(std::string inname_str,
         alncnt++;
 
         // process alignment
-        // ... get sequence
-        i = 0; // position in read sequence
+        // ... extract *forward* read sequence to char*
         data = bam_get_seq(bamdata);
+        if (qseq_len < bamdata->core.l_qseq) {
+            if (qseq)
+                free((void*) qseq);
+            qseq = (char*) calloc(bamdata->core.l_qseq + 1, sizeof(char));
+            qseq_len = bamdata->core.l_qseq;
+        }
+        if (bam_is_rev(bamdata)) {
+            for (j = 0; j < qseq_len; j++) {
+                qseq[qseq_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
+            }
+        } else {
+            for (j = 0; j < qseq_len; j++) {
+                qseq[j] = seq_nt16_str[bam_seqi(data, j)];
+            }
+        }
 
         // ... parse base modifications
         if (bam_parse_basemod(bamdata, ms)) {
@@ -238,33 +274,45 @@ Rcpp::List read_modbam(std::string inname_str,
         // ... process read if modifications of the right type are present
         //     bam_mods_query_type:
         //     - returns 0 on success, -1 if not found
-        //     - also fills out `canonical` (unmodified base) and `impl`
-        //       (boolean for whether unlisted positions should be implicitly
-        //        assumed to be unmodified, or require an explicit score and
-        //        should be considered as unknown)
-        if (bam_mods_query_type(ms, modbase, NULL, &impl, &canonical) == 0) {
+        //     - also fills out `canonical`, `strand` and `impl`
+        //       (`impl` is a boolean for whether unlisted positions should be
+        //        implicitly assumed to be unmodified, or require an explicit
+        //        score and should be considered as unknown)
+        if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
             // ... loop over sequence positions i
-            for (; i < bamdata->core.l_qseq; i++) {
-                if ((r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]))) <= -1) {
-                    // r: number of found modifications (>=1, 0 or -1 if failed)
+            for (i = 0; i < bamdata->core.l_qseq; i++) {
+                // i is the position in the aligned read (possibly reverse-complemented)
+                // pos is the position in the original read (qseq)
+                if (bam_is_rev(bamdata)) {
+                    pos = bamdata->core.l_qseq - 1 - i;
+                } else{
+                    pos = i;
+                }
+
+                // r: number of found modifications (>=1, 0 or -1 if failed)
+                r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
+                if (r <= -1) {
                     Rprintf("Failed to get modifications (read %s)\n",
                             bam_get_qname(bamdata));
                     goto end;
 
                 } else if (r > (sizeof(mod) / sizeof(mod[0]))) {
-                    Rprintf("More modifications than this app can handle, update the app\n");
+                    Rprintf("More modifications than footprintR:::read_modbam can handle (read %s)\n",
+                            bam_get_qname(bamdata));
                     goto end;
 
                 } else if (!r && impl) {
-                    // no modification at position i
-                    if (seq_nt16_str[bam_seqi(data, i)] == canonical) {
-                        // found omitted, likely unmodified base -> add to results
+                    // implied base without modification at position i
+                    // if (seq_nt16_str[bam_seqi(data, i)] == unmodbase) {
+                    if (qseq[pos] == unmodbase) {
+                        // base of the right type -> add to results
                         read_name.push_back(bam_get_qname(bamdata));
                         read_position.push_back(i);
                         ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
                         modified_base.push_back('-');
                         canonical_base.push_back(canonical);
-                        strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
+                        // strand_vec.push_back(bam_is_rev(bamdata) ? '-' : '+');
+                        strand_vec.push_back(strand ? '-' : '+');
                         call_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
                     }
                 }
@@ -277,7 +325,7 @@ Rcpp::List read_modbam(std::string inname_str,
                         ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
                         modified_base.push_back((char) mod[j].modified_base);
                         canonical_base.push_back((char) mod[j].canonical_base);
-                        strand.push_back(mod[j].strand ? '-' : '+');
+                        strand_vec.push_back(mod[j].strand ? '-' : '+');
                         // qual of `N` corresponds to call probability
                         //     in [N/256, (N+1)/256] -> store midpoint
                         call_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
@@ -285,67 +333,6 @@ Rcpp::List read_modbam(std::string inname_str,
                 }
             }
         }
-
-        // while ((r = bam_next_basemod(bamdata, ms, mod,
-        //                              sizeof(mod)/sizeof(mod[0]), &pos)) >= 0) {
-        //     // r: number of found modifications
-        //     //   (typically 1, or 0 at the end, or -1 if failed)
-        //
-        //     // non-modified bases omitted from BAM
-        //     for (; i < bamdata->core.l_qseq && i < pos; i++) {
-        //         if (seq_nt16_str[bam_seqi(data, i)] == canonical) {
-        //             // found omitted base -> add to results
-        //             read_name.push_back(bam_get_qname(bamdata));
-        //             read_position.push_back(i);
-        //             ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-        //             modified_base.push_back('-');
-        //             canonical_base.push_back(canonical);
-        //             strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
-        //             call_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
-        //         }
-        //     }
-        //
-        //     // modifications
-        //     for (j = 0; j < r; j++) {
-        //         // Rprintf("%c %c %c %d\n", mod[j].canonical_base, mod[j].strand ? '-' : '+', mod[j].modified_base, pos);
-        //         // append modification to vectors
-        //         if (mod[j].modified_base == modbase) {
-        //             read_name.push_back(bam_get_qname(bamdata));
-        //             read_position.push_back(pos);
-        //             ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-        //             modified_base.push_back((char) mod[j].modified_base);
-        //             canonical_base.push_back((char) mod[j].canonical_base);
-        //             strand.push_back(mod[j].strand ? '-' : '+');
-        //             // qual of `N` corresponds to call probalitiy in [N/256, (N+1)/256] -> use midpoint
-        //             call_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
-        //         }
-        //     }
-        //
-        //     // skip the modification already processed
-        //     if (i == pos)
-        //         i++;
-        //
-        //     // non-modified bases after the last modified base omitted from the BAM file
-        //     if (!r) {
-        //         for (; i < bamdata->core.l_qseq; ++i) {
-        //             if (seq_nt16_str[bam_seqi(data, i)] == canonical) {
-        //                 // found omitted base -> add to results
-        //                 read_name.push_back(bam_get_qname(bamdata));
-        //                 read_position.push_back(i);
-        //                 ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-        //                 modified_base.push_back('-');
-        //                 canonical_base.push_back(canonical);
-        //                 strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
-        //                 call_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
-        //             }
-        //         }
-        //         break;
-        //     }
-        // }
-        // if (r <= -1) {
-        //     Rprintf("Failed to get modifications (read %s)\n", bam_get_qname(bamdata));
-        //     goto end;
-        // }
 
         // ... convert read positions to reference coordinates
         std::vector<int> read_position_converted = read_to_reference_pos(bamdata, read_position);
@@ -371,10 +358,14 @@ Rcpp::List read_modbam(std::string inname_str,
             Rcpp::_["ref_position"] = ref_position,
             Rcpp::_["modified_base"] = modified_base,
             Rcpp::_["canonical_base"] = canonical_base,
-            Rcpp::_["strand"] = strand,
+            Rcpp::_["strand"] = strand_vec,
             Rcpp::_["call_prob"] = call_prob);
 
         //cleanup
+        if (qseq) {
+            free((void*) qseq);
+            qseq = NULL;
+        }
         if (regions_c) {
             free((void*) regions_c);
             regions_c = NULL;
