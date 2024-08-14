@@ -9,17 +9,27 @@
 #' @param inname_str Character scalar with name of the input bam file.
 #' @param regions Character vector specifying the region(s) for which
 #'     to extract overlapping reads, in the form \code{"chr:start-end"}
+#' @param modbase Character scalar defining the modified base to extract.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @examples
-#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
+#'                           package = "footprintR")
 #' res <- read_modbam(modbamfile, "chr1:6940000-6955000", TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
 #'     SAM ML and MM tags for base modifications.
+#'     Helpful examples are available in
+#'      https://github.com/samtools/htslib/blob/develop/samples/modstate.c
+#'     Documentation of the htslib C API is available in
+#'      https://github.com/samtools/htslib/blob/develop/htslib/sam.h
 #'
-read_modbam <- function(inname_str, regions, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam`, inname_str, regions, verbose)
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+read_modbam <- function(inname_str, regions, modbase, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam`, inname_str, regions, modbase, verbose)
 }
 

@@ -11,21 +11,22 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // read_modbam
-List read_modbam(std::string inname_str, std::vector<std::string> regions, bool verbose);
-RcppExport SEXP _footprintR_read_modbam(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP verboseSEXP) {
+Rcpp::List read_modbam(std::string inname_str, std::vector<std::string> regions, char modbase, bool verbose);
+RcppExport SEXP _footprintR_read_modbam(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type inname_str(inname_strSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type regions(regionsSEXP);
+    Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_modbam(inname_str, regions, verbose));
+    rcpp_result_gen = Rcpp::wrap(read_modbam(inname_str, regions, modbase, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_footprintR_read_modbam", (DL_FUNC) &_footprintR_read_modbam, 3},
+    {"_footprintR_read_modbam", (DL_FUNC) &_footprintR_read_modbam, 4},
     {NULL, NULL, 0}
 };
 
