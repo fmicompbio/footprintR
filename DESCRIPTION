@@ -1,6 +1,6 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Michael", "Stadler", email = "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
@@ -37,7 +37,10 @@ Imports:
     patchwork,
     purrr,
     SparseArray,
-    Matrix
+    Matrix,
+    Rhtslib,
+    zlibbioc,
+    Rcpp
 Suggests:
     rmarkdown,
     knitr,
@@ -46,6 +49,11 @@ Suggests:
     withr,
     BiocManager,
     BiocParallel
+LinkingTo: 
+    Rcpp,
+    Rhtslib,
+    zlibbioc
+SystemRequirements: GNU make
 URL: https://github.com/fmicompbio/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
 Encoding: UTF-8
