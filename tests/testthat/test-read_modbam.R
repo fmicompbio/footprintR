@@ -40,11 +40,15 @@ test_that("get_unmodified_base works", {
     }
 })
 
+
+## -------------------------------------------------------------------------- ##
+## Checks, read_modbam_cpp
+## -------------------------------------------------------------------------- ##
 test_that("read_modbam_cpp works", {
     # example data
     modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                               package = "footprintR")
-    extractfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv",
+    extractfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
                                package = "footprintR")
 
     # invalid arguments
@@ -135,5 +139,4 @@ test_that("read_modbam_cpp works", {
     for (nm in expected_names) {
         expect_length(res3[[nm]], 0L)
     }
-
 })
