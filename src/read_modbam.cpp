@@ -82,6 +82,7 @@ std::vector<int> read_to_reference_pos(const bam1_t *alignment, const std::vecto
 }
 
 // create the complement of a base
+// [[Rcpp::export]]
 char complement(char n) {
     switch(n) {
     case 'A':
@@ -104,6 +105,7 @@ char complement(char n) {
 }
 
 // get unmodified base corresponding to a modified base `b`
+// [[Rcpp::export]]
 char get_unmodified_base(char b) {
     switch (b) {
     case 'm':
