@@ -161,7 +161,7 @@ char get_unmodified_base(char b) {
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 //'                           package = "footprintR")
-//' res <- read_modbam(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -178,7 +178,7 @@ char get_unmodified_base(char b) {
 //' @noRd
 //' @keywords internal
 // [[Rcpp::export]]
-Rcpp::List read_modbam(std::string inname_str,
+Rcpp::List read_modbam_cpp(std::string inname_str,
                        std::vector<std::string> regions,
                        char modbase,
                        bool verbose = false) {
@@ -334,7 +334,7 @@ Rcpp::List read_modbam(std::string inname_str,
                 } else if (r > (sizeof(mod) / sizeof(mod[0]))) {
                     had_error = true;
                     snprintf(buffer, buffer_len,
-                             "More modifications than footprintR:::read_modbam can handle (read %s)\n",
+                             "More modifications than footprintR:::read_modbam_cpp can handle (read %s)\n",
                              bam_get_qname(bamdata));
                     goto end;
 

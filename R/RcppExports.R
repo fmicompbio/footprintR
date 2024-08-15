@@ -32,7 +32,7 @@ get_unmodified_base <- function(b) {
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
-#' res <- read_modbam(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -48,7 +48,7 @@ get_unmodified_base <- function(b) {
 #'
 #' @noRd
 #' @keywords internal
-read_modbam <- function(inname_str, regions, modbase, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam`, inname_str, regions, modbase, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, verbose)
 }
 

@@ -40,7 +40,7 @@ test_that("get_unmodified_base works", {
     }
 })
 
-test_that("read_modbam works", {
+test_that("read_modbam_cpp works", {
     # example data
     modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                               package = "footprintR")
@@ -49,20 +49,20 @@ test_that("read_modbam works", {
 
     # invalid arguments
     # ... non-existing bam file
-    expect_error(read_modbam("error", "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp("error", "chr1", "a", FALSE))
     # ... no bam index
     tmpbam <- tempfile(fileext = ".bam")
     expect_true(file.copy(from = modbamfile, to = tmpbam))
-    expect_error(read_modbam(tmpbam, "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(tmpbam, "chr1", "a", FALSE))
     unlink(tmpbam)
 
     # expected results
     df <- read.delim(extractfile)
     expect_message(expect_message(expect_message(
-        res1 <- read_modbam(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+        res1 <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
     )))
-    res2 <- read_modbam(modbamfile, "chr1:", "a", FALSE)
-    res3 <- read_modbam(modbamfile, "chr1:", "m", FALSE)
+    res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", FALSE)
+    res3 <- read_modbam_cpp(modbamfile, "chr1:", "m", FALSE)
 
     # ... structure
     expect_type(res1, "list")

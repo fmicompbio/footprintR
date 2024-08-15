@@ -32,9 +32,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// read_modbam
-Rcpp::List read_modbam(std::string inname_str, std::vector<std::string> regions, char modbase, bool verbose);
-RcppExport SEXP _footprintR_read_modbam(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP verboseSEXP) {
+// read_modbam_cpp
+Rcpp::List read_modbam_cpp(std::string inname_str, std::vector<std::string> regions, char modbase, bool verbose);
+RcppExport SEXP _footprintR_read_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,7 +42,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<std::string> >::type regions(regionsSEXP);
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_modbam(inname_str, regions, modbase, verbose));
+    rcpp_result_gen = Rcpp::wrap(read_modbam_cpp(inname_str, regions, modbase, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -50,7 +50,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
-    {"_footprintR_read_modbam", (DL_FUNC) &_footprintR_read_modbam, 4},
+    {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 4},
     {NULL, NULL, 0}
 };
 

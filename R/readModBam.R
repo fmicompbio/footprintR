@@ -92,10 +92,10 @@ readModBam <- function(bamfiles,
     resLL <- parallel::mclapply(bamfiles, function(bamfile) {
         # extract modifications (returned list is similar to modkit extract
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
-        resL <- read_modbam(inname_str = bamfile,
-                            regions = regions_str,
-                            modbase = modbase,
-                            verbose = verbose)
+        resL <- read_modbam_cpp(inname_str = bamfile,
+                                regions = regions_str,
+                                modbase = modbase,
+                                verbose = verbose)
 
         # convert 0-based ref_position to 1-based
         resL$ref_position <- resL$ref_position + 1L
@@ -103,7 +103,7 @@ readModBam <- function(bamfiles,
         # convert inferred `mod_prob` to our minimal value as in
         # readModkitExtract(). Inferred means that the modification was omitted
         # from the BAM file, e.g. DORADO omits base modification probabilities
-        # less than 0.05, and read_modbam returns a call_probability of -1 for
+        # less than 0.05, and read_modbam_cpp returns a call_probability of -1 for
         # these.
         resL$mod_prob[resL$mod_prob == -1] <- 0.02
         resL
