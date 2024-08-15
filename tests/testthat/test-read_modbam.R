@@ -66,7 +66,7 @@ test_that("read_modbam_cpp works", {
         res1 <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
     )))
     res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", FALSE)
-    res3 <- read_modbam_cpp(modbamfile, "chr1:", "m", FALSE)
+    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", FALSE)
 
     # ... structure
     expect_type(res1, "list")
