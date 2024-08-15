@@ -104,6 +104,7 @@ test_that("modkitExtract works", {
         expect_message(
             se2 <- getReadDataForRegion(bamfile = modbamfile, region = reg,
                                         arglist.readModkitExtract = list(modbase = "a"),
+                                        arglist.filterReadData = list(),
                                         verbose = TRUE)
         )
     )
