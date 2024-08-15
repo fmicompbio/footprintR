@@ -161,7 +161,7 @@ char get_unmodified_base(char b) {
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 //'                           package = "footprintR")
-//' res <- read_modbam(modbamfile, "chr1:6940000-6955000", TRUE)
+//' res <- read_modbam(modbamfile, "chr1:6940000-6955000", "a", TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
