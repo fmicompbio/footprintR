@@ -2,74 +2,77 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <cstdio>
 #include <Rcpp.h>
-// using namespace Rcpp;
+
 
 // Helper functions
 // -----------------------------------------------------------------------------
-// convert aligned read position to reference sequence position
-std::vector<int> read_to_reference_pos(const bam1_t *alignment, const std::vector<int> &read_positions) {
-    const uint32_t *cigar = bam_get_cigar(alignment);  // CIGAR array
-    int ref_pos = alignment->core.pos;  // Reference position (0-based)
-    int read_index = 0;  // Current index in the read sequence
+// convert 0-based read position to 0-based reference sequence position
+// (a position of -1 means unaligned)
+std::vector<int> read_to_reference_pos(const bam1_t *aln,
+                                       const std::vector<int> &read_pos) {
+    // variables
+    size_t read_pos_index = 0; // index to elements of read_pos
+    const uint32_t *cigar = bam_get_cigar(aln);  // cigar array
+    int ref_pos = aln->core.pos;  // reference position (0-based)
+    int read_seq_index = 0;  // current index in the read sequence
 
-    std::vector<int> ref_positions(read_positions.size(), -1);  // Initialize all positions to -1
+    // return value: 0-based reference positions, initialized to -1
+    std::vector<int> ref_positions(read_pos.size(), -1);
 
-    size_t read_pos_index = 0;
-
-    // Iterate over the CIGAR operations
-    for (int i = 0; i < alignment->core.n_cigar && read_pos_index < read_positions.size(); i++) {
-        int op_len = bam_cigar_oplen(cigar[i]);  // Length of the operation
-        int op = bam_cigar_op(cigar[i]);  // CIGAR operation type
+    // iterate over the CIGAR operations i
+    for (int i = 0; i < aln->core.n_cigar && read_pos_index < read_pos.size(); i++) {
+        int op = bam_cigar_op(cigar[i]);  // operation type
+        int op_len = bam_cigar_oplen(cigar[i]);  // operation length
 
         switch (op) {
-        case BAM_CMATCH:  // Match or mismatch (M)
-        case BAM_CEQUAL:  // Sequence match (=)
-        case BAM_CDIFF:   // Sequence mismatch (X)
-            // Check each read position within this segment
-            while (read_pos_index < read_positions.size() &&
-                   read_index + op_len > read_positions[read_pos_index]) {
-                ref_positions[read_pos_index] = ref_pos + (read_positions[read_pos_index] - read_index);
+        case BAM_CMATCH:  // match or mismatch (M)
+        case BAM_CEQUAL:  // match (=)
+        case BAM_CDIFF:   // mismatch (X)
+            while (read_pos_index < read_pos.size() &&
+                   read_seq_index + op_len > read_pos[read_pos_index]) {
+                ref_positions[read_pos_index] = ref_pos + (read_pos[read_pos_index] - read_seq_index);
                 read_pos_index++;
             }
             ref_pos += op_len;
-            read_index += op_len;
+            read_seq_index += op_len;
             break;
 
-        case BAM_CINS:  // Insertion (I)
-            // Handle positions within the insertion
-            if (read_index + op_len > read_positions[read_pos_index]) {
-                // The current read position is within an insertion
-                while (read_pos_index < read_positions.size() &&
-                       read_index + op_len > read_positions[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;  // No corresponding reference position
+        case BAM_CINS:  // insertion (I)
+            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+                // the current read position is within an insertion -->
+                //     no corresponding reference position
+                while (read_pos_index < read_pos.size() &&
+                       read_seq_index + op_len > read_pos[read_pos_index]) {
+                    ref_positions[read_pos_index] = -1;
                     read_pos_index++;
                 }
             }
-            read_index += op_len;
+            read_seq_index += op_len;
             break;
 
-        case BAM_CDEL:  // Deletion (D)
-        case BAM_CREF_SKIP:  // Reference skip (N)
+        case BAM_CDEL:       // deletion (D)
+        case BAM_CREF_SKIP:  // reference skip (N)
             ref_pos += op_len;
             break;
 
-        case BAM_CSOFT_CLIP:  // Soft clipping (S)
-            // Handle positions within the soft clipping
-            if (read_index + op_len > read_positions[read_pos_index]) {
-                // The current read position is within a soft-clipped region
-                while (read_pos_index < read_positions.size() &&
-                       read_index + op_len > read_positions[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;  // No corresponding reference position
+        case BAM_CSOFT_CLIP:  // soft clipping (S)
+            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+                // the current read position is within a soft-clipped region -->
+                //     no corresponding reference position
+                while (read_pos_index < read_pos.size() &&
+                       read_seq_index + op_len > read_pos[read_pos_index]) {
+                    ref_positions[read_pos_index] = -1;
                     read_pos_index++;
                 }
             }
-            read_index += op_len;
+            read_seq_index += op_len;
             break;
 
-        case BAM_CHARD_CLIP:  // Hard clipping (H)
-        case BAM_CPAD:        // Padding (P)
-            // Hard clipping and padding do not consume any positions in the read or reference
+        case BAM_CHARD_CLIP:  // hard clipping (H)
+        case BAM_CPAD:        // padding (P)
+            // these do not consume any positions in the read or reference
             break;
 
         default:
