@@ -3,8 +3,13 @@
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
 #' section 1.7) and return a list of information on modified bases.
 #'
-#' @param bamfile Character scalar specifying the path to a \code{modBAM}
-#'     file. The BAM file must have an index.
+#' @param bamfiles Character vector with one or several paths of \code{modBAM}
+#'     files, containing information about base modifications in \code{MM} and
+#'     \code{ML} tags. If \code{bamfiles} is a named vector, the names are used
+#'     as sample names and prefixes for the column (read) names in the returned
+#'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
+#'     Otherwise, the prefixes will be \code{s1}, ..., \code{sN}, where \code{N}
+#'     is the length of \code{bamfiles}. All \code{bamfiles} must have an index.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
 #'     genomic regions to extract the reads from. Alternatively, regions can be
 #'     specified as a character scalar (e.g. "chr1:1200-1300") that can be
@@ -16,6 +21,8 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
+#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
+#'     to use for some of the steps in \code{readModBam}.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -38,24 +45,27 @@
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors DataFrame
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics pos strand
+#' @importFrom BiocGenerics do.call cbind pos strand
+#' @importFrom parallel mclapply
 #'
 #' @export
-readModBam <- function(bamfile,
+readModBam <- function(bamfiles,
                        regions,
                        modbase,
                        seqinfo = NULL,
+                       ncpu = 1L,
                        verbose = FALSE) {
     # digest arguments
-    .assertScalar(x = bamfile, type = "character")
-    if (!file.exists(bamfile)) {
-        stop("bamfile (", bamfile, ") does not exist.")
+    .assertVector(x = bamfiles, type = "character")
+    if (any(i <- !file.exists(bamfiles))) {
+        stop("not all `bamfiles` exist: ", paste(bamfiles[i], collapse = ", "))
     }
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
     }
     .assertScalar(x = regions, type = "GRanges")
-    # for valid values of `modbase`, see https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
     .assertScalar(x = modbase, type = "character",
                   validValues = c("m","h","f","c","C","g","e","b","T",
                                   "U","a","A","o","G","n","N"))
@@ -66,50 +76,83 @@ readModBam <- function(bamfile,
                  " numeric vector with genomic sequence lengths.")
         }
     }
+    .assertScalar(x = ncpu, type = "numeric")
     .assertScalar(x = verbose, type = "logical")
 
-    # extract modification probabilities from `bamfile`
-    resL <- read_modbam(inname_str = bamfile,
-                        regions = as.character(regions, ignore.strand = TRUE),
-                        modbase = modbase,
-                        verbose = verbose)
-
-    # remove unaligned and convert coordinates 0-based to 1-based
-    keep <- resL$ref_position != -1
-    if (verbose) {
-        message("filtering out ", sum(!keep), " of ", length(keep),
-                " unaligned modification events (e.g. soft-masked)")
+    # make sure bamfiles has sample names
+    if (is.null(names(bamfiles))) {
+        names(bamfiles) <- paste0("s", seq_along(bamfiles))
     }
-    resL <- lapply(resL, "[", keep)
-    resL$ref_position <- resL$ref_position + 1L
 
-    # convert inferred `call_prob` to our minimal value as in readModkitExtract()
-    # (inferred means that the modification was omitted from the BAM file, e.g.
-    #  dorado omits base modification probabilities less than 0.05, and
-    #  read_modbam returns a call_probability of -1 for these)
-    resL$call_prob[resL$call_prob == -1] <- 0.02
+    # extract modification probabilities from `bamfiles`
+    if (verbose) {
+        message("extracting base modifications from modBAM files")
+    }
+    regions_str <- as.character(regions, ignore.strand = TRUE)
+    resLL <- parallel::mclapply(bamfiles, function(bamfile) {
+        # extract modifications (returned list is similar to modkit extract
+        # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
+        resL <- read_modbam(inname_str = bamfile,
+                            regions = regions_str,
+                            modbase = modbase,
+                            verbose = verbose)
 
-    # convert to SummarizedExperiment
-    gpos_all <- GenomicRanges::GPos(seqnames = resL$ref_name,
-                                    pos = resL$ref_position,
-                                    strand = resL$strand,
-                                    seqinfo = seqinfo)
-    gpos <- GenomicRanges::sort(unique(gpos_all))
-    read_name_unique <- unique(resL$read_name)
-    modmat <- SparseArray::SparseArray(Matrix::sparseMatrix(
-            i = GenomicRanges::match(gpos_all, gpos),
-            j = match(resL$read_name, read_name_unique),
-            x = resL$call_prob,
-            dims = c(length(gpos), length(read_name_unique)),
-            dimnames = list(NULL, read_name_unique)))
+        # convert 0-based ref_position to 1-based
+        resL$ref_position <- resL$ref_position + 1L
+
+        # convert inferred `mod_prob` to our minimal value as in
+        # readModkitExtract(). Inferred means that the modification was omitted
+        # from the BAM file, e.g. DORADO omits base modification probabilities
+        # less than 0.05, and read_modbam returns a call_probability of -1 for
+        # these.
+        resL$mod_prob[resL$mod_prob == -1] <- 0.02
+        resL
+    }, mc.cores = ncpu)
+
+    # create GPos objects for each input
+    gposL <- parallel::mclapply(resLL, function(resL) {
+        GenomicRanges::GPos(seqnames = resL$chrom, pos = resL$ref_position,
+                            strand = resL$ref_strand, seqinfo = seqinfo)
+    }, mc.cores = ncpu)
+
+    # create combined GPos, reduce to unique positions
+    if (verbose) {
+        message("finding unique genomic positions...", appendLF = FALSE)
+    }
+    gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
+    if (verbose) {
+        message("collapsed ", sum(lengths(gposL)), " positions to ",
+                length(gpos), " unique ones")
+    }
+
+    # extract read names
+    readL <- lapply(resLL, function(resL) unique(resL$read_id))
+
+    # modified probability
+    modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
+    for (nm in names(bamfiles)) {
+        x <- resLL[[nm]]
+        # only record observed values
+        modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
+            i = GenomicRanges::match(gposL[[nm]], gpos),
+            j = match(x$read_id, readL[[nm]]),
+            x = x$mod_prob,
+            dims = c(length(gpos), length(readL[[nm]])),
+            dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
+        ))
+    }
+    # reduce to a single sparse matrix
+    readnames <- do.call(c, lapply(modmat, colnames))
+    samplenames <- rep(names(modmat), vapply(modmat, ncol, 0))
+    modmat <- BiocGenerics::do.call(BiocGenerics::cbind, modmat)
 
     # create SummarizedExperiment object
     se <- SummarizedExperiment::SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
-            row.names = read_name_unique,
-            sample = rep("s1", length(read_name_unique))
+            row.names = readnames,
+            sample = samplenames
         ),
         metadata = list()
     )

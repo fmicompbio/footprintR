@@ -4,11 +4,23 @@
 \alias{readModBam}
 \title{Read base modifications from a bam file.}
 \usage{
-readModBam(bamfile, regions, modbase, seqinfo = NULL, verbose = FALSE)
+readModBam(
+  bamfiles,
+  regions,
+  modbase,
+  seqinfo = NULL,
+  ncpu = 1L,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{bamfile}{Character scalar specifying the path to a \code{modBAM}
-file. The BAM file must have an index.}
+\item{bamfiles}{Character vector with one or several paths of \code{modBAM}
+files, containing information about base modifications in \code{MM} and
+\code{ML} tags. If \code{bamfiles} is a named vector, the names are used
+as sample names and prefixes for the column (read) names in the returned
+\code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
+Otherwise, the prefixes will be \code{s1}, ..., \code{sN}, where \code{N}
+is the length of \code{bamfiles}. All \code{bamfiles} must have an index.}
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
 genomic regions to extract the reads from. Alternatively, regions can be
@@ -23,6 +35,9 @@ positions will typically extend out of the specified regions.}
 containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
+
+\item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
+to use for some of the steps in \code{readModBam}.}
 
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
