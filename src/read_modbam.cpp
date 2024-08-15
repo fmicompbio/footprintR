@@ -73,7 +73,7 @@ std::vector<int> read_to_reference_pos(const bam1_t *alignment, const std::vecto
             break;
 
         default:
-            Rcpp::Rcerr << "Unknown CIGAR operation: " << op << std::endl;
+            Rcpp::warning("Unknown CIGAR operation: %d", op);
         return ref_positions;
         }
     }
