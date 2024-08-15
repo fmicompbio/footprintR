@@ -149,6 +149,15 @@ char get_unmodified_base(char b) {
 //' @param modbase Character scalar defining the modified base to extract.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
+//' @return A named list with elements \code{"read_id"},
+//'     \code{"forward_read_position"}, \code{"ref_position"},
+//'     \code{"chrom"}, \code{"ref_strand"}, \code{"call_code"},
+//'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
+//'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
+//'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
+//'     modified bases and equal to \code{1 - call_prob} for unmodified bases
+//'     (\code{call_code == "-"}).
+//'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 //'                           package = "footprintR")
@@ -161,18 +170,21 @@ char get_unmodified_base(char b) {
 //'      https://github.com/samtools/htslib/blob/develop/samples/modstate.c
 //'     Documentation of the htslib C API is available in
 //'      https://github.com/samtools/htslib/blob/develop/htslib/sam.h
+//'     Description of returned values
+//'      https://nanoporetech.github.io/modkit/intro_extract.html
 //'
 //' @author Michael Stadler
 //'
 //' @noRd
 //' @keywords internal
- // [[Rcpp::export]]
+// [[Rcpp::export]]
 Rcpp::List read_modbam(std::string inname_str,
                        std::vector<std::string> regions,
                        char modbase,
                        bool verbose = false) {
     // variable declarations
     int c = 0, i = 0, j = 0, r = 0, impl = 0, qseq_len = 0, pos = 0, strand = 0;
+    int n_unaligned = 0, n_total = 0;
     samFile *infile = NULL;
     sam_hdr_t *in_samhdr = NULL;
     bam1_t *bamdata = NULL;
@@ -185,14 +197,15 @@ Rcpp::List read_modbam(std::string inname_str,
     int buffer_len = 2000;
     char buffer[2000];
 
-    std::vector<std::string> read_name;
-    std::vector<char> modified_base;
+    std::vector<std::string> read_id;
+    std::vector<char> call_code;
     std::vector<char> canonical_base;
-    std::vector<char> strand_vec;
-    std::vector<std::string> ref_name;
-    std::vector<int> read_position;
+    std::vector<char> ref_strand;
+    std::vector<std::string> chrom;
+    std::vector<int> aligned_read_position;
+    std::vector<int> forward_read_position;
     std::vector<int> ref_position;
-    std::vector<double> call_prob;
+    std::vector<double> mod_prob;
 
     const char* inname = inname_str.c_str();
 
@@ -315,41 +328,65 @@ Rcpp::List read_modbam(std::string inname_str,
                     // if (seq_nt16_str[bam_seqi(data, i)] == unmodbase) {
                     if (qseq[pos] == unmodbase) {
                         // base of the right type -> add to results
-                        read_name.push_back(bam_get_qname(bamdata));
-                        read_position.push_back(i);
-                        ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-                        modified_base.push_back('-');
+                        read_id.push_back(bam_get_qname(bamdata));
+                        aligned_read_position.push_back(i);
+                        forward_read_position.push_back(pos);
+                        chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
+                        call_code.push_back('-');
                         canonical_base.push_back(canonical);
-                        // strand_vec.push_back(bam_is_rev(bamdata) ? '-' : '+');
-                        strand_vec.push_back(strand ? '-' : '+');
-                        call_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
+                        ref_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
+                        // mod_strand.push_back(strand ? '-' : '+');
+                        mod_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
                     }
                 }
                 //modifications
                 for (j = 0; j < r; j++) {
                     if (mod[j].modified_base == modbase) {
                         // found modified base of the right type -> add to results
-                        read_name.push_back(bam_get_qname(bamdata));
-                        read_position.push_back(i);
-                        ref_name.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-                        modified_base.push_back((char) mod[j].modified_base);
+                        read_id.push_back(bam_get_qname(bamdata));
+                        aligned_read_position.push_back(i);
+                        forward_read_position.push_back(pos);
+                        chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
+                        call_code.push_back((char) mod[j].modified_base);
                         canonical_base.push_back((char) mod[j].canonical_base);
-                        strand_vec.push_back(mod[j].strand ? '-' : '+');
-                        // qual of `N` corresponds to call probability
+                        ref_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
+                        // mod_strand.push_back(mod[j].strand ? '-' : '+');
+                        // `qual` of N corresponds to call probability
                         //     in [N/256, (N+1)/256] -> store midpoint
-                        call_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
+                        mod_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
                     }
                 }
             }
         }
 
-        // ... convert read positions to reference coordinates
-        std::vector<int> read_position_converted = read_to_reference_pos(bamdata, read_position);
-        ref_position.reserve(ref_position.size() + read_position_converted.size());
+        // ... convert 0-based read positions to 1-based reference coordinates
+        //     (a coordinate of -1 means unaligned, e.g. soft-masked)
+        std::vector<int> aligned_read_position_converted =
+            read_to_reference_pos(bamdata, aligned_read_position);
+        ref_position.reserve(ref_position.size() +
+            aligned_read_position_converted.size());
         ref_position.insert(ref_position.end(),
-                            read_position_converted.begin(),
-                            read_position_converted.end());
-        read_position.clear();
+                            aligned_read_position_converted.begin(),
+                            aligned_read_position_converted.end());
+        aligned_read_position.clear();
+
+        // ... remove unaligned (e.g. soft-masked) read-bases
+        //     (iterate backwards to avoid messing up indices
+        //      when removing elements)
+        n_total += ref_position.size();
+        for (size_t e = ref_position.size(); e-- > 0;) {
+            if (ref_position[e] == -1) {
+                n_unaligned++;
+                read_id.erase(read_id.begin() + e);
+                chrom.erase(chrom.begin() + e);
+                forward_read_position.erase(forward_read_position.begin() + e);
+                ref_position.erase(ref_position.begin() + e);
+                call_code.erase(call_code.begin() + e);
+                canonical_base.erase(canonical_base.begin() + e);
+                ref_strand.erase(ref_strand.begin() + e);
+                mod_prob.erase(mod_prob.begin() + e);
+            }
+        }
     }
     if (c != -1) {
         Rprintf("Error while reading from %s - aborting\n", inname);
@@ -365,13 +402,14 @@ Rcpp::List read_modbam(std::string inname_str,
     end:
         // create return list
         Rcpp::List res = Rcpp::List::create(
-            Rcpp::_["read_name"] = read_name,
-            Rcpp::_["ref_name"] = ref_name,
+            Rcpp::_["read_id"] = read_id,
+            Rcpp::_["forward_read_position"] = forward_read_position,
             Rcpp::_["ref_position"] = ref_position,
-            Rcpp::_["modified_base"] = modified_base,
+            Rcpp::_["chrom"] = chrom,
+            Rcpp::_["ref_strand"] = ref_strand,
+            Rcpp::_["call_code"] = call_code,
             Rcpp::_["canonical_base"] = canonical_base,
-            Rcpp::_["strand"] = strand_vec,
-            Rcpp::_["call_prob"] = call_prob);
+            Rcpp::_["mod_prob"] = mod_prob);
 
         //cleanup
         if (qseq) {
