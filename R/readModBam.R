@@ -63,7 +63,7 @@ readModBam <- function(bamfiles,
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
     }
-    .assertScalar(x = regions, type = "GRanges")
+    .assertVector(x = regions, type = "GRanges")
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
     .assertScalar(x = modbase, type = "character",
