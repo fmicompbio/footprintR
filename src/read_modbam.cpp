@@ -185,6 +185,7 @@ Rcpp::List read_modbam(std::string inname_str,
     // variable declarations
     int c = 0, i = 0, j = 0, r = 0, impl = 0, qseq_len = 0, pos = 0, strand = 0;
     int n_unaligned = 0, n_total = 0;
+    bool had_error = false;
     samFile *infile = NULL;
     sam_hdr_t *in_samhdr = NULL;
     bam1_t *bamdata = NULL;
@@ -214,11 +215,13 @@ Rcpp::List read_modbam(std::string inname_str,
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
-        Rprintf("Failed to initialize bamdata\n");
+        had_error = true;
+        snprintf(buffer, buffer_len, "Failed to initialize bamdata\n");
         goto end;
     }
     if (!(ms = hts_base_mod_state_alloc())) {
-        printf("Failed to allocate state memory\n");
+        had_error = true;
+        snprintf(buffer, buffer_len, "Failed to allocate state memory\n");
         goto end;
     }
 
@@ -228,19 +231,24 @@ Rcpp::List read_modbam(std::string inname_str,
         Rcpp::message(Rcpp::wrap(buffer));
     }
     if (!(infile = sam_open(inname, "r"))) {
-        Rprintf("Could not open input file %s\n", inname);
+        had_error = true;
+        snprintf(buffer, buffer_len, "Could not open input file %s\n", inname);
         goto end;
     }
 
     // load index file
     if (!(idx = sam_index_load(infile, inname))) {
-        Rprintf("Failed to load the index for %s\n", inname);
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to load the index for %s\n", inname);
         goto end;
     }
 
     // read header
     if (!(in_samhdr = sam_hdr_read(infile))) {
-        Rprintf("Failed to read header from file %s\n", inname);
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to read header from file %s\n", inname);
         goto end;
     }
 
@@ -253,7 +261,8 @@ Rcpp::List read_modbam(std::string inname_str,
 
     // create multi-region iterator
     if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
-        printf("Failed to get iterator\n");
+        had_error = true;
+        snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
         goto end;
     }
 
@@ -287,8 +296,10 @@ Rcpp::List read_modbam(std::string inname_str,
 
         // ... parse base modifications
         if (bam_parse_basemod(bamdata, ms)) {
-            Rprintf("Failed to parse the base mods (read %s)\n",
-                    bam_get_qname(bamdata));
+            had_error = true;
+            snprintf(buffer, buffer_len,
+                     "Failed to parse the base mods (read %s)\n",
+                     bam_get_qname(bamdata));
             goto end;
         }
         hts_base_mod mod[5] = {{0}};  //for ATCGN
@@ -314,13 +325,17 @@ Rcpp::List read_modbam(std::string inname_str,
                 // r: number of found modifications (>=1, 0 or -1 if failed)
                 r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
                 if (r <= -1) {
-                    Rprintf("Failed to get modifications (read %s)\n",
-                            bam_get_qname(bamdata));
+                    had_error = true;
+                    snprintf(buffer, buffer_len,
+                             "Failed to get modifications (read %s)\n",
+                             bam_get_qname(bamdata));
                     goto end;
 
                 } else if (r > (sizeof(mod) / sizeof(mod[0]))) {
-                    Rprintf("More modifications than footprintR:::read_modbam can handle (read %s)\n",
-                            bam_get_qname(bamdata));
+                    had_error = true;
+                    snprintf(buffer, buffer_len,
+                             "More modifications than footprintR:::read_modbam can handle (read %s)\n",
+                             bam_get_qname(bamdata));
                     goto end;
 
                 } else if (!r && impl) {
@@ -389,7 +404,9 @@ Rcpp::List read_modbam(std::string inname_str,
         }
     }
     if (c != -1) {
-        Rprintf("Error while reading from %s - aborting\n", inname);
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Error while reading from %s - aborting\n", inname);
         goto end;
     }
     if (verbose) {
@@ -400,17 +417,6 @@ Rcpp::List read_modbam(std::string inname_str,
     }
 
     end:
-        // create return list
-        Rcpp::List res = Rcpp::List::create(
-            Rcpp::_["read_id"] = read_id,
-            Rcpp::_["forward_read_position"] = forward_read_position,
-            Rcpp::_["ref_position"] = ref_position,
-            Rcpp::_["chrom"] = chrom,
-            Rcpp::_["ref_strand"] = ref_strand,
-            Rcpp::_["call_code"] = call_code,
-            Rcpp::_["canonical_base"] = canonical_base,
-            Rcpp::_["mod_prob"] = mod_prob);
-
         //cleanup
         if (qseq) {
             free((void*) qseq);
@@ -438,5 +444,23 @@ Rcpp::List read_modbam(std::string inname_str,
         if (idx) {
             hts_idx_destroy(idx);
         }
-        return res;
+
+        if (had_error) {
+            // we encountered an error (message in `buffer`) --> stop
+            Rcpp::stop(buffer);
+
+        } else {
+            // create return list
+            Rcpp::List res = Rcpp::List::create(
+                Rcpp::_["read_id"] = read_id,
+                Rcpp::_["forward_read_position"] = forward_read_position,
+                Rcpp::_["ref_position"] = ref_position,
+                Rcpp::_["chrom"] = chrom,
+                Rcpp::_["ref_strand"] = ref_strand,
+                Rcpp::_["call_code"] = call_code,
+                Rcpp::_["canonical_base"] = canonical_base,
+                Rcpp::_["mod_prob"] = mod_prob);
+
+            return res;
+        }
 }
