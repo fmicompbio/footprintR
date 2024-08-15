@@ -132,14 +132,17 @@ readModBam <- function(bamfiles,
     modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
     for (nm in names(bamfiles)) {
         x <- resLL[[nm]]
-        # only record observed values
-        modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
-            i = GenomicRanges::match(gposL[[nm]], gpos),
-            j = match(x$read_id, readL[[nm]]),
-            x = x$mod_prob,
-            dims = c(length(gpos), length(readL[[nm]])),
-            dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
-        ))
+        if (length(x$read_id) > 0) {
+            modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
+                i = GenomicRanges::match(gposL[[nm]], gpos),
+                j = match(x$read_id, readL[[nm]]),
+                x = x$mod_prob,
+                dims = c(length(gpos), length(readL[[nm]])),
+                dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
+            ))
+        } else {
+            modmat[[nm]] <- SparseArray::SparseArray(matrix(nrow = length(gpos), ncol = 0))
+        }
     }
     # reduce to a single sparse matrix
     readnames <- do.call(c, lapply(modmat, colnames))
@@ -156,11 +159,13 @@ readModBam <- function(bamfiles,
         ),
         metadata = list()
     )
-    rownames(se) <- paste0(
-        GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),
-        ":", BiocGenerics::pos(SummarizedExperiment::rowRanges(se)), ":",
-        BiocGenerics::strand(SummarizedExperiment::rowRanges(se)))
-    colnames(se) <- rownames(SummarizedExperiment::colData(se))
+    if (nrow(se) > 0) {
+        rownames(se) <- paste0(
+            GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),
+            ":", BiocGenerics::pos(SummarizedExperiment::rowRanges(se)), ":",
+            BiocGenerics::strand(SummarizedExperiment::rowRanges(se)))
+        colnames(se) <- rownames(SummarizedExperiment::colData(se))
+    }
 
     se
 }
