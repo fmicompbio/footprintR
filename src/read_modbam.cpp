@@ -179,6 +179,8 @@ Rcpp::List read_modbam(std::string inname_str,
     hts_itr_t *iter = NULL;
     unsigned int regcnt = 0, alncnt = 0;
     char unmodbase = '0', canonical = '0', **regions_c = NULL, *qseq = NULL;
+    int buffer_len = 2000;
+    char buffer[2000];
 
     std::vector<std::string> read_name;
     std::vector<char> modified_base;
@@ -206,7 +208,8 @@ Rcpp::List read_modbam(std::string inname_str,
 
     // open input file
     if (verbose) {
-        Rprintf("opening input file %s\n", inname);
+        snprintf(buffer, buffer_len, "    opening input file %s", inname);
+        Rcpp::message(Rcpp::wrap(buffer));
     }
     if (!(infile = sam_open(inname, "r"))) {
         Rprintf("Could not open input file %s\n", inname);
@@ -240,7 +243,8 @@ Rcpp::List read_modbam(std::string inname_str,
 
     // iterate over regions
     if (verbose) {
-        Rprintf("reading alignments overlapping any of %u regions\n", regcnt);
+        snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u regions", regcnt);
+        Rcpp::message(Rcpp::wrap(buffer));
     }
     // read overlapping alignments using iterator
     while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -349,7 +353,10 @@ Rcpp::List read_modbam(std::string inname_str,
         goto end;
     }
     if (verbose) {
-        Rprintf("read %u alignments\n", alncnt);
+        snprintf(buffer, buffer_len,
+                 "    removed %d unaligned (e.g. soft-masked) of %d called bases\n    read %u alignments",
+                 n_unaligned, n_total, alncnt);
+        Rcpp::message(Rcpp::wrap(buffer));
     }
 
     end:
