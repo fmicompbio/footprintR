@@ -76,14 +76,17 @@ test_that("readModBam works", {
 
     # ... content se1
     expect_identical(dim(se1), c(12571L, 10L))
-    ov_row <- findOverlaps(se0, se1)
-    expect_length(ov_row, 8534L)
-    ov_col <- match(colnames(se0), colnames(se1))
-    expect_true(sum(!is.na(ov_col)) == 10L)
-    # plot(as.vector(assay(se1, "mod_prob")[subjectHits(ov_row), na.omit(ov_col)]),
-    #      as.vector(assay(se0, "mod_prob")[queryHits(ov_row), !is.na(ov_col)]))
-    expect_true(cor(as.vector(assay(se1, "mod_prob")[subjectHits(ov_row), na.omit(ov_col)]),
-                    as.vector(assay(se0, "mod_prob")[queryHits(ov_row), !is.na(ov_col)])) > 0.99)
+    shared_rows <- intersect(rownames(se0), rownames(se1))
+    shared_cols <- intersect(colnames(se0), colnames(se1))
+    expect_length(shared_rows, 8534L)
+    expect_length(shared_cols, 10L)
+    nonzero <- as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols]) > 0 &
+        as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols]) > 0
+    # plot(as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols])[nonzero],
+    #      as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero])
+    expect_equal(as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols])[nonzero],
+                 as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
+                 tolerance = 1e-6)
 
     # ... content se2
     expect_identical(dim(se2), dim(se3))
@@ -92,14 +95,17 @@ test_that("readModBam works", {
 
     # ... content se3
     expect_identical(dim(se3), c(9266L, 5L))
-    ov_row <- findOverlaps(se0, se3)
-    expect_length(ov_row, 7809L)
-    ov_col <- match(colnames(se0), colnames(se3))
-    expect_true(sum(!is.na(ov_col)) == 5L)
-    # plot(as.vector(assay(se3, "mod_prob")[subjectHits(ov_row), na.omit(ov_col)]),
-    #      as.vector(assay(se0, "mod_prob")[queryHits(ov_row), !is.na(ov_col)]))
-    expect_true(cor(as.vector(assay(se3, "mod_prob")[subjectHits(ov_row), na.omit(ov_col)]),
-                    as.vector(assay(se0, "mod_prob")[queryHits(ov_row), !is.na(ov_col)])) > 0.99)
+    shared_rows <- intersect(rownames(se0), rownames(se3))
+    shared_cols <- intersect(colnames(se0), colnames(se3))
+    expect_length(shared_rows, 7809L)
+    expect_length(shared_cols, 5L)
+    nonzero <- as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols]) > 0 &
+        as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols]) > 0
+    # plot(as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols])[nonzero],
+    #      as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero])
+    expect_equal(as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols])[nonzero],
+                 as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
+                 tolerance = 1e-6)
 
     # ... content se4
     expect_identical(dim(se4), c(0L, 0L))
