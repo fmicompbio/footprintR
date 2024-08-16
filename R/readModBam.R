@@ -12,7 +12,7 @@
 #'     is the length of \code{bamfiles}. All \code{bamfiles} must have an index.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
 #'     genomic regions to extract the reads from. Alternatively, regions can be
-#'     specified as a character scalar (e.g. "chr1:1200-1300") that can be
+#'     specified as a character vector (e.g. "chr1:1200-1300") that can be
 #'     coerced into a \code{GRanges} object. Note that the reads are not
 #'     trimmed to the boundaries of the specified ranges. As a result, returned
 #'     positions will typically extend out of the specified regions.
