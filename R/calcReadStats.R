@@ -295,8 +295,8 @@ calcReadStats <- function(se,
 
     SummarizedExperiment::colData(se) <-
         cbind(SummarizedExperiment::colData(se), stats_res)
-    S4Vectors::metadata(se) <- c(S4Vectors::metadata(se),
-                                 as.list(environment(), all = TRUE))
+    # S4Vectors::metadata(se) <- c(S4Vectors::metadata(se),
+    #                              as.list(environment(), all = TRUE))
     S4Vectors::metadata(se)$stats <- param_names
     S4Vectors::metadata(se)$min.Nobs.ppos <- min.cov
     S4Vectors::metadata(se)$Lags <- LagRangeValues
