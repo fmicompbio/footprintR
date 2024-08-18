@@ -2,7 +2,7 @@
 #'
 #' @description
 #' This function calculates various per-read summary statistics on modification
-#' probabilities or calls from a code{\link[SummarizedExperiment]{SummarizedExperiment}}
+#' probabilities or calls from a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
 #' object with genomic positions in rows and reads in columns. See details
 #' for more information on the statistics that are calculated.
 #'
@@ -85,8 +85,8 @@
 #'         typically covers the signal of nucleosome periodicity.}
 #'  }
 #'
-#' @return A code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with {colData} filtered for positions according to \code{regions},
+#' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
+#'     with \code{colData} filtered for positions according to \code{regions},
 #'     \code{sequence.context} and \code{min.Nobs.ppos} arguments and extended
 #'     to include the read statistics.
 #'
@@ -97,7 +97,9 @@
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
-#' calcReadStats(se, plot=FALSE)
+#' se_withReadStats <- calcReadStats(se, plot=FALSE)
+#' rowData(se_withReadStats)
+#' colData(se_withReadStats)
 #'
 #' @importFrom BiocGenerics start
 #' @import ggplot2
