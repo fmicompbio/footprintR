@@ -31,6 +31,7 @@ Imports:
     scuttle,
     parallel,
     dplyr,
+    tidyr,
     rlang,
     ggplot2,
     scales,
