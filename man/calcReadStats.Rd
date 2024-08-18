@@ -23,7 +23,9 @@ object with assay \code{"mod_prob"} typically returned by
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object limiting the
 positions included in the calculations to the ones overlapping the
-corresponding genomic regions.}
+corresponding genomic regions. Alternatively, regions can be
+specified as a character vector (e.g. "chr1:1200-1300") that can be
+coerced into a \code{GRanges} object.}
 
 \item{sequence.context}{A character vector with sequence context(s)
 to include in the calculations. Only positions that match one of the
