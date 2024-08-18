@@ -39,8 +39,6 @@ Imports:
     purrr,
     SparseArray,
     Matrix,
-    Rhtslib,
-    zlibbioc,
     Rcpp
 Suggests:
     rmarkdown,
