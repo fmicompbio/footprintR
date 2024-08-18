@@ -554,8 +554,9 @@ plotRegion <- function(se,
         mapping = ggplot2::aes(x = .data[["position"]],
                                y = .data[["read"]],
                                fill = .data[["value"]])) +
-        ggplot2::scale_fill_gradient(low = "white", high = "black",
-                                     na.value = "beige", limits = c(0, 1)) +
+        ggplot2::scale_fill_viridis_c(begin = 0, end = 1,
+                                      option = "cividis",
+                                      direction = -1, na.value = "beige") +
         ggplot2::facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
         ggplot2::labs(x = ifelse(is.numeric(df$position),
                                  paste0("Position on ", chr),
