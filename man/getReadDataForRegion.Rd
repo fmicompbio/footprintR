@@ -32,7 +32,7 @@ Alternatively, the region can be specified as a character scalar (e.g.
 is set automatically).}
 
 \item{arglist.filterReadData}{A named list with further argument to pass to
-\code{\link{filterReadData}}. Alternatively, it can be set to \code{NULL},
+\code{filterReadData}. Alternatively, it can be set to \code{NULL},
 in which case no filtering will be performed.}
 
 \item{assay.type}{A string scalar specifying the assay name to store

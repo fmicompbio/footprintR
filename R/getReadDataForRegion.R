@@ -29,7 +29,7 @@
 #'     \code{\link{readModkitExtract}} (must not contain \code{fnames}, which
 #'     is set automatically).
 #' @param arglist.filterReadData A named list with further argument to pass to
-#'     \code{\link{filterReadData}}. Alternatively, it can be set to \code{NULL},
+#'     \code{filterReadData}. Alternatively, it can be set to \code{NULL},
 #'     in which case no filtering will be performed.
 #' @param assay.type A string scalar specifying the assay name to store
 #'     modification probabilities.
