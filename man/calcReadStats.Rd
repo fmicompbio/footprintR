@@ -18,70 +18,100 @@ calcReadStats(
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-object with assay \code{"mod_prob"} typically
-returned by \code{\link{readModkitExtract}} or \code{\link{readModBam}}}
+object with assay \code{"mod_prob"} typically returned by
+\code{\link{readModkitExtract}} or \code{\link{readModBam}}.}
 
-\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object limiting the positions included in the calculations
-to the ones overalapping the corresponding genomic regions.}
+\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object limiting the
+positions included in the calculations to the ones overlapping the
+corresponding genomic regions.}
 
 \item{sequence.context}{A character vector with sequence context(s)
-to include in the calculations. Only positions that match one of the provided sequence
-contexts will be included in the plot. Sequence contexts can be provided
-using IUPAC redundancy codes. The sequence contexts of modified bases are
-obtained from \code{rowData(se)$sequence.context} and thus requires that
-\code{se} contains the appropriate information, for example by setting
-the \code{sequence.context} and \code{sequence.reference} arguments of
-\code{\link{readModkitExtract}} when it was generated, or by adding it using
-\code{\link{seqContext}}.}
+to include in the calculations. Only positions that match one of the
+provided sequence contexts will be included. Sequence contexts can be
+provided using IUPAC redundancy codes. The sequence contexts of modified
+bases are obtained from \code{rowData(se)$sequence.context} and thus
+requires that \code{se} contains the appropriate information, for example
+by setting the \code{sequence.context} and \code{sequence.reference}
+arguments of \code{\link{readModkitExtract}} when it was generated,
+or by adding it using \code{\link{seqContext}}.}
 
-\item{stats}{Character vector specifying which statistics to calculate. When set to NULL
-all available statistics are calculated. See the details section for a complete list of available
-read statistics}
+\item{stats}{Character vector specifying which statistics to calculate.
+When set to NULL all available statistics are calculated. See details
+for a complete list of available read statistics.}
 
-\item{min.Nobs.ppos}{A value >=1 indicating the minimum coverage on individual positions for them to be included in the calculations.  In high coverage data this is an effective filter for removing spurious modbases, typically the
-result of erroneous basecalling.
-The default \code{NULL} sets its value to Q3-0.5*IQR where Q3 and IQR are the third quartile and interquartile range of the coverage distribution estimated from the data in \code{se}.}
+\item{min.Nobs.ppos}{A numeric scalar value >=1 indicating the minimum
+coverage on individual positions for them to be included in the
+calculations. In high coverage data this is an effective filter for
+removing spurious modbases, typically the result of erroneous
+basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
+Q3 and IQR are the third quartile and interquartile range of the coverage
+distribution estimated from the data in \code{se}.}
 
-\item{min.Nobs.pread}{The minimum number of observed modifiable bases per read for it to be included in the calculations. \code{NA} values are returned for the reads that do not pass this threshold.}
+\item{min.Nobs.pread}{A numeric scalar with the minimum number of observed
+modifiable bases per read for it to be included in the calculations.
+\code{NA} values are returned for the reads that do not pass this
+threshold.}
 
-\item{LowConf}{Minimum call confidence below which calls are considered "low confidence"}
+\item{LowConf}{A numeric scalar with the minimum call confidence below which
+calls are considered "low confidence".}
 
-\item{LagRange}{Range of lags for the calculation of autocorrelation and partial autocorrelation (see details section)}
+\item{LagRange}{A numeric vector of two values (minimum and maxium) defining
+the range of lags for the calculation of autocorrelation and partial
+autocorrelation (see details section).}
 
-\item{plot}{Logical: whether to produce plots for the distributions of the calculated read statistics}
+\item{plot}{A locial scalar, defining whether to produce plots for the
+distributions of the calculated read statistics.}
 }
 \value{
 A code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with {colData} filtered for positions according to the \code{region}, \code{sequence.context} and \code{min.Nobs.ppos} parameters and extended to include the read statistics.
+with {colData} filtered for positions according to \code{regions},
+\code{sequence.context} and \code{min.Nobs.ppos} arguments and extended
+to include the read statistics.
 }
 \description{
-This function calculates various per-read summary statistics on modification probabilities or calls
-from a code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with genomic positions in rows and reads in columns. See details section for more information
-on the statistics that are calculated.
+This function calculates various per-read summary statistics on modification
+probabilities or calls from a code{\link[SummarizedExperiment]{SummarizedExperiment}}
+object with genomic positions in rows and reads in columns. See details
+for more information on the statistics that are calculated.
 }
 \details{
-A collection of location/scatter statistics and information theoretic/signal-processing metrics
-for the modification probability, confidence or modification calls value vectors across individual reads. When \code{sequence.context}, \code{min.coverage} or
-\code{min.Nobs.ppos} filters are enforced, only modifiable bases passing the filters are included in the calculations.
-\itemize{
-\item MeanModProb: Mean  modification probability across the read.
-\item FracMod: Fraction of modified bases. That is, the ratio of modifiable bases with modification probability >= 0.5 over all modifiable bases.
-\item MeanConf:  Mean call confidence across the read.
-\item MeanConfUnm: Mean call confidence confined to unmodified bases ( modifiable bases with modification probability < 0.5).
-\item MeanConfMod: Mean call confidence confined to modified bases ( modifiable bases with modification probability >= 0.5).
-\item FracLowConf: Fraction of modifiable bases called with low confidence (call confidence < 0.7)
-\item IQRModProb: Interquartile range of modification probabilities across the read.
-\item sdModProb Standard deviation of modification probabilities across the read.
-\item SEntrModProb: Sample Entropy of the modification probability signal. Sample entropy is a metric assessing the complexity of 1D physiological signals.
-The higher Sample Entropy the more irregular, unpredictable and therefore complex are
-}
-
-\href{https://en.wikipedia.org/wiki/Sample_entropy}{wikipedia:Sample_entropy}
-\itemize{
-\item Lag1DModProb: Mean Lag1 differences of modification calls: mean(Mod\link{i}-Mod\link{i-1}), where Mod is a {0,1} modification call
-\item ACModProb: Autocorrelation of the modification probability values for lags in the range \code{LagRange}. This range typically covers the signal of nucleosome periodicity
-\item PACModProb: Partial autocorrelation of the modification probability values for lags in the range \code{LagRange}. This range typically covers the signal of nucleosome periodicity
+Calculates a collection of location/scatter statistics and information
+theoretic/ signal-processing metrics for the modification probability,
+confidence or modification call value vectors across individual reads. When
+\code{sequence.context}, \code{min.coverage} or \code{min.Nobs.ppos} filters
+are enforced, only modifiable bases passing the filters are included in the
+calculations. The following statistics are available:
+\describe{
+\item{MeanModProb}{: Mean modification probability across the read.}
+\item{FracMod}{: Fraction of confidently modified bases, defined as the
+ratio of modifiable bases with modification probability >= 0.5 over
+all modifiable bases.}
+\item{MeanConf}{:  Mean call confidence across the read.}
+\item{MeanConfUnm}{: Mean call confidence confined to unmodified bases
+(modifiable bases with modification probability < 0.5).}
+\item{MeanConfMod}{: Mean call confidence confined to modified bases
+(modifiable bases with modification probability >= 0.5).}
+\item{FracLowConf}{: Fraction of modifiable bases called with low
+confidence (call confidence < \code{LowConf}).}
+\item{IQRModProb}{: Interquartile range of modification probabilities
+across the read.}
+\item{sdModProb}{: Standard deviation of modification probabilities
+across the read.}
+\item{SEntrModProb}{: Sample entropy of the modification probability
+signal. Sample entropy is a metric assessing the complexity of
+one-dimensional physiological signals. The higher the sample entropy,
+the more irregular, unpredictable and therefore complex the signal.
+See \href{https://en.wikipedia.org/wiki/Sample_entropy}{wikipedia:Sample_entropy}
+for more details.}
+\item{Lag1DModProb}{: Mean Lag1 differences of modification calls,
+defined as: \code{mean(Mod[i]-Mod[i-1])}, where \code{Mod} is a
+\code{{0,1}} modification call.}
+\item{ACModProb}{: Autocorrelation of the modification probability values
+for lags in the range \code{LagRange}. This range typically covers
+the signal of nucleosome periodicity.}
+\item{PACModProb}{: Partial autocorrelation of the modification
+probability values for lags in the range \code{LagRange}. This range
+typically covers the signal of nucleosome periodicity.}
 }
 }
 \examples{
@@ -90,8 +120,6 @@ modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
            modbase = "a", verbose = TRUE)
 calcReadStats(se, plot=FALSE)
-
-
 
 }
 \author{
