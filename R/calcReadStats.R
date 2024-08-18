@@ -88,11 +88,12 @@
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with \code{colData} filtered for positions according to \code{regions},
 #'     \code{sequence.context} and \code{min.Nobs.ppos} arguments and extended
-#'     to include the read statistics.
+#'     to include the read statistics in its row- and column-data.
 #'
 #' @author Panagiotis Papapasaikas
 #'
 #' @examples
+#' library(SummarizedExperiment)
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
