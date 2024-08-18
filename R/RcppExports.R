@@ -63,21 +63,21 @@ read_modbam_cpp <- function(inname_str, regions, modbase, verbose = FALSE) {
 #' given as argument. Sample Entropy is  used to assess the complexity of physiological
 #' time-series signals.
 #' This C++  implementation is a modified version of:
-#' https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6 
+#' https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6
 #'
-#' @param data  Numeric vector 
+#' @param data  Numeric vector
 #' @param m  Integer, the embedding dimension, as for chaotic time series; a preferred value is 2.
-#' @param r  Scaling parameter for the filtering factor. The filtering factor is r x standard deviation of the signal 
+#' @param r  Scaling parameter for the filtering factor. The filtering factor is r x standard deviation of the signal
 #'
 #' @return The Sample Entropy value of the time-series signal
 #'
 #' @examples
 #' ts <- runif(100,0,1)
 #' sampleEntropy(ts, m=2L, r=0.2)
-#' 
+#'
 #' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 #' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
-#' 
+#'
 sampleEntropy <- function(data, m, r) {
     .Call(`_footprintR_sampleEntropy`, data, m, r)
 }

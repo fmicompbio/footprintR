@@ -261,18 +261,22 @@ calcReadStats <- function(se,
         param_names <- names(statFunctions)
     }
 
-    # Iterate through the logicals and add columns to stats_res if the parameter is TRUE
-    stats_res <- data.frame(row.names = colnames(se))
+    # Iterate through the logicals and add columns to stats_res
+    # if the parameter is TRUE
+    stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(se))
+    row.names(stats_res) <- colnames(se)
     for (param in param_names) {
-        stats_res[[param]] <- NA
 
         if (!grepl("AC", param)) {
-            stats_res[use.reads,][[param]] <- sapply(use.reads, function(r) {
+            stats_res[[param]] <- rep(NA, ncol(se))
+            stats_res[use.reads, param] <- vapply(use.reads, function(r) {
                 v <- NZvals_byCol[[r]]
                 statFunctions[[param]](v)
-            })
+            }, numeric(1))
         } else {
-            stats_res[use.reads,][[param]] <- I(lapply(use.reads, function(r) {
+            stats_res[[param]] <- rep(list(rep(NA, length(LagRangeValues))),
+                                      ncol(se))
+            stats_res[use.reads, param] <- I(lapply(use.reads, function(r) {
                 v <- NZvals_byCol[[r]]
                 statFunctions[[param]](v)
             }))
