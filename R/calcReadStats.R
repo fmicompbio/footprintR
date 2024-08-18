@@ -103,7 +103,7 @@
 #' @import ggplot2
 #' @importFrom tidyr gather
 #' @importFrom S4Vectors metadata
-#' @importFrom SparseArray rowSums
+#' @importFrom SparseArray rowSums nzwhich nzvals
 #' @importFrom SummarizedExperiment assay rowData assayNames
 #' @importFrom stats sd IQR acf pacf
 #' @importFrom Biostrings vcountPattern
