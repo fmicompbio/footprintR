@@ -109,6 +109,7 @@
 #' @importFrom SummarizedExperiment assay rowData assayNames
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom Biostrings vcountPattern
+#' @importFrom rlang .data
 #'
 #' @export
 calcReadStats <- function(se,
@@ -282,7 +283,7 @@ calcReadStats <- function(se,
        print(
        ggplot(gather(as.data.frame(
            stats_res[use.reads, !grepl("AC",colnames(stats_res))])),
-              aes(value)) +
+              aes(.data[["value"]])) +
             geom_histogram(bins = 32) +
             facet_wrap(~ key, scales = 'free_x')
        )
