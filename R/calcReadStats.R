@@ -105,7 +105,7 @@
 #' @importFrom S4Vectors metadata
 #' @importFrom SparseArray rowSums nzwhich nzvals
 #' @importFrom SummarizedExperiment assay rowData assayNames
-#' @importFrom stats sd IQR acf pacf
+#' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom Biostrings vcountPattern
 #'
 #' @export
@@ -155,14 +155,14 @@ calcReadStats <- function(se,
         ACModProb = function(x, lag.max = max(LagRange),
                              xrange = seq(LagRange[1], LagRange[2])) {
             if (length(x) > lag.max) {
-                stats::acf(x, na.action = na.pass, lag.max = lag.max,
+                stats::acf(x, na.action = stats::na.pass, lag.max = lag.max,
                            plot = FALSE)$acf[xrange]
             } else { rep(0, length(xrange)) }
         },
         PACModProb = function(x, lag.max = max(LagRange),
                               xrange = seq(LagRange[1], LagRange[2])) {
             if (length(x) > lag.max) {
-                stats::pacf(x, na.action = na.pass, lag.max = lag.max,
+                stats::pacf(x, na.action = stats::na.pass, lag.max = lag.max,
                             plot = FALSE)$acf[xrange]
             } else{ rep(0, length(xrange)) }
         }
