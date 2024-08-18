@@ -12,7 +12,7 @@
 #'     \item{\code{\link{readModkitExtract}}}{reads the resulting output from
 #'         \code{modkit} into a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
 #'         object.}
-#'     \item{\code{\link{filterReadData}}}{calculates quality measures
+#'     \item{\code{filterReadData}}{calculates quality measures
 #'         and optionally filters out data from low quality reads.}
 #' }
 #'
@@ -52,7 +52,7 @@
 #' @seealso \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the
 #'     returned object type, \code{\link{modkitExtract}} for calling
 #'     \code{modkit}, \code{\link{readModkitExtract}} for the function
-#'     used to read the \code{modkit} output and \code{\link{filterReadData}}
+#'     used to read the \code{modkit} output and \code{filterReadData}
 #'     for filtering read-level footprinting data.
 #'
 #'
