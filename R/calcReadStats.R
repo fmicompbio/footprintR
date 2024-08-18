@@ -135,6 +135,9 @@ calcReadStats <- function(se,
 
     .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
 
+    .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
+    .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
+    LagRangeValues <- seq(LagRange[1], LagRange[2])
     statFunctions <- list(
         MeanModProb = mean,
         FracMod = function(x, c = 0.5) {
@@ -156,14 +159,14 @@ calcReadStats <- function(se,
             mean(abs(diff(xC, lag = 1)))
         },
         ACModProb = function(x, lag.max = max(LagRange),
-                             xrange = seq(LagRange[1], LagRange[2])) {
+                             xrange = LagRangeValues) {
             if (length(x) > lag.max) {
                 stats::acf(x, na.action = stats::na.pass, lag.max = lag.max,
                            plot = FALSE)$acf[xrange]
             } else { rep(0, length(xrange)) }
         },
         PACModProb = function(x, lag.max = max(LagRange),
-                              xrange = seq(LagRange[1], LagRange[2])) {
+                              xrange = LagRangeValues) {
             if (length(x) > lag.max) {
                 stats::pacf(x, na.action = stats::na.pass, lag.max = lag.max,
                             plot = FALSE)$acf[xrange]
@@ -178,9 +181,6 @@ calcReadStats <- function(se,
 
     .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
 
-    .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
-
-    .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
 
     .assertScalar(x = plot, type = "logical")
 
@@ -295,7 +295,7 @@ calcReadStats <- function(se,
                                  as.list(environment(), all = TRUE))
     S4Vectors::metadata(se)$stats <- param_names
     S4Vectors::metadata(se)$min.Nobs.ppos <- min.cov
-    S4Vectors::metadata(se)$Lags <- seq(LagRange[1], LagRange[2])
+    S4Vectors::metadata(se)$Lags <- LagRangeValues
 
     return(se)
 }
