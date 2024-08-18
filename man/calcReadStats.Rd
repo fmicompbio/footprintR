@@ -10,7 +10,7 @@ calcReadStats(
   sequence.context = NULL,
   stats = NULL,
   min.Nobs.ppos = NULL,
-  min.Nobs.pread = NULL,
+  min.Nobs.pread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
   plot = TRUE
@@ -38,8 +38,8 @@ arguments of \code{\link{readModkitExtract}} when it was generated,
 or by adding it using \code{\link{seqContext}}.}
 
 \item{stats}{Character vector specifying which statistics to calculate.
-When set to NULL all available statistics are calculated. See details
-for a complete list of available read statistics.}
+When set to \code{NULL} all available statistics are calculated. See
+details for a complete list of available read statistics.}
 
 \item{min.Nobs.ppos}{A numeric scalar value >=1 indicating the minimum
 coverage on individual positions for them to be included in the
@@ -78,7 +78,7 @@ for more information on the statistics that are calculated.
 }
 \details{
 Calculates a collection of location/scatter statistics and information
-theoretic/ signal-processing metrics for the modification probability,
+theoretic/signal-processing metrics for the modification probability,
 confidence or modification call value vectors across individual reads. When
 \code{sequence.context}, \code{min.coverage} or \code{min.Nobs.ppos} filters
 are enforced, only modifiable bases passing the filters are included in the
