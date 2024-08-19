@@ -29,7 +29,8 @@ using namespace Rcpp;
 //' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 //' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 //'
-//'@export
+//' @noRd
+//' @keywords internal
 // [[Rcpp::export]]
  double sampleEntropy(NumericVector data, int m, double r) {
      int N = data.size();
