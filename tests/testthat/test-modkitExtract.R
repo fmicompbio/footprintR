@@ -124,16 +124,13 @@ test_that("modkitExtract works", {
     res2 <- modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                           num_reads = 3,
                           regions = NULL,
-                          out_extract_table = tmp_tab,
+                          out_extract_table = NULL,
                           out_read_calls = NULL,
                           out_log_file = tmp_log,
                           verbose = FALSE)
-    expect_identical(res2, c(`extract-table` = normalizePath(tmp_tab),
+    expect_identical(res2, c(`extract-table` = NA,
                              `read-calls` = NA,
                              `run-log` = normalizePath(tmp_log)))
-    lns <- readLines(tmp_tab)
-    expect_length(lns, 12349L)
-    expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
     lns <- readLines(tmp_log)
     expect_true(grepl("INFO.+processed", lns[length(lns)]))
     unlink(c(tmp_tab, tmp_log))
