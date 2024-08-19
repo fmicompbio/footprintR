@@ -2,6 +2,8 @@ suppressPackageStartupMessages({
     library(testthat)
     library(footprintR)
     library(GenomicRanges)
+    library(SummarizedExperiment)
+    library(SparseArray)
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -102,13 +104,20 @@ test_that("modkitExtract works", {
     se1 <- readModkitExtract(tmp_calls, modbase = "a")
     suppressMessages(
         expect_message(
-            se2 <- getReadDataForRegion(bamfile = modbamfile, region = reg,
-                                        arglist.readModkitExtract = list(modbase = "a"),
-                                        arglist.filterReadData = list(),
-                                        verbose = TRUE)
+            se2 <- readModBam(bamfiles = modbamfile, regions = reg,
+                              modbase = "a", verbose = TRUE)
         )
     )
-    expect_identical(se1, se2)
+    i1 <- overlapsAny(se1, se2)
+    i2 <- match(se1[i1], se2)
+    expect_true(all(start(se1[!i1]) == 0 |
+                        rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
+    expect_identical(colData(se1), colData(se2))
+    expect_identical(rowData(se1)[i1,], rowData(se2)[i2,])
+    inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &
+                       assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)
+    expect_equal(assay(se1, "mod_prob")[i1, ][inz],
+                 assay(se2, "mod_prob")[i2, ][inz], tolerance = 1e-6)
     unlink(c(tmp_tab, tmp_calls, tmp_log))
 
     # ... one bamfile, no regions
