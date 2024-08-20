@@ -47,13 +47,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleEntropy
-double sampleEntropy(NumericVector data, int m, double r);
+double sampleEntropy(NumericVector data, unsigned int m, double r);
 RcppExport SEXP _footprintR_sampleEntropy(SEXP dataSEXP, SEXP mSEXP, SEXP rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< unsigned int >::type m(mSEXP);
     Rcpp::traits::input_parameter< double >::type r(rSEXP);
     rcpp_result_gen = Rcpp::wrap(sampleEntropy(data, m, r));
     return rcpp_result_gen;

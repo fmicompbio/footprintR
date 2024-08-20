@@ -32,8 +32,8 @@ using namespace Rcpp;
 //' @noRd
 //' @keywords internal
 // [[Rcpp::export]]
- double sampleEntropy(NumericVector data, int m, double r) {
-     int N = data.size();
+ double sampleEntropy(NumericVector data, unsigned int m, double r) {
+     unsigned int N = data.size();
 
      double ssum = std::accumulate(std::begin(data), std::end(data), 0.0);
      double mm =  ssum / N;
