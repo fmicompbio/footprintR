@@ -22,7 +22,7 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
     std::vector<int> ref_positions(read_pos.size(), -1);
 
     // iterate over the CIGAR operations i
-    for (int i = 0; i < aln->core.n_cigar && read_pos_index < read_pos.size(); i++) {
+    for (unsigned int i = 0; i < aln->core.n_cigar && read_pos_index < read_pos.size(); i++) {
         int op = bam_cigar_op(cigar[i]);  // operation type
         int op_len = bam_cigar_oplen(cigar[i]);  // operation length
 
@@ -75,9 +75,9 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
             // these do not consume any positions in the read or reference
             break;
 
-        default:
+        default: // # nocov start
             Rcpp::warning("Unknown CIGAR operation: %d", op);
-        return ref_positions;
+        return ref_positions; // # nocov end
         }
     }
 
@@ -215,14 +215,14 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
-        had_error = true;
+        had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Failed to initialize bamdata\n");
-        goto end;
+        goto end; // # nocov end
     }
     if (!(ms = hts_base_mod_state_alloc())) {
-        had_error = true;
+        had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Failed to allocate state memory\n");
-        goto end;
+        goto end; // # nocov end
     }
 
     // open input file
@@ -246,16 +246,16 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     // read header
     if (!(in_samhdr = sam_hdr_read(infile))) {
-        had_error = true;
+        had_error = true; // # nocov start
         snprintf(buffer, buffer_len,
                  "Failed to read header from file %s\n", inname);
-        goto end;
+        goto end; // # nocov end
     }
 
     // convert regions to C arrays
     regcnt = (unsigned int) regions.size();
     regions_c = (char**) calloc(regcnt, sizeof(char*));
-    for (i = 0; i < regcnt; i++) {
+    for (i = 0; i < (int) regcnt; i++) {
         regions_c[i] = (char*) regions[i].c_str();
     }
 
@@ -325,13 +325,13 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 // r: number of found modifications (>=1, 0 or -1 if failed)
                 r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
                 if (r <= -1) {
-                    had_error = true;
+                    had_error = true; // # nocov start
                     snprintf(buffer, buffer_len,
                              "Failed to get modifications (read %s)\n",
                              bam_get_qname(bamdata));
-                    goto end;
+                    goto end; // # nocov end
 
-                } else if (r > (sizeof(mod) / sizeof(mod[0]))) {
+                } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) {
                     had_error = true;
                     snprintf(buffer, buffer_len,
                              "More modifications than footprintR:::read_modbam_cpp can handle (read %s)\n",
