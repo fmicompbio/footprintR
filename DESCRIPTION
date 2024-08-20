@@ -50,8 +50,7 @@ Suggests:
     BiocParallel
 LinkingTo: 
     Rcpp,
-    Rhtslib,
-    zlibbioc
+    Rhtslib
 SystemRequirements: GNU make
 URL: https://github.com/fmicompbio/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
