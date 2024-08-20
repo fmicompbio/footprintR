@@ -152,9 +152,9 @@ calcReadStats <- function(se,
         },
         IQRModProb = function(x)  stats::IQR(x),
         sdModProb = function(x)  stats::sd(x),
-        # SEntrModProb = function(x) {
-        #     if(length(x) > 64) { sampleEntropy(x, 2L, 0.2) } else{ NA }
-        # },
+        SEntrModProb = function(x) {
+             if(length(x) > 64) { sampleEntropy(x, 2L, 0.2) } else{ NA }
+         },
         Lag1DModProb = function(x) {
             xC <- 1 * (x > 0.5)
             mean(abs(diff(xC, lag = 1)))
@@ -251,7 +251,7 @@ calcReadStats <- function(se,
 
     # Include in calculations only reads with sufficient Number of observations:
     if (min.Nobs.pread > 0) {
-        use.reads <- colnames(se)[, se$Nobs > min.Nobs.pread]
+        use.reads <- colnames(se)[se$Nobs > min.Nobs.pread]
     } else {
         use.reads <- colnames(se)
     }
