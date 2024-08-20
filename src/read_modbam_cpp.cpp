@@ -149,14 +149,15 @@ char get_unmodified_base(char b) {
 //' @param modbase Character scalar defining the modified base to extract.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
-//' @return A named list with elements \code{"read_id"},
+//' @return A named list with elements \code{"read_id"}, \code{mapq},
 //'     \code{"forward_read_position"}, \code{"ref_position"},
 //'     \code{"chrom"}, \code{"ref_strand"}, \code{"call_code"},
 //'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
 //'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 //'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
 //'     modified bases and equal to \code{1 - call_prob} for unmodified bases
-//'     (\code{call_code == "-"}).
+//'     (\code{call_code == "-"}), and \code{mapq}, which is the mapping
+//'     quality for the aligned read as recorded in the bam file.
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
@@ -199,6 +200,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     char buffer[2000];
 
     std::vector<std::string> read_id;
+    std::vector<int> mapq;
     std::vector<char> call_code;
     std::vector<char> canonical_base;
     std::vector<char> ref_strand;
@@ -344,6 +346,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                     if (qseq[pos] == unmodbase) {
                         // base of the right type -> add to results
                         read_id.push_back(bam_get_qname(bamdata));
+                        mapq.push_back(bamdata->core.qual);
                         aligned_read_position.push_back(i);
                         forward_read_position.push_back(pos);
                         chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
@@ -359,6 +362,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                     if (mod[j].modified_base == modbase) {
                         // found modified base of the right type -> add to results
                         read_id.push_back(bam_get_qname(bamdata));
+                        mapq.push_back(bamdata->core.qual);
                         aligned_read_position.push_back(i);
                         forward_read_position.push_back(pos);
                         chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
@@ -393,6 +397,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             if (ref_position[e] == -1) {
                 n_unaligned++;
                 read_id.erase(read_id.begin() + e);
+                mapq.erase(mapq.begin() + e);
                 chrom.erase(chrom.begin() + e);
                 forward_read_position.erase(forward_read_position.begin() + e);
                 ref_position.erase(ref_position.begin() + e);
@@ -453,6 +458,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             // create return list
             Rcpp::List res = Rcpp::List::create(
                 Rcpp::_["read_id"] = read_id,
+                Rcpp::_["mapq"] = mapq,
                 Rcpp::_["forward_read_position"] = forward_read_position,
                 Rcpp::_["ref_position"] = ref_position,
                 Rcpp::_["chrom"] = chrom,

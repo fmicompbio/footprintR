@@ -110,17 +110,18 @@ test_that("read_modbam_cpp works", {
     expect_type(res4, "list")
     expect_type(res5, "list")
 
-    expected_names <- c("read_id", "forward_read_position", "ref_position",
-                        "chrom", "ref_strand", "call_code", "canonical_base",
-                        "mod_prob")
+    expected_names <- c("read_id", "mapq", "forward_read_position",
+                        "ref_position", "chrom", "ref_strand", "call_code",
+                        "canonical_base", "mod_prob")
     expect_named(res1, expected_names)
     expect_named(res2, expected_names)
     expect_named(res3, expected_names)
     expect_named(res4, expected_names)
     expect_named(res5, expected_names)
 
-    expected_types <- c("character", "integer", "integer", "character",
-                        "character", "character", "character", "double")
+    expected_types <- c("character", "integer", "integer", "integer",
+                        "character", "character", "character", "character",
+                        "double")
     for (i in seq_along(expected_names)) {
         expect_type(res1[[expected_names[i]]], expected_types[i])
         expect_type(res2[[expected_names[i]]], expected_types[i])
@@ -130,6 +131,7 @@ test_that("read_modbam_cpp works", {
     }
 
     # ... content res1
+    expect_identical(res1$mapq, rep(60L, length(res1$mapq)))
     expect_true(all(nchar(res1$call_code) == 1L))
     expect_true(all(res1$canonical_base == "A"))
     expect_true(all(res1$mod_prob == -1 | (res1$mod_prob >= 0 & res1$mod_prob <= 1.0)))
@@ -184,6 +186,7 @@ test_that("read_modbam_cpp works", {
     # ... content of res4
     expect_identical(res4, list(
         read_id = rep(c("artificial-read-1", "artificial-read-2"), c(5, 3)),
+        mapq = rep(10L, 8),
         forward_read_position = c(0L, 7L, 10L, 15L, 19L, 21L, 15L, 7L),
         ref_position = c(6940000L, 6940007L, 6940011L, 6940014L, 6940018L,
                          6940003L, 6940009L, 6940016L),
@@ -196,7 +199,8 @@ test_that("read_modbam_cpp works", {
 
     # ... content of res5
     expect_identical(res5, list(
-        read_id = character(0), forward_read_position = integer(0),
+        read_id = character(0), mapq = integer(0),
+        forward_read_position = integer(0),
         ref_position = integer(0), chrom = character(0),
         ref_strand = character(0), call_code = character(0),
         canonical_base = character(0), mod_prob = numeric(0)))
