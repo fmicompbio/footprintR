@@ -67,7 +67,7 @@ obtained from \code{rowData(se)$sequence.context} and thus requires that
 \code{se} contains the appropriate information, for example by setting
 the \code{sequence.context} and \code{sequence.reference} arguments of
 \code{\link{readBedMethyl}} when it was generated, or by adding it using
-\code{\link{seqContext}}.}
+\code{\link{addSeqContext}}.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object with tracks selected by

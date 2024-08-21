@@ -41,7 +41,7 @@
 #'     width = 1, names = c("a","b","c")))
 #'
 #' # extract sequence context (note the padding with N's)
-#' seqContext(regions, 7, reffile)
+#' extractSeqContext(regions, 7, reffile)
 #'
 #' @seealso \code{\link[GenomicRanges]{resize}}, \code{\link[Biostrings]{DNAStringSet}}
 #'

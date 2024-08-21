@@ -25,7 +25,7 @@
 #'     requires that \code{se} contains the appropriate information, for example
 #'     by setting the \code{sequence.context} and \code{sequence.reference}
 #'     arguments of \code{\link{readModkitExtract}} when it was generated,
-#'     or by adding it using \code{\link{seqContext}}.
+#'     or by adding it using \code{\link{addSeqContext}}.
 #' @param min.Nobs.ppos A numeric scalar value >=1 indicating the minimum
 #'     coverage on individual positions for them to be included in the
 #'     calculations. In high coverage data this is an effective filter for
@@ -224,19 +224,19 @@ calcReadStats <- function(se,
     message('Applied coverage filter\nPositions with coverage < ',
             min.cov, " removed.")
 
-    
+
     # Create list of non-zero row indices per column (i.e per read)
     NZind <- SparseArray::nzwhich(SummarizedExperiment::assay(se, "mod_prob"),
                                   arr.ind = TRUE)
     NZind_byCol <- split(NZind[,1], NZind[,2])
     names(NZind_byCol) <- colnames(se)[as.numeric(names(NZind_byCol))]
-    
+
     # List of non-zero observations by column (i.e by read):
     NZvals <- SparseArray::nzvals(SummarizedExperiment::assay(se, "mod_prob"))
     NZvals_byCol <- split(NZvals, NZind[,2])
     names(NZvals_byCol) <- colnames(se)[as.numeric(names(NZvals_byCol))]
-    
-    
+
+
     # Number of (valid) observations per read:
     se$Nobs <- lengths(NZind_byCol)
 

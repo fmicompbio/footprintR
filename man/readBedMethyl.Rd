@@ -43,7 +43,7 @@ lengths. Useful to set the sorting order of sequence names.}
 context to be extracted around modified bases. By default (
 \code{sequence.context.width = 0}), no sequence context will be
 extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
-See \code{\link{seqContext}} for details.}
+See \code{\link{addSeqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readBedMethyl()}.}
@@ -71,7 +71,7 @@ readBedMethyl(bmfile)
 \href{https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output}{\code{bedMethyl} format description},
 \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
 \code{\link[data.table]{fread}} for the function used to read the input files,
-\code{\link{seqContext}} used to extract the sequence context.
+\code{\link{addSeqContext}} used to add the sequence context.
 }
 \author{
 Michael Stadler

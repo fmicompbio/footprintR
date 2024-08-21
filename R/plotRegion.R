@@ -53,7 +53,7 @@
 #'     \code{se} contains the appropriate information, for example by setting
 #'     the \code{sequence.context} and \code{sequence.reference} arguments of
 #'     \code{\link{readBedMethyl}} when it was generated, or by adding it using
-#'     \code{\link{seqContext}}.
+#'     \code{\link{addSeqContext}}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks.reads} and \code{tracks.summary}.

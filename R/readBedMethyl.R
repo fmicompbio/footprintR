@@ -27,7 +27,7 @@
 #'     context to be extracted around modified bases. By default (
 #'     \code{sequence.context.width = 0}), no sequence context will be
 #'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
-#'     See \code{\link{seqContext}} for details.
+#'     See \code{\link{addSeqContext}} for details.
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
 #'     to use for some of the steps in \code{readBedMethyl()}.
 #' @param verbose If \code{TRUE}, report on progress.
@@ -48,7 +48,7 @@
 #'     [`bedMethyl` format description](https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output),
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,
 #'     \code{\link[data.table]{fread}} for the function used to read the input files,
-#'     \code{\link{seqContext}} used to extract the sequence context.
+#'     \code{\link{addSeqContext}} used to add the sequence context.
 #'
 #' @import SummarizedExperiment
 #' @importFrom data.table fread
@@ -149,7 +149,7 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("extracting sequence contexts")
         }
-        mcols(gpos)$sequence.context <- seqContext(
+        mcols(gpos)$sequence.context <- extractSeqContext(
             x = as(gpos, "GRanges"),
             sequence.context.width = sequence.context.width,
             sequence.reference = sequence.reference)
