@@ -85,10 +85,8 @@
 #'         typically covers the signal of nucleosome periodicity.}
 #'  }
 #'
-#' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with \code{colData} filtered for positions according to \code{regions},
-#'     \code{sequence.context} and \code{min.Nobs.ppos} arguments and extended
-#'     to include the read statistics in its row- and column-data.
+#' @return A \code{list} object
+#'
 #'
 #' @author Panagiotis Papapasaikas
 #'
@@ -98,9 +96,8 @@
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
-#' se_withReadStats <- calcReadStats(se, plot=FALSE)
-#' rowData(se_withReadStats)
-#' colData(se_withReadStats)
+#' ReadStats <- calcReadStats(se, plot=FALSE)
+#'
 #'
 #' @importFrom BiocGenerics start
 #' @import ggplot2
@@ -302,14 +299,6 @@ calcReadStats <- function(se,
        )
     }
 
-    SummarizedExperiment::colData(se) <-
-        cbind(SummarizedExperiment::colData(se), stats_res)
-    # S4Vectors::metadata(se) <- c(S4Vectors::metadata(se),
-    #                              as.list(environment(), all = TRUE))
-    S4Vectors::metadata(se)$stats <- param_names
-    S4Vectors::metadata(se)$min.Nobs.ppos <- min.cov
-    S4Vectors::metadata(se)$Lags <- LagRangeValues
-
-    return(se)
+    return(list(ReadStats=stats_res, Params=list(stats=param_names, min.Nobs.ppos=min.cov, Lags=LagRangeValues) ) )
 }
 
