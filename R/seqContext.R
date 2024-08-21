@@ -49,7 +49,7 @@
 #' @importFrom methods as is
 #'
 #' @export
-seqContext <- function(x,
+extractSeqContext <- function(x,
                        sequence.context.width,
                        sequence.reference) {
     # digest arguments
