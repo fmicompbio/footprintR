@@ -205,20 +205,15 @@ calcReadStats <- function(se,
         #% removed
     }
 
-    # Create list of non-zero row indices per column (i.e per read)
+    # Non-zero indices:
     NZind <- SparseArray::nzwhich(SummarizedExperiment::assay(se, "mod_prob"),
                                   arr.ind = TRUE)
-    NZind_byCol <- split(NZind[,1], NZind[,2])
 
-    # Coverage per position
+    # Coverage per row (i.e per position)
     rowData(se)[,'Nobs'] <- rep(0, nrow(se))
     TBL <- table(NZind[,1])
     rowData(se)[as.numeric(names(TBL)), 'Nobs'] <- unclass(TBL)
 
-    # List of non-zero observations by column (i.e by read):
-    NZvals <- SparseArray::nzvals(SummarizedExperiment::assay(se, "mod_prob"))
-    NZvals_byCol <- split(NZvals, NZind[,2])
-    names(NZvals_byCol) <- colnames(se)[as.numeric(names(NZvals_byCol))]
 
     # Subset positions by coverage
     if (is.null(min.Nobs.ppos)) {
@@ -232,7 +227,20 @@ calcReadStats <- function(se,
     message('Applied coverage filter\nPositions with coverage < ',
             min.cov, " removed.")
 
-    # Number of observations per read:
+    
+    # Create list of non-zero row indices per column (i.e per read)
+    NZind <- SparseArray::nzwhich(SummarizedExperiment::assay(se, "mod_prob"),
+                                  arr.ind = TRUE)
+    NZind_byCol <- split(NZind[,1], NZind[,2])
+    names(NZind_byCol) <- colnames(se)[as.numeric(names(NZind_byCol))]
+    
+    # List of non-zero observations by column (i.e by read):
+    NZvals <- SparseArray::nzvals(SummarizedExperiment::assay(se, "mod_prob"))
+    NZvals_byCol <- split(NZvals, NZind[,2])
+    names(NZvals_byCol) <- colnames(se)[as.numeric(names(NZvals_byCol))]
+    
+    
+    # Number of (valid) observations per read:
     se$Nobs <- lengths(NZind_byCol)
 
     ##TODO:
