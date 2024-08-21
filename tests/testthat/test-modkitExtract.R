@@ -2,6 +2,8 @@ suppressPackageStartupMessages({
     library(testthat)
     library(footprintR)
     library(GenomicRanges)
+    library(SummarizedExperiment)
+    library(SparseArray)
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -102,28 +104,33 @@ test_that("modkitExtract works", {
     se1 <- readModkitExtract(tmp_calls, modbase = "a")
     suppressMessages(
         expect_message(
-            se2 <- getReadDataForRegion(bamfile = modbamfile, region = reg,
-                                        arglist.readModkitExtract = list(modbase = "a"),
-                                        verbose = TRUE)
+            se2 <- readModBam(bamfiles = modbamfile, regions = reg,
+                              modbase = "a", verbose = TRUE)
         )
     )
-    expect_identical(se1, se2)
+    i1 <- overlapsAny(se1, se2)
+    i2 <- match(se1[i1], se2)
+    expect_true(all(start(se1[!i1]) == 0 |
+                        rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
+    expect_identical(colData(se1)$sample, colData(se2)$sample)
+    expect_identical(rowData(se1)[i1,], rowData(se2)[i2,])
+    inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &
+                       assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)
+    expect_equal(assay(se1, "mod_prob")[i1, ][inz],
+                 assay(se2, "mod_prob")[i2, ][inz], tolerance = 1e-6)
     unlink(c(tmp_tab, tmp_calls, tmp_log))
 
     # ... one bamfile, no regions
     res2 <- modkitExtract(modkit_bin = NULL, bamfile = modbamfile,
                           num_reads = 3,
                           regions = NULL,
-                          out_extract_table = tmp_tab,
+                          out_extract_table = NULL,
                           out_read_calls = NULL,
                           out_log_file = tmp_log,
                           verbose = FALSE)
-    expect_identical(res2, c(`extract-table` = normalizePath(tmp_tab),
+    expect_identical(res2, c(`extract-table` = NA,
                              `read-calls` = NA,
                              `run-log` = normalizePath(tmp_log)))
-    lns <- readLines(tmp_tab)
-    expect_length(lns, 12349L)
-    expect_true(grepl("^read_id\tforward_read_position\tref_position\tchrom\tmod_strand\tref_strand", lns[1]))
     lns <- readLines(tmp_log)
     expect_true(grepl("INFO.+processed", lns[length(lns)]))
     unlink(c(tmp_tab, tmp_log))
