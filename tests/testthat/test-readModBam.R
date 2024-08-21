@@ -74,6 +74,11 @@ test_that("readModBam works", {
     expect_identical(assayNames(se3), "mod_prob")
     expect_identical(assayNames(se4), "mod_prob")
 
+    expect_identical(colnames(colData(se1)), c("sample", "qscore"))
+    expect_identical(colnames(colData(se2)), c("sample", "qscore"))
+    expect_identical(colnames(colData(se3)), c("sample", "qscore"))
+    expect_identical(colnames(colData(se4)), c("sample", "qscore"))
+
     # ... content se1
     expect_identical(dim(se1), c(12571L, 10L))
     shared_rows <- intersect(rownames(se0), rownames(se1))
@@ -87,11 +92,21 @@ test_that("readModBam works", {
     expect_equal(as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols])[nonzero],
                  as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
+    expect_identical(se1$sample, rep(names(modbamfiles), c(4, 6)))
+    expect_equal(se1$qscore,
+                 c(14.1428003311157, 16.0126991271973, 21.1338005065918,
+                   20.3082008361816, 12.9041996002197, 9.67461013793945,
+                   15.0149002075195, 15.1365995407104, 17.7175006866455,
+                   13.6647996902466))
 
     # ... content se2
     expect_identical(dim(se2), dim(se3))
     expect_identical(unname(assay(se2, "mod_prob")),
                      unname(assay(se3, "mod_prob")))
+    expect_identical(sub("^[^-]+-", "", rownames(colData(se2))),
+                     sub("^[^-]+-", "", rownames(colData(se3))))
+    expect_identical(se2$sample, sub("sample", "s", se3$sample))
+    expect_identical(se2$qscore, se3$qscore)
 
     # ... content se3
     expect_identical(dim(se3), c(9266L, 5L))
@@ -106,6 +121,9 @@ test_that("readModBam works", {
     expect_equal(as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols])[nonzero],
                  as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
+    expect_equal(se3$qscore,
+                 c(14.1428003311157, 16.0126991271973, 20.3082008361816,
+                   9.67461013793945, 13.6647996902466))
 
     # ... content se4
     expect_identical(dim(se4), c(0L, 0L))

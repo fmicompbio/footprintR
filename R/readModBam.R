@@ -146,6 +146,10 @@ readModBam <- function(bamfiles,
     }
     # reduce to a single sparse matrix
     readnames <- do.call(c, lapply(modmat, colnames))
+    qscore <- unlist(lapply(names(modmat), function(nm) {
+        resLL[[nm]][["qscore"]][match(colnames(modmat[[nm]]),
+                                      paste0(nm, "-", resLL[[nm]][["read_id"]]))]
+    }))
     samplenames <- rep(names(modmat), vapply(modmat, ncol, 0))
     modmat <- BiocGenerics::do.call(BiocGenerics::cbind, modmat)
 
@@ -155,7 +159,8 @@ readModBam <- function(bamfiles,
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
             row.names = readnames,
-            sample = samplenames
+            sample = samplenames,
+            qscore = qscore
         ),
         metadata = list()
     )
