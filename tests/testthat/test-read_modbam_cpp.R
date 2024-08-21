@@ -110,7 +110,7 @@ test_that("read_modbam_cpp works", {
     expect_type(res4, "list")
     expect_type(res5, "list")
 
-    expected_names <- c("read_id", "mapq", "forward_read_position",
+    expected_names <- c("read_id", "qscore", "forward_read_position",
                         "ref_position", "chrom", "ref_strand", "call_code",
                         "canonical_base", "mod_prob")
     expect_named(res1, expected_names)
@@ -119,7 +119,7 @@ test_that("read_modbam_cpp works", {
     expect_named(res4, expected_names)
     expect_named(res5, expected_names)
 
-    expected_types <- c("character", "integer", "integer", "integer",
+    expected_types <- c("character", "double", "integer", "integer",
                         "character", "character", "character", "character",
                         "double")
     for (i in seq_along(expected_names)) {
@@ -131,7 +131,9 @@ test_that("read_modbam_cpp works", {
     }
 
     # ... content res1
-    expect_identical(res1$mapq, rep(60L, length(res1$mapq)))
+    expect_equal(res1$qscore,
+                     rep(c(14.1428003311157, 16.0126991271973, 20.3082008361816),
+                         c(4363L, 1750L,  2237L)))
     expect_true(all(nchar(res1$call_code) == 1L))
     expect_true(all(res1$canonical_base == "A"))
     expect_true(all(res1$mod_prob == -1 | (res1$mod_prob >= 0 & res1$mod_prob <= 1.0)))
@@ -156,6 +158,13 @@ test_that("read_modbam_cpp works", {
 
     # ... content res2
     expect_true(all(res2$canonical_base == "A"))
+    expect_equal(res2$qscore,
+                 rep(c(14.1428003311157, 16.0126991271973, 21.1338005065918,
+                       20.3082008361816, 16.0568008422852, 13.3486995697021,
+                       13.7178001403809, 12.6245002746582, 16.3353996276855,
+                       13.055100440979),
+                     c(4363L, 1750L, 2925L, 2237L, 3078L,
+                       2720L, 1085L, 2539L, 2412L, 896L)))
     expect_true(
         all(paste0(res1$chrom, ":", res1$ref_position, ":", res1$ref_strand) %in%
             paste0(res2$chrom, ":", res2$ref_position, ":", res2$ref_strand)))
@@ -184,9 +193,9 @@ test_that("read_modbam_cpp works", {
     }
 
     # ... content of res4
-    expect_identical(res4, list(
+    expect_equal(res4, list(
         read_id = rep(c("artificial-read-1", "artificial-read-2"), c(5, 3)),
-        mapq = rep(10L, 8),
+        qscore = rep(c(13.4761904761905, 13.24), c(5, 3)),
         forward_read_position = c(0L, 7L, 10L, 15L, 19L, 21L, 15L, 7L),
         ref_position = c(6940000L, 6940007L, 6940011L, 6940014L, 6940018L,
                          6940003L, 6940009L, 6940016L),
@@ -199,7 +208,7 @@ test_that("read_modbam_cpp works", {
 
     # ... content of res5
     expect_identical(res5, list(
-        read_id = character(0), mapq = integer(0),
+        read_id = character(0), qscore = numeric(0),
         forward_read_position = integer(0),
         ref_position = integer(0), chrom = character(0),
         ref_strand = character(0), call_code = character(0),

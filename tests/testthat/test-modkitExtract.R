@@ -112,7 +112,7 @@ test_that("modkitExtract works", {
     i2 <- match(se1[i1], se2)
     expect_true(all(start(se1[!i1]) == 0 |
                         rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
-    expect_identical(colData(se1), colData(se2))
+    expect_identical(colData(se1)$sample, colData(se2)$sample)
     expect_identical(rowData(se1)[i1,], rowData(se2)[i2,])
     inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &
                        assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)

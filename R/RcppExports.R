@@ -20,15 +20,15 @@ get_unmodified_base <- function(b) {
 #' @param modbase Character scalar defining the modified base to extract.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"read_id"}, \code{mapq},
+#' @return A named list with elements \code{"read_id"}, \code{qscore},
 #'     \code{"forward_read_position"}, \code{"ref_position"},
 #'     \code{"chrom"}, \code{"ref_strand"}, \code{"call_code"},
 #'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
 #'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 #'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
 #'     modified bases and equal to \code{1 - call_prob} for unmodified bases
-#'     (\code{call_code == "-"}), and \code{mapq}, which is the mapping
-#'     quality for the aligned read as recorded in the bam file.
+#'     (\code{call_code == "-"}), and \code{qscore}, which is the read quality
+#'     score recorded in the \code{qs} tag of each bam record.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
