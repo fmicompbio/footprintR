@@ -38,7 +38,7 @@
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with genomic positions in rows and reads in columns.
+#'     with genomic positions in rows and samples in columns.
 #'
 #' @author Charlotte Soneson
 #'
@@ -222,13 +222,21 @@ readModkitExtract <- function(fnames,
     samplenames <- rep(names(modmat), vapply(modmat, ncol, 0))
     modmat <- BiocGenerics::do.call(BiocGenerics::cbind, modmat)
 
+    # group reads by sample
+    ids <- factor(samplenames)
+    dfReads <- S4Vectors::make_zero_col_DFrame(nrow = nrow(modmat))
+    iBySample <- split(seq.int(ncol(modmat)), ids)
+    for (s in seq_along(iBySample)) {
+        dfReads[[levels(ids)[s]]] <- modmat[, iBySample[[s]]]
+    }
+
     # create SummarizedExperiment object
     se <- SummarizedExperiment::SummarizedExperiment(
-        assays = list(mod_prob = modmat),
+        assays = list(mod_prob = dfReads),
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
-            row.names = readnames,
-            sample = samplenames
+            row.names = names(dfReads),
+            sample = names(dfReads)
         ),
         metadata = list(modkit_threshold = modkit_threshold,
                         filter_threshold = filter_threshold)

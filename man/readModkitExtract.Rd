@@ -50,7 +50,7 @@ to use for some of the steps in \code{readModkitExtract()}.}
 }
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with genomic positions in rows and reads in columns.
+with genomic positions in rows and samples in columns.
 }
 \description{
 This function reads one or more modkit extract files and generates a
