@@ -6,8 +6,11 @@
 #' \code{sequence.reference}.
 #'
 #' @param x A \code{\link[GenomicRanges]{GRanges}} object defining the regions
-#'     of interest. The extracted sequences will correspond to the regions
-#'     defined as \code{resize(x, width = sequence.context.width, fix = "center"}.
+#'     of interest. Alternatively, a \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
+#'     object from which regions can be extracted using
+#'     \code{\link[SummarizedExperiment]{rowRanges}}. The extracted sequences
+#'     will correspond to the regions defined as
+#'     \code{resize(x, width = sequence.context.width, fix = "center"}.
 #' @param sequence.context.width A numeric scalar giving the width of the
 #'     sequence context to be extracted from the reference
 #'     (\code{sequence.reference} argument). This must be an odd number
@@ -42,6 +45,7 @@
 #'
 #' @seealso \code{\link[GenomicRanges]{resize}}, \code{\link[Biostrings]{DNAStringSet}}
 #'
+#' @importFrom SummarizedExperiment rowRanges
 #' @importFrom GenomicRanges GRanges resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
@@ -53,6 +57,9 @@ extractSeqContext <- function(x,
                        sequence.context.width,
                        sequence.reference) {
     # digest arguments
+    if (is(x, "RangedSummarizedExperiment")) {
+        x <- rowRanges(x)
+    }
     .assertVector(x = x, type = "GRanges")
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(1, 1000))
     if (sequence.context.width %% 2 == 0) {
