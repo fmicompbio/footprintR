@@ -112,7 +112,7 @@ readModBam <- function(bamfiles,
     # create GPos objects for each input
     gposL <- parallel::mclapply(resLL, function(resL) {
         GenomicRanges::GPos(seqnames = resL$chrom, pos = resL$ref_position,
-                            strand = resL$ref_strand, seqinfo = seqinfo)
+                            strand = resL$ref_mod_strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos, reduce to unique positions

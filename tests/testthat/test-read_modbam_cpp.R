@@ -111,7 +111,7 @@ test_that("read_modbam_cpp works", {
     expect_type(res5, "list")
 
     expected_names <- c("read_id", "qscore", "forward_read_position",
-                        "ref_position", "chrom", "ref_strand", "call_code",
+                        "ref_position", "chrom", "ref_mod_strand", "call_code",
                         "canonical_base", "mod_prob")
     expect_named(res1, expected_names)
     expect_named(res2, expected_names)
@@ -166,8 +166,8 @@ test_that("read_modbam_cpp works", {
                      c(4363L, 1750L, 2925L, 2237L, 3078L,
                        2720L, 1085L, 2539L, 2412L, 896L)))
     expect_true(
-        all(paste0(res1$chrom, ":", res1$ref_position, ":", res1$ref_strand) %in%
-            paste0(res2$chrom, ":", res2$ref_position, ":", res2$ref_strand)))
+        all(paste0(res1$chrom, ":", res1$ref_position, ":", res1$ref_mod_strand) %in%
+            paste0(res2$chrom, ":", res2$ref_position, ":", res2$ref_mod_strand)))
     for (nm in expected_names) {
         expect_length(res2[[nm]], 24005L)
     }
@@ -200,7 +200,7 @@ test_that("read_modbam_cpp works", {
         ref_position = c(6940000L, 6940007L, 6940011L, 6940014L, 6940018L,
                          6940003L, 6940009L, 6940016L),
         chrom = rep("chr1", 8),
-        ref_strand = rep(c("+", "-"), c(5, 3)),
+        ref_mod_strand = rep(c("+", "-"), c(5, 3)),
         call_code = c("a", "a", "-", "a", "a", "a", "-", "-"),
         canonical_base = rep("A", 8),
         mod_prob = c(0.134765625, 0.380859375, -1, 0.724609375, 0.998046875,
@@ -211,6 +211,6 @@ test_that("read_modbam_cpp works", {
         read_id = character(0), qscore = numeric(0),
         forward_read_position = integer(0),
         ref_position = integer(0), chrom = character(0),
-        ref_strand = character(0), call_code = character(0),
+        ref_mod_strand = character(0), call_code = character(0),
         canonical_base = character(0), mod_prob = numeric(0)))
 })

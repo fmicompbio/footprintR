@@ -151,7 +151,7 @@ char get_unmodified_base(char b) {
 //'
 //' @return A named list with elements \code{"read_id"}, \code{qscore},
 //'     \code{"forward_read_position"}, \code{"ref_position"},
-//'     \code{"chrom"}, \code{"ref_strand"}, \code{"call_code"},
+//'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
 //'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
 //'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 //'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
@@ -204,7 +204,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<double> qscore;
     std::vector<char> call_code;
     std::vector<char> canonical_base;
-    std::vector<char> ref_strand;
+    std::vector<char> ref_mod_strand;
     std::vector<std::string> chrom;
     std::vector<int> aligned_read_position;
     std::vector<int> forward_read_position;
@@ -369,8 +369,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                         chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
                         call_code.push_back('-');
                         canonical_base.push_back(canonical);
-                        ref_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
-                        // mod_strand.push_back(strand ? '-' : '+');
+                        ref_mod_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
                         mod_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
                     }
                 }
@@ -385,8 +384,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                         chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
                         call_code.push_back((char) mod[j].modified_base);
                         canonical_base.push_back((char) mod[j].canonical_base);
-                        ref_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
-                        // mod_strand.push_back(mod[j].strand ? '-' : '+');
+                        ref_mod_strand.push_back(bam_is_rev(bamdata) == mod[j].strand ? '+' : '-');
                         // `qual` of N corresponds to call probability
                         //     in [N/256, (N+1)/256] -> store midpoint
                         mod_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
@@ -420,7 +418,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 ref_position.erase(ref_position.begin() + e);
                 call_code.erase(call_code.begin() + e);
                 canonical_base.erase(canonical_base.begin() + e);
-                ref_strand.erase(ref_strand.begin() + e);
+                ref_mod_strand.erase(ref_mod_strand.begin() + e);
                 mod_prob.erase(mod_prob.begin() + e);
             }
         }
@@ -479,7 +477,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 Rcpp::_["forward_read_position"] = forward_read_position,
                 Rcpp::_["ref_position"] = ref_position,
                 Rcpp::_["chrom"] = chrom,
-                Rcpp::_["ref_strand"] = ref_strand,
+                Rcpp::_["ref_mod_strand"] = ref_mod_strand,
                 Rcpp::_["call_code"] = call_code,
                 Rcpp::_["canonical_base"] = canonical_base,
                 Rcpp::_["mod_prob"] = mod_prob);

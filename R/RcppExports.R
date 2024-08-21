@@ -22,7 +22,7 @@ get_unmodified_base <- function(b) {
 #'
 #' @return A named list with elements \code{"read_id"}, \code{qscore},
 #'     \code{"forward_read_position"}, \code{"ref_position"},
-#'     \code{"chrom"}, \code{"ref_strand"}, \code{"call_code"},
+#'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
 #'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
 #'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 #'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
