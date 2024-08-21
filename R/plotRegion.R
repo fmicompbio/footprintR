@@ -288,6 +288,8 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param drawRead A logical scalar. If \code{TRUE}, draw a horizontal line
 #'     segment for each read from its start to its end.
+#' @param linewidthTiles A numeric scalar, the line width of the border drawn
+#'     around each measured base.
 #' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
 #'     on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
 #'     where \code{X} is \code{assay(x, aname)} with zero values set to \code{NA}.
@@ -306,6 +308,7 @@ plotRegion <- function(se,
 .plotReadsHeatmap <- function(x,
                               aname,
                               drawRead = TRUE,
+                              linewidthTiles = 0,
                               orderReads = TRUE,
                               modbaseSpace = FALSE) {
     # prepare plot data
@@ -332,7 +335,8 @@ plotRegion <- function(se,
     }
 
     # add tiles
-    p <- p + ggplot2::geom_tile(colour = "gray20", width = 1, height = 1)
+    p <- p + ggplot2::geom_tile(colour = "gray20", width = 1, height = 1,
+                                linewidth = linewidthTiles)
 
     # return plot
     return(p)
@@ -550,8 +554,9 @@ plotRegion <- function(se,
         mapping = ggplot2::aes(x = .data[["position"]],
                                y = .data[["read"]],
                                fill = .data[["value"]])) +
-        ggplot2::scale_fill_gradient(low = "white", high = "black",
-                                     na.value = "beige", limits = c(0, 1)) +
+        ggplot2::scale_fill_viridis_c(begin = 0, end = 1,
+                                      option = "cividis",
+                                      direction = -1, na.value = "beige") +
         ggplot2::facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
         ggplot2::labs(x = ifelse(is.numeric(df$position),
                                  paste0("Position on ", chr),
