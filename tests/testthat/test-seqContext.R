@@ -68,3 +68,28 @@ test_that("extractSeqContext works", {
     detach("package:BSgenome.Mmusculus.footprintR.reference", unload = TRUE,
            character.only = TRUE)
 })
+
+## -------------------------------------------------------------------------- ##
+## Checks, addSeqContext
+## -------------------------------------------------------------------------- ##
+test_that("addSeqContext works", {
+    # example data
+    ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+    regions <- GenomicRanges::GRanges(seqnames = "chr1",
+                                      ranges = IRanges::IRanges(start = 6957060 - c(4, 2, 0),
+                                                                width = 1, names = c("x","y","z")))
+    se <- SummarizedExperiment(assays = matrix(1:3, ncol = 1), rowRanges = regions)
+
+    # invalid arguments
+    expect_error(addSeqContext(x = "error"))
+    expect_error(addSeqContext(x = regions, sequence.context.width = -1))
+    expect_error(addSeqContext(x = regions, sequence.context.width = 7, sequence.reference = "error"))
+
+    # expected results
+    expect_warning(se1 <- addSeqContext(x = se, sequence.context.width = 6, sequence.reference = ref))
+    expect_s4_class(se1, "RangedSummarizedExperiment")
+    expect_identical(dim(se), dim(se1))
+    expect_true("sequence.context" %in% colnames(rowData(se1)))
+    expect_identical(as.character(rowData(se1)$sequence.context),
+                     c(x = "AAAGGGG", y = "AGGGGAN", z = "GGGANNN"))
+})

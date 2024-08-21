@@ -107,3 +107,72 @@ extractSeqContext <- function(x,
     }
     return(seqcontext)
 }
+
+
+#' Add sequence context around positions of interest to a SummarizedExperiment.
+#'
+#' @description
+#' Convenience function to extract sequence context around positions of
+#' interest (the \code{\link[SummarizedExperiment]{rowRanges}} of
+#' a \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}) and
+#' add them the the \code{\link[SummarizedExperiment]{SummarizedExperiment}}'s
+#' row data (\code{rowData(se)$sequence.context}). The extracted sequences
+#' will correspond to the regions defined as
+#' \code{resize(rowRanges(x), width = sequence.context.width, fix = "center"}.
+#' Sequence contexts are extracted using \code{\link{extractSeqContext}}.
+#'
+#' @param x A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}.
+#' @param sequence.context.width A numeric scalar giving the width of the
+#'     sequence context to be extracted from the reference
+#'     (\code{sequence.reference} argument). This must be an odd number
+#'     so that the sequence can be centered on the modified base.
+#'     If \code{sequence.context.width = 0} (the default), no
+#'     sequence context will be extracted.
+#' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
+#'     character scalar giving the path to a fasta formatted file with reference
+#'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
+#'     The sequence context (see \code{sequence.context.width} argument) will be
+#'     extracted from these sequences.
+#'
+#' @return A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
+#'     object with sequence contexts added as a
+#'     \code{\link[Biostrings]{DNAStringSet}} object to
+#'     \code{rowData(x)$sequence.context}.
+#'
+#' @author Michael Stadler
+#'
+#' @examples
+#' # load package
+#' library(SummarizedExperiment)
+#'
+#' # file with sequence in fasta format of length 6957060
+#' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+#'
+#' # define some regions at the end of the reference sequence
+#' se <- SummarizedExperiment(
+#'           assays = matrix(1:3, ncol=1),
+#'           rowRanges = GRanges(
+#'               "chr1", IRanges(start = 6957060 - c(4, 2, 0),
+#'               width = 1, names = c("a","b","c"))))
+#'
+#' # add sequence context (note the padding with N's)
+#' rowRanges(se)
+#' se <- addSeqContext(regions, 7, reffile)
+#' rowRanges(se)
+#'
+#' @seealso \code{\link{extractSeqContext}}
+#'
+#' @importFrom SummarizedExperiment rowRanges
+#'
+#' @export
+addSeqContext <- function(x,
+                          sequence.context.width,
+                          sequence.reference) {
+    .assertVector(x = x, type = "RangedSummarizedExperiment")
+    rowData(x)$sequence.context <- extractSeqContext(
+        x = as(SummarizedExperiment::rowRanges(x), "GRanges"),
+        sequence.context.width = sequence.context.width,
+        sequence.reference = sequence.reference
+    )
+    return(x)
+}
