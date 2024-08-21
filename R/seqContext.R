@@ -58,7 +58,7 @@ extractSeqContext <- function(x,
                        sequence.reference) {
     # digest arguments
     if (is(x, "RangedSummarizedExperiment")) {
-        x <- rowRanges(x)
+        x <- as(SummarizedExperiment::rowRanges(x), "GRanges")
     }
     .assertVector(x = x, type = "GRanges")
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(1, 1000))
