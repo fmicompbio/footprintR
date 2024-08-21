@@ -7,11 +7,12 @@
 <url><loc>/articles/using-footprintR.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
-<url><loc>/reference/getReadDataForRegion.html</loc></url>
+<url><loc>/reference/calcReadStats.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/modkitExtract.html</loc></url>
 <url><loc>/reference/plotRegion.html</loc></url>
 <url><loc>/reference/readBedMethyl.html</loc></url>
+<url><loc>/reference/readModBam.html</loc></url>
 <url><loc>/reference/readModkitExtract.html</loc></url>
 <url><loc>/reference/seqContext.html</loc></url>
 <url><loc>/reference/sumOverRegions.html</loc></url>
