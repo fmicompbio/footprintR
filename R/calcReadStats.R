@@ -85,7 +85,8 @@
 #'         typically covers the signal of nucleosome periodicity.}
 #'  }
 #'
-#' @return A \code{list} object
+#' @return A \code{list} object with a `ReadStats` \code{DFrame} slot for the calculates statistics
+#' and a `params` \code{list} slot for parameters used in filtering and statistics calculations
 #'
 #'
 #' @author Panagiotis Papapasaikas
