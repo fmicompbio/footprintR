@@ -191,7 +191,7 @@ calcReadStats <- function(se,
     .assertScalar(x = min.Nobs.ppos, type = "numeric", allowNULL = TRUE,
                   rngIncl = c(1, Inf))
     .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = plot, type = "logical")
+    .assertScalar(x = verbose, type = "logical")
 
     # Subset se by region
     if (!is.null(regions)) {
