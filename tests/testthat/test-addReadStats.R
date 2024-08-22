@@ -18,10 +18,10 @@ test_that("calcReadStats works", {
                       "ACModProb", "PACModProb", "sample") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
-                 colSums(assay(se)$s1) / colSums(assay(se)$s1 > 0),
+                 Matrix::colSums(assay(se)$s1) / Matrix::colSums(assay(se)$s1 > 0),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 colSums(assay(se)$s1 > 0.5) / colSums(assay(se)$s1 > 0),
+                 Matrix::colSums(assay(se)$s1 > 0.5) / Matrix::colSums(assay(se)$s1 > 0),
                  ignore_attr = TRUE)
     expect_equal(unique(qc$sample), "s1")
     expect_type(S4Vectors::metadata(qc), "list")
@@ -47,10 +47,10 @@ test_that("calcReadStats works", {
                       "ACModProb", "PACModProb", "sample") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
-                 colSums(assay(se)$s1[idx, ]) / colSums(assay(se)$s1[idx, ] > 0),
+                 Matrix::colSums(assay(se)$s1[idx, ]) / Matrix::colSums(assay(se)$s1[idx, ] > 0),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 colSums(assay(se)$s1[idx, ] > 0.5) / colSums(assay(se)$s1[idx, ] > 0),
+                 Matrix::colSums(assay(se)$s1[idx, ] > 0.5) / Matrix::colSums(assay(se)$s1[idx, ] > 0),
                  ignore_attr = TRUE)
     expect_equal(unique(qc$sample), "s1")
     expect_type(S4Vectors::metadata(qc), "list")
