@@ -16,7 +16,12 @@
 #'     coerced into a \code{GRanges} object. Note that the reads are not
 #'     trimmed to the boundaries of the specified ranges. As a result, returned
 #'     positions will typically extend out of the specified regions.
-#' @param modbase Character scalar defining the modified base to extract.
+#' @param modbase Character vector defining the modified base for each sample.
+#'     If \code{modbase} is a named vector, the names should correspond to
+#'     the names of \code{bamfiles}. Otherwise, it will be assumed that the
+#'     elements are in the same order as the files in \code{bamfiles}. If
+#'     \code{modbase} has length 1, the same modified base will be used for
+#'     all samples.
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -63,15 +68,33 @@ readModBam <- function(bamfiles,
     if (any(i <- !file.exists(bamfiles))) {
         stop("not all `bamfiles` exist: ", paste(bamfiles[i], collapse = ", "))
     }
+    if (is.null(names(bamfiles))) {
+        names(bamfiles) <- paste0("s", seq_along(bamfiles))
+    } else if (any(duplicated(names(bamfiles)))) {
+        stop("`names(bamfiles)` are not unique")
+    }
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
     }
     .assertVector(x = regions, type = "GRanges")
+    if (length(modbase) == 1) {
+        modbase <- rep(modbase, length(bamfiles))
+    }
+    .assertVector(x = modbase, type = "character", len = length(bamfiles))
+    if (is.null(names(modbase))) {
+        names(modbase) <- names(bamfiles)
+    } else {
+        if (!all(names(modbase) %in% names(bamfiles))) {
+            stop("names of `modbase` and `bamfiles` don't agree")
+        }
+    }
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    .assertScalar(x = modbase, type = "character",
-                  validValues = c("m","h","f","c","C","g","e","b","T",
-                                  "U","a","A","o","G","n","N"))
+    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
+                                 "U","a","A","o","G","n","N"))) {
+        stop("invalid `modbase` values: ",
+             paste(unique(modbase[i]), collapse = ", "))
+    }
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
             (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
@@ -82,22 +105,19 @@ readModBam <- function(bamfiles,
     .assertScalar(x = ncpu, type = "numeric")
     .assertScalar(x = verbose, type = "logical")
 
-    # make sure bamfiles has sample names
-    if (is.null(names(bamfiles))) {
-        names(bamfiles) <- paste0("s", seq_along(bamfiles))
-    }
-
     # extract modification probabilities from `bamfiles`
     if (verbose) {
         message("extracting base modifications from modBAM files")
     }
     regions_str <- as.character(regions, ignore.strand = TRUE)
-    resLL <- parallel::mclapply(bamfiles, function(bamfile) {
+    resLL <- parallel::mclapply(structure(names(bamfiles),
+                                          names = names(bamfiles)),
+                                function(nm) {
         # extract modifications (returned list is similar to modkit extract
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
-        resL <- read_modbam_cpp(inname_str = bamfile,
+        resL <- read_modbam_cpp(inname_str = bamfiles[nm],
                                 regions = regions_str,
-                                modbase = modbase,
+                                modbase = modbase[nm],
                                 verbose = verbose)
 
         # convert 0-based ref_position to 1-based
@@ -158,6 +178,7 @@ readModBam <- function(bamfiles,
         colData = S4Vectors::DataFrame(
             row.names = names(bamfiles),
             sample = names(bamfiles),
+            modbase = modbase[names(bamfiles)],
             n_reads = lengths(qscoreL),
             qscore = qscoreL
         ),

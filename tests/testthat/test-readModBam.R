@@ -22,8 +22,18 @@ test_that("readModBam works", {
     # invalid arguments
     expect_error(readModBam("error", "chr1:6940000-6955000", "a"),
                  "not all `bamfiles` exist")
+    expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
+                            "chr1:6940000-6955000", "a"),
+                 "are not unique")
     expect_error(readModBam(modbamfiles, "error", "a"),
                  "GRanges object must contain")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "Z"),
+                 "invalid `modbase` values")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", c("a", "a", "a")),
+                 "must have length")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000",
+                            c(sample1 = "a", sample3 = "a")),
+                 "names of `modbase` and `bamfiles` don't agree")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
 
@@ -50,7 +60,7 @@ test_that("readModBam works", {
                       verbose = FALSE)
     se4 <- readModBam(bamfiles = modbamfiles,
                       regions = reg4,
-                      modbase = "m",
+                      modbase = c("a", "m"),
                       verbose = FALSE)
 
     # ... structure
@@ -64,16 +74,16 @@ test_that("readModBam works", {
     expect_s4_class(rowRanges(se3), "GPos")
     expect_s4_class(rowRanges(se4), "GPos")
 
-    expect_identical(colnames(colData(se1)), c("sample", "n_reads", "qscore"))
-    expect_identical(colnames(colData(se2)), c("sample", "n_reads", "qscore"))
-    expect_identical(colnames(colData(se3)), c("sample", "n_reads", "qscore"))
-    expect_identical(colnames(colData(se4)), c("sample", "n_reads", "qscore"))
+    expected_coldata_names <- c("sample", "modbase", "n_reads", "qscore")
+    expect_identical(colnames(colData(se1)), expected_coldata_names)
+    expect_identical(colnames(colData(se2)), expected_coldata_names)
+    expect_identical(colnames(colData(se3)), expected_coldata_names)
+    expect_identical(colnames(colData(se4)), expected_coldata_names)
 
     expect_identical(se1$sample, names(modbamfiles))
     expect_identical(se2$sample, c("s1", "s2"))
     expect_identical(se3$sample, names(modbamfiles))
     expect_identical(se4$sample, names(modbamfiles))
-
 
     expect_identical(assayNames(se1), "mod_prob")
     expect_identical(assayNames(se2), "mod_prob")
@@ -150,10 +160,12 @@ test_that("readModBam works", {
                      sample2 = c(9.67461013793945, 13.6647996902466)))
 
     # ... content se4
-    expect_identical(unname(se4$n_reads), c(0L, 0L))
-    expect_identical(dim(se4), c(0L, 2L))
-    expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(0L, 0L))
-    expect_identical(se4$qscore,
-                     S4Vectors::SimpleList(sample1 = numeric(0),
-                                           sample2 = numeric(0)))
+    expect_identical(unname(se4$n_reads), c(3L, 0L))
+    expect_identical(dim(se4), c(6057L, 2L))
+    expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(6057L, 3L))
+    expect_equal(se4$qscore,
+                 S4Vectors::SimpleList(sample1 = c(14.1428003311157,
+                                                   16.0126991271973,
+                                                   20.3082008361816),
+                                       sample2 = numeric(0)))
 })

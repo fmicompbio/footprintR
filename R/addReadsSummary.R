@@ -79,17 +79,6 @@ addReadsSummary <- function(se,
                     AvgConf = "Nvalid")[statistics],
                use.names = FALSE))
 
-    # generate DataFrame with sample-grouped columns
-    # if (verbose) {
-    #     message("Grouping read-level data")
-    # }
-    # dfReads <- S4Vectors::make_zero_col_DFrame(nrow = nrow(se))
-    # ids <- factor(colData(se)$sample)
-    # iBySample <- split(seq.int(ncol(se)), ids)
-    # for (s in seq_along(iBySample)) {
-    #     dfReads[[levels(ids)[s]]] <- assay(se, assay.type)[, iBySample[[s]]]
-    # }
-
     # summarize reads
     if (verbose) {
         message("Summarizing reads")

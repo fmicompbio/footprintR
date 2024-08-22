@@ -28,7 +28,12 @@ coerced into a \code{GRanges} object. Note that the reads are not
 trimmed to the boundaries of the specified ranges. As a result, returned
 positions will typically extend out of the specified regions.}
 
-\item{modbase}{Character scalar defining the modified base to extract.}
+\item{modbase}{Character vector defining the modified base for each sample.
+If \code{modbase} is a named vector, the names should correspond to
+the names of \code{bamfiles}. Otherwise, it will be assumed that the
+elements are in the same order as the files in \code{bamfiles}. If
+\code{modbase} has length 1, the same modified base will be used for
+all samples.}
 
 \item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 containing information about the set of genomic sequences (chromosomes).
