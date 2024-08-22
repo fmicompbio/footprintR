@@ -155,7 +155,8 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
-    expect_equal(rme$sample, c("s1_5mC", "s1_6mA", "s2_5mC"))
+    expect_equal(rme$sample, c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -190,7 +191,8 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18615, 3)) ## number of unique positions
-    expect_equal(rme$sample, c("s1_5mC", "s1_6mA", "s2_5mC"))
+    expect_equal(rme$sample, c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -220,15 +222,15 @@ test_that("readModkitExtract works", {
     expect_equal(sum(ceiling(as.matrix(SummarizedExperiment::assay(rme)))), 71467) ## total number of rows in the original files
 
     # ... multiple files, automatic filtering
-    rme <- readModkitExtract(fnames = fnames[c("s1_5mC", "s2_5mC",
-                                               "s1_6mA")],
-                             modbase = c("m", "m", "a"),
+    rme <- readModkitExtract(fnames = fnames[c("s1_5mC", "s1_6mA", "s2_5mC")],
+                             modbase = c("m", "a", "m"),
                              filter = "modkit",
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(17459, 3)) ## number of unique positions
     expect_equal(rme$sample, c("s1_5mC", "s1_6mA", "s2_5mC"))
+    expect_equal(rme$modbase, c("m", "a", "m"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -245,13 +247,13 @@ test_that("readModkitExtract works", {
                                              "filter_threshold"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
-                      s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906),
-                      s1_6mA = c(`a` = -Inf, `-` = 0.8964844)),
+                      s1_6mA = c(`a` = -Inf, `-` = 0.8964844),
+                      s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906)),
                  ignore_attr = TRUE)
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
-                      s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906),
-                      s1_6mA = c(`a` = -Inf, `-` = 0.8964844)),
+                      s1_6mA = c(`a` = -Inf, `-` = 0.8964844),
+                      s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906)),
                  ignore_attr = TRUE)
     expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme))), 6672.8205)
     expect_equal(sum(ceiling(as.matrix(SummarizedExperiment::assay(rme)))), 61228) ## total number of rows in the original files

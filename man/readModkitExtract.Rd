@@ -50,7 +50,10 @@ to use for some of the steps in \code{readModkitExtract()}.}
 }
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with genomic positions in rows and samples in columns.
+with genomic positions in rows and samples in columns. The assay
+\code{"mod_prob"} contains per-read modification probabilities,
+with each column (sample) corresponding to a position-by-read
+\code{\link[SparseArray]{SparseMatrix}}.
 }
 \description{
 This function reads one or more modkit extract files and generates a

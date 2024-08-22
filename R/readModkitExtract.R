@@ -38,7 +38,10 @@
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with genomic positions in rows and samples in columns.
+#'     with genomic positions in rows and samples in columns. The assay
+#'     \code{"mod_prob"} contains per-read modification probabilities,
+#'     with each column (sample) corresponding to a position-by-read
+#'     \code{\link[SparseArray]{SparseMatrix}}.
 #'
 #' @author Charlotte Soneson
 #'
@@ -217,26 +220,15 @@ readModkitExtract <- function(fnames,
             dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
         ))
     }
-    # reduce to a single sparse matrix
-    readnames <- do.call(c, lapply(modmat, colnames))
-    samplenames <- rep(names(modmat), vapply(modmat, ncol, 0))
-    modmat <- BiocGenerics::do.call(BiocGenerics::cbind, modmat)
-
-    # group reads by sample
-    ids <- factor(samplenames)
-    dfReads <- S4Vectors::make_zero_col_DFrame(nrow = nrow(modmat))
-    iBySample <- split(seq.int(ncol(modmat)), ids)
-    for (s in seq_along(iBySample)) {
-        dfReads[[levels(ids)[s]]] <- modmat[, iBySample[[s]]]
-    }
 
     # create SummarizedExperiment object
     se <- SummarizedExperiment::SummarizedExperiment(
-        assays = list(mod_prob = dfReads),
+        assays = list(mod_prob = modmat),
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
-            row.names = names(dfReads),
-            sample = names(dfReads)
+            row.names = names(modmat),
+            sample = names(modmat),
+            modbase = modbase[names(modmat)]
         ),
         metadata = list(modkit_threshold = modkit_threshold,
                         filter_threshold = filter_threshold)
