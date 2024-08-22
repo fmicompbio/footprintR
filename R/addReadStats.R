@@ -98,7 +98,7 @@
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
-#' se_withReadStats <- addReadStats(se, plot=FALSE)
+#' se_withReadStats <- addReadStats(se)
 #' rowData(se_withReadStats)
 #' colData(se_withReadStats)
 #'
