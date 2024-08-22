@@ -56,26 +56,34 @@ se <- readModBam(bamfiles = modbamfiles,
                  verbose = TRUE)
 se
 ```
-This will create a `RangedSummarizedExperiment` object with positions in rows
-and individual reads in columns:
+This will create a `RangedSummarizedExperiment` object with positions in rows:
 
-```{r row-column-data}
+```{r row-data}
 # rows are positions...
 rowRanges(se)
-
-# ... and columns are reads
-colData(se)
 ```
 
-As you can see in the `colData(se)`, reads are assigned to samples,
-and the read quality score (`qscore`) has also been extracted. The
-sample names are obtained from the input files (here `extractfiles`), or
+Just like with summary-level data, columns correspond to samples
+```{r column-data}
+# ... and columns are samples
+colData(se)
+```
+The sample names are obtained from the input files (here `extractfiles`), or
 if the files are not named will be automatically assigned (each file
 corresponding to a separate sample).
 
+However, as each sample typically contains several reads (see `se$n_reads`),
+the `qscore` column that stores the quality scores for individual reads, is
+not a simple vector, but a list of vectors, in which scores are grouped by
+sample. It may be needed to `unlist()` it if a flat vector is needed:
+```{r coldata-list-columns}
+se$qscore
+unlist(se$qscore)
+```
+
 ## Explore assay data
 
-The single assay `mod_prob` is a `SparseMatrix` with modification probabilities.
+The single assay `mod_prob` is a `DataFrame` with modification probabilities.
 
 ```{r mod-prob-assay}
 assayNames(se)
@@ -83,10 +91,26 @@ assayNames(se)
 m <- assay(se, "mod_prob")
 m
 ```
+Again, to store read-level data for variable numbers of reads in each sample,
+each column (sample) is not just a simple vector, but a position-by-read
+`SparseMatrix`. If a simple matrix is needed, in which columns correspond to
+reads instead of sample, it can be created using `as.matrix()`:
+```{r mod-prob-columns}
+m$sample1
 
-This matrix does not store the zeros and thus uses much less memory compared
-to a normal (dense) matrix. However, you have to be careful when interpreting
-the values in that matrix, as they follow a specific convention:
+as.matrix(m)
+```
+
+One advantage of the this grouping of reads per sample is that you can easily
+perform per-sample operations using `lapply` (returns a `list`) or `endoapply`
+(returns a `DataFrame`):
+```{r mod-prob-lapply}
+lapply(m, ncol)
+endoapply(m, ncol)
+```
+The `SparseMatrix` objects do not store the zeros and thus use much less
+memory compared to a normal (dense) matrix. However, you have to be careful when
+interpreting the values in that matrix, as they follow a specific convention:
 
 **Important: ** The zeros correspond to unobserved read/position combinations,
 while all values that are 'implicitly' called (with a modifictation
@@ -102,16 +126,17 @@ unobserved data:
 m["chr1:6928850:-", ]
 
 # WRONG: take the mean of all values
-mean(m["chr1:6928850:-", ])
+lapply(m["chr1:6928850:-", ], rowMeans)
 
 # CORRECT: exclude the zeros
-non_zero <- m["chr1:6928850:-", ] != 0
-mean(m["chr1:6928850:-", non_zero])
+lapply(m["chr1:6928850:-", ], function(x) {
+    non_zero <- SparseArray::nzwhich(x != 0)
+    mean(x[non_zero])
+})
 ```
-
 This is however rarely needed, as there are convenience functions that
 will exclude the unobserved (zero) values automatically for you. For
-example, you can summarize the reads in each sample using `summarizeOverReads()`
+example, you can summarize the reads in each sample using `addReadSummary()`
 (see next section).
 
 ## Summarize read-level data
@@ -119,10 +144,10 @@ example, you can summarize the reads in each sample using `summarizeOverReads()`
 Summarized data can be obtained from the read-level data by calculating
 a per-position summary over the reads in each sample:
 
-```{r summarise-read-level-to-collapsed}
-se_summary <- summarizeOverReads(se, keep.reads = TRUE,
-                                 statistics = c("Nmod", "Nvalid", "FracMod",
-                                                "Pmod", "AvgConf"))
+```{r summarise-read-level}
+se_summary <- addReadSummary(se, keep.reads = TRUE,
+                             statistics = c("Nmod", "Nvalid", "FracMod",
+                                            "Pmod", "AvgConf"))
 ```
 
 As discussed above, this will automatically exclude the non-observed (zero)
@@ -134,7 +159,7 @@ assay(se_summary, "Pmod")["chr1:6928850:-", ]
 ```
 
 The summary statistics to calculate are selected using the `statistics` argument.
-By default, `summarizeOverReads()` will count the number of modified (`Nmod`)
+By default, `addReadSummary()` will count the number of modified (`Nmod`)
 and total (`Nvalid`) reads at each position and sample, and calculate the
 fraction of modified bases from the two (`FracMod`).
 
@@ -157,24 +182,14 @@ assayNames(se_summary)
 # ... which groups the reads by sample
 assay(se_summary, "mod_prob")
 
-# this means that the number of columns in "se_summary"
-# is lower than in "se" (the number of samples instead
-# of the number of reads)
+# the dimensions of  read-level `se` and summarized `se_summary` are identical
 dim(se)
 dim(se_summary)
-
-# the same is true for the assay "mod_prob" in "se" and
-# "se_summary", however all read level data is still
-# there and you can convert the assay back to ungrouped
-# reads using as.matrix()
-dim(assay(se, "mod_prob"))
-dim(assay(se_summary, "mod_prob"))
-dim(as.matrix(assay(se_summary, "mod_prob")))
 ```
 
 ## Plot data
 
-The collapsed data can then be visualized just like the summary-level data
+The read-level data can then be visualized just like the summary-level data
 using `plotRegion`, using the `tracks.reads` argument instead of `tracks.summary`
 to select the type of plot(s).
 

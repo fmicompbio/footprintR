@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
 })
 
 ## -------------------------------------------------------------------------- ##
-## Checks, summarizeOverReads
+## Checks, addReadSummary
 ## -------------------------------------------------------------------------- ##
-test_that("summarizeOverReads works", {
+test_that("addReadSummary works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     se <- readModkitExtract(exfile, modbase = "a")
@@ -17,19 +17,19 @@ test_that("summarizeOverReads works", {
     rowRanges(se1) <- NULL
 
     # invalid arguments
-    expect_error(summarizeOverReads(se = "error"))
-    expect_error(summarizeOverReads(se = se0))
-    expect_error(summarizeOverReads(se = se, assay.type = "error"))
-    expect_error(summarizeOverReads(se = se, statistics = "error"))
-    expect_error(summarizeOverReads(se = se, keep.reads = "error"))
-    expect_error(summarizeOverReads(se = se, verbose = "error"))
+    expect_error(addReadSummary(se = "error"))
+    expect_error(addReadSummary(se = se0))
+    expect_error(addReadSummary(se = se, assay.type = "error"))
+    expect_error(addReadSummary(se = se, statistics = "error"))
+    expect_error(addReadSummary(se = se, keep.reads = "error"))
+    expect_error(addReadSummary(se = se, verbose = "error"))
 
     # expected results
     expect_message(expect_message(expect_message(
-        s1 <- summarizeOverReads(se = se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"), verbose = TRUE)
+        s1 <- addReadSummary(se = se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"), verbose = TRUE)
     )))
-    s2 <- summarizeOverReads(se = se, statistics = "FracMod", keep.reads = TRUE)
-    s3 <- summarizeOverReads(se = se1, statistics = "FracMod", keep.reads = TRUE)
+    s2 <- addReadSummary(se = se, statistics = "FracMod", keep.reads = TRUE)
+    s3 <- addReadSummary(se = se1, statistics = "FracMod", keep.reads = TRUE)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
     expect_s4_class(s3, "SummarizedExperiment")
