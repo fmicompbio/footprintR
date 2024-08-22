@@ -35,7 +35,7 @@ bases are obtained from \code{rowData(se)$sequence.context} and thus
 requires that \code{se} contains the appropriate information, for example
 by setting the \code{sequence.context} and \code{sequence.reference}
 arguments of \code{\link{readModkitExtract}} when it was generated,
-or by adding it using \code{\link{seqContext}}.}
+or by adding it using \code{\link{addSeqContext}}.}
 
 \item{stats}{Character vector specifying which statistics to calculate.
 When set to \code{NULL} all available statistics are calculated. See

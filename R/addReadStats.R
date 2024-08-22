@@ -3,7 +3,7 @@
 #' @description
 #' This function calculates various per-read summary statistics on modification
 #' probabilities or calls from a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
-#' object with genomic positions in rows and reads in columns and adds them to the 
+#' object with genomic positions in rows and reads in columns and adds them to the
 #' \code{colData}.
 #' See details for more information on the statistics that are calculated.
 #'
@@ -26,7 +26,7 @@
 #'     requires that \code{se} contains the appropriate information, for example
 #'     by setting the \code{sequence.context} and \code{sequence.reference}
 #'     arguments of \code{\link{readModkitExtract}} when it was generated,
-#'     or by adding it using \code{\link{seqContext}}.
+#'     or by adding it using \code{\link{addSeqContext}}.
 #' @param min.Nobs.ppos A numeric scalar value >=1 indicating the minimum
 #'     coverage on individual positions for them to be included in the
 #'     calculations. In high coverage data this is an effective filter for
@@ -133,7 +133,7 @@ addReadStats <- function(se,
         min.Nobs.pread = min.Nobs.pread,
         LowConf = LowConf,
         LagRange = LagRange,
-        plot = plot 
+        plot = plot
     )
 
     SummarizedExperiment::colData(se) <-

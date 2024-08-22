@@ -153,11 +153,12 @@ extractSeqContext <- function(x,
 #'           assays = matrix(1:3, ncol=1),
 #'           rowRanges = GRanges(
 #'               "chr1", IRanges(start = 6957060 - c(4, 2, 0),
-#'               width = 1, names = c("a","b","c"))))
+#'               width = 1, names = c("a","b","c")),
+#'               strand = "-"))
 #'
 #' # add sequence context (note the padding with N's)
 #' rowRanges(se)
-#' se <- addSeqContext(regions, 7, reffile)
+#' se <- addSeqContext(se, 7, reffile)
 #' rowRanges(se)
 #'
 #' @seealso \code{\link{extractSeqContext}}
