@@ -115,18 +115,18 @@
 #'
 #' @export
 addReadStats <- function(se,
-                          regions = NULL,
-                          sequence.context = NULL,
-                          stats = NULL,
-                          min.Nobs.ppos = NULL,
-                          min.Nobs.pread = 0,
-                          LowConf = 0.7,
-                          LagRange = c(12, 64),
-                          plot = TRUE) {
+                         regions = NULL,
+                         sequence.context = NULL,
+                         stats = NULL,
+                         min.Nobs.ppos = NULL,
+                         min.Nobs.pread = 0,
+                         LowConf = 0.7,
+                         LagRange = c(12, 64),
+                         plot = TRUE) {
 
-    calcReadStats.RES <- calcReadStats(
-        se=se,
-        regions=regions,
+    se$QC <- calcReadStats(
+        se = se,
+        regions = regions,
         sequence.context = sequence.context,
         stats = stats,
         min.Nobs.ppos = min.Nobs.ppos,
@@ -134,15 +134,7 @@ addReadStats <- function(se,
         LowConf = LowConf,
         LagRange = LagRange,
         plot = plot
-    )
-
-    SummarizedExperiment::colData(se) <-
-        cbind(SummarizedExperiment::colData(se), calcReadStats.RES$ReadStats)
-    # S4Vectors::metadata(se) <- c(S4Vectors::metadata(se),
-    #                              as.list(environment(), all = TRUE))
-    S4Vectors::metadata(se)$stats <- calcReadStats.RES$Params$stats
-    S4Vectors::metadata(se)$min.Nobs.ppos <- calcReadStats.RES$Params$min.Nobs.ppos
-    S4Vectors::metadata(se)$Lags <- calcReadStats.RES$Params$Lags
+    )[colnames(se)]
 
     return(se)
 }
