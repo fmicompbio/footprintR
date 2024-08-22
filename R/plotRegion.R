@@ -479,13 +479,9 @@ plotRegion <- function(se,
 #' @keywords internal
 .preparePlotdataReads <- function(x, aname, modbaseSpace = FALSE) {
     assaydat <- SummarizedExperiment::assay(x, aname)
-    if (!is.null(dim(assaydat[1,1]))) {
-        # `aname` columns are grouped reads -> flatten
-        sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
-        assaydat <- as.matrix(assaydat)
-    } else {
-        sample_ids <- SummarizedExperiment::colData(x)[["sample"]]
-    }
+    # `aname` columns are grouped reads -> flatten
+    sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
+    assaydat <- as.matrix(assaydat)
     i <- SparseArray::nzwhich(assaydat, arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,1]],
