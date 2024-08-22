@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
 })
 
 ## -------------------------------------------------------------------------- ##
-## Checks, addReadSummary
+## Checks, addReadsSummary
 ## -------------------------------------------------------------------------- ##
-test_that("addReadSummary works", {
+test_that("addReadsSummary works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     se <- readModkitExtract(exfile, modbase = "a")
@@ -17,19 +17,19 @@ test_that("addReadSummary works", {
     rowRanges(se1) <- NULL
 
     # invalid arguments
-    expect_error(addReadSummary(se = "error"))
-    expect_error(addReadSummary(se = se0))
-    expect_error(addReadSummary(se = se, assay.type = "error"))
-    expect_error(addReadSummary(se = se, statistics = "error"))
-    expect_error(addReadSummary(se = se, keep.reads = "error"))
-    expect_error(addReadSummary(se = se, verbose = "error"))
+    expect_error(addReadsSummary(se = "error"))
+    expect_error(addReadsSummary(se = se0))
+    expect_error(addReadsSummary(se = se, assay.type = "error"))
+    expect_error(addReadsSummary(se = se, statistics = "error"))
+    expect_error(addReadsSummary(se = se, keep.reads = "error"))
+    expect_error(addReadsSummary(se = se, verbose = "error"))
 
     # expected results
-    expect_message(expect_message(expect_message(
-        s1 <- addReadSummary(se = se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"), verbose = TRUE)
-    )))
-    s2 <- addReadSummary(se = se, statistics = "FracMod", keep.reads = TRUE)
-    s3 <- addReadSummary(se = se1, statistics = "FracMod", keep.reads = TRUE)
+    expect_message(expect_message(
+        s1 <- addReadsSummary(se = se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"), verbose = TRUE)
+    ))
+    s2 <- addReadsSummary(se = se, statistics = "FracMod", keep.reads = TRUE)
+    s3 <- addReadsSummary(se = se1, statistics = "FracMod", keep.reads = TRUE)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
     expect_s4_class(s3, "SummarizedExperiment")
@@ -42,11 +42,11 @@ test_that("addReadSummary works", {
     expect_identical(rownames(s1), rownames(se))
     expect_identical(rownames(s2), rownames(se))
     expect_null(rownames(s3))
-    expect_equal(sum(assay(se, "mod_prob") >= 0.5),
+    expect_equal(sum(as.matrix(assay(se, "mod_prob")) >= 0.5),
                  sum(assay(s1, "Nmod")))
-    expect_equal(sum(assay(se, "mod_prob") != 0.0),
+    expect_equal(sum(as.matrix(assay(se, "mod_prob")) != 0.0),
                  sum(assay(s1, "Nvalid")))
     expect_s4_class(assay(s2, "mod_prob"), "DataFrame")
     expect_s4_class(assay(s2, "mod_prob")[,1], "SparseMatrix")
-    expect_identical(dim(assay(s2, "mod_prob")[,1]), dim(se))
+    expect_identical(dim(assay(s2, "mod_prob")[,1]), dim(assay(se, "mod_prob")[,1]))
 })

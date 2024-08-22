@@ -136,7 +136,7 @@ lapply(m["chr1:6928850:-", ], function(x) {
 ```
 This is however rarely needed, as there are convenience functions that
 will exclude the unobserved (zero) values automatically for you. For
-example, you can summarize the reads in each sample using `addReadSummary()`
+example, you can summarize the reads in each sample using `addReadsSummary()`
 (see next section).
 
 ## Summarize read-level data
@@ -145,9 +145,9 @@ Summarized data can be obtained from the read-level data by calculating
 a per-position summary over the reads in each sample:
 
 ```{r summarise-read-level}
-se_summary <- addReadSummary(se, keep.reads = TRUE,
-                             statistics = c("Nmod", "Nvalid", "FracMod",
-                                            "Pmod", "AvgConf"))
+se_summary <- addReadsSummary(se, keep.reads = TRUE,
+                              statistics = c("Nmod", "Nvalid", "FracMod",
+                                             "Pmod", "AvgConf"))
 ```
 
 As discussed above, this will automatically exclude the non-observed (zero)
@@ -159,7 +159,7 @@ assay(se_summary, "Pmod")["chr1:6928850:-", ]
 ```
 
 The summary statistics to calculate are selected using the `statistics` argument.
-By default, `addReadSummary()` will count the number of modified (`Nmod`)
+By default, `addReadsSummary()` will count the number of modified (`Nmod`)
 and total (`Nvalid`) reads at each position and sample, and calculate the
 fraction of modified bases from the two (`FracMod`).
 

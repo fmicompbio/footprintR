@@ -33,7 +33,7 @@
 #' se <- readModkitExtract(exfile, modbase = "a")
 #' se
 #'
-#' se_summary <- addReadSummary(se, keep.reads = TRUE)
+#' se_summary <- addReadsSummary(se, keep.reads = TRUE)
 #' se_summary
 #'
 #' @seealso \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the
@@ -46,11 +46,11 @@
 #' @importFrom SparseArray pmax nzvals nzvals<- rowSums
 #'
 #' @export
-addReadSummary <- function(se,
-                           assay.type = "mod_prob",
-                           statistics = c("Nmod", "Nvalid", "FracMod"),
-                           keep.reads = FALSE,
-                           verbose = FALSE) {
+addReadsSummary <- function(se,
+                            assay.type = "mod_prob",
+                            statistics = c("Nmod", "Nvalid", "FracMod"),
+                            keep.reads = FALSE,
+                            verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     if (!"sample" %in% colnames(colData(se))) {
