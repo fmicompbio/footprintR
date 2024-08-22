@@ -27,7 +27,7 @@
 #' @export
 plotReadStats <- function(se) {
     stopifnot("QC" %in% colnames(SummarizedExperiment::colData(se)))
-    df <- BiocGenerics::as.data.frame(rme$QC)
+    df <- BiocGenerics::as.data.frame(se$QC)
     df <- df[, !grepl("AC", colnames(df))]
     df <- df[, !colnames(df) %in% c("group", "group_name")]
 
