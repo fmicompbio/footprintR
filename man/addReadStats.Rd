@@ -13,7 +13,7 @@ addReadStats(
   min.Nobs.pread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
-  plot = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
@@ -61,8 +61,7 @@ calls are considered "low confidence".}
 the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).}
 
-\item{plot}{A locial scalar, defining whether to produce plots for the
-distributions of the calculated read statistics.}
+\item{verbose}{If \code{TRUE}, report on progress.}
 }
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object

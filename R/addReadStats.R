@@ -43,8 +43,7 @@
 #' @param LagRange A numeric vector of two values (minimum and maxium) defining
 #'     the range of lags for the calculation of autocorrelation and partial
 #'     autocorrelation (see details section).
-#' @param plot A locial scalar, defining whether to produce plots for the
-#'     distributions of the calculated read statistics.
+#' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
 #' Calculates a collection of location/scatter statistics and information
@@ -122,7 +121,7 @@ addReadStats <- function(se,
                          min.Nobs.pread = 0,
                          LowConf = 0.7,
                          LagRange = c(12, 64),
-                         plot = TRUE) {
+                         verbose = FALSE) {
 
     se$QC <- calcReadStats(
         se = se,
@@ -133,7 +132,7 @@ addReadStats <- function(se,
         min.Nobs.pread = min.Nobs.pread,
         LowConf = LowConf,
         LagRange = LagRange,
-        plot = plot
+        verbose = verbose
     )[colnames(se)]
 
     return(se)
