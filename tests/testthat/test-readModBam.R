@@ -64,67 +64,96 @@ test_that("readModBam works", {
     expect_s4_class(rowRanges(se3), "GPos")
     expect_s4_class(rowRanges(se4), "GPos")
 
-    expect_identical(se1$sample, rep(names(modbamfiles), c(4, 6)))
-    expect_identical(se2$sample, rep(c("s1", "s2"), c(3, 2)))
-    expect_identical(se3$sample, rep(names(modbamfiles), c(3, 2)))
-    expect_identical(se4$sample, character(0))
+    expect_identical(colnames(colData(se1)), c("sample", "n_reads", "qscore"))
+    expect_identical(colnames(colData(se2)), c("sample", "n_reads", "qscore"))
+    expect_identical(colnames(colData(se3)), c("sample", "n_reads", "qscore"))
+    expect_identical(colnames(colData(se4)), c("sample", "n_reads", "qscore"))
+
+    expect_identical(se1$sample, names(modbamfiles))
+    expect_identical(se2$sample, c("s1", "s2"))
+    expect_identical(se3$sample, names(modbamfiles))
+    expect_identical(se4$sample, names(modbamfiles))
+
 
     expect_identical(assayNames(se1), "mod_prob")
     expect_identical(assayNames(se2), "mod_prob")
     expect_identical(assayNames(se3), "mod_prob")
     expect_identical(assayNames(se4), "mod_prob")
 
-    expect_identical(colnames(colData(se1)), c("sample", "qscore"))
-    expect_identical(colnames(colData(se2)), c("sample", "qscore"))
-    expect_identical(colnames(colData(se3)), c("sample", "qscore"))
-    expect_identical(colnames(colData(se4)), c("sample", "qscore"))
+    expect_s4_class(assay(se1, "mod_prob"), "DFrame")
+    expect_s4_class(assay(se2, "mod_prob"), "DFrame")
+    expect_s4_class(assay(se3, "mod_prob"), "DFrame")
+    expect_s4_class(assay(se4, "mod_prob"), "DFrame")
+
+    expect_s4_class(assay(se1, "mod_prob")[[1]], "SparseMatrix")
+    expect_s4_class(assay(se2, "mod_prob")[[1]], "SparseMatrix")
+    expect_s4_class(assay(se3, "mod_prob")[[1]], "SparseMatrix")
+    expect_s4_class(assay(se4, "mod_prob")[[1]], "SparseMatrix")
+
+    expect_equal(vapply(assay(se1, "mod_prob"), ncol, 0), se1$n_reads)
+    expect_equal(vapply(assay(se2, "mod_prob"), ncol, 0), se2$n_reads)
+    expect_equal(vapply(assay(se3, "mod_prob"), ncol, 0), se3$n_reads)
+    expect_equal(vapply(assay(se4, "mod_prob"), ncol, 0), se4$n_reads)
 
     # ... content se1
-    expect_identical(dim(se1), c(12571L, 10L))
-    shared_rows <- intersect(rownames(se0), rownames(se1))
-    shared_cols <- intersect(colnames(se0), colnames(se1))
+    expect_identical(unname(se1$n_reads), c(4L, 6L))
+    expect_identical(dim(se1), c(12571L, 2L))
+    modprob0 <- as.matrix(assay(se0, "mod_prob"))
+    modprob1 <- as.matrix(assay(se1, "mod_prob"))
+    shared_rows <- intersect(rownames(modprob0), rownames(modprob1))
+    shared_cols <- intersect(colnames(modprob0), colnames(modprob1))
     expect_length(shared_rows, 8534L)
     expect_length(shared_cols, 10L)
-    nonzero <- as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols]) > 0 &
-        as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols]) > 0
-    # plot(as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols])[nonzero],
-    #      as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero])
-    expect_equal(as.vector(assay(se1, "mod_prob")[shared_rows, shared_cols])[nonzero],
-                 as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
+    nonzero <- as.vector(modprob1[shared_rows, shared_cols]) > 0 &
+        as.vector(modprob0[shared_rows, shared_cols]) > 0
+    # plot(as.vector(modprob1[shared_rows, shared_cols])[nonzero],
+    #      as.vector(modprob0[shared_rows, shared_cols])[nonzero])
+    expect_equal(as.vector(modprob1[shared_rows, shared_cols])[nonzero],
+                 as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
-    expect_identical(se1$sample, rep(names(modbamfiles), c(4, 6)))
+    expect_identical(se1$sample, names(modbamfiles))
     expect_equal(se1$qscore,
-                 c(14.1428003311157, 16.0126991271973, 21.1338005065918,
-                   20.3082008361816, 12.9041996002197, 9.67461013793945,
-                   15.0149002075195, 15.1365995407104, 17.7175006866455,
-                   13.6647996902466))
+                 S4Vectors::SimpleList(
+                     sample1 = c(14.1428003311157, 16.0126991271973,
+                                 21.1338005065918, 20.3082008361816),
+                     sample2 = c(12.9041996002197, 9.67461013793945,
+                                 15.0149002075195, 15.1365995407104,
+                                 17.7175006866455, 13.6647996902466)))
 
     # ... content se2
+    expect_identical(unname(se2$n_reads), c(3L, 2L))
     expect_identical(dim(se2), dim(se3))
-    expect_identical(unname(assay(se2, "mod_prob")),
-                     unname(assay(se3, "mod_prob")))
-    expect_identical(sub("^[^-]+-", "", rownames(colData(se2))),
-                     sub("^[^-]+-", "", rownames(colData(se3))))
+    expect_identical(unname(as.matrix(assay(se2, "mod_prob"))),
+                     unname(as.matrix(assay(se3, "mod_prob"))))
+    expect_identical(sub("^s", "sample", colnames(se2)), colnames(se3))
     expect_identical(se2$sample, sub("sample", "s", se3$sample))
-    expect_identical(se2$qscore, se3$qscore)
+    expect_identical(unname(se2$qscore), unname(se3$qscore))
 
     # ... content se3
-    expect_identical(dim(se3), c(9266L, 5L))
-    shared_rows <- intersect(rownames(se0), rownames(se3))
-    shared_cols <- intersect(colnames(se0), colnames(se3))
+    expect_identical(unname(se3$n_reads), c(3L, 2L))
+    expect_identical(dim(se3), c(9266L, 2L))
+    modprob3 <- as.matrix(assay(se3, "mod_prob"))
+    shared_rows <- intersect(rownames(modprob0), rownames(modprob3))
+    shared_cols <- intersect(colnames(modprob0), colnames(modprob3))
     expect_length(shared_rows, 7809L)
     expect_length(shared_cols, 5L)
-    nonzero <- as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols]) > 0 &
-        as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols]) > 0
-    # plot(as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols])[nonzero],
-    #      as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero])
-    expect_equal(as.vector(assay(se3, "mod_prob")[shared_rows, shared_cols])[nonzero],
-                 as.vector(assay(se0, "mod_prob")[shared_rows, shared_cols])[nonzero],
+    nonzero <- as.vector(modprob3[shared_rows, shared_cols]) > 0 &
+        as.vector(modprob0[shared_rows, shared_cols]) > 0
+    # plot(as.vector(modprob3[shared_rows, shared_cols])[nonzero],
+    #      as.vector(modprob0[shared_rows, shared_cols])[nonzero])
+    expect_equal(as.vector(modprob3[shared_rows, shared_cols])[nonzero],
+                 as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
     expect_equal(se3$qscore,
-                 c(14.1428003311157, 16.0126991271973, 20.3082008361816,
-                   9.67461013793945, 13.6647996902466))
+                 S4Vectors::SimpleList(
+                     sample1 = c(14.1428003311157, 16.0126991271973, 20.3082008361816),
+                     sample2 = c(9.67461013793945, 13.6647996902466)))
 
     # ... content se4
-    expect_identical(dim(se4), c(0L, 0L))
+    expect_identical(unname(se4$n_reads), c(0L, 0L))
+    expect_identical(dim(se4), c(0L, 2L))
+    expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(0L, 0L))
+    expect_identical(se4$qscore,
+                     S4Vectors::SimpleList(sample1 = numeric(0),
+                                           sample2 = numeric(0)))
 })

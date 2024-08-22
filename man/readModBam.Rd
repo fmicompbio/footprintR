@@ -17,10 +17,9 @@ readModBam(
 \item{bamfiles}{Character vector with one or several paths of \code{modBAM}
 files, containing information about base modifications in \code{MM} and
 \code{ML} tags. If \code{bamfiles} is a named vector, the names are used
-as sample names and prefixes for the column (read) names in the returned
-\code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
-Otherwise, the prefixes will be \code{s1}, ..., \code{sN}, where \code{N}
-is the length of \code{bamfiles}. All \code{bamfiles} must have an index.}
+as sample names and prefixes for read names. Otherwise, the prefixes will
+be \code{s1}, ..., \code{sN}, where \code{N} is the length of
+\code{bamfiles}. All \code{bamfiles} must have an index.}
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
 genomic regions to extract the reads from. Alternatively, regions can be
@@ -43,16 +42,20 @@ to use for some of the steps in \code{readModBam}.}
 }
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with genomic positions in rows and reads in columns.
+with genomic positions in rows and samples in columns. The assay
+\code{"mod_prob"} contains per-read modification probabilities,
+with each column (sample) corresponding to a position-by-read
+\code{\link[SparseArray]{SparseMatrix}}.
 }
 \description{
 Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
-section 1.7) and return a list of information on modified bases.
+section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
+object with information on modified bases.
 }
 \examples{
 modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                           package = "footprintR")
-readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
+readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
            modbase = "a", verbose = TRUE)
 
 }

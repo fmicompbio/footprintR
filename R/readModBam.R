@@ -1,15 +1,15 @@
 #' Read base modifications from a bam file.
 #'
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
-#' section 1.7) and return a list of information on modified bases.
+#' section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
+#' object with information on modified bases.
 #'
 #' @param bamfiles Character vector with one or several paths of \code{modBAM}
 #'     files, containing information about base modifications in \code{MM} and
 #'     \code{ML} tags. If \code{bamfiles} is a named vector, the names are used
-#'     as sample names and prefixes for the column (read) names in the returned
-#'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} object.
-#'     Otherwise, the prefixes will be \code{s1}, ..., \code{sN}, where \code{N}
-#'     is the length of \code{bamfiles}. All \code{bamfiles} must have an index.
+#'     as sample names and prefixes for read names. Otherwise, the prefixes will
+#'     be \code{s1}, ..., \code{sN}, where \code{N} is the length of
+#'     \code{bamfiles}. All \code{bamfiles} must have an index.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
 #'     genomic regions to extract the reads from. Alternatively, regions can be
 #'     specified as a character vector (e.g. "chr1:1200-1300") that can be
@@ -26,12 +26,15 @@
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with genomic positions in rows and reads in columns.
+#'     with genomic positions in rows and samples in columns. The assay
+#'     \code{"mod_prob"} contains per-read modification probabilities,
+#'     with each column (sample) corresponding to a position-by-read
+#'     \code{\link[SparseArray]{SparseMatrix}}.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
-#' readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
+#' readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -43,7 +46,7 @@
 #' @importFrom SparseArray SparseArray
 #' @importFrom Matrix sparseMatrix
 #' @importFrom GenomicRanges GPos sort match
-#' @importFrom S4Vectors DataFrame
+#' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand
 #' @importFrom parallel mclapply
@@ -130,6 +133,7 @@ readModBam <- function(bamfiles,
 
     # modified probability
     modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
+    qscoreL <- S4Vectors::SimpleList()
     for (nm in names(bamfiles)) {
         x <- resLL[[nm]]
         if (length(x$read_id) > 0) {
@@ -140,27 +144,22 @@ readModBam <- function(bamfiles,
                 dims = c(length(gpos), length(readL[[nm]])),
                 dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
             ))
+            qscoreL[[nm]] <- x$qscore[match(readL[[nm]], x$read_id)]
         } else {
             modmat[[nm]] <- SparseArray::SparseArray(matrix(nrow = length(gpos), ncol = 0))
+            qscoreL[[nm]] <- numeric(0)
         }
     }
-    # reduce to a single sparse matrix
-    readnames <- do.call(c, lapply(modmat, colnames))
-    qscore <- unlist(lapply(names(modmat), function(nm) {
-        resLL[[nm]][["qscore"]][match(colnames(modmat[[nm]]),
-                                      paste0(nm, "-", resLL[[nm]][["read_id"]]))]
-    }))
-    samplenames <- rep(names(modmat), vapply(modmat, ncol, 0))
-    modmat <- BiocGenerics::do.call(BiocGenerics::cbind, modmat)
 
     # create SummarizedExperiment object
     se <- SummarizedExperiment::SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
         colData = S4Vectors::DataFrame(
-            row.names = readnames,
-            sample = samplenames,
-            qscore = qscore
+            row.names = names(bamfiles),
+            sample = names(bamfiles),
+            n_reads = lengths(qscoreL),
+            qscore = qscoreL
         ),
         metadata = list()
     )
