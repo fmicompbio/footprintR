@@ -43,8 +43,7 @@
 #' @param LagRange A numeric vector of two values (minimum and maxium) defining
 #'     the range of lags for the calculation of autocorrelation and partial
 #'     autocorrelation (see details section).
-#' @param plot A locial scalar, defining whether to produce plots for the
-#'     distributions of the calculated read statistics.
+#' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
 #' Calculates a collection of location/scatter statistics and information
@@ -99,7 +98,7 @@
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
-#' se_withReadStats <- addReadStats(se, plot=FALSE)
+#' se_withReadStats <- addReadStats(se)
 #' rowData(se_withReadStats)
 #' colData(se_withReadStats)
 #'
@@ -115,34 +114,26 @@
 #'
 #' @export
 addReadStats <- function(se,
-                          regions = NULL,
-                          sequence.context = NULL,
-                          stats = NULL,
-                          min.Nobs.ppos = NULL,
-                          min.Nobs.pread = 0,
-                          LowConf = 0.7,
-                          LagRange = c(12, 64),
-                          plot = TRUE) {
+                         regions = NULL,
+                         sequence.context = NULL,
+                         stats = NULL,
+                         min.Nobs.ppos = NULL,
+                         min.Nobs.pread = 0,
+                         LowConf = 0.7,
+                         LagRange = c(12, 64),
+                         verbose = FALSE) {
 
-    calcReadStats.RES <- calcReadStats(
-        se=se,
-        regions=regions,
+    se$QC <- calcReadStats(
+        se = se,
+        regions = regions,
         sequence.context = sequence.context,
         stats = stats,
         min.Nobs.ppos = min.Nobs.ppos,
         min.Nobs.pread = min.Nobs.pread,
         LowConf = LowConf,
         LagRange = LagRange,
-        plot = plot
-    )
-
-    SummarizedExperiment::colData(se) <-
-        cbind(SummarizedExperiment::colData(se), calcReadStats.RES$ReadStats)
-    # S4Vectors::metadata(se) <- c(S4Vectors::metadata(se),
-    #                              as.list(environment(), all = TRUE))
-    S4Vectors::metadata(se)$stats <- calcReadStats.RES$Params$stats
-    S4Vectors::metadata(se)$min.Nobs.ppos <- calcReadStats.RES$Params$min.Nobs.ppos
-    S4Vectors::metadata(se)$Lags <- calcReadStats.RES$Params$Lags
+        verbose = verbose
+    )[colnames(se)]
 
     return(se)
 }
