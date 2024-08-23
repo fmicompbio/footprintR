@@ -1,0 +1,377 @@
+#' @title Calculate distances between modified bases on individual reads.
+#'
+#' @description Calculate the frequencies of same read modified base distances,
+#'     for example from read-level modification data to estimate nucleosome
+#'     repeat length. Distance calculations are implemented in C++
+#'     (\code{\link{calcAndCountDist}}) for efficiency.
+#'
+#' @author Michael Stadler
+#'
+#' @param bamfiles Character vector with one or several bam files. If
+#'     multiple files are given, distance counts from all will be summed.
+#' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
+#'     genomic regions to extract the reads from. Alternatively, regions can be
+#'     specified as a character vector (e.g. "chr1:1200-1300") that can be
+#'     coerced into a \code{GRanges} object. Note that the reads are not
+#'     trimmed to the boundaries of the specified ranges. As a result, analyzed
+#'     positions will typically extend out of the specified regions.
+#' @param modbase Character scalar defining the modified base.
+#' @param min_mod_prob Numeric scalar giving the minimal modification
+#'     probability for a modified base.
+#' @param rmdup Logical scalar indicating if duplicates should be removed.
+#'     If \code{TRUE} (the default), only one of several alignments starting at
+#'     the same coordinate is used.
+#' @param dmax Numeric scalar specifying the maximal distance between
+#'     modified bases on the same read to count.
+#'
+#' @return \code{integer} vector with \code{dmax} elements, with the element at
+#'   position \code{d} giving the observed number of alignment pairs at that
+#'   distance.
+#'
+#' @references Phasograms were originally described in Valouev et al., Nature
+#'   2011 (doi:10.1038/nature10002). The implementation here differs in three
+#'   ways from the original algorithms:
+#'   \enumerate{
+#'     \item Instead of same strand alignment start positions, this function
+#'         studies the same read modified base positions.
+#'     \item It does not implement removing of positions that have been seen
+#'         less than \code{n} times (referred to as a \code{n}-pile subset in
+#'         the paper).
+#'     \item It does allow to retain only alignments that fall into selected
+#'         genomic intervals (\code{regions} argument).
+#'   }
+#'
+#' @seealso \code{\link{estimateNRL}} to estimate the nucleosome repeat length
+#'   from a phasogram, \code{\link{plotModbaseSpacing}} to visualize an annotated
+#'   phasogram, \code{\link{calcAndCountDist}} for low-level distance counting.
+#'
+#' @examples
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' pg <- calcModbaseSpacing(modbamfiles, "chr1:6940000-6955000", "a")
+#' print(estimateNRL(pg)[1:2])
+#' plotModbaseSpacing(pg)
+#' plotModbaseSpacing(pg, detailedPlots = TRUE)
+#'
+#' @importFrom IRanges IRanges overlapsAny
+#' @importFrom GenomicRanges GRanges seqnames ranges
+#' @import Rcpp
+#'
+#' @export
+calcModbaseSpacing <- function(bamfiles,
+                               regions,
+                               modbase,
+                               min_mod_prob = 0.5,
+                               rmdup = TRUE,
+                               dmax = 1000L) {
+    # digest arguments
+    .assertVector(x = bamfiles, type = "character")
+    if (any(i <- !file.exists(bamfiles))) {
+        stop("not all `bamfiles` exist: ", paste(bamfiles[i], collapse = ", "))
+    }
+    if (is.character(regions)) {
+        regions <- as(regions, "GRanges")
+    }
+    .assertVector(x = regions, type = "GRanges")
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    .assertScalar(x = modbase, type = "character",
+                  validValues = c("m","h","f","c","C","g","e","b","T",
+                                  "U","a","A","o","G","n","N"))
+
+    cnt <- numeric(dmax)
+    names(cnt) <- as.character(seq.int(dmax))
+    regions_str <- as.character(regions, ignore.strand = TRUE)
+
+    # for each bamfile i
+    for (i in seq_along(bamfiles)) {
+        resL <- read_modbam_cpp(inname_str = bamfiles[i],
+                                regions = regions_str,
+                                modbase = modbase, verbose = FALSE)
+        idxByRead <- split(seq_along(resL$read_id), resL$read_id)
+        # for each read j in bamfile i
+        for (j in seq_along(idxByRead)) {
+            is_mod <- resL$mod_prob[idxByRead[[j]]] > min_mod_prob
+            pos <- resL$ref_position[idxByRead[[j]]][is_mod]
+            if (rmdup) {
+                pos <- unique(pos)
+            }
+            # count distances in (1..dmax)
+            calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+        }
+    }
+
+    return(cnt)
+}
+
+#' @title Estimate the nucleosome repeat length (NRL) from modified-base distances.
+#'
+#' @description Estimate the nucleosome repeat length (NRL) from the frequencies
+#'   of same-read modified base distances, e.g. generated by
+#'   \code{\link{calcModbaseSpacing}}. The NRL is obtained from the slope of a
+#'   linear fit to the modes in the distance distribution.
+#'
+#' @author Michael Stadler
+#'
+#' @param x \code{numeric} vector giving the counts of distances
+#'   (typically the output of \code{\link{calcModbaseSpacing}}.
+#' @param mind \code{integer(1)} specifying the minimal distance to be used for
+#'   NRL estimation. The default value (140) ignores any distance too short to
+#'   span at least a single nucleosome.
+#' @param usePeaks \code{integer} vector selecting the modes (peaks) in the
+#'   phasogram used in NRL estimation.
+#' @param span1 \code{numeric(1)} giving the smoothing parameter for de-trending
+#'   loess fit (high pass filter).
+#' @param span2 \code{numeric(1)} giving the smoothing parameter for de-noising
+#'   loess fit (low pass filter).
+#'
+#' @return A \code{list} with elements: \describe{
+#'   \item{nrl}{the estimated nucleosome repeat length}
+#'   \item{nrl.CI95}{the 95\% confidence interval}
+#'   \item{xs}{smoothed (de-trended) phasogram}
+#'   \item{loessfit}{the de-noising fit to the de-trended phasogram}
+#'   \item{lmfit}{the linear fit to the phasogram peaks}
+#'   \item{peaks}{the peak locations}
+#'   \item{mind}{minimal distance included in the fit}
+#'   \item{span1}{smoothing parameter for de-trending loess fit}
+#'   \item{span2}{smoothing parameter for de-noising loess fit}
+#'   \item{usePeaks}{the peaks used in the fit}}
+#'
+#' @seealso \code{\link{calcModbaseSpacing}} to calculate the distances from
+#'   base modification data, \code{\link{plotModbaseSpacing}} to visualize
+#'   annotated distance frequencies between modified bases.
+#'
+#' @examples
+#'   # see the help for calcModbaseSpacing() for a full example
+#'
+#' @importFrom stats loess lm confint residuals predict coefficients
+#' @importFrom IRanges IRanges Views viewApply
+#' @importFrom methods as
+#'
+#' @export
+estimateNRL <- function(x,
+                        mind = 140L,
+                        usePeaks = 1:5,
+                        span1 = 100 / length(x),
+                        span2 = 1500 / length(x)) {
+    # digest arguments
+    .assertVector(x = x, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = mind, type = "numeric", rngIncl = c(0, Inf))
+    .assertVector(x = usePeaks, type = "numeric", rngIncl = c(1, Inf))
+    .assertScalar(x = span1, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = span2, type = "numeric", rngExcl = c(span1, Inf))
+
+    if (all(x == 0)) {
+        warning("NRL not estimated (no non-zero distances)")
+        return(list(nrl = NA, nrl.CI95 = NA, xs = NA, loessfit = NA, lmfit = NA,
+                    peaks = NA, mind = mind, span1 = span1, span2 = span2,
+                    usePeaks = usePeaks))
+    }
+
+    pos <- seq_along(x)
+    xs <- stats::predict(stats::loess(x ~ pos, subset = pos > mind,
+                                      span = span1),
+                         pos)
+    fit <- stats::loess(xs ~ pos, subset = pos > mind, span = span2)
+    rx <- stats::residuals(fit)
+    irpos <- as(rx >= 0, "IRanges")
+    xposmax <- IRanges::viewApply(
+        X = IRanges::Views(rx, irpos),
+        FUN = function(y) which.max(as.vector(y))
+    ) + mind + start(irpos) - 1
+    if (any(!usePeaks %in% seq_along(xposmax))) {
+        warning("less peaks detected than selected by `usePeaks`")
+        usePeaks <- intersect(usePeaks, seq_along(xposmax))
+    }
+    lmfit <- stats::lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
+    # will warn if a single peak and slope = NA
+    suppressWarnings(cilmfit <- stats::confint(lmfit))
+
+    res <- list(nrl = unname(coefficients(lmfit)[2]),
+                nrl.CI95 = cilmfit[2,],
+                xs = xs, loessfit = fit, lmfit = lmfit,
+                peaks = xposmax, mind = mind,
+                span1 = span1, span2 = span2,
+                usePeaks = usePeaks)
+    return(res)
+}
+
+
+#' @title Plot annotated distances between modified bases.
+#'
+#' @description Plot distances bwtween modified bases and annotate it with
+#'     estimated nucleosome repeat length (NRL).
+#'
+#' @author Michael Stadler
+#'
+#' @param x \code{numeric} vector giving the counts of distances between
+#'     modified bases on the same read (typically the output of
+#'     \code{\link{calcModbaseSpacing}}.
+#' @param hide If \code{TRUE} (the default), hide distance counts not used in
+#'       the NRL estimate (\code{mind} parameter from
+#'       \code{\link{estimateNRL}}).
+#' @param xlim \code{numeric(2)} with the x-axis (distance) limits in the first
+#'     two plots (see Details). if \code{NULL} (the default), the full range
+#'     defined by \code{x} and \code{hide} will be used.
+#' @param detailedPlots If \code{TRUE}, create three plots instead of just a
+#'       single plot (see Details).
+#' @param ... Additional arguments passed to \code{\link{estimateNRL}} to
+#'       control NRL estimation.
+#'
+#' @details The function will visualize an annotated distance frequencies
+#'     between modified bases. For \code{detailedPlots=FALSE} (the default), it
+#'     will create a single annotated plot. For \code{detailedPlots=TRUE}, it will
+#'     create three plots (using \code{par(mfrow=c(1,3))}):
+#'     \enumerate{
+#'         \item raw phase counts with de-trending and de-noising loess fits
+#'         \item residual phase counts with de-noising loess fit and detected peaks
+#'         \item linear fit to peaks and NRL estimation
+#'     }
+#'
+#' @return A \code{\link[ggplot2]{ggplot}} object.
+#'
+#' @seealso \code{\link{calcModbaseSpacing}} to calculate the distance
+#'   frequencies from base modification data, \code{\link{estimateNRL}} to
+#'   estimate nucleosome repeat length.
+#'
+#' @examples
+#'   # see the help for calcModbaseSpacing() for a full example
+#'
+#' @importFrom stats residuals
+#' @importFrom IRanges IRanges start end
+#' @importFrom methods as
+#' @importFrom dplyr filter
+#' @import ggplot2
+#' @importFrom patchwork wrap_plots
+#' @importFrom rlang .data
+#'
+#' @export
+plotModbaseSpacing <- function(x,
+                               hide = TRUE,
+                               xlim = NULL,
+                               detailedPlots = FALSE,
+                               ...) {
+    # estimate NRL
+    nrl <- estimateNRL(x, ...)
+
+    # prepare plot data
+    if (is.null(xlim))
+        xlim <- c(0, length(x))
+    if (hide) {
+        x[seq.int(nrl$mind - 1)] <- NA
+        xlim[1] <- nrl$mind
+    }
+    types <- c("raw",
+               paste0("smoothed (", signif(c(nrl$span1, nrl$span2), 4), ")"))
+    pd <- data.frame(pos = seq_along(x),
+                     type = factor(rep(types, each = length(x)), levels = types),
+                     cnt = c(x, nrl$xs,
+                             c(rep(NA, nrl$mind), nrl$loessfit$fitted))) |>
+        dplyr::filter(!is.na(.data[["cnt"]]))
+    ylim <- range(pd$cnt, na.rm = TRUE)
+
+    # create distance vs. count plot
+    p <- ggplot(data = pd, aes(.data[["pos"]], .data[["cnt"]],
+                                colour = .data[["type"]],
+                                linewidth = .data[["type"]])) +
+        geom_line() +
+        labs(x = "Distance between modified bases (bp)",
+             y = "Number of distances",
+             colour = element_blank(),
+             linewidth = element_blank()) +
+        scale_colour_manual(
+            values = structure(c("gray", "red", "green3"), names = types)) +
+        scale_linewidth_manual(
+            values = structure(c(0.5, 1, 1), names = types)) +
+        scale_x_continuous(limits = xlim) +
+        scale_y_continuous(limits = ylim) +
+        theme_bw(base_size = 13) +
+        theme(legend.position = "inside",
+              legend.position.inside = c(0.95, 0.95),
+              legend.justification.inside = c(1, 1),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank())
+
+    if (detailedPlots) {
+        # residual distances plot
+        rx <- stats::residuals(nrl$loessfit)
+        pd2 <- data.frame(pos = seq_along(x),
+                          resid = c(rep(NA, nrl$mind), rx)) |>
+            dplyr::filter(!is.na(.data[["resid"]]))
+        irpos <- as(pd2$resid >= 0, "IRanges")
+
+        p2 <- ggplot(pd2, aes(.data[["pos"]], .data[["resid"]])) +
+            geom_rect(data = data.frame(xmin = nrl$mind + IRanges::start(irpos),
+                                        xmax = nrl$mind + IRanges::end(irpos),
+                                        ymin = -Inf,
+                                        ymax = Inf),
+                      inherit.aes = FALSE,
+                      mapping = aes(
+                          xmin = .data[["xmin"]], xmax = .data[["xmax"]],
+                          ymin = .data[["ymin"]], ymax = .data[["ymax"]]),
+                      fill = "#FF000022", colour = NA) +
+            geom_line() +
+            geom_point(data = data.frame(
+                pos = nrl$peaks[nrl$usePeaks],
+                resid = c(rep(NA, nrl$mind), rx)[nrl$peaks]),
+                       size = 2.5) +
+            geom_hline(yintercept = 0, linetype = "dashed") +
+            labs(x = "Distance between modified bases (bp)",
+                 y = "Residual number of distances") +
+            scale_x_continuous(limits = xlim) +
+            theme_bw(base_size = 13) +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank())
+
+        # linear fit plot
+        slmfit <- stats::summary.lm(nrl$lmfit)
+        pd3 <- data.frame(peak = seq_along(nrl$peaks)[nrl$usePeaks],
+                          pos = nrl$peaks[nrl$usePeaks])
+
+        p3 <- ggplot(pd3, aes(.data[["peak"]], .data[["pos"]])) +
+            geom_point(shape = 1, size = 2.5) +
+            geom_abline(intercept = slmfit$coefficients[1,1],
+                        slope = slmfit$coefficients[2,1]) +
+            geom_text(data = data.frame(
+                          peak = -Inf, pos = Inf,
+                          label = sprintf("%1g (%1g-%1g)",
+                                          signif(nrl$nrl,3),
+                                          signif(nrl$nrl.CI95[1],3),
+                                          signif(nrl$nrl.CI95[2],3))),
+                      mapping = aes(label = .data[["label"]]),
+                      hjust = -0.3, vjust = 1.1) +
+            geom_text(data = data.frame(
+                peak = Inf, pos = -Inf,
+                label = c(paste0("Adj. R-squared: ", signif(slmfit$adj.r.squared, 3), "\n",
+                                 "P-value = ", signif(slmfit$coefficients[2,4],3)))),
+                mapping = aes(label = .data[["label"]]),
+                hjust = 1.1, vjust = -0.3) +
+            labs(x = "Peak count", y = "Peak coordinate (bp)") +
+            theme_bw(base_size = 13) +
+            theme(panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank())
+
+        # assemble plots
+        p <- patchwork::wrap_plots(p, p2, p3, nrow = 1)
+
+    } else {
+        # add peak points and NRL estimate
+        ylim <- ylim + c(0, 0.05) * diff(ylim)
+        p <- p +
+            geom_point(data = data.frame(pos = nrl$peaks[nrl$usePeaks],
+                                         cnt = nrl$xs[nrl$peaks][nrl$usePeaks],
+                                         type = types[2]),
+                       size = 2.5) +
+            geom_text(inherit.aes = FALSE,
+                      data = data.frame(
+                          pos = mean(xlim), cnt = ylim[2],
+                          label = sprintf("%1g (%1g-%1g)",
+                                          signif(nrl$nrl,3),
+                                          signif(nrl$nrl.CI95[1],3),
+                                          signif(nrl$nrl.CI95[2],3))),
+                      mapping = aes(pos, cnt, label = label),
+                      hjust = 0.5, vjust = 1.05)
+    }
+    return(p)
+}
