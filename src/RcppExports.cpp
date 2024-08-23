@@ -10,6 +10,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// calcAndCountDist
+Rcpp::NumericVector calcAndCountDist(std::vector<int> query, std::vector<int> reference, Rcpp::NumericVector cnt);
+RcppExport SEXP _footprintR_calcAndCountDist(SEXP querySEXP, SEXP referenceSEXP, SEXP cntSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type query(querySEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type reference(referenceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cnt(cntSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcAndCountDist(query, reference, cnt));
+    return rcpp_result_gen;
+END_RCPP
+}
 // complement
 char complement(char n);
 RcppExport SEXP _footprintR_complement(SEXP nSEXP) {
@@ -61,6 +74,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 4},
