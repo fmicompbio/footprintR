@@ -7,15 +7,12 @@
 #'
 #' @author Michael Stadler
 #'
-#' @param bamfiles Character vector with one or several bam files. If
-#'     multiple files are given, distance counts from all will be summed.
-#' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
-#'     genomic regions to extract the reads from. Alternatively, regions can be
-#'     specified as a character vector (e.g. "chr1:1200-1300") that can be
-#'     coerced into a \code{GRanges} object. Note that the reads are not
-#'     trimmed to the boundaries of the specified ranges. As a result, analyzed
-#'     positions will typically extend out of the specified regions.
-#' @param modbase Character scalar defining the modified base.
+#' @param se \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
+#'     with read-level footprinting data, for example returned by
+#'     \code{\link{readModBam}}. Rows should correspond to positions
+#'     and columns to samples.
+#' @param assay.type A string or integer scalar specifying the assay of
+#'     \code{se} containing the read-level modification probabilities.
 #' @param min_mod_prob Numeric scalar giving the minimal modification
 #'     probability for a modified base.
 #' @param rmdup Logical scalar indicating if duplicates should be removed.
@@ -33,7 +30,8 @@
 #'   ways from the original algorithms:
 #'   \enumerate{
 #'     \item Instead of same strand alignment start positions, this function
-#'           studies the same read modified base positions.
+#'           is adapted to single-molecule footprinting data and measures
+#'           the distances between same-read modified base positions.
 #'     \item It does not implement removing of positions that have been seen
 #'           less than \code{n} times (referred to as a \code{n}-pile subset in
 #'           the paper).
@@ -49,57 +47,50 @@
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' pg <- calcModbaseSpacing(modbamfiles, "chr1:6940000-6955000", "a")
-#' print(estimateNRL(pg)[1:2])
-#' plotModbaseSpacing(pg)
-#' plotModbaseSpacing(pg, detailedPlots = TRUE)
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
 #'
-#' @importFrom IRanges IRanges overlapsAny
-#' @importFrom GenomicRanges GRanges seqnames ranges
-#' @import Rcpp
+#' moddist <- calcModbaseSpacing(se)
+#' print(estimateNRL(moddist)[1:2])
+#' plotModbaseSpacing(moddist)
+#' plotModbaseSpacing(moddist, detailedPlots = TRUE)
+#'
+#' @importFrom SummarizedExperiment assays assayNames assay
+#' @importFrom BiocGenerics start
 #'
 #' @export
-calcModbaseSpacing <- function(bamfiles,
-                               regions,
-                               modbase,
+calcModbaseSpacing <- function(se,
+                               assay.type = "mod_prob",
                                min_mod_prob = 0.5,
                                rmdup = TRUE,
                                dmax = 1000L) {
     # digest arguments
-    .assertVector(x = bamfiles, type = "character")
-    if (any(i <- !file.exists(bamfiles))) {
-        stop("not all `bamfiles` exist: ", paste(bamfiles[i], collapse = ", "))
+    .assertVector(x = se, type = "RangedSummarizedExperiment")
+    if (length(assay.type) != 1L ||
+        (is.numeric(assay.type) &&
+         (assay.type < 1 || assay.type > length(SummarizedExperiment::assays(se)))) ||
+        (is.character(assay.type) && !assay.type %in% SummarizedExperiment::assayNames(se))) {
+        stop("'assay.type' must be a string or integer scalar specifying the ",
+             "assay of se containing the read-level data to be summarized.")
     }
-    if (is.character(regions)) {
-        regions <- as(regions, "GRanges")
-    }
-    .assertVector(x = regions, type = "GRanges")
-    # for valid values of `modbase`, see
-    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    .assertScalar(x = modbase, type = "character",
-                  validValues = c("m","h","f","c","C","g","e","b","T",
-                                  "U","a","A","o","G","n","N"))
+    .assertScalar(x = min_mod_prob, type = "numeric", rngExcl = c(0, 1))
+    .assertScalar(x = rmdup, type = "logical")
+    .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))
 
+    # init distance cound vector `cnt` and extract assay and positions from `se`
     cnt <- numeric(dmax)
     names(cnt) <- as.character(seq.int(dmax))
-    regions_str <- as.character(regions, ignore.strand = TRUE)
+    modprob <- as.matrix(SummarizedExperiment::assay(se, assay.type))
+    s <- BiocGenerics::start(se)
 
-    # for each bamfile i
-    for (i in seq_along(bamfiles)) {
-        resL <- read_modbam_cpp(inname_str = bamfiles[i],
-                                regions = regions_str,
-                                modbase = modbase, verbose = FALSE)
-        idxByRead <- split(seq_along(resL$read_id), resL$read_id)
-        # for each read j in bamfile i
-        for (j in seq_along(idxByRead)) {
-            is_mod <- resL$mod_prob[idxByRead[[j]]] > min_mod_prob
-            pos <- resL$ref_position[idxByRead[[j]]][is_mod]
-            if (rmdup) {
-                pos <- unique(pos)
-            }
-            # count distances in (1..dmax)
-            calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+    # for each read i
+    for (i in seq.int(ncol(modprob))) {
+        # extract positions of modified bases
+        pos <- s[modprob[, i] >= min_mod_prob]
+        if (rmdup) {
+            pos <- unique(pos)
         }
+        # add distances in (1..dmax) to `cnt`
+        calcAndCountDist(query = pos, reference = pos, cnt = cnt)
     }
 
     return(cnt)

@@ -5,26 +5,21 @@
 \title{Calculate distances between modified bases on individual reads.}
 \usage{
 calcModbaseSpacing(
-  bamfiles,
-  regions,
-  modbase,
+  se,
+  assay.type = "mod_prob",
   min_mod_prob = 0.5,
   rmdup = TRUE,
   dmax = 1000L
 )
 }
 \arguments{
-\item{bamfiles}{Character vector with one or several bam files. If
-multiple files are given, distance counts from all will be summed.}
+\item{se}{\code{\link[SummarizedExperiment]{SummarizedExperiment}} object
+with read-level footprinting data, for example returned by
+\code{\link{readModBam}}. Rows should correspond to positions
+and columns to samples.}
 
-\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
-genomic regions to extract the reads from. Alternatively, regions can be
-specified as a character vector (e.g. "chr1:1200-1300") that can be
-coerced into a \code{GRanges} object. Note that the reads are not
-trimmed to the boundaries of the specified ranges. As a result, analyzed
-positions will typically extend out of the specified regions.}
-
-\item{modbase}{Character scalar defining the modified base.}
+\item{assay.type}{A string or integer scalar specifying the assay of
+\code{se} containing the read-level modification probabilities.}
 
 \item{min_mod_prob}{Numeric scalar giving the minimal modification
 probability for a modified base.}
@@ -51,10 +46,12 @@ repeat length. Distance calculations are implemented in C++
 modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
-pg <- calcModbaseSpacing(modbamfiles, "chr1:6940000-6955000", "a")
-print(estimateNRL(pg)[1:2])
-plotModbaseSpacing(pg)
-plotModbaseSpacing(pg, detailedPlots = TRUE)
+se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+
+moddist <- calcModbaseSpacing(se)
+print(estimateNRL(moddist)[1:2])
+plotModbaseSpacing(moddist)
+plotModbaseSpacing(moddist, detailedPlots = TRUE)
 
 }
 \references{
@@ -63,7 +60,8 @@ Phasograms were originally described in Valouev et al., Nature
 ways from the original algorithms:
 \enumerate{
 \item Instead of same strand alignment start positions, this function
-studies the same read modified base positions.
+is adapted to single-molecule footprinting data and measures
+the distances between same-read modified base positions.
 \item It does not implement removing of positions that have been seen
 less than \code{n} times (referred to as a \code{n}-pile subset in
 the paper).

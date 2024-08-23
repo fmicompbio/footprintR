@@ -10,13 +10,12 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     ## create modified-base distances using 6mA data (20 reads) from chr1:6940000-6955000
     bamf <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                         package = "footprintR")
-    expect_error(calcModbaseSpacing(bamfiles = "error", "chr1:6940000-6955000", "a"),
-                 "not all `bamfiles` exist")
-    pg1 <- calcModbaseSpacing(bamf, "chr1:6940000-6955000", "a")
-    pg2 <- calcModbaseSpacing(bamf, "chr1:6940000-6955000", "a", rmdup = FALSE)
-    pg3 <- calcModbaseSpacing(c(bamf,bamf), "chr1:6940000-6955000", "a")
-    pg4 <- calcModbaseSpacing(bamf, regions = GenomicRanges::GRanges("chr10", IRanges::IRanges(start = 19000000, end = 23000000)), "a")
-    pg5 <- calcModbaseSpacing(bamf, regions = "chr1:6940000-6955000", "m")
+    se <- readModBam(bamf, "chr1:6940000-6955000", "a")
+    expect_error(calcModbaseSpacing("error"), "must be of class")
+    expect_error(calcModbaseSpacing(se, "error"), "'assay.type' must be a string or integer")
+    pg1 <- calcModbaseSpacing(se)
+    pg2 <- calcModbaseSpacing(se, rmdup = FALSE)
+    pg3 <- calcModbaseSpacing(cbind(se, se))
 
     ## check invalid arguments
     expect_warning(estimateNRL(rep(0, 3000L)), "no non-zero distances")
@@ -32,7 +31,7 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_identical(dim(p2$data), c(5L, 2L))
     tf <- tempfile(fileext = ".pdf")
     pdf(file = tf)
-    expect_warning(print(p1))
+    print(p1)
     print(p2)
     dev.off()
     unlink(tf)
@@ -42,8 +41,6 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_length(pg1, 1000L)
     expect_true(all(pg2 >= pg1))
     expect_true(all(pg1 < pg3))
-    expect_true(sum(pg4) == 0L)
-    expect_true(sum(pg5) == 0L)
 
     nrl <- estimateNRL(pg1, usePeaks = 1:5)
     expect_type(nrl, "list")
