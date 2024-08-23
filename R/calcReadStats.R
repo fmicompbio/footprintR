@@ -181,7 +181,7 @@ calcReadStats <- function(se,
             if (length(x) > lag.max) {
                 stats::pacf(x, na.action = stats::na.pass, lag.max = lag.max,
                             plot = FALSE)$acf[xrange]
-            } else{
+            } else {
                 rep(0, length(xrange))
             }
         }
