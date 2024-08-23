@@ -136,20 +136,16 @@ used that are not available otherwise.</p>
 <span><span class="co">#&gt; finding unique genomic positions...collapsed 14789 positions to 9266 unique ones</span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
-<span><span class="co">#&gt; dim: 9266 5 </span></span>
+<span><span class="co">#&gt; dim: 9266 2 </span></span>
 <span><span class="co">#&gt; metadata(0):</span></span>
 <span><span class="co">#&gt; assays(1): mod_prob</span></span>
 <span><span class="co">#&gt; rownames(9266): chr1:6930410:+ chr1:6930415:+ ... chr1:6941622:-</span></span>
 <span><span class="co">#&gt;   chr1:6941631:-</span></span>
 <span><span class="co">#&gt; rowData names(0):</span></span>
-<span><span class="co">#&gt; colnames(5): sample1-233e48a7-f379-4dcf-9270-958231125563</span></span>
-<span><span class="co">#&gt;   sample1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9</span></span>
-<span><span class="co">#&gt;   sample1-92e906ae-cddb-4347-a114-bf9137761a8d</span></span>
-<span><span class="co">#&gt;   sample2-034b625e-6230-4f8d-a713-3a32cd96c298</span></span>
-<span><span class="co">#&gt;   sample2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8</span></span>
-<span><span class="co">#&gt; colData names(2): sample qscore</span></span></code></pre></div>
+<span><span class="co">#&gt; colnames(2): sample1 sample2</span></span>
+<span><span class="co">#&gt; colData names(4): sample modbase n_reads qscore</span></span></code></pre></div>
 <p>This will create a <code>RangedSummarizedExperiment</code> object
-with positions in rows and individual reads in columns:</p>
+with positions in rows:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># rows are positions...</span></span>
 <span><span class="fu">rowRanges</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
@@ -168,36 +164,104 @@ with positions in rows and individual reads in columns:</p>
 <span><span class="co">#&gt;   chr1:6941622:-     chr1   6941622      -</span></span>
 <span><span class="co">#&gt;   chr1:6941631:-     chr1   6941631      -</span></span>
 <span><span class="co">#&gt;   -------</span></span>
-<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span>
-<span></span>
-<span><span class="co"># ... and columns are reads</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p>Just like with summary-level data, columns correspond to samples</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># ... and columns are samples</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
-<span><span class="co">#&gt; DataFrame with 5 rows and 2 columns</span></span>
-<span><span class="co">#&gt;                                                   sample    qscore</span></span>
-<span><span class="co">#&gt;                                              &lt;character&gt; &lt;numeric&gt;</span></span>
-<span><span class="co">#&gt; sample1-233e48a7-f379-4dcf-9270-958231125563     sample1  14.14280</span></span>
-<span><span class="co">#&gt; sample1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9     sample1  16.01270</span></span>
-<span><span class="co">#&gt; sample1-92e906ae-cddb-4347-a114-bf9137761a8d     sample1  20.30820</span></span>
-<span><span class="co">#&gt; sample2-034b625e-6230-4f8d-a713-3a32cd96c298     sample2   9.67461</span></span>
-<span><span class="co">#&gt; sample2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8     sample2  13.66480</span></span></code></pre></div>
-<p>As you can see in the <code>colData(se)</code>, reads are assigned to
-samples, and the read quality score (<code>qscore</code>) has also been
-extracted. The sample names are obtained from the input files (here
+<span><span class="co">#&gt; DataFrame with 2 rows and 4 columns</span></span>
+<span><span class="co">#&gt;              sample     modbase   n_reads                  qscore</span></span>
+<span><span class="co">#&gt;         &lt;character&gt; &lt;character&gt; &lt;integer&gt;                  &lt;List&gt;</span></span>
+<span><span class="co">#&gt; sample1     sample1           a         3 14.1428,16.0127,20.3082</span></span>
+<span><span class="co">#&gt; sample2     sample2           a         2        9.67461,13.66480</span></span></code></pre></div>
+<p>The sample names are obtained from the input files (here
 <code>extractfiles</code>), or if the files are not named will be
 automatically assigned (each file corresponding to a separate
 sample).</p>
+<p>However, as each sample typically contains several reads (see
+<code>se$n_reads</code>), the <code>qscore</code> column that stores the
+quality scores for individual reads, is not a simple vector, but a list
+of vectors, in which scores are grouped by sample. It may be needed to
+<code><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist()</a></code> it if a flat vector is needed:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">se</span><span class="op">$</span><span class="va">qscore</span></span>
+<span><span class="co">#&gt; List of length 2</span></span>
+<span><span class="co">#&gt; names(2): sample1 sample2</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">se</span><span class="op">$</span><span class="va">qscore</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  sample1  sample1  sample1  sample2  sample2 </span></span>
+<span><span class="co">#&gt; 14.14280 16.01270 20.30820  9.67461 13.66480</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="explore-assay-data">Explore assay data<a class="anchor" aria-label="anchor" href="#explore-assay-data"></a>
 </h2>
-<p>The single assay <code>mod_prob</code> is a <code>SparseMatrix</code>
+<p>The single assay <code>mod_prob</code> is a <code>DataFrame</code>
 with modification probabilities.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assayNames</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "mod_prob"</span></span>
 <span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"mod_prob"</span><span class="op">)</span></span>
 <span><span class="va">m</span></span>
+<span><span class="co">#&gt; DataFrame with 9266 rows and 2 columns</span></span>
+<span><span class="co">#&gt;                        sample1        sample2</span></span>
+<span><span class="co">#&gt;                 &lt;SparseMatrix&gt; &lt;SparseMatrix&gt;</span></span>
+<span><span class="co">#&gt; chr1:6930410:+           0:0:0         0:0.02</span></span>
+<span><span class="co">#&gt; chr1:6930415:+           0:0:0         0:0.02</span></span>
+<span><span class="co">#&gt; chr1:6930419:+           0:0:0         0:0.02</span></span>
+<span><span class="co">#&gt; chr1:6930421:+           0:0:0         0:0.02</span></span>
+<span><span class="co">#&gt; chr1:6930428:+           0:0:0         0:0.02</span></span>
+<span><span class="co">#&gt; ...                        ...            ...</span></span>
+<span><span class="co">#&gt; chr1:6941611:- 0:0:0.052734375            0:0</span></span>
+<span><span class="co">#&gt; chr1:6941614:- 0:0:0.130859375            0:0</span></span>
+<span><span class="co">#&gt; chr1:6941620:- 0:0:0.068359375            0:0</span></span>
+<span><span class="co">#&gt; chr1:6941622:- 0:0:0.060546875            0:0</span></span>
+<span><span class="co">#&gt; chr1:6941631:- 0:0:0.056640625            0:0</span></span></code></pre></div>
+<p>Again, to store read-level data for variable numbers of reads in each
+sample, each column (sample) is not just a simple vector, but a
+position-by-read <code>SparseMatrix</code>. If a simple matrix is
+needed, in which columns correspond to reads instead of sample, it can
+be created using <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code>:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span><span class="op">$</span><span class="va">sample1</span></span>
+<span><span class="co">#&gt; &lt;9266 x 3 SparseMatrix&gt; of type "double" [nzcount=8350 (30%)]:</span></span>
+<span><span class="co">#&gt;         sample1-233e48a7-f379-4dcf-9270-958231125563</span></span>
+<span><span class="co">#&gt;    [1,]                                            0</span></span>
+<span><span class="co">#&gt;    [2,]                                            0</span></span>
+<span><span class="co">#&gt;    [3,]                                            0</span></span>
+<span><span class="co">#&gt;    [4,]                                            0</span></span>
+<span><span class="co">#&gt;    [5,]                                            0</span></span>
+<span><span class="co">#&gt;     ...                                            .</span></span>
+<span><span class="co">#&gt; [9262,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9263,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9264,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9265,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9266,]                                   0.00000000</span></span>
+<span><span class="co">#&gt;         sample1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9</span></span>
+<span><span class="co">#&gt;    [1,]                                            0</span></span>
+<span><span class="co">#&gt;    [2,]                                            0</span></span>
+<span><span class="co">#&gt;    [3,]                                            0</span></span>
+<span><span class="co">#&gt;    [4,]                                            0</span></span>
+<span><span class="co">#&gt;    [5,]                                            0</span></span>
+<span><span class="co">#&gt;     ...                                            .</span></span>
+<span><span class="co">#&gt; [9262,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9263,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9264,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9265,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [9266,]                                   0.00000000</span></span>
+<span><span class="co">#&gt;         sample1-92e906ae-cddb-4347-a114-bf9137761a8d</span></span>
+<span><span class="co">#&gt;    [1,]                                            0</span></span>
+<span><span class="co">#&gt;    [2,]                                            0</span></span>
+<span><span class="co">#&gt;    [3,]                                            0</span></span>
+<span><span class="co">#&gt;    [4,]                                            0</span></span>
+<span><span class="co">#&gt;    [5,]                                            0</span></span>
+<span><span class="co">#&gt;     ...                                            .</span></span>
+<span><span class="co">#&gt; [9262,]                                   0.05273438</span></span>
+<span><span class="co">#&gt; [9263,]                                   0.13085938</span></span>
+<span><span class="co">#&gt; [9264,]                                   0.06835938</span></span>
+<span><span class="co">#&gt; [9265,]                                   0.06054688</span></span>
+<span><span class="co">#&gt; [9266,]                                   0.05664062</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;9266 x 5 SparseMatrix&gt; of type "double" [nzcount=14789 (32%)]:</span></span>
 <span><span class="co">#&gt;                sample1-233e48a7-f379-4dcf-9270-958231125563 ...</span></span>
 <span><span class="co">#&gt; chr1:6930410:+                                            0   .</span></span>
@@ -223,10 +287,26 @@ with modification probabilities.</p>
 <span><span class="co">#&gt; chr1:6941620:-                                            0</span></span>
 <span><span class="co">#&gt; chr1:6941622:-                                            0</span></span>
 <span><span class="co">#&gt; chr1:6941631:-                                            0</span></span></code></pre></div>
-<p>This matrix does not store the zeros and thus uses much less memory
-compared to a normal (dense) matrix. However, you have to be careful
-when interpreting the values in that matrix, as they follow a specific
-convention:</p>
+<p>One advantage of the this grouping of reads per sample is that you
+can easily perform per-sample operations using <code>lapply</code>
+(returns a <code>list</code>) or <code>endoapply</code> (returns a
+<code>DataFrame</code>):</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">ncol</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $sample1</span></span>
+<span><span class="co">#&gt; [1] 3</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $sample2</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="fu">endoapply</span><span class="op">(</span><span class="va">m</span>, <span class="va">ncol</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DataFrame with 1 row and 2 columns</span></span>
+<span><span class="co">#&gt;     sample1   sample2</span></span>
+<span><span class="co">#&gt;   &lt;integer&gt; &lt;integer&gt;</span></span>
+<span><span class="co">#&gt; 1         3         2</span></span></code></pre></div>
+<p>The <code>SparseMatrix</code> objects do not store the zeros and thus
+use much less memory compared to a normal (dense) matrix. However, you
+have to be careful when interpreting the values in that matrix, as they
+follow a specific convention:</p>
 <p><strong>Important: </strong> The zeros correspond to unobserved
 read/position combinations, while all values that are ‘implicitly’
 called (with a modifictation probability of less than 5%) are
@@ -235,56 +315,60 @@ represented with a value of 0.02.</p>
 average modification probability at a given position, taking the row
 mean would not be correct, as it would include the zero values that
 correspond to unobserved data:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># modification probabilities at position chr1:6928850:-</span></span>
 <span><span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span></span>
-<span><span class="co">#&gt; sample1-233e48a7-f379-4dcf-9270-958231125563 </span></span>
-<span><span class="co">#&gt;                                   0.62304688 </span></span>
-<span><span class="co">#&gt; sample1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9 </span></span>
-<span><span class="co">#&gt;                                   0.09960938 </span></span>
-<span><span class="co">#&gt; sample1-92e906ae-cddb-4347-a114-bf9137761a8d </span></span>
-<span><span class="co">#&gt;                                   0.00000000 </span></span>
-<span><span class="co">#&gt; sample2-034b625e-6230-4f8d-a713-3a32cd96c298 </span></span>
-<span><span class="co">#&gt;                                   0.00000000 </span></span>
-<span><span class="co">#&gt; sample2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8 </span></span>
-<span><span class="co">#&gt;                                   0.00000000</span></span>
+<span><span class="co">#&gt; DataFrame with 1 row and 2 columns</span></span>
+<span><span class="co">#&gt;                                  sample1        sample2</span></span>
+<span><span class="co">#&gt;                           &lt;SparseMatrix&gt; &lt;SparseMatrix&gt;</span></span>
+<span><span class="co">#&gt; chr1:6928850:- 0.623046875:0.099609375:0            0:0</span></span>
 <span></span>
 <span><span class="co"># WRONG: take the mean of all values</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.1445312</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span>, <span class="va">rowMeans</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $sample1</span></span>
+<span><span class="co">#&gt; [1] 0.2408854</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $sample2</span></span>
+<span><span class="co">#&gt; [1] 0</span></span>
 <span></span>
 <span><span class="co"># CORRECT: exclude the zeros</span></span>
-<span><span class="va">non_zero</span> <span class="op">&lt;-</span> <span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span> <span class="op">!=</span> <span class="fl">0</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="va">non_zero</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3613281</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">m</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">non_zero</span> <span class="op">&lt;-</span> <span class="fu">SparseArray</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SparseArray/man/SparseArray-class.html" class="external-link">nzwhich</a></span><span class="op">(</span><span class="va">x</span> <span class="op">!=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span><span class="op">[</span><span class="va">non_zero</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $sample1</span></span>
+<span><span class="co">#&gt; [1] 0.3613281</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $sample2</span></span>
+<span><span class="co">#&gt; [1] NaN</span></span></code></pre></div>
 <p>This is however rarely needed, as there are convenience functions
 that will exclude the unobserved (zero) values automatically for you.
 For example, you can summarize the reads in each sample using
-<code><a href="../reference/summarizeOverReads.html">summarizeOverReads()</a></code> (see next section).</p>
+<code><a href="../reference/addReadsSummary.html">addReadsSummary()</a></code> (see next section).</p>
 </div>
 <div class="section level2">
 <h2 id="summarize-read-level-data">Summarize read-level data<a class="anchor" aria-label="anchor" href="#summarize-read-level-data"></a>
 </h2>
 <p>Summarized data can be obtained from the read-level data by
 calculating a per-position summary over the reads in each sample:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">se_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarizeOverReads.html">summarizeOverReads</a></span><span class="op">(</span><span class="va">se</span>, keep.reads <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                                 statistics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Nmod"</span>, <span class="st">"Nvalid"</span>, <span class="st">"FracMod"</span>,</span>
-<span>                                                <span class="st">"Pmod"</span>, <span class="st">"AvgConf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">se_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addReadsSummary.html">addReadsSummary</a></span><span class="op">(</span><span class="va">se</span>, keep.reads <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                              statistics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Nmod"</span>, <span class="st">"Nvalid"</span>, <span class="st">"FracMod"</span>,</span>
+<span>                                             <span class="st">"Pmod"</span>, <span class="st">"AvgConf"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>As discussed above, this will automatically exclude the non-observed
 (zero) values from the data when calculating the modification
 probability at each position (<code>Pmod</code> assay):</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se_summary</span>, <span class="st">"Pmod"</span><span class="op">)</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span></span>
 <span><span class="co">#&gt;   sample1   sample2 </span></span>
 <span><span class="co">#&gt; 0.3613281       NaN</span></span></code></pre></div>
 <p>The summary statistics to calculate are selected using the
 <code>statistics</code> argument. By default,
-<code><a href="../reference/summarizeOverReads.html">summarizeOverReads()</a></code> will count the number of modified
+<code><a href="../reference/addReadsSummary.html">addReadsSummary()</a></code> will count the number of modified
 (<code>Nmod</code>) and total (<code>Nvalid</code>) reads at each
 position and sample, and calculate the fraction of modified bases from
 the two (<code>FracMod</code>).</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se_summary</span>, <span class="st">"Nmod"</span><span class="op">)</span><span class="op">[</span><span class="st">"chr1:6928850:-"</span>, <span class="op">]</span></span>
 <span><span class="co">#&gt; sample1 sample2 </span></span>
 <span><span class="co">#&gt;       1       0</span></span>
@@ -300,7 +384,7 @@ of the modification calls per position (<code>AvgConf</code>). As we
 have set <code>keep.reads = TRUE</code>, we get in addition also the
 read-level assay from the input object (<code>mod_prob</code>) in which
 the reads are grouped by sample:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># read-level data is retained in "mod_prob" assay</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assayNames</a></span><span class="op">(</span><span class="va">se_summary</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Nmod"     "Nvalid"   "FracMod"  "Pmod"     "AvgConf"  "mod_prob"</span></span>
@@ -322,44 +406,31 @@ the reads are grouped by sample:</p>
 <span><span class="co">#&gt; chr1:6941622:- 0:0:0.060546875            0:0</span></span>
 <span><span class="co">#&gt; chr1:6941631:- 0:0:0.056640625            0:0</span></span>
 <span></span>
-<span><span class="co"># this means that the number of columns in "se_summary"</span></span>
-<span><span class="co"># is lower than in "se" (the number of samples instead</span></span>
-<span><span class="co"># of the number of reads)</span></span>
+<span><span class="co"># the dimensions of  read-level `se` and summarized `se_summary` are identical</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    5</span></span>
+<span><span class="co">#&gt; [1] 9266    2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">se_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    2</span></span>
-<span></span>
-<span><span class="co"># the same is true for the assay "mod_prob" in "se" and</span></span>
-<span><span class="co"># "se_summary", however all read level data is still</span></span>
-<span><span class="co"># there and you can convert the assay back to ungrouped</span></span>
-<span><span class="co"># reads using as.matrix()</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"mod_prob"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    5</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se_summary</span>, <span class="st">"mod_prob"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    2</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se_summary</span>, <span class="st">"mod_prob"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    5</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 9266    2</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="plot-data">Plot data<a class="anchor" aria-label="anchor" href="#plot-data"></a>
 </h2>
-<p>The collapsed data can then be visualized just like the summary-level
-data using <code>plotRegion</code>, using the <code>tracks.reads</code>
-argument instead of <code>tracks.summary</code> to select the type of
-plot(s).</p>
+<p>The read-level data can then be visualized just like the
+summary-level data using <code>plotRegion</code>, using the
+<code>tracks.reads</code> argument instead of
+<code>tracks.summary</code> to select the type of plot(s).</p>
 <p>For reference, here we plot the summary-level data:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se_summary</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>FracMod <span class="op">=</span> <span class="st">"Point"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="read-level-data_files/figure-html/plot-summary-1.png" width="576"></p>
 <p>… and here we plot the read-level data of the same region:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>           tracks.reads <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mod_prob <span class="op">=</span> <span class="st">"Heatmap"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="read-level-data_files/figure-html/plot-region-1.png" width="768"></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -370,13 +441,13 @@ the coordinates of genomic bases on which modifications can be
 irregularly spaced. Alternatively, we can also generate these plot in
 “modbase-space”, in which only modified bases are shown and the gaps
 between them are removed:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>           tracks.reads <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mod_prob <span class="op">=</span> <span class="st">"Heatmap"</span><span class="op">)</span>,</span>
 <span>           modbaseSpace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="read-level-data_files/figure-html/plot-region-modbasespace-1.png" width="768"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -387,7 +458,7 @@ between them are removed:</p>
 summary object <code>se_summary</code>, so we can plot both
 summary-level and read-level data simultaneously with this object as
 input:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se_summary</span>, region <span class="op">=</span> <span class="st">"chr1:6932700-6932800"</span>,</span>
 <span>           tracks.summary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>FracMod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Smooth"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           tracks.reads <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mod_prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Heatmap"</span>, <span class="st">"Lollipop"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -396,7 +467,7 @@ input:</p>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.4.1 (2024-06-14)</span></span>
 <span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>

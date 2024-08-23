@@ -78,7 +78,7 @@ for more information on the statistics that are calculated.</p>
 <span>  min.Nobs.pread <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  LowConf <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  LagRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">64</span><span class="op">)</span>,</span>
-<span>  plot <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -109,7 +109,7 @@ bases are obtained from <code>rowData(se)$sequence.context</code> and thus
 requires that <code>se</code> contains the appropriate information, for example
 by setting the <code>sequence.context</code> and <code>sequence.reference</code>
 arguments of <code><a href="readModkitExtract.html">readModkitExtract</a></code> when it was generated,
-or by adding it using <code><a href="seqContext.html">seqContext</a></code>.</p></dd>
+or by adding it using <code><a href="addSeqContext.html">addSeqContext</a></code>.</p></dd>
 
 
 <dt id="arg-stats">stats<a class="anchor" aria-label="anchor" href="#arg-stats"></a></dt>
@@ -146,17 +146,14 @@ the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).</p></dd>
 
 
-<dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>A locial scalar, defining whether to produce plots for the
-distributions of the calculated read statistics.</p></dd>
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>If <code>TRUE</code>, report on progress.</p></dd>
 
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A <code><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">SummarizedExperiment</a></code> object
-with <code>colData</code> filtered for positions according to <code>regions</code>,
-<code>sequence.context</code> and <code>min.Nobs.ppos</code> arguments and extended
-to include the read statistics in its row- and column-data.</p>
+    <p>A <code>SimpleList</code> object with QC statistics for the samples in
+<code>se</code>.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -223,74 +220,12 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 </dl></div>
     <div id="author">
     <h2>Author</h2>
-    <p>Panagiotis Papapasaikas</p>
+    <p>Panagiotis Papapasaikas, Charlotte Soneson</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/SummarizedExperiment" class="external-link">SummarizedExperiment</a></span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: MatrixGenerics</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: matrixStats</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘MatrixGenerics’</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:matrixStats’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colCounts, colCummaxs, colCummins, colCumprods, colCumsums,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colWeightedMeans, colWeightedMedians, colWeightedSds,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowWeightedMads, rowWeightedMeans, rowWeightedMedians,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowWeightedSds, rowWeightedVars</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: GenomicRanges</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: stats4</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: BiocGenerics</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘BiocGenerics’</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:stats’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     IQR, mad, sd, var, xtabs</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:base’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     Filter, Find, Map, Position, Reduce, anyDuplicated, aperm, append,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     as.data.frame, basename, cbind, colnames, dirname, do.call,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     duplicated, eval, evalq, get, grep, grepl, intersect, is.unsorted,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     lapply, mapply, match, mget, order, paste, pmax, pmax.int, pmin,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     pmin.int, rank, rbind, rownames, sapply, setdiff, table, tapply,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     union, unique, unsplit, which.max, which.min</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: S4Vectors</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘S4Vectors’</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following object is masked from ‘package:utils’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     findMatches</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:base’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     I, expand.grid, unname</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: IRanges</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: GenomeInfoDb</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: Biobase</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Welcome to Bioconductor</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     Vignettes contain introductory material; view with</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     'browseVignettes()'. To cite Bioconductor, see</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     'citation("Biobase")', and for packages 'citation("pkgname")'.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘Biobase’</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following object is masked from ‘package:MatrixGenerics’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     rowMedians</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following objects are masked from ‘package:matrixStats’:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     anyMissing, rowMedians</span>
 <span class="r-in"><span><span class="va">modbamfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"6mA_1_10reads.bam"</span>,</span></span>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span>bamfile <span class="op">=</span> <span class="va">modbamfile</span>, regions <span class="op">=</span> <span class="st">"chr1:6940000-6955000"</span>,</span></span>
@@ -302,31 +237,9 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     read 3 alignments</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> finding unique genomic positions...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> collapsed 8350 positions to 6057 unique ones</span>
-<span class="r-in"><span><span class="va">se_withReadStats</span> <span class="op">&lt;-</span> <span class="fu">calcReadStats</span><span class="op">(</span><span class="va">se</span>, plot<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Applied coverage filter</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Positions with coverage &lt; 1 removed.</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">se_withReadStats</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 6057 rows and 2 columns</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     Nobs MeanModProb</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                &lt;numeric&gt;   &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6925830:-         1    0.020000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6925834:-         1    0.020000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6925836:-         1    0.020000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6925837:-         1    0.020000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6925841:-         1    0.275391</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ...                  ...         ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6941611:-         1   0.0527344</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6941614:-         1   0.1308594</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6941620:-         1   0.0683594</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6941622:-         1   0.0605469</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> chr1:6941631:-         1   0.0566406</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">se_withReadStats</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 15 columns</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                              sample    qscore      Nobs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                         &lt;character&gt; &lt;numeric&gt; &lt;integer&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563          s1   14.1428      4363</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9          s1   16.0127      1750</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d          s1   20.3082      2237</span>
+<span class="r-in"><span><span class="va">ReadStats</span> <span class="op">&lt;-</span> <span class="fu">calcReadStats</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ReadStats</span><span class="op">[[</span><span class="st">"s1"</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 13 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         MeanModProb   FracMod  MeanConf</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                           &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.178342 0.1498969  0.930859</span>
@@ -357,6 +270,11 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    -0.0410769,-0.0214619,-0.0135970,...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9       0.0242180,0.0287871,0.0366562,...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d -0.00193405,-0.01611739, 0.01876362,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                              sample</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                         &lt;character&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563          s1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9          s1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d          s1</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

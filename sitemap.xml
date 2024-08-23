@@ -7,15 +7,22 @@
 <url><loc>/articles/using-footprintR.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
+<url><loc>/reference/addReadStats.html</loc></url>
+<url><loc>/reference/addReadsSummary.html</loc></url>
+<url><loc>/reference/addSeqContext.html</loc></url>
+<url><loc>/reference/calcAndCountDist.html</loc></url>
+<url><loc>/reference/calcModbaseSpacing.html</loc></url>
 <url><loc>/reference/calcReadStats.html</loc></url>
+<url><loc>/reference/estimateNRL.html</loc></url>
+<url><loc>/reference/extractSeqContext.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/modkitExtract.html</loc></url>
+<url><loc>/reference/plotModbaseSpacing.html</loc></url>
+<url><loc>/reference/plotReadStats.html</loc></url>
 <url><loc>/reference/plotRegion.html</loc></url>
 <url><loc>/reference/readBedMethyl.html</loc></url>
 <url><loc>/reference/readModBam.html</loc></url>
 <url><loc>/reference/readModkitExtract.html</loc></url>
-<url><loc>/reference/seqContext.html</loc></url>
 <url><loc>/reference/sumOverRegions.html</loc></url>
-<url><loc>/reference/summarizeOverReads.html</loc></url>
 </urlset>
 

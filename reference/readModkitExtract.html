@@ -142,7 +142,10 @@ to use for some of the steps in <code>readModkitExtract()</code>.</p></dd>
     <div id="value">
     <h2>Value</h2>
     <p>A <code><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">SummarizedExperiment</a></code> object
-with genomic positions in rows and reads in columns.</p>
+with genomic positions in rows and samples in columns. The assay
+<code>"mod_prob"</code> contains per-read modification probabilities,
+with each column (sample) corresponding to a position-by-read
+<code><a href="https://rdrr.io/pkg/SparseArray/man/SparseArray-class.html" class="external-link">SparseMatrix</a></code>.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
@@ -162,31 +165,25 @@ with genomic positions in rows and reads in columns.</p>
 <span class="r-in"><span><span class="co">## ... no filtering</span></span></span>
 <span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 6432 10 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 6432 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(2): modkit_threshold filter_threshold</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): mod_prob</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rownames(6432): chr1:6932662:+ chr1:6932664:+ ... chr1:6942543:-</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6942552:-</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(10): s1-e2774e70-532d-45de-bcda-470ba3802687</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-47d47413-eb74-4658-846d-0455006cb8c6 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-a1b0cdd4-5ac0-455d-b45c-184611b19bd1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-0e30de73-7000-4688-ad33-d735da68aca3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(1): sample</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
 <span class="r-in"><span><span class="co">## ... modkit filtering</span></span></span>
 <span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="st">"modkit"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5893 10 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5893 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(2): modkit_threshold filter_threshold</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): mod_prob</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rownames(5893): chr1:6932662:+ chr1:6932664:+ ... chr1:6942543:-</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6942552:-</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(10): s1-e2774e70-532d-45de-bcda-470ba3802687</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-47d47413-eb74-4658-846d-0455006cb8c6 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-a1b0cdd4-5ac0-455d-b45c-184611b19bd1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s1-0e30de73-7000-4688-ad33-d735da68aca3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(1): sample</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

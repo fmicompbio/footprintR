@@ -100,22 +100,34 @@ Alternatively, the region can be specified as a character scalar (e.g.
 <dd><p>A named list where the names correspond to assay names
 of read-level assays in <code>se</code> and the values are character vectors
 with the plot types to make for each assay. Currently supported plot
-types are:</p><ul><li><p><code>"Lollipop"</code>: Lollipop plot (filled circles with the
-color representing the values in the assay).</p></li>
-<li><p><code>"Heatmap"</code>: Heatmap plot (tiles with the color
-represeting the values in the assay).</p></li>
-</ul><p>If <code>NULL</code>, do not plot any read-level tracks.</p></dd>
+types are:</p><dl><dt><code>"Lollipop"</code></dt>
+<dd><p>: Lollipop plot (filled circles with the
+color representing the values in the assay).</p></dd>
+
+<dt><code>"Heatmap"</code></dt>
+<dd><p>: Heatmap plot (tiles with the color
+represeting the values in the assay).</p></dd>
+
+
+</dl><p>If <code>NULL</code>, do not plot any read-level tracks.</p></dd>
 
 
 <dt id="arg-tracks-summary">tracks.summary<a class="anchor" aria-label="anchor" href="#arg-tracks-summary"></a></dt>
 <dd><p>A named list where the names correspond to assay names
 of summarized data in <code>se</code> and the values are character vectors with
-plot types to make for each assay. Currently supported plot types are:</p><ul><li><p><code>Point</code>: A point plot displaying values in the assay.</p></li>
-<li><p><code>Smooth</code>: A smoothed line plot displaying values in the
-assay.</p></li>
-<li><p><code>PointSmooth</code>: A point and smoothed line plot displaying
-values in the assay.</p></li>
-</ul><p>If <code>NULL</code>, do not plot any summary data tracks.
+plot types to make for each assay. Currently supported plot types are:</p><dl><dt><code>Point</code></dt>
+<dd><p>: A point plot displaying values in the assay.</p></dd>
+
+<dt><code>Smooth</code></dt>
+<dd><p>: A smoothed line plot displaying values in the
+assay.</p></dd>
+
+<dt><code>PointSmooth</code></dt>
+<dd><p>: A point and smoothed line plot displaying
+values in the assay.</p></dd>
+
+
+</dl><p>If <code>NULL</code>, do not plot any summary data tracks.
 A special case is the track name <code>"FracMod"</code>: If <code>se</code> does not
 contain an assay of that name, but <code>"Nmod"</code> and <code>"Nvalid"</code>
 assays are available, <code>"FracMod"</code> will be calculated from
@@ -139,7 +151,7 @@ obtained from <code>rowData(se)$sequence.context</code> and thus requires that
 <code>se</code> contains the appropriate information, for example by setting
 the <code>sequence.context</code> and <code>sequence.reference</code> arguments of
 <code><a href="readBedMethyl.html">readBedMethyl</a></code> when it was generated, or by adding it using
-<code><a href="seqContext.html">seqContext</a></code>.</p></dd>
+<code><a href="addSeqContext.html">addSeqContext</a></code>.</p></dd>
 
 </dl></div>
     <div id="value">
