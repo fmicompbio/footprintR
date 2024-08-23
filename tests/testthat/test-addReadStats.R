@@ -2,7 +2,14 @@ test_that("calcReadStats works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
                           package = "footprintR")
+    reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readModkitExtract(exfile, modbase = "a")
+
+    ## Expected errors
+    se2 <- se
+    SummarizedExperiment::assayNames(se2) <- "error"
+    expect_error(calcReadStats(se2), "needs to have a 'mod_prob' assay")
+    rm(se2)
 
     ## No coverage requirement
     rs <- calcReadStats(se, min.Nobs.ppos = 1)
@@ -34,7 +41,9 @@ test_that("calcReadStats works", {
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
-    rs <- calcReadStats(se)
+    expect_message(
+        rs <- calcReadStats(se, verbose = TRUE)
+    )
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -57,6 +66,34 @@ test_that("calcReadStats works", {
     expect_length(S4Vectors::metadata(qc), 3L)
     expect_named(S4Vectors::metadata(qc), c("min.Nobs.ppos", "Lags", "stats"))
     expect_equal(S4Vectors::metadata(qc)$min.Nobs.ppos, thr)
+
+    ## Using `regions` and large LagRange
+    rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges("chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256))
+    rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100", LagRange = c(200, 256))
+    expect_identical(rs1, rs2)
+    expect_s4_class(rs1$s1, "DFrame")
+    expect_identical(dim(rs1$s1), c(10L, 13L))
+    expect_equal(sum(rs1$s1$MeanModProb), 1.52775200714286)
+    expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
+    expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
+
+    ## Using `sequence.context`, `min.Nobs.pread` and `stats`
+    expect_error(calcReadStats(se, regions = "chr1:6935000-6935100",
+                               sequence.context = c("TAA", "AAA")),
+                 "No sequence context found")
+    se1 <- addSeqContext(se, sequence.context.width = 3,
+                         sequence.reference = reffile)
+    expect_identical(colnames(rowData(se1)), "sequence.context")
+    rs1 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
+                         sequence.context = c("TAA", "AAA"),
+                         min.Nobs.pread = 1, stats = "MeanModProb")
+    rs2 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
+                         sequence.context = "WAA",
+                         min.Nobs.pread = 1, stats = "MeanModProb")
+    expect_identical(rs1, rs2)
+    expect_s4_class(rs1$s1, "DFrame")
+    expect_identical(dim(rs1$s1), c(10L, 2L))
+    expect_equal(sum(rs1$s1$MeanModProb), 0.95680377182716)
 
     ## Test that addReadStats also works
     exfiles <- system.file("extdata", c("modkit_extract_rc_6mA_1.tsv.gz",
