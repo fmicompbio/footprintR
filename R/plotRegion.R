@@ -18,22 +18,22 @@
 #'     of read-level assays in \code{se} and the values are character vectors
 #'     with the plot types to make for each assay. Currently supported plot
 #'     types are:
-#'     \itemize{
-#'         \item \code{"Lollipop"}: Lollipop plot (filled circles with the
-#'             color representing the values in the assay).
-#'         \item \code{"Heatmap"}: Heatmap plot (tiles with the color
-#'             represeting the values in the assay).
+#'     \describe{
+#'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
+#'             color representing the values in the assay).}
+#'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
+#'             represeting the values in the assay).}
 #'     }
 #'     If \code{NULL}, do not plot any read-level tracks.
 #' @param tracks.summary A named list where the names correspond to assay names
 #'     of summarized data in \code{se} and the values are character vectors with
 #'     plot types to make for each assay. Currently supported plot types are:
-#'     \itemize{
-#'         \item \code{Point}: A point plot displaying values in the assay.
-#'         \item \code{Smooth}: A smoothed line plot displaying values in the
-#'             assay.
-#'         \item \code{PointSmooth}: A point and smoothed line plot displaying
-#'             values in the assay.
+#'     \describe{
+#'         \item{\code{Point}}{: A point plot displaying values in the assay.}
+#'         \item{\code{Smooth}}{: A smoothed line plot displaying values in the
+#'             assay.}
+#'         \item{\code{PointSmooth}}{: A point and smoothed line plot displaying
+#'             values in the assay.}
 #'     }
 #'     If \code{NULL}, do not plot any summary data tracks.
 #'     A special case is the track name \code{"FracMod"}: If \code{se} does not

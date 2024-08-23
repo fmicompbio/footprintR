@@ -30,17 +30,18 @@ loess fit (high pass filter).}
 loess fit (low pass filter).}
 }
 \value{
-A \code{list} with elements: \describe{
+A \code{list} with elements:
+\describe{
 \item{nrl}{the estimated nucleosome repeat length}
-\item{nrl.CI95}{the 95\\% confidence interval}
+\item{nrl.CI95}{the 95-percent confidence interval}
 \item{xs}{smoothed (de-trended) phasogram}
 \item{loessfit}{the de-noising fit to the de-trended phasogram}
 \item{lmfit}{the linear fit to the phasogram peaks}
-\item{peaks}{the peak locations}
 \item{mind}{minimal distance included in the fit}
 \item{span1}{smoothing parameter for de-trending loess fit}
 \item{span2}{smoothing parameter for de-noising loess fit}
-\item{usePeaks}{the peaks used in the fit}}
+\item{usePeaks}{the peaks used in the fit}
+}
 }
 \description{
 Estimate the nucleosome repeat length (NRL) from the frequencies
