@@ -214,6 +214,7 @@ estimateNRL <- function(x,
 #' @param xlim \code{numeric(2)} with the x-axis (distance) limits in the first
 #'     two plots (see Details). if \code{NULL} (the default), the full range
 #'     defined by \code{x} and \code{hide} will be used.
+#' @param base_size Numeric scalar defining the base font size in pts.
 #' @param detailedPlots If \code{TRUE}, create three plots instead of just a
 #'       single plot (see Details).
 #' @param ... Additional arguments passed to \code{\link{estimateNRL}} to
@@ -250,8 +251,16 @@ estimateNRL <- function(x,
 plotModbaseSpacing <- function(x,
                                hide = TRUE,
                                xlim = NULL,
+                               base_size = 14,
                                detailedPlots = FALSE,
                                ...) {
+    # digest arguments
+    .assertVector(x = x, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = hide, type = "logical")
+    .assertVector(x = xlim, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = base_size, type = "numeric", rngExcl = c(0, Inf))
+    .assertScalar(x = detailedPlots, type = "logical")
+
     # estimate NRL
     nrl <- estimateNRL(x, ...)
 
@@ -286,7 +295,7 @@ plotModbaseSpacing <- function(x,
             values = structure(c(0.5, 1, 1), names = types)) +
         scale_x_continuous(limits = xlim) +
         scale_y_continuous(limits = ylim) +
-        theme_bw(base_size = 13) +
+        theme_bw(base_size = base_size) +
         theme(legend.position = "inside",
               legend.position.inside = c(0.95, 0.95),
               legend.justification.inside = c(1, 1),
@@ -320,7 +329,7 @@ plotModbaseSpacing <- function(x,
             labs(x = "Distance between modified bases (bp)",
                  y = "Residual number of distances") +
             scale_x_continuous(limits = xlim) +
-            theme_bw(base_size = 13) +
+            theme_bw(base_size = base_size) +
             theme(panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank())
 
@@ -348,7 +357,7 @@ plotModbaseSpacing <- function(x,
                 mapping = aes(label = .data[["label"]]),
                 hjust = 1.1, vjust = -0.3) +
             labs(x = "Peak count", y = "Peak coordinate (bp)") +
-            theme_bw(base_size = 13) +
+            theme_bw(base_size = base_size) +
             theme(panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank())
 
@@ -365,13 +374,13 @@ plotModbaseSpacing <- function(x,
                        size = 2.5) +
             geom_text(inherit.aes = FALSE,
                       data = data.frame(
-                          pos = mean(xlim), cnt = ylim[2],
+                          pos = mean(xlim), cnt = Inf,
                           label = sprintf("%1g (%1g-%1g)",
                                           signif(nrl$nrl,3),
                                           signif(nrl$nrl.CI95[1],3),
                                           signif(nrl$nrl.CI95[2],3))),
                       mapping = aes(pos, cnt, label = label),
-                      hjust = 0.5, vjust = 1.05)
+                      hjust = 0.5, vjust = 1.5)
     }
     return(p)
 }

@@ -65,7 +65,8 @@ autocorrelation (see details section).}
 distributions of the calculated read statistics.}
 }
 \value{
-A \code{list} object
+A \code{list} object with a \code{ReadStats} \code{DFrame} slot for the calculates statistics
+and a \code{params} \code{list} slot for parameters used in filtering and statistics calculations
 }
 \description{
 This function calculates various per-read summary statistics on modification

@@ -4,7 +4,14 @@
 \alias{plotModbaseSpacing}
 \title{Plot annotated distances between modified bases.}
 \usage{
-plotModbaseSpacing(x, hide = TRUE, xlim = NULL, detailedPlots = FALSE, ...)
+plotModbaseSpacing(
+  x,
+  hide = TRUE,
+  xlim = NULL,
+  base_size = 14,
+  detailedPlots = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{\code{numeric} vector giving the counts of distances between
@@ -18,6 +25,8 @@ the NRL estimate (\code{mind} parameter from
 \item{xlim}{\code{numeric(2)} with the x-axis (distance) limits in the first
 two plots (see Details). if \code{NULL} (the default), the full range
 defined by \code{x} and \code{hide} will be used.}
+
+\item{base_size}{Numeric scalar defining the base font size in pts.}
 
 \item{detailedPlots}{If \code{TRUE}, create three plots instead of just a
 single plot (see Details).}
