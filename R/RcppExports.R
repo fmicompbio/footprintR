@@ -8,7 +8,7 @@
 #'     elements that are greater than zero and less than \code{maxd}. The
 #'     number of observed distances \code{d} are reported in \code{cnt[d]},
 #'     and \code{maxd} corresponds to the \code{length(cnt)}. The function is
-#'     called by \code{\link{calcModSpacing}}, which provides a higher level,
+#'     called by \code{\link{calcModbaseSpacing}}, which provides a higher level,
 #'     more convenient interface.
 #'
 #' @author Michael Stadler
