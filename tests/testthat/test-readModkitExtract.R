@@ -20,12 +20,16 @@ test_that("readModkitExtract works", {
 
     # invalid arguments
     expect_error(readModkitExtract("error"), "not all `fnames` exist")
+    expect_error(readModkitExtract(c(s1 = fnames[[1]], s1 = fnames[[2]])),
+                 "`names(fnames)` are not unique", fixed = TRUE)
     expect_error(readModkitExtract(fnames, modbase = NULL),
                  "'modbase' must not be NULL")
     expect_error(readModkitExtract(fnames, modbase = 1),
                  "'modbase' must be of class 'character'")
     expect_error(readModkitExtract(fnames, modbase = c("m", "a")),
                  "'modbase' must have length 4")
+    expect_error(readModkitExtract(fnames, modbase = "x"),
+                 "invalid `modbase` values")
     expect_error(readModkitExtract(fnames, modbase = c(s1 = "m", s2 = "m",
                                                        s3 = "a", s4 = "a")),
                  "names of `modbase` and `fnames` don't agree")
