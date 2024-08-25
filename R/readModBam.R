@@ -1,4 +1,4 @@
-#' Read base modifications from a bam file.
+#' Read base modifications from bam file(s).
 #'
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
 #' section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}

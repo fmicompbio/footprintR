@@ -2,7 +2,7 @@
 % Please edit documentation in R/readModBam.R
 \name{readModBam}
 \alias{readModBam}
-\title{Read base modifications from a bam file.}
+\title{Read base modifications from bam file(s).}
 \usage{
 readModBam(
   bamfiles,
