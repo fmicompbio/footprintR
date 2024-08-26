@@ -52,7 +52,7 @@ LinkingTo:
     Rcpp,
     Rhtslib
 SystemRequirements: GNU make
-URL: https://github.com/fmicompbio/footprintR
+URL: https://github.com/fmicompbio/footprintR, https://fmicompbio.github.io/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
