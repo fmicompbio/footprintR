@@ -371,7 +371,8 @@ plotModbaseSpacing <- function(x,
                                           signif(nrl$nrl,3),
                                           signif(nrl$nrl.CI95[1],3),
                                           signif(nrl$nrl.CI95[2],3))),
-                      mapping = aes(pos, cnt, label = label),
+                      mapping = aes(.data[["pos"]], .data[["cnt"]],
+                                    label = .data[["label"]]),
                       hjust = 0.5, vjust = 1.5)
     }
     return(p)
