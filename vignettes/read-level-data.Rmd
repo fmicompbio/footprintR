@@ -20,9 +20,10 @@ knitr::opts_chunk$set(
 ## Load data
 
 We start the analysis by loading footprinting data at the level of individual
-reads. Such data can be extracted from `modBam` files (standard bam file with
-modification data stored in `MM` and `ML` tags, see
-[SAMtags.pdf](https://samtools.github.io/hts-specs/SAMtags.pdf)) using
+reads (for an example of working with summary-level data, see
+`vignette("using-footprintR")`). Read-level data can be extracted from `modBam`
+files (standard bam file with modification data stored in `MM` and `ML` tags,
+see [SAMtags.pdf](https://samtools.github.io/hts-specs/SAMtags.pdf)) using
 `readModBam()`. This is the preferred way described below.
 
 Alternatively, read-level modification data can also be extracted from

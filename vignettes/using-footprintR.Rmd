@@ -47,7 +47,9 @@ BiocManager::install("fmicompbio/footprintR")
 ## Functionality
 
 Here is a minimal example for using `footprintR` that illustrates its
-functionality. We start by loading the package:
+functionality using summary-level data.
+
+We start by loading the package:
 
 ```{r load-package, message=FALSE}
 library(footprintR)
@@ -58,8 +60,8 @@ library(SummarizedExperiment)
 
 Here, we will demonstrate how to read and visualize summary-level data
 (where individual reads have been combined per genomic position). For
-an example of how to work with read-level data, see the `read-level-data`
-vignette.
+an example of how to work with read-level data, see the
+`vignette("read-level-data")`.
 
 The example is using small example data provided as part of the package. Here
 we get the file names for per-position summary modification data in
