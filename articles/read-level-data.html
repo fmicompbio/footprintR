@@ -93,9 +93,11 @@
 <h2 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
 </h2>
 <p>We start the analysis by loading footprinting data at the level of
-individual reads. Such data can be extracted from <code>modBam</code>
-files (standard bam file with modification data stored in
-<code>MM</code> and <code>ML</code> tags, see <a href="https://samtools.github.io/hts-specs/SAMtags.pdf" class="external-link">SAMtags.pdf</a>)
+individual reads (for an example of working with summary-level data, see
+<code><a href="../articles/using-footprintR.html">vignette("using-footprintR")</a></code>). Read-level data can be
+extracted from <code>modBam</code> files (standard bam file with
+modification data stored in <code>MM</code> and <code>ML</code> tags,
+see <a href="https://samtools.github.io/hts-specs/SAMtags.pdf" class="external-link">SAMtags.pdf</a>)
 using <code><a href="../reference/readModBam.html">readModBam()</a></code>. This is the preferred way described
 below.</p>
 <p>Alternatively, read-level modification data can also be extracted
