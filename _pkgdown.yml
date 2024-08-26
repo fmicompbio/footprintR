@@ -1,0 +1,28 @@
+reference:
+- title: Reading data into R
+  contents:
+  - readBedMethyl
+  - readModBam
+  - readModkitExtract
+- title: Calculating on data in R
+  contents:
+  - addReadStats
+  - addSeqContext
+  - addReadsSummary
+  - sumOverRegions
+- title: Visualization
+  contents:
+  - plotReadStats
+  - plotRegion
+- title: Helper functions
+  contents:
+  - calcReadStats
+  - extractSeqContext
+  - modkitExtract
+- title: Nucleosome repeat length (NRL) analysis
+  desc: "Functions for calculating and visualizing distance distributions between modified bases and estimate NRL."
+  contents:
+  - calcModbaseSpacing
+  - estimateNRL
+  - plotModbaseSpacing
+  - calcAndCountDist
