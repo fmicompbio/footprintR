@@ -1,5 +1,8 @@
 url: https://fmicompbio.github.io/footprintR
 
+template:
+  bootstrap: 5
+
 reference:
 - title: Reading data into R
   contents:
