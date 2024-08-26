@@ -126,7 +126,7 @@ Use the `plotRegion()` function to visualize data for a specific region,
 here visualizing the accessibility using GpC methylation (sequence context GCH),
 and adding a smooth line:
 
-```{r plot-region-GCH, warning=FALSE, fig.width=6, fig.height=4}
+```{r plot-region-GCH, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in GCH contexts, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
            tracks.summary = list(FracMod = "PointSmooth"),
@@ -135,7 +135,7 @@ plotRegion(se,
 
 Or the endogenous DNA methylation (sequence context HCG):
 
-```{r plot-region-HCG, warning=FALSE, fig.width=6, fig.height=4}
+```{r plot-region-HCG, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in HCG contexts, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
            tracks.summary = list(FracMod = "PointSmooth"),
@@ -144,7 +144,7 @@ plotRegion(se,
 
 Or just plotting the coverage (`Nvalid`) as a smooth line:
 
-```{r plot-region-Nvalid, warning=FALSE, fig.width=6, fig.height=4}
+```{r plot-region-Nvalid, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A smoothed line plot showing the read coverage (Nvalid) per position, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
            tracks.summary = list(Nvalid = "Smooth"))

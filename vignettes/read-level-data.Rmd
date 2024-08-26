@@ -196,18 +196,19 @@ to select the type of plot(s).
 
 For reference, here we plot the summary-level data:
 
-```{r plot-summary, fig.width=6, fig.height=4}
+```{r plot-summary, fig.width=6, fig.height=4, fig.alt="A summary-level point plot with the fraction modified bases per position."}
 plotRegion(se_summary, region = "chr1:6932700-6932800",
            tracks.summary = list(FracMod = "Point"))
 ```
 
 ... and here we plot the read-level data of the same region:
 
-```{r plot-region, warning=FALSE, fig.width=8, fig.height=2.5}
+```{r plot-region1, warning=FALSE, fig.width=8, fig.height=2.5, fig.alt="A read-level heatmap showing modification probabilities of individual modified bases of each read grouped by sample."}
 plotRegion(se, region = "chr1:6932700-6932800",
            tracks.summary = NULL,
            tracks.reads = list(mod_prob = "Heatmap"))
-
+```
+```{r plot-region2, warning=FALSE, fig.width=8, fig.height=2.5, fig.alt="A read-level point (lollipop) plot showing modification probabilities of individual modified bases of each read grouped by sample."}
 plotRegion(se, region = "chr1:6932700-6932800",
            tracks.summary = NULL,
            tracks.reads = list(mod_prob = "Lollipop"))
@@ -218,12 +219,14 @@ coordinates of genomic bases on which modifications can be irregularly spaced.
 Alternatively, we can also generate these plot in "modbase-space", in which
 only modified bases are shown and the gaps between them are removed:
 
-```{r plot-region-modbasespace, warning=FALSE, fig.width=8, fig.height=2.5}
+```{r plot-region-modbasespace1, warning=FALSE, fig.width=8, fig.height=2.5, fig.alt="A read-level heatmap showing modification probabilities of individual modified bases only, without interviening non-modified bases."}
 plotRegion(se, region = "chr1:6932700-6932800",
            tracks.summary = NULL,
            tracks.reads = list(mod_prob = "Heatmap"),
            modbaseSpace = TRUE)
+```
 
+```{r plot-region-modbasespace2, warning=FALSE, fig.width=8, fig.height=2.5, fig.alt="A read-level point (lollipop) plot showing modification probabilities of individual modified bases only, without interviening non-modified bases."}
 plotRegion(se, region = "chr1:6932700-6932800",
            tracks.summary = NULL,
            tracks.reads = list(mod_prob = "Lollipop"),
@@ -234,7 +237,7 @@ As mentioned above, the read-level data is still contained in the
 summary object `se_summary`, so we can plot both summary-level
 and read-level data simultaneously with this object as input:
 
-```{r plot-summary-and-read-level, fig.width=8, fig.height=6}
+```{r plot-summary-and-read-level, fig.width=8, fig.height=6, fig.alt="A plot of modification data combining different track types."}
 plotRegion(se_summary, region = "chr1:6932700-6932800",
            tracks.summary = list(FracMod = c("Smooth")),
            tracks.reads = list(mod_prob = c("Heatmap", "Lollipop")))
