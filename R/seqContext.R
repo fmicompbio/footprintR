@@ -90,7 +90,9 @@ extractSeqContext <- function(x,
     Npre <- pmax(0L, 1L - start(xcontext))
     Npost <- pmax(0L, end(xcontext) - seqlengths(ref)[as.character(seqnames(xcontext))])
     if (any(Npre > 0) || any(Npost > 0)) {
-        suppressWarnings(seqlengths(xcontext) <- seqlengths(ref))
+        suppressWarnings(
+            seqlengths(xcontext) <- seqlengths(ref)
+        )
         xcontext <- GenomicRanges::trim(xcontext)
         seqcontext <- DNAStringSet(
             x = paste0(strrep("N", Npre),

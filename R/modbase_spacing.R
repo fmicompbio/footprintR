@@ -144,7 +144,7 @@ calcModbaseSpacing <- function(se,
 #' @export
 estimateNRL <- function(x,
                         mind = 140L,
-                        usePeaks = 1:5,
+                        usePeaks = seq_len(5),
                         span1 = 100 / length(x),
                         span2 = 1500 / length(x)) {
     # digest arguments
@@ -177,11 +177,13 @@ estimateNRL <- function(x,
         usePeaks <- intersect(usePeaks, seq_along(xposmax))
     }
     lmfit <- stats::lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
-    # will warn if a single peak and slope = NA
-    suppressWarnings(cilmfit <- stats::confint(lmfit))
+    cilmfit <- c(`2.5 %` = NA_real_, `97.5 %` = NA_real_)
+    if (!is.na(stats::coefficients(lmfit)[2])) {
+        cilmfit <- stats::confint(lmfit)[2,]
+    }
 
-    res <- list(nrl = unname(coefficients(lmfit)[2]),
-                nrl.CI95 = cilmfit[2,],
+    res <- list(nrl = unname(stats::coefficients(lmfit)[2]),
+                nrl.CI95 = cilmfit,
                 xs = xs, loessfit = fit, lmfit = lmfit,
                 peaks = xposmax, mind = mind,
                 span1 = span1, span2 = span2,

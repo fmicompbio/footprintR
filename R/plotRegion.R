@@ -648,10 +648,8 @@ plotRegion <- function(se,
     YY <- scuttle::sumCountsAcrossFeatures(x = Y, ids = bin)
     XX <- XX / YY
     # calculate distances between reads
-    suppressWarnings({
-        D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
-                                                    use = "pairwise.complete")))
-    })
+    D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
+                                                use = "pairwise.complete")))
     D[is.na(D)] <- 1.0
     # cluster reads and return order
     cl <- stats::hclust(D, method = "ward.D2")
