@@ -17,7 +17,7 @@ jobs:
           #- { os: macOS-12, bioc: 'devel', install_modkit: 'no'}
           #- { os: macOS-14, bioc: 'devel', install_modkit: 'yes'}
           #- { os: ubuntu-latest, image: 'bioconductor/bioconductor_docker:devel', install_modkit: 'yes'}
-          - { os: ubuntu-latest, bioc: 'devel', install_modkit: 'yes'}
+          - { os: ubuntu-latest, bioc: 'devel', install_modkit: 'no'}
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -95,5 +95,5 @@ jobs:
 
       - name: Run Valgrind
         run: |
-          ls -alR footprintR
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < footprintR/tests/testthat/test-read_modbam_cpp.R
+          ls -alR /home/runner/work/footprintR/footprintR
+          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < /home/runner/work/footprintR/footprintR/tests/testthat/test-read_modbam_cpp.R
