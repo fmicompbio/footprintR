@@ -55,7 +55,7 @@ linear fit to the modes in the distance distribution.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">estimateNRL</span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  mind <span class="op">=</span> <span class="fl">140L</span>,</span>
-<span>  usePeaks <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span>
+<span>  usePeaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span>,</span>
 <span>  span1 <span class="op">=</span> <span class="fl">100</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
 <span>  span2 <span class="op">=</span> <span class="fl">1500</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -67,7 +67,7 @@ linear fit to the modes in the distance distribution.</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p><code>numeric</code> vector giving the counts of distances
-(typically the output of <code><a href="calcModbaseSpacing.html">calcModbaseSpacing</a></code>.</p></dd>
+(typically the calculated with <code><a href="calcModbaseSpacing.html">calcModbaseSpacing</a></code>.</p></dd>
 
 
 <dt id="arg-mind">mind<a class="anchor" aria-label="anchor" href="#arg-mind"></a></dt>
