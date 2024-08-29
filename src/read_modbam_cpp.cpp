@@ -183,6 +183,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                            std::vector<std::string> regions,
                            char modbase,
                            bool verbose = false) {
+    // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
+    hts_set_log_level(HTS_LOG_OFF);
+
     // variable declarations
     int c = 0, i = 0, j = 0, r = 0, impl = 0, qseq_len = 0, pos = 0, strand = 0;
     int n_unaligned = 0, n_total = 0;
