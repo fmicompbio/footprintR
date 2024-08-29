@@ -32,6 +32,7 @@
 #' @author Michael Stadler
 #'
 #' @examples
+#' library(SummarizedExperiment)
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
