@@ -95,5 +95,15 @@ jobs:
 
       - name: Run Valgrind
         run: |
-          ls -alR /home/runner/work/footprintR/footprintR
-          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < /home/runner/work/footprintR/footprintR/tests/testthat/test-read_modbam_cpp.R
+          R -d "valgrind --tool=memcheck --error-exitcode=1 --track-origins=yes --leak-check=full" \
+              --vanilla -e 'pkgload::load_all("/home/runner/work/footprintR/footprintR"); testthat::test_file("/home/runner/work/footprintR/footprintR/tests/testthat/test-read_modbam_cpp.R")' | \
+              tee -a /home/runner/work/footprintR/footprintR/valgrind-out.txt
+
+      - name: Upload Valgrind results
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ runner.os }}-Valgrind-results
+          path: "/home/runner/work/footprintR/footprintR/valgrind-out.txt"
+
+
