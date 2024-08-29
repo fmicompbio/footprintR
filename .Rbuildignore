@@ -4,3 +4,4 @@
 ^create_sample_data.sh$
 ^.github$
 ^\.github$
+^_pkgdown.yml$
