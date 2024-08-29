@@ -65,7 +65,7 @@ are implemented in C++ (<code><a href="calcAndCountDist.html">calcAndCountDist</
 <span>  <span class="va">se</span>,</span>
 <span>  assay.type <span class="op">=</span> <span class="st">"mod_prob"</span>,</span>
 <span>  min_mod_prob <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  rmdup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  pool_reads <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  dmax <span class="op">=</span> <span class="fl">1000L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -91,10 +91,12 @@ and columns to samples.</p></dd>
 probability for a modified base.</p></dd>
 
 
-<dt id="arg-rmdup">rmdup<a class="anchor" aria-label="anchor" href="#arg-rmdup"></a></dt>
-<dd><p>Logical scalar indicating if duplicates should be removed.
-If <code>TRUE</code> (the default), only one of several alignments starting at
-the same coordinate is used.</p></dd>
+<dt id="arg-pool-reads">pool_reads<a class="anchor" aria-label="anchor" href="#arg-pool-reads"></a></dt>
+<dd><p>Logical scalar indicating if reads within a sample should
+be pooled. If <code>TRUE</code> (the default), distances from reads within a
+sample are combined and returned as a vector. If <code>FALSE</code>, distances
+obtained from each read in a sample are returned separately as columns
+in a matrix.</p></dd>
 
 
 <dt id="arg-dmax">dmax<a class="anchor" aria-label="anchor" href="#arg-dmax"></a></dt>
@@ -105,9 +107,13 @@ modified bases on the same read to count.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list of length <code>ncol(se)</code> (one element for each sample).
-The elements are <code>integer</code> vectors of length <code>dmax</code>, with the
-value at position <code>d</code> giving the observed number of within-read
-modified bases at distance <code>d</code>.</p>
+If <code>pool_reads=TRUE</code>, the elements are <code>integer</code> vectors of
+length <code>dmax</code>, with the value at position <code>d</code> giving the
+observed number of within-read modified base pairs at distance <code>d</code>.
+If <code>pool_reads=FALSE</code>, each list element is a matrix with
+<code>dmax</code> rows and individual reads in columns, with the value at
+row <code>d</code> and column <code>r</code> giving the observed number of modified
+base pairs at distance <code>d</code> for read <code>r</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
