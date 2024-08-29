@@ -15,6 +15,7 @@ reference:
   - addSeqContext
   - addReadsSummary
   - sumOverRegions
+  - subsetReads
 - title: Visualization
   contents:
   - plotReadStats
