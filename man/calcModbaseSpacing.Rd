@@ -8,7 +8,7 @@ calcModbaseSpacing(
   se,
   assay.type = "mod_prob",
   min_mod_prob = 0.5,
-  rmdup = TRUE,
+  pool_reads = TRUE,
   dmax = 1000L
 )
 }
@@ -24,18 +24,24 @@ and columns to samples.}
 \item{min_mod_prob}{Numeric scalar giving the minimal modification
 probability for a modified base.}
 
-\item{rmdup}{Logical scalar indicating if duplicates should be removed.
-If \code{TRUE} (the default), only one of several alignments starting at
-the same coordinate is used.}
+\item{pool_reads}{Logical scalar indicating if reads within a sample should
+be pooled. If \code{TRUE} (the default), distances from reads within a
+sample are combined and returned as a vector. If \code{FALSE}, distances
+obtained from each read in a sample are returned separately as columns
+in a matrix.}
 
 \item{dmax}{Numeric scalar specifying the maximal distance between
 modified bases on the same read to count.}
 }
 \value{
 A named list of length \code{ncol(se)} (one element for each sample).
-The elements are \code{integer} vectors of length \code{dmax}, with the
-value at position \code{d} giving the observed number of within-read
-modified bases at distance \code{d}.
+If \code{pool_reads=TRUE}, the elements are \code{integer} vectors of
+length \code{dmax}, with the value at position \code{d} giving the
+observed number of within-read modified base pairs at distance \code{d}.
+If \code{pool_reads=FALSE}, each list element is a matrix with
+\code{dmax} rows and individual reads in columns, with the value at
+row \code{d} and column \code{r} giving the observed number of modified
+base pairs at distance \code{d} for read \code{r}.
 }
 \description{
 Calculate the frequencies of same-read modified base distances,

@@ -18,16 +18,22 @@
 #'     \code{se} containing the read-level modification probabilities.
 #' @param min_mod_prob Numeric scalar giving the minimal modification
 #'     probability for a modified base.
-#' @param rmdup Logical scalar indicating if duplicates should be removed.
-#'     If \code{TRUE} (the default), only one of several alignments starting at
-#'     the same coordinate is used.
+#' @param pool_reads Logical scalar indicating if reads within a sample should
+#'     be pooled. If \code{TRUE} (the default), distances from reads within a
+#'     sample are combined and returned as a vector. If \code{FALSE}, distances
+#'     obtained from each read in a sample are returned separately as columns
+#'     in a matrix.
 #' @param dmax Numeric scalar specifying the maximal distance between
 #'     modified bases on the same read to count.
 #'
 #' @return A named list of length \code{ncol(se)} (one element for each sample).
-#'     The elements are \code{integer} vectors of length \code{dmax}, with the
-#'     value at position \code{d} giving the observed number of within-read
-#'     modified bases at distance \code{d}.
+#'     If \code{pool_reads=TRUE}, the elements are \code{integer} vectors of
+#'     length \code{dmax}, with the value at position \code{d} giving the
+#'     observed number of within-read modified base pairs at distance \code{d}.
+#'     If \code{pool_reads=FALSE}, each list element is a matrix with
+#'     \code{dmax} rows and individual reads in columns, with the value at
+#'     row \code{d} and column \code{r} giving the observed number of modified
+#'     base pairs at distance \code{d} for read \code{r}.
 #'
 #' @references Phasograms were originally described in Valouev et al., Nature
 #'   2011 (doi:10.1038/nature10002). The implementation here differs in three
@@ -72,7 +78,7 @@
 calcModbaseSpacing <- function(se,
                                assay.type = "mod_prob",
                                min_mod_prob = 0.5,
-                               rmdup = TRUE,
+                               pool_reads = TRUE,
                                dmax = 1000L) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
@@ -84,27 +90,38 @@ calcModbaseSpacing <- function(se,
              "assay of se containing the read-level data to be summarized.")
     }
     .assertScalar(x = min_mod_prob, type = "numeric", rngExcl = c(0, 1))
-    .assertScalar(x = rmdup, type = "logical")
+    .assertScalar(x = pool_reads, type = "logical")
     .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))
 
-    # assay and positions from `se`
+    # assay and positions from 'se'
     modprobL <- SummarizedExperiment::assay(se, assay.type)
     s <- BiocGenerics::start(se)
 
     # for each sample
     cntL <- lapply(modprobL, function(modprob) {
-        cnt <- numeric(dmax)
-        names(cnt) <- as.character(seq.int(dmax))
+        if (pool_reads) {
+            cnt <- numeric(dmax)
+            names(cnt) <- as.character(seq.int(dmax))
 
-        # for each read i
-        for (i in seq.int(ncol(modprob))) {
-            # extract positions of modified bases
-            pos <- s[modprob[, i] >= min_mod_prob]
-            if (rmdup) {
-                pos <- unique(pos)
+            # for each read i
+            for (i in seq.int(ncol(modprob))) {
+                # extract positions of modified bases
+                pos <- s[modprob[, i] >= min_mod_prob]
+                # add distances in (1..dmax) to 'cnt'
+                calcAndCountDist(query = pos, reference = pos, cnt = cnt)
             }
-            # add distances in (1..dmax) to `cnt`
-            calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+        } else {
+            # for each read i
+            cnt <- do.call(cbind, lapply(seq.int(ncol(modprob)), function(i) {
+                # extract positions of modified bases
+                pos <- s[modprob[, i] >= min_mod_prob]
+                # add distances in (1..dmax) to 'cnt'
+                cntR <- numeric(dmax)
+                calcAndCountDist(query = pos, reference = pos, cnt = cntR)
+                return(cntR)
+            }))
+            dimnames(cnt) <- list(as.character(seq.int(dmax)),
+                                  colnames(modprob))
         }
 
         return(cnt)
