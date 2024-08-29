@@ -1,0 +1,99 @@
+on:
+  workflow_dispatch:
+
+name: R-test-valgrind
+
+jobs:
+  R-test-valgrind:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.bioc }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          #- { os: windows-latest, bioc: 'devel', install_modkit: 'no'}
+          #- { os: macOS-12, bioc: 'devel', install_modkit: 'no'}
+          #- { os: macOS-14, bioc: 'devel', install_modkit: 'yes'}
+          #- { os: ubuntu-latest, image: 'bioconductor/bioconductor_docker:devel', install_modkit: 'yes'}
+          - { os: ubuntu-latest, bioc: 'devel', install_modkit: 'yes'}
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      CRAN: ${{ matrix.config.cran }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      cache-version: v2
+
+    steps:
+      - name: checkout branch
+        uses: actions/checkout@v4
+
+      - name: Set up modkit
+        if: matrix.config.install_modkit == 'yes'
+        run: |
+            cargo install --git https://github.com/nanoporetech/modkit.git
+            modkit --version
+        shell: bash
+
+      - name: Set up R and install BiocManager
+        uses: grimbough/bioc-actions/setup-bioc@v1
+        if: matrix.config.image == null
+        with:
+          bioc-version: ${{ matrix.config.bioc }}
+
+      - name: Install remotes
+        run: |
+          install.packages(c('remotes'))
+        shell: Rscript {0}
+
+      - name: Query dependencies
+        run: |
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE, repos = c(getOption('repos'), BiocManager::repositories())), 'depends.Rds', version = 2)
+        shell: Rscript {0}
+
+      - name: Cache R packages
+        if: runner.os != 'Windows' && matrix.config.image == null
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ env.cache-version }}-${{ matrix.config.os }}-bioc-${{ matrix.config.bioc }}-${{ hashFiles('depends.Rds') }}
+          restore-keys: ${{ env.cache-version }}-${{ matrix.config.os }}-bioc-${{ matrix.config.bioc }}-
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        env:
+          RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          pak-version: devel
+
+      - name: Install R package dependencies
+        run: |
+          local_deps <- remotes::local_package_deps(dependencies = TRUE)
+          deps <- remotes::dev_package_deps(dependencies = TRUE, repos = BiocManager::repositories())
+          print(deps)
+          BiocManager::install(local_deps[local_deps %in% deps$package[deps$diff != 0]], Ncpu = 2L)
+          remotes::install_cran('rcmdcheck', Ncpu = 2L)
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
+        shell: Rscript {0}
+
+      - name: Install Valgrind
+        run: |
+          sudo -H apt-get update -y
+          sudo -H apt-get install -y valgrind
+        env:
+          DEBIAN_FRONTEND: noninteractive
+
+      - name: Run Valgrind
+        run: |
+          ls -alR footprintR
+          R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < footprintR/tests/testthat/test-read_modbam_cpp.R
