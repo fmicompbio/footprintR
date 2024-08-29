@@ -14,17 +14,20 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_error(calcModbaseSpacing("error"), "must be of class")
     expect_error(calcModbaseSpacing(se, "error"), "'assay.type' must be a string or integer")
     pg1 <- calcModbaseSpacing(se)
+    pg1comb <- Reduce("+", pg1)
     pg2 <- calcModbaseSpacing(se, rmdup = FALSE)
+    pg2comb <- Reduce("+", pg2)
     pg3 <- calcModbaseSpacing(cbind(se, se))
+    pg3comb <- Reduce("+", pg3)
 
     ## check invalid arguments
     expect_warning(estimateNRL(rep(0, 3000L)), "no non-zero distances")
-    expect_warning(estimateNRL(pg1, usePeaks = 1:100), "less peaks detected")
+    expect_warning(estimateNRL(pg1comb, usePeaks = 1:100), "less peaks detected")
     expect_error(calcAndCountDist(1:3, 3:1, numeric(3)), "must be sorted ascendingly")
 
     ## check if the plotting function runs
-    p1 <- plotModbaseSpacing(x = pg1, hide = FALSE)
-    p2 <- plotModbaseSpacing(x = pg1, detailedPlots = TRUE)
+    p1 <- plotModbaseSpacing(x = pg1comb, hide = FALSE)
+    p2 <- plotModbaseSpacing(x = pg1comb, detailedPlots = TRUE)
     expect_s3_class(p1, "ggplot")
     expect_identical(dim(p1$data), c(2720L, 3L))
     expect_s3_class(p2, "ggplot")
@@ -37,12 +40,15 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     unlink(tf)
 
     ## check expected results
-    expect_type(pg1, "double")
-    expect_length(pg1, 1000L)
-    expect_true(all(pg2 >= pg1))
-    expect_true(all(pg1 < pg3))
+    expect_type(pg1, "list")
+    expect_length(pg1, ncol(se))
+    expect_true(all(unlist(lapply(pg1, class)) == "numeric"))
+    expect_type(pg1comb, "double")
+    expect_length(pg1comb, 1000L)
+    expect_true(all(pg2comb >= pg1comb))
+    expect_true(all(pg1comb < pg3comb))
 
-    nrl <- estimateNRL(pg1, usePeaks = 1:5)
+    nrl <- estimateNRL(pg1comb, usePeaks = 1:5)
     expect_type(nrl, "list")
     expect_equal(nrl$nrl, 183.9)
     expect_length(nrl$nrl.CI95, 2L)

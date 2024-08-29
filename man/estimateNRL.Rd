@@ -7,14 +7,14 @@
 estimateNRL(
   x,
   mind = 140L,
-  usePeaks = 1:5,
+  usePeaks = seq_len(5),
   span1 = 100/length(x),
   span2 = 1500/length(x)
 )
 }
 \arguments{
 \item{x}{\code{numeric} vector giving the counts of distances
-(typically the output of \code{\link{calcModbaseSpacing}}.}
+(typically the calculated with \code{\link{calcModbaseSpacing}}.}
 
 \item{mind}{\code{integer(1)} specifying the minimal distance to be used for
 NRL estimation. The default value (140) ignores any distance too short to

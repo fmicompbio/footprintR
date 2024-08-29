@@ -15,7 +15,7 @@ plotModbaseSpacing(
 }
 \arguments{
 \item{x}{\code{numeric} vector giving the counts of distances between
-modified bases on the same read (typically the output of
+modified bases on the same read (typically calculated by
 \code{\link{calcModbaseSpacing}}.}
 
 \item{hide}{If \code{TRUE} (the default), hide distance counts not used in

@@ -1,9 +1,12 @@
 #' @title Calculate distances between modified bases on individual reads.
 #'
-#' @description Calculate the frequencies of same read modified base distances,
+#' @description Calculate the frequencies of same-read modified base distances,
 #'     for example from read-level modification data to estimate nucleosome
-#'     repeat length. Distance calculations are implemented in C++
-#'     (\code{\link{calcAndCountDist}}) for efficiency.
+#'     repeat length. Distances are calculated separately for each sample
+#'     (column in \code{se}), but if needed they can be easily combined for
+#'     estimating NRL on a pool of samples by summing up observed counts
+#'     (e.g. using \code{Reduce("+", sampleDistsList)}. Distance calculations
+#'     are implemented in C++ (\code{\link{calcAndCountDist}}) for efficiency.
 #'
 #' @author Michael Stadler
 #'
@@ -21,9 +24,10 @@
 #' @param dmax Numeric scalar specifying the maximal distance between
 #'     modified bases on the same read to count.
 #'
-#' @return \code{integer} vector with \code{dmax} elements, with the element at
-#'   position \code{d} giving the observed number of alignment pairs at that
-#'   distance.
+#' @return A named list of length \code{ncol(se)} (one element for each sample).
+#'     The elements are \code{integer} vectors of length \code{dmax}, with the
+#'     value at position \code{d} giving the observed number of within-read
+#'     modified bases at distance \code{d}.
 #'
 #' @references Phasograms were originally described in Valouev et al., Nature
 #'   2011 (doi:10.1038/nature10002). The implementation here differs in three
@@ -49,10 +53,17 @@
 #'                            package = "footprintR")
 #' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
 #'
+#' # get distances for each sample
 #' moddist <- calcModbaseSpacing(se)
-#' print(estimateNRL(moddist)[1:2])
-#' plotModbaseSpacing(moddist)
-#' plotModbaseSpacing(moddist, detailedPlots = TRUE)
+#'
+#' # analyze NRL for sample 's1'
+#' print(estimateNRL(moddist$s1)[1:2])
+#' plotModbaseSpacing(moddist$s1)
+#' plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
+#'
+#' # combine samples
+#' moddistComb <- Reduce("+", moddist)
+#' print(estimateNRL(moddistComb)[1:2])
 #'
 #' @importFrom SummarizedExperiment assays assayNames assay
 #' @importFrom BiocGenerics start
@@ -76,24 +87,30 @@ calcModbaseSpacing <- function(se,
     .assertScalar(x = rmdup, type = "logical")
     .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))
 
-    # init distance cound vector `cnt` and extract assay and positions from `se`
-    cnt <- numeric(dmax)
-    names(cnt) <- as.character(seq.int(dmax))
-    modprob <- as.matrix(SummarizedExperiment::assay(se, assay.type))
+    # assay and positions from `se`
+    modprobL <- SummarizedExperiment::assay(se, assay.type)
     s <- BiocGenerics::start(se)
 
-    # for each read i
-    for (i in seq.int(ncol(modprob))) {
-        # extract positions of modified bases
-        pos <- s[modprob[, i] >= min_mod_prob]
-        if (rmdup) {
-            pos <- unique(pos)
-        }
-        # add distances in (1..dmax) to `cnt`
-        calcAndCountDist(query = pos, reference = pos, cnt = cnt)
-    }
+    # for each sample
+    cntL <- lapply(modprobL, function(modprob) {
+        cnt <- numeric(dmax)
+        names(cnt) <- as.character(seq.int(dmax))
 
-    return(cnt)
+        # for each read i
+        for (i in seq.int(ncol(modprob))) {
+            # extract positions of modified bases
+            pos <- s[modprob[, i] >= min_mod_prob]
+            if (rmdup) {
+                pos <- unique(pos)
+            }
+            # add distances in (1..dmax) to `cnt`
+            calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+        }
+
+        return(cnt)
+    })
+
+    return(cntL)
 }
 
 #' @title Estimate the nucleosome repeat length (NRL) from modified-base distances.
@@ -106,7 +123,7 @@ calcModbaseSpacing <- function(se,
 #' @author Michael Stadler
 #'
 #' @param x \code{numeric} vector giving the counts of distances
-#'   (typically the output of \code{\link{calcModbaseSpacing}}.
+#'   (typically the calculated with \code{\link{calcModbaseSpacing}}.
 #' @param mind \code{integer(1)} specifying the minimal distance to be used for
 #'   NRL estimation. The default value (140) ignores any distance too short to
 #'   span at least a single nucleosome.
@@ -200,7 +217,7 @@ estimateNRL <- function(x,
 #' @author Michael Stadler
 #'
 #' @param x \code{numeric} vector giving the counts of distances between
-#'     modified bases on the same read (typically the output of
+#'     modified bases on the same read (typically calculated by
 #'     \code{\link{calcModbaseSpacing}}.
 #' @param hide If \code{TRUE} (the default), hide distance counts not used in
 #'       the NRL estimate (\code{mind} parameter from

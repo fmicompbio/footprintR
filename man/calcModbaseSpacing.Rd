@@ -32,15 +32,19 @@ the same coordinate is used.}
 modified bases on the same read to count.}
 }
 \value{
-\code{integer} vector with \code{dmax} elements, with the element at
-position \code{d} giving the observed number of alignment pairs at that
-distance.
+A named list of length \code{ncol(se)} (one element for each sample).
+The elements are \code{integer} vectors of length \code{dmax}, with the
+value at position \code{d} giving the observed number of within-read
+modified bases at distance \code{d}.
 }
 \description{
-Calculate the frequencies of same read modified base distances,
+Calculate the frequencies of same-read modified base distances,
 for example from read-level modification data to estimate nucleosome
-repeat length. Distance calculations are implemented in C++
-(\code{\link{calcAndCountDist}}) for efficiency.
+repeat length. Distances are calculated separately for each sample
+(column in \code{se}), but if needed they can be easily combined for
+estimating NRL on a pool of samples by summing up observed counts
+(e.g. using \code{Reduce("+", sampleDistsList)}. Distance calculations
+are implemented in C++ (\code{\link{calcAndCountDist}}) for efficiency.
 }
 \examples{
 modbamfiles <- system.file("extdata",
@@ -48,10 +52,17 @@ modbamfiles <- system.file("extdata",
                            package = "footprintR")
 se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
 
+# get distances for each sample
 moddist <- calcModbaseSpacing(se)
-print(estimateNRL(moddist)[1:2])
-plotModbaseSpacing(moddist)
-plotModbaseSpacing(moddist, detailedPlots = TRUE)
+
+# analyze NRL for sample 's1'
+print(estimateNRL(moddist$s1)[1:2])
+plotModbaseSpacing(moddist$s1)
+plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
+
+# combine samples
+moddistComb <- Reduce("+", moddist)
+print(estimateNRL(moddistComb)[1:2])
 
 }
 \references{
