@@ -334,7 +334,7 @@ plotModbaseSpacing <- function(x,
             geom_line() +
             geom_point(data = data.frame(
                 pos = nrl$peaks[nrl$usePeaks],
-                resid = c(rep(NA, nrl$mind), rx)[nrl$peaks]),
+                resid = c(rep(NA, nrl$mind), rx)[nrl$peaks[nrl$usePeaks]]),
                        size = 2.5) +
             geom_hline(yintercept = 0, linetype = "dashed") +
             labs(x = "Distance between modified bases (bp)",

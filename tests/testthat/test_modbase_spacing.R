@@ -26,12 +26,12 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_error(calcAndCountDist(1:3, 3:1, numeric(3)), "must be sorted ascendingly")
 
     ## check if the plotting function runs
-    p1 <- plotModbaseSpacing(x = pg1comb, hide = FALSE)
-    p2 <- plotModbaseSpacing(x = pg1comb, detailedPlots = TRUE)
+    p1 <- plotModbaseSpacing(x = pg1comb, hide = FALSE, usePeaks = 2:4)
+    p2 <- plotModbaseSpacing(x = pg1comb, detailedPlots = TRUE, usePeaks = 2:4)
     expect_s3_class(p1, "ggplot")
     expect_identical(dim(p1$data), c(2720L, 3L))
     expect_s3_class(p2, "ggplot")
-    expect_identical(dim(p2$data), c(5L, 2L))
+    expect_identical(dim(p2$data), c(3L, 2L))
     tf <- tempfile(fileext = ".pdf")
     pdf(file = tf)
     print(p1)
