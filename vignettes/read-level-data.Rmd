@@ -243,6 +243,27 @@ plotRegion(se_summary, region = "chr1:6932700-6932800",
            tracks.reads = list(mod_prob = c("Heatmap", "Lollipop")))
 ```
 
+## Analyze read-level data
+
+Amongst other things, single-molecule footprinting data allows to measure
+the average distance between neighboring nucleosome particles, the so called
+*nucleosome repeat length* or *NRL*. Traditionally, this was measured using
+MNase-seq data (phasogram analysis, see Valouev et al., Nature 2011,
+doi:10.1038/nature10002), which required millions of reads for an accurate
+estimate. By switching to measuring distances between modified bases within
+reads, we can extract much more information per read and already manage to get
+accurate estimates from a handful of reads:
+
+```{r estimate-nrl, fig.width=8, fig.height=4}
+moddist <- calcModbaseSpacing(se)
+print(estimateNRL(moddist$sample1)[1:2])
+plotModbaseSpacing(moddist$sample1)
+```
+
+```{r plot-nrl-detailed, fig.width=12, fig.height=4}
+plotModbaseSpacing(moddist$sample1, detailedPlots = TRUE)
+```
+
 ## Session info
 
 ```{r session-info}
