@@ -54,7 +54,7 @@ A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples in columns. The assay
 \code{"mod_prob"} contains per-read modification probabilities,
 with each column (sample) corresponding to a position-by-read
-\code{\link[SparseArray]{SparseMatrix}}.
+\code{\link[SparseArray]{NaMatrix}}.
 }
 \description{
 This function reads one or more modkit extract files and generates a
@@ -62,7 +62,7 @@ single SummarizedExperiment object with rows representing positions and
 columns representing samples. The SummarizedExperiment object
 contains one assay (\code{mod_prob}) with modification probabilities for
 each position in each read. Unobserved read/position combinations are
-represented by a zero, while all values that are 'implicitly' called by
+represented by \code{NA}, while all values that are 'implicitly' called by
 modkit (with a modification probability less than 5\%) are represented with
 a value of 0.02.
 }

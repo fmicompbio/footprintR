@@ -6,7 +6,7 @@
 #' columns representing samples. The SummarizedExperiment object
 #' contains one assay (\code{mod_prob}) with modification probabilities for
 #' each position in each read. Unobserved read/position combinations are
-#' represented by a zero, while all values that are 'implicitly' called by
+#' represented by `NA`, while all values that are 'implicitly' called by
 #' modkit (with a modification probability less than 5%) are represented with
 #' a value of 0.02.
 #'
@@ -42,7 +42,7 @@
 #'     with genomic positions in rows and samples in columns. The assay
 #'     \code{"mod_prob"} contains per-read modification probabilities,
 #'     with each column (sample) corresponding to a position-by-read
-#'     \code{\link[SparseArray]{SparseMatrix}}.
+#'     \code{\link[SparseArray]{NaMatrix}}.
 #'
 #' @author Charlotte Soneson
 #'
@@ -63,8 +63,7 @@
 #' @importFrom parallel mclapply
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors make_zero_col_DFrame DataFrame
-#' @importFrom SparseArray SparseArray
-#' @importFrom Matrix sparseMatrix
+#' @importFrom SparseArray NaArray
 #' @importFrom BiocGenerics pos strand do.call cbind
 #' @importFrom GenomeInfoDb seqnames
 #'
@@ -216,15 +215,15 @@ readModkitExtract <- function(fnames,
         x <- dfL[[nm]]
         # only record observed values
         # idx <- which(x$mod_prob != 0)
-        # namat <- SparseArray::NaMatrix(dim = c(length(gpos), length(readL[[nm]])),
+        # namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
         #                  dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
         #                  type = "double")
         # i <- GenomicRanges::match(gposL[[nm]][idx], gpos)
         # j <- match(x$read_id[idx], readL[[nm]])
         # namat[cbind(i, j)] <- x$mod_prob[idx]
-        namat <- SparseArray::NaMatrix(dim = c(length(gpos), length(readL[[nm]])),
-                                       dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
-                                       type = "double")
+        namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                                      dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                                      type = "double")
         i <- GenomicRanges::match(gposL[[nm]], gpos)
         j <- match(x$read_id, readL[[nm]])
         namat[cbind(i, j)] <- x$mod_prob

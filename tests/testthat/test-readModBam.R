@@ -95,10 +95,10 @@ test_that("readModBam works", {
     expect_s4_class(assay(se3, "mod_prob"), "DFrame")
     expect_s4_class(assay(se4, "mod_prob"), "DFrame")
 
-    expect_s4_class(assay(se1, "mod_prob")[[1]], "SparseMatrix")
-    expect_s4_class(assay(se2, "mod_prob")[[1]], "SparseMatrix")
-    expect_s4_class(assay(se3, "mod_prob")[[1]], "SparseMatrix")
-    expect_s4_class(assay(se4, "mod_prob")[[1]], "SparseMatrix")
+    expect_s4_class(assay(se1, "mod_prob")[[1]], "NaMatrix")
+    expect_s4_class(assay(se2, "mod_prob")[[1]], "NaMatrix")
+    expect_s4_class(assay(se3, "mod_prob")[[1]], "NaMatrix")
+    expect_s4_class(assay(se4, "mod_prob")[[1]], "NaMatrix")
 
     expect_equal(vapply(assay(se1, "mod_prob"), ncol, 0), se1$n_reads)
     expect_equal(vapply(assay(se2, "mod_prob"), ncol, 0), se2$n_reads)

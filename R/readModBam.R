@@ -34,7 +34,7 @@
 #'     with genomic positions in rows and samples in columns. The assay
 #'     \code{"mod_prob"} contains per-read modification probabilities,
 #'     with each column (sample) corresponding to a position-by-read
-#'     \code{\link[SparseArray]{SparseMatrix}}.
+#'     \code{\link[SparseArray]{NaMatrix}}.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
@@ -48,8 +48,7 @@
 #' @author Michael Stadler
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
-#' @importFrom SparseArray SparseArray
-#' @importFrom Matrix sparseMatrix
+#' @importFrom SparseArray NaArray
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
@@ -157,16 +156,17 @@ readModBam <- function(bamfiles,
     for (nm in names(bamfiles)) {
         x <- resLL[[nm]]
         if (length(x$read_id) > 0) {
-            modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
-                i = GenomicRanges::match(gposL[[nm]], gpos),
-                j = match(x$read_id, readL[[nm]]),
-                x = x$mod_prob,
-                dims = c(length(gpos), length(readL[[nm]])),
-                dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
-            ))
+            namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                                          dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                                          type = "double")
+            i <- GenomicRanges::match(gposL[[nm]], gpos)
+            j <- match(x$read_id, readL[[nm]])
+            namat[cbind(i, j)] <- x$mod_prob
+            modmat[[nm]] <- namat
             qscoreL[[nm]] <- x$qscore[match(readL[[nm]], x$read_id)]
         } else {
-            modmat[[nm]] <- SparseArray::SparseArray(matrix(nrow = length(gpos), ncol = 0))
+            modmat[[nm]] <- SparseArray::NaArray(dim = c(length(gpos), 0),
+                                                 type = "double")
             qscoreL[[nm]] <- numeric(0)
         }
     }

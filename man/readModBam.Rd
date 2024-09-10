@@ -50,7 +50,7 @@ A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples in columns. The assay
 \code{"mod_prob"} contains per-read modification probabilities,
 with each column (sample) corresponding to a position-by-read
-\code{\link[SparseArray]{SparseMatrix}}.
+\code{\link[SparseArray]{NaMatrix}}.
 }
 \description{
 Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
