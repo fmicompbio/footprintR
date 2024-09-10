@@ -106,7 +106,7 @@ calcModbaseSpacing <- function(se,
             # for each read i
             for (i in seq.int(ncol(modprob))) {
                 # extract positions of modified bases
-                pos <- s[modprob[, i] >= min_mod_prob]
+                pos <- s[which(modprob[, i] >= min_mod_prob)]
                 # add distances in (1..dmax) to 'cnt'
                 calcAndCountDist(query = pos, reference = pos, cnt = cnt)
             }
@@ -114,7 +114,7 @@ calcModbaseSpacing <- function(se,
             # for each read i
             cnt <- do.call(cbind, lapply(seq.int(ncol(modprob)), function(i) {
                 # extract positions of modified bases
-                pos <- s[modprob[, i] >= min_mod_prob]
+                pos <- s[which(modprob[, i] >= min_mod_prob)]
                 # add distances in (1..dmax) to 'cnt'
                 cntR <- numeric(dmax)
                 calcAndCountDist(query = pos, reference = pos, cnt = cntR)
