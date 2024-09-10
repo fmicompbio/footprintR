@@ -215,14 +215,20 @@ readModkitExtract <- function(fnames,
     for (nm in names(fnames)) {
         x <- dfL[[nm]]
         # only record observed values
-        idx <- which(x$mod_prob != 0)
-        modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
-            i = GenomicRanges::match(gposL[[nm]][idx], gpos),
-            j = match(x$read_id[idx], readL[[nm]]),
-            x = x$mod_prob[idx],
-            dims = c(length(gpos), length(readL[[nm]])),
-            dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
-        ))
+        # idx <- which(x$mod_prob != 0)
+        # namat <- SparseArray::NaMatrix(dim = c(length(gpos), length(readL[[nm]])),
+        #                  dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+        #                  type = "double")
+        # i <- GenomicRanges::match(gposL[[nm]][idx], gpos)
+        # j <- match(x$read_id[idx], readL[[nm]])
+        # namat[cbind(i, j)] <- x$mod_prob[idx]
+        namat <- SparseArray::NaMatrix(dim = c(length(gpos), length(readL[[nm]])),
+                                       dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                                       type = "double")
+        i <- GenomicRanges::match(gposL[[nm]], gpos)
+        j <- match(x$read_id, readL[[nm]])
+        namat[cbind(i, j)] <- x$mod_prob
+        modmat[[nm]] <- namat
     }
 
     # create SummarizedExperiment object
