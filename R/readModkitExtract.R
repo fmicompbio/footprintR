@@ -213,14 +213,6 @@ readModkitExtract <- function(fnames,
     modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
     for (nm in names(fnames)) {
         x <- dfL[[nm]]
-        # only record observed values
-        # idx <- which(x$mod_prob != 0)
-        # namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
-        #                  dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
-        #                  type = "double")
-        # i <- GenomicRanges::match(gposL[[nm]][idx], gpos)
-        # j <- match(x$read_id[idx], readL[[nm]])
-        # namat[cbind(i, j)] <- x$mod_prob[idx]
         namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
                                       dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
                                       type = "double")
