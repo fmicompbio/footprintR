@@ -473,7 +473,7 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics start colnames
 #' @importFrom SummarizedExperiment colData assay
-#' @importFrom SparseArray nzwhich nzvals
+#' @importFrom SparseArray nnawhich nnavals
 #'
 #' @noRd
 #' @keywords internal
@@ -482,12 +482,12 @@ plotRegion <- function(se,
     # `aname` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
-    i <- SparseArray::nzwhich(assaydat, arr.ind = TRUE)
+    i <- SparseArray::nnawhich(assaydat, arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,1]],
         read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
         sample = sample_ids[i[,2]],
-        value = nzvals(assaydat))
+        value = SparseArray::nnavals(assaydat))
     if (modbaseSpace) {
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,

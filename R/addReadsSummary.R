@@ -43,7 +43,7 @@
 #' @importFrom SummarizedExperiment SummarizedExperiment assays assayNames
 #'     assay assay<- rowRanges rowRanges<- rowData rowData<-
 #' @importFrom S4Vectors endoapply
-#' @importFrom SparseArray pmax nzvals nzvals<- rowSums
+#' @importFrom SparseArray pmax nnavals nnavals<- rowSums
 #'
 #' @export
 addReadsSummary <- function(se,
@@ -86,8 +86,8 @@ addReadsSummary <- function(se,
     dfReads <- SummarizedExperiment::assay(se, assay.type)
     assL <- lapply(structure(statistics_use, names = statistics_use), function(statistic) {
         switch(statistic,
-            Nmod = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0.5))),
-            Nvalid = as.matrix(endoapply(dfReads, function(y) rowSums(y != 0))),
+            Nmod = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+            Nvalid = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
             # these ones will be calculated later:
             FracMod = NULL,
             Pmod = NULL,
@@ -100,14 +100,15 @@ addReadsSummary <- function(se,
         assL[["FracMod"]] <- assL[["Nmod"]] / assL[["Nvalid"]]
     }
     if ("Pmod" %in% statistics) {
-        assL[["Pmod"]] <- as.matrix(endoapply(dfReads, rowSums)) / assL[["Nvalid"]]
+        assL[["Pmod"]] <- as.matrix(endoapply(dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)
         assL[["AvgConf"]] <- as.matrix(
             endoapply(dfReads, function(y) {
-                nzvals(y) <- pmax(nzvals(y), 1 - nzvals(y))
-                rowSums(y)
+                SparseArray::nnavals(y) <- pmax(SparseArray::nnavals(y),
+                                                1 - SparseArray::nnavals(y))
+                rowSums(y, na.rm = TRUE)
             })
         ) / assL[["Nvalid"]]
     }
