@@ -42,11 +42,11 @@ test_that("addReadsSummary works", {
     expect_identical(rownames(s1), rownames(se))
     expect_identical(rownames(s2), rownames(se))
     expect_null(rownames(s3))
-    expect_equal(sum(as.matrix(assay(se, "mod_prob")) >= 0.5),
-                 sum(assay(s1, "Nmod")))
-    expect_equal(sum(as.matrix(assay(se, "mod_prob")) != 0.0),
-                 sum(assay(s1, "Nvalid")))
+    expect_equal(sum(as.matrix(assay(se, "mod_prob")) >= 0.5, na.rm = TRUE),
+                 sum(assay(s1, "Nmod"), na.rm = TRUE))
+    expect_equal(sum(as.matrix(assay(se, "mod_prob")) >= 0.0, na.rm = TRUE),
+                 sum(assay(s1, "Nvalid"), na.rm = TRUE))
     expect_s4_class(assay(s2, "mod_prob"), "DataFrame")
-    expect_s4_class(assay(s2, "mod_prob")[,1], "SparseMatrix")
+    expect_s4_class(assay(s2, "mod_prob")[,1], "NaMatrix")
     expect_identical(dim(assay(s2, "mod_prob")[,1]), dim(assay(se, "mod_prob")[,1]))
 })
