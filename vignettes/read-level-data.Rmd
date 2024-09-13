@@ -94,7 +94,7 @@ m
 ```
 Again, to store read-level data for variable numbers of reads in each sample,
 each column (sample) is not just a simple vector, but a position-by-read
-`SparseMatrix`. If a simple matrix is needed, in which columns correspond to
+`NaMatrix`. If a simple matrix is needed, in which columns correspond to
 reads instead of sample, it can be created using `as.matrix()`:
 ```{r mod-prob-columns}
 m$sample1
@@ -109,36 +109,31 @@ perform per-sample operations using `lapply` (returns a `list`) or `endoapply`
 lapply(m, ncol)
 endoapply(m, ncol)
 ```
-The `SparseMatrix` objects do not store the zeros and thus use much less
-memory compared to a normal (dense) matrix. However, you have to be careful when
-interpreting the values in that matrix, as they follow a specific convention:
+The `NaMatrix` objects do not store `NA` values and thus use much less
+memory compared to a normal (dense) matrix. `NA` values typically occur
+at positions (rows) that are not covered by a given read. 
 
-**Important: ** The zeros correspond to unobserved read/position combinations,
-while all values that are 'implicitly' called (with a modifictation
-probability of less than 5%) are represented with a value of 0.02.
-
-That means if you would be manually calculating for example the average
-modification probability at a given position, taking the row mean would
-not be correct, as it would include the zero values that correspond to
-unobserved data:
+**Important: ** These `NA` values have to be ignored when for example
+manually calculating the average modification probability for positions
+using `rowMeans(..., na.rm = TRUE)`, otherwise the result will be `NA` for
+all incompletely covered positions:
 
 ```{r mod-prob-zeros}
-# modification probabilities at position chr1:6928850:-
+# modification probabilities at position "chr1:6928850:-"
 m["chr1:6928850:-", ]
 
-# WRONG: take the mean of all values
+# WRONG: take the mean of all values (including NAs)
 lapply(m["chr1:6928850:-", ], rowMeans)
 
-# CORRECT: exclude the zeros
-lapply(m["chr1:6928850:-", ], function(x) {
-    non_zero <- SparseArray::nzwhich(x != 0)
-    mean(x[non_zero])
-})
+# CORRECT: exclude the zeros (na.rm = TRUE)
+lapply(m["chr1:6928850:-", ], rowMeans, na.rm = TRUE)
 ```
-This is however rarely needed, as there are convenience functions that
-will exclude the unobserved (zero) values automatically for you. For
-example, you can summarize the reads in each sample using `addReadsSummary()`
-(see next section).
+Note that for sample2, in which no read overlaps the selected position,
+`rowMeans(..., na.rm = TRUE)` returns a zero value, which may be misleading
+as it could be interpreted as evidence for no modifications. It is therefore
+preferred to use the convenience functions provided by `footprintR`, such
+as `addReadsSummary()`, that will correctly deal with this situation and
+return `NaN` for sample2 (see next section).
 
 ## Summarize read-level data
 
@@ -151,9 +146,8 @@ se_summary <- addReadsSummary(se, keep.reads = TRUE,
                                              "Pmod", "AvgConf"))
 ```
 
-As discussed above, this will automatically exclude the non-observed (zero)
-values from the data when calculating the modification probability at each
-position (`Pmod` assay):
+As discussed above, this will correctly exclude non-observed values
+and return `NaN` for positions without any observed data (`Pmod` assay):
 
 ```{r summarized-pmod}
 assay(se_summary, "Pmod")["chr1:6928850:-", ]
@@ -173,8 +167,9 @@ assay(se_summary, "FracMod")["chr1:6928850:-", ]
 In the above example, we in addition also calculate the average modification
 probability (`Pmod`) and the average confidence of the modification calls
 per position (`AvgConf`). As we have set `keep.reads = TRUE`,
-we get in addition also the read-level assay from the input object
-(`mod_prob`) in which the reads are grouped by sample:
+we in addition also keep the read-level assay from the input object
+(`mod_prob`) in the returned object. In `mod_prob`, the reads are grouped by
+sample:
 
 ```{r collapsed-assays}
 # read-level data is retained in "mod_prob" assay
