@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,19 +105,19 @@ used that are not available otherwise.</p>
 <span><span class="co">#&gt; extracting base modifications from modBAM files</span></span>
 <span><span class="co">#&gt;     opening input file /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span></span>
 <span><span class="co">#&gt;     reading alignments overlapping any of 1 regions</span></span>
-<span><span class="co">#&gt;     removed 1728 unaligned (e.g. soft-masked) of 20554 called bases</span></span>
+<span><span class="co">#&gt;     removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span></span>
 <span><span class="co">#&gt;     read 3 alignments</span></span>
 <span><span class="co">#&gt;     opening input file /Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam</span></span>
 <span><span class="co">#&gt;     reading alignments overlapping any of 1 regions</span></span>
 <span><span class="co">#&gt;     removed 320 unaligned (e.g. soft-masked) of 10174 called bases</span></span>
 <span><span class="co">#&gt;     read 2 alignments</span></span>
-<span><span class="co">#&gt; finding unique genomic positions...collapsed 14789 positions to 9266 unique ones</span></span>
+<span><span class="co">#&gt; finding unique genomic positions...collapsed 17739 positions to 7967 unique ones</span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
-<span><span class="co">#&gt; dim: 9266 2 </span></span>
+<span><span class="co">#&gt; dim: 7967 2 </span></span>
 <span><span class="co">#&gt; metadata(0):</span></span>
 <span><span class="co">#&gt; assays(1): mod_prob</span></span>
-<span><span class="co">#&gt; rownames(9266): chr1:6930410:+ chr1:6930415:+ ... chr1:6941622:-</span></span>
+<span><span class="co">#&gt; rownames(7967): chr1:6930410:+ chr1:6930415:+ ... chr1:6941622:-</span></span>
 <span><span class="co">#&gt;   chr1:6941631:-</span></span>
 <span><span class="co">#&gt; rowData names(0):</span></span>
 <span><span class="co">#&gt; colnames(2): sample1 sample2</span></span>
@@ -127,7 +127,7 @@ with positions in rows:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># rows are positions...</span></span>
 <span><span class="fu">rowRanges</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
-<span><span class="co">#&gt; UnstitchedGPos object with 9266 positions and 0 metadata columns:</span></span>
+<span><span class="co">#&gt; UnstitchedGPos object with 7967 positions and 0 metadata columns:</span></span>
 <span><span class="co">#&gt;                  seqnames       pos strand</span></span>
 <span><span class="co">#&gt;                     &lt;Rle&gt; &lt;integer&gt;  &lt;Rle&gt;</span></span>
 <span><span class="co">#&gt;   chr1:6930410:+     chr1   6930410      +</span></span>
@@ -180,7 +180,7 @@ with modification probabilities.</p>
 <span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"mod_prob"</span><span class="op">)</span></span>
 <span><span class="va">m</span></span>
-<span><span class="co">#&gt; DataFrame with 9266 rows and 2 columns</span></span>
+<span><span class="co">#&gt; DataFrame with 7967 rows and 2 columns</span></span>
 <span><span class="co">#&gt;                        sample1        sample2</span></span>
 <span><span class="co">#&gt;                 &lt;SparseMatrix&gt; &lt;SparseMatrix&gt;</span></span>
 <span><span class="co">#&gt; chr1:6930410:+           0:0:0         0:0.02</span></span>
@@ -201,7 +201,7 @@ needed, in which columns correspond to reads instead of sample, it can
 be created using <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m</span><span class="op">$</span><span class="va">sample1</span></span>
-<span><span class="co">#&gt; &lt;9266 x 3 SparseMatrix&gt; of type "double" [nzcount=8350 (30%)]:</span></span>
+<span><span class="co">#&gt; &lt;7967 x 3 SparseMatrix&gt; of type "double" [nzcount=11300 (47%)]:</span></span>
 <span><span class="co">#&gt;         sample1-233e48a7-f379-4dcf-9270-958231125563</span></span>
 <span><span class="co">#&gt;    [1,]                                            0</span></span>
 <span><span class="co">#&gt;    [2,]                                            0</span></span>
@@ -209,11 +209,11 @@ be created using <code><a href="https://rdrr.io/r/base/matrix.html" class="exter
 <span><span class="co">#&gt;    [4,]                                            0</span></span>
 <span><span class="co">#&gt;    [5,]                                            0</span></span>
 <span><span class="co">#&gt;     ...                                            .</span></span>
-<span><span class="co">#&gt; [9262,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9263,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9264,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9265,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9266,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7963,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7964,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7965,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7966,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7967,]                                   0.00000000</span></span>
 <span><span class="co">#&gt;         sample1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9</span></span>
 <span><span class="co">#&gt;    [1,]                                            0</span></span>
 <span><span class="co">#&gt;    [2,]                                            0</span></span>
@@ -221,11 +221,11 @@ be created using <code><a href="https://rdrr.io/r/base/matrix.html" class="exter
 <span><span class="co">#&gt;    [4,]                                            0</span></span>
 <span><span class="co">#&gt;    [5,]                                            0</span></span>
 <span><span class="co">#&gt;     ...                                            .</span></span>
-<span><span class="co">#&gt; [9262,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9263,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9264,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9265,]                                   0.00000000</span></span>
-<span><span class="co">#&gt; [9266,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7963,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7964,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7965,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7966,]                                   0.00000000</span></span>
+<span><span class="co">#&gt; [7967,]                                   0.00000000</span></span>
 <span><span class="co">#&gt;         sample1-92e906ae-cddb-4347-a114-bf9137761a8d</span></span>
 <span><span class="co">#&gt;    [1,]                                            0</span></span>
 <span><span class="co">#&gt;    [2,]                                            0</span></span>
@@ -233,14 +233,14 @@ be created using <code><a href="https://rdrr.io/r/base/matrix.html" class="exter
 <span><span class="co">#&gt;    [4,]                                            0</span></span>
 <span><span class="co">#&gt;    [5,]                                            0</span></span>
 <span><span class="co">#&gt;     ...                                            .</span></span>
-<span><span class="co">#&gt; [9262,]                                   0.05273438</span></span>
-<span><span class="co">#&gt; [9263,]                                   0.13085938</span></span>
-<span><span class="co">#&gt; [9264,]                                   0.06835938</span></span>
-<span><span class="co">#&gt; [9265,]                                   0.06054688</span></span>
-<span><span class="co">#&gt; [9266,]                                   0.05664062</span></span>
+<span><span class="co">#&gt; [7963,]                                   0.05273438</span></span>
+<span><span class="co">#&gt; [7964,]                                   0.13085938</span></span>
+<span><span class="co">#&gt; [7965,]                                   0.06835938</span></span>
+<span><span class="co">#&gt; [7966,]                                   0.06054688</span></span>
+<span><span class="co">#&gt; [7967,]                                   0.05664062</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;9266 x 5 SparseMatrix&gt; of type "double" [nzcount=14789 (32%)]:</span></span>
+<span><span class="co">#&gt; &lt;7967 x 5 SparseMatrix&gt; of type "double" [nzcount=17739 (45%)]:</span></span>
 <span><span class="co">#&gt;                sample1-233e48a7-f379-4dcf-9270-958231125563 ...</span></span>
 <span><span class="co">#&gt; chr1:6930410:+                                            0   .</span></span>
 <span><span class="co">#&gt; chr1:6930415:+                                            0   .</span></span>
@@ -369,7 +369,7 @@ the reads are grouped by sample:</p>
 <span></span>
 <span><span class="co"># ... which groups the reads by sample</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se_summary</span>, <span class="st">"mod_prob"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; DataFrame with 9266 rows and 2 columns</span></span>
+<span><span class="co">#&gt; DataFrame with 7967 rows and 2 columns</span></span>
 <span><span class="co">#&gt;                        sample1        sample2</span></span>
 <span><span class="co">#&gt;                 &lt;SparseMatrix&gt; &lt;SparseMatrix&gt;</span></span>
 <span><span class="co">#&gt; chr1:6930410:+           0:0:0         0:0.02</span></span>
@@ -386,9 +386,9 @@ the reads are grouped by sample:</p>
 <span></span>
 <span><span class="co"># the dimensions of  read-level `se` and summarized `se_summary` are identical</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    2</span></span>
+<span><span class="co">#&gt; [1] 7967    2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">se_summary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 9266    2</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 7967    2</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="plot-data">Plot data<a class="anchor" aria-label="anchor" href="#plot-data"></a>
@@ -495,7 +495,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  [3] GenomicRanges_1.57.1        GenomeInfoDb_1.41.1        </span></span>
 <span><span class="co">#&gt;  [5] IRanges_2.39.2              S4Vectors_0.43.2           </span></span>
 <span><span class="co">#&gt;  [7] BiocGenerics_0.51.1         MatrixGenerics_1.17.0      </span></span>
-<span><span class="co">#&gt;  [9] matrixStats_1.4.1           footprintR_0.1.1           </span></span>
+<span><span class="co">#&gt;  [9] matrixStats_1.4.1           footprintR_0.1.2           </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] tidyselect_1.2.1            viridisLite_0.4.2          </span></span>
@@ -511,33 +511,33 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt; [21] data.table_1.16.0           rtracklayer_1.65.0         </span></span>
 <span><span class="co">#&gt; [23] knitr_1.48                  S4Arrays_1.5.7             </span></span>
 <span><span class="co">#&gt; [25] labeling_0.4.3              curl_5.2.2                 </span></span>
-<span><span class="co">#&gt; [27] DelayedArray_0.31.11        abind_1.4-5                </span></span>
+<span><span class="co">#&gt; [27] DelayedArray_0.31.11        abind_1.4-8                </span></span>
 <span><span class="co">#&gt; [29] BiocParallel_1.39.0         withr_3.0.1                </span></span>
 <span><span class="co">#&gt; [31] purrr_1.0.2                 desc_1.4.3                 </span></span>
 <span><span class="co">#&gt; [33] grid_4.4.1                  fansi_1.0.6                </span></span>
 <span><span class="co">#&gt; [35] beachmat_2.21.6             colorspace_2.1-1           </span></span>
 <span><span class="co">#&gt; [37] ggplot2_3.5.1               scales_1.3.0               </span></span>
 <span><span class="co">#&gt; [39] cli_3.6.3                   rmarkdown_2.28             </span></span>
-<span><span class="co">#&gt; [41] crayon_1.5.3                ragg_1.3.2                 </span></span>
+<span><span class="co">#&gt; [41] crayon_1.5.3                ragg_1.3.3                 </span></span>
 <span><span class="co">#&gt; [43] generics_0.1.3              httr_1.4.7                 </span></span>
-<span><span class="co">#&gt; [45] rjson_0.2.22                scuttle_1.15.4             </span></span>
+<span><span class="co">#&gt; [45] rjson_0.2.23                scuttle_1.15.4             </span></span>
 <span><span class="co">#&gt; [47] cachem_1.1.0                zlibbioc_1.51.1            </span></span>
 <span><span class="co">#&gt; [49] parallel_4.4.1              XVector_0.45.0             </span></span>
 <span><span class="co">#&gt; [51] restfulr_0.0.15             vctrs_0.6.5                </span></span>
 <span><span class="co">#&gt; [53] Matrix_1.7-0                jsonlite_1.8.8             </span></span>
-<span><span class="co">#&gt; [55] patchwork_1.2.0             systemfonts_1.1.0          </span></span>
+<span><span class="co">#&gt; [55] patchwork_1.3.0             systemfonts_1.1.0          </span></span>
 <span><span class="co">#&gt; [57] jquerylib_0.1.4             tidyr_1.3.1                </span></span>
 <span><span class="co">#&gt; [59] glue_1.7.0                  pkgdown_2.1.0.9000         </span></span>
 <span><span class="co">#&gt; [61] codetools_0.2-20            gtable_0.3.5               </span></span>
 <span><span class="co">#&gt; [63] BiocIO_1.15.2               UCSC.utils_1.1.0           </span></span>
 <span><span class="co">#&gt; [65] munsell_0.5.1               tibble_3.2.1               </span></span>
 <span><span class="co">#&gt; [67] pillar_1.9.0                htmltools_0.5.8.1          </span></span>
-<span><span class="co">#&gt; [69] GenomeInfoDbData_1.2.12     BSgenome_1.73.0            </span></span>
+<span><span class="co">#&gt; [69] GenomeInfoDbData_1.2.12     BSgenome_1.73.1            </span></span>
 <span><span class="co">#&gt; [71] R6_2.5.1                    textshaping_0.4.0          </span></span>
-<span><span class="co">#&gt; [73] evaluate_0.24.0             lattice_0.22-6             </span></span>
+<span><span class="co">#&gt; [73] evaluate_1.0.0              lattice_0.22-6             </span></span>
 <span><span class="co">#&gt; [75] highr_0.11                  Rsamtools_2.21.1           </span></span>
 <span><span class="co">#&gt; [77] bslib_0.8.0                 Rcpp_1.0.13                </span></span>
-<span><span class="co">#&gt; [79] SparseArray_1.5.31          xfun_0.47                  </span></span>
+<span><span class="co">#&gt; [79] SparseArray_1.5.34          xfun_0.47                  </span></span>
 <span><span class="co">#&gt; [81] fs_1.6.4                    pkgconfig_2.0.3</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -13,7 +13,7 @@ for more information on the statistics that are calculated."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -216,43 +216,43 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> extracting base modifications from modBAM files</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     opening input file /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     reading alignments overlapping any of 1 regions</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     removed 1728 unaligned (e.g. soft-masked) of 20554 called bases</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     read 3 alignments</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> finding unique genomic positions...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> collapsed 8350 positions to 6057 unique ones</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> collapsed 11300 positions to 4772 unique ones</span>
 <span class="r-in"><span><span class="va">ReadStats</span> <span class="op">&lt;-</span> <span class="fu">calcReadStats</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ReadStats</span><span class="op">[[</span><span class="st">"s1"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 13 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         MeanModProb   FracMod  MeanConf</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                           &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.178342 0.1498969  0.930859</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9    0.169769 0.1234286  0.910119</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d    0.102100 0.0558784  0.932400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563   0.1813986 0.1540698  0.931635</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9   0.0969716 0.0632411  0.944381</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d   0.0714111 0.0353929  0.950393</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         MeanConfUnm MeanConfMod FracLowConf</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                           &lt;numeric&gt;   &lt;numeric&gt;   &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.942603    0.864255   0.0680724</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9    0.922299    0.823622   0.0897143</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d    0.939721    0.808703   0.0572195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.943439    0.866826   0.0668605</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9    0.952309    0.826942   0.0456066</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d    0.955617    0.808031   0.0371926</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         IQRModProb sdModProb SEntrModProb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                          &lt;numeric&gt; &lt;numeric&gt;    &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563  0.1108594  0.306032     0.213926</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9  0.1421094  0.270295     0.329435</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d  0.0600781  0.195103     0.347000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563   0.114766  0.310155     0.210238</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9   0.000000  0.208093     0.161245</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d   0.000000  0.160210     0.193140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         Lag1DModProb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.1474094</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9    0.1566609</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d    0.0889982</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    0.1546961</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9    0.0821168</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d    0.0519052</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                       ACModProb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                          &lt;list&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563       0.1278957,0.0813845,0.0568569,...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9       0.0568332,0.0669937,0.0792946,...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d  0.03030089, 0.01649001,-0.00553059,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563       0.1400568,0.0864025,0.0542389,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9       0.0490902,0.0539862,0.0119943,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d -0.00389478,-0.01949284,-0.00804977,...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                      PACModProb</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                          &lt;list&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563    -0.0410769,-0.0214619,-0.0135970,...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9       0.0242180,0.0287871,0.0366562,...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d -0.00193405,-0.01611739, 0.01876362,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563 -0.04826710,-0.03493131,-0.00989425,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9  0.01549346,-0.03706194, 0.00959782,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d -0.01961229, 0.00615528,-0.01833084,...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              sample</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         &lt;character&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-233e48a7-f379-4dcf-9270-958231125563          s1</span>

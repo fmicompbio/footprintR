@@ -15,7 +15,7 @@ See details for more information on the statistics that are calculated."></head>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -283,21 +283,21 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> extracting base modifications from modBAM files</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     opening input file /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     reading alignments overlapping any of 1 regions</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     removed 1728 unaligned (e.g. soft-masked) of 20554 called bases</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>     read 3 alignments</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> finding unique genomic positions...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> collapsed 8350 positions to 6057 unique ones</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> collapsed 11300 positions to 4772 unique ones</span>
 <span class="r-in"><span><span class="va">se_withReadStats</span> <span class="op">&lt;-</span> <span class="fu">addReadStats</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">se_withReadStats</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 6057 rows and 0 columns</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 4772 rows and 0 columns</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">se_withReadStats</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 1 row and 5 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         sample     modbase   n_reads                  qscore</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;character&gt; &lt;character&gt; &lt;integer&gt;                  &lt;List&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1          s1           a         3 14.1428,16.0127,20.3082</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                     QC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                 &lt;List&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> s1 0.178342:0.1498969:0.930859:...,0.169769:0.1234286:0.910119:...,0.102100:0.0558784:0.932400:...,...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                        QC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                    &lt;List&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> s1 0.1813986:0.1540698:0.931635:...,0.0969716:0.0632411:0.944381:...,0.0714111:0.0353929:0.950393:...,...</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
