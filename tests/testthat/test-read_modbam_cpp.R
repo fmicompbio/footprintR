@@ -1,25 +1,26 @@
 suppressPackageStartupMessages({
     library(testthat)
     library(footprintR)
+    library(Rsamtools)
 })
 
 ## -------------------------------------------------------------------------- ##
 ## Checks, helper functions
 ## -------------------------------------------------------------------------- ##
 test_that("complement works", {
-    expect_error(complement(1))
-    expect_error(complement(TRUE))
-    expect_identical(complement("A"), "T")
-    expect_identical(complement("a"), "T")
-    expect_identical(complement("C"), "G")
-    expect_identical(complement("c"), "G")
-    expect_identical(complement("G"), "C")
-    expect_identical(complement("g"), "C")
-    expect_identical(complement("T"), "A")
-    expect_identical(complement("t"), "A")
-    expect_identical(complement("N"), "N")
-    expect_identical(complement("n"), "N")
-    expect_identical(complement("X"), "N")
+    expect_error(footprintR:::complement(1))
+    expect_error(footprintR:::complement(TRUE))
+    expect_identical(footprintR:::complement("A"), "T")
+    expect_identical(footprintR:::complement("a"), "T")
+    expect_identical(footprintR:::complement("C"), "G")
+    expect_identical(footprintR:::complement("c"), "G")
+    expect_identical(footprintR:::complement("G"), "C")
+    expect_identical(footprintR:::complement("g"), "C")
+    expect_identical(footprintR:::complement("T"), "A")
+    expect_identical(footprintR:::complement("t"), "A")
+    expect_identical(footprintR:::complement("N"), "N")
+    expect_identical(footprintR:::complement("n"), "N")
+    expect_identical(footprintR:::complement("X"), "N")
 })
 
 test_that("get_unmodified_base works", {
@@ -102,6 +103,16 @@ test_that("read_modbam_cpp works", {
     res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", FALSE)
     res4 <- read_modbam_cpp(bam4, "chr1", "a", FALSE)
     res5 <- read_modbam_cpp(bam5, "chr1", "a", FALSE)
+    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", "a", FALSE)
+    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), "a", FALSE)
+    aln6a <- scanBam(file = modbamfile, param = ScanBamParam(
+        what = "qname",
+        which = GRanges("chr1:6941000-6941001")
+    ))
+    aln6b <- scanBam(file = modbamfile, param = ScanBamParam(
+        what = "qname",
+        which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
+    ))
 
     # ... results structure
     expect_type(res1, "list")
@@ -109,6 +120,8 @@ test_that("read_modbam_cpp works", {
     expect_type(res3, "list")
     expect_type(res4, "list")
     expect_type(res5, "list")
+    expect_type(res6a, "list")
+    expect_type(res6b, "list")
 
     expected_names <- c("read_id", "qscore", "forward_read_position",
                         "ref_position", "chrom", "ref_mod_strand", "call_code",
@@ -118,6 +131,8 @@ test_that("read_modbam_cpp works", {
     expect_named(res3, expected_names)
     expect_named(res4, expected_names)
     expect_named(res5, expected_names)
+    expect_named(res6a, expected_names)
+    expect_named(res6b, expected_names)
 
     expected_types <- c("character", "double", "integer", "integer",
                         "character", "character", "character", "character",
@@ -128,22 +143,24 @@ test_that("read_modbam_cpp works", {
         expect_type(res3[[expected_names[i]]], expected_types[i])
         expect_type(res4[[expected_names[i]]], expected_types[i])
         expect_type(res5[[expected_names[i]]], expected_types[i])
+        expect_type(res6a[[expected_names[i]]], expected_types[i])
+        expect_type(res6b[[expected_names[i]]], expected_types[i])
     }
 
     # ... content res1
     expect_equal(res1$qscore,
-                     rep(c(14.1428003311157, 16.0126991271973, 20.3082008361816),
-                         c(4363L, 1750L,  2237L)))
+                 rep(c(14.1428003311157, 16.0126991271973, 20.3082008361816),
+                     c(4363L, 3340L,  3597L)))
     expect_true(all(nchar(res1$call_code) == 1L))
     expect_true(all(res1$canonical_base == "A"))
     expect_true(all(res1$mod_prob == -1 | (res1$mod_prob >= 0 & res1$mod_prob <= 1.0)))
     for (nm in expected_names) {
-        expect_length(res1[[nm]], 8350L)
+        expect_length(res1[[nm]], 11300L)
     }
     expect_length(unique(res1$read_id), 3L)
     i1 <- match(paste0(res1$read_id, ":", res1$forward_read_position),
                 paste0(df$read_id, ":", df$forward_read_position))
-    expect_identical(sum(!is.na(i1)), 6616L)
+    expect_identical(sum(!is.na(i1)), 11183L)
     expect_identical(res1$ref_position[!is.na(i1)],
                      df$ref_position[i1[!is.na(i1)]])
     expect_true(all(
@@ -163,18 +180,18 @@ test_that("read_modbam_cpp works", {
                        20.3082008361816, 16.0568008422852, 13.3486995697021,
                        13.7178001403809, 12.6245002746582, 16.3353996276855,
                        13.055100440979),
-                     c(4363L, 1750L, 2925L, 2237L, 3078L,
-                       2720L, 1085L, 2539L, 2412L, 896L)))
+                     c(4363L, 3340L, 2925L, 3597L, 3078L,
+                       2720L, 2568L, 2539L, 2412L, 2003L)))
     expect_true(
         all(paste0(res1$chrom, ":", res1$ref_position, ":", res1$ref_mod_strand) %in%
             paste0(res2$chrom, ":", res2$ref_position, ":", res2$ref_mod_strand)))
     for (nm in expected_names) {
-        expect_length(res2[[nm]], 24005L)
+        expect_length(res2[[nm]], 29545L)
     }
     expect_length(unique(res2$read_id), 10L)
     i2 <- match(paste0(res2$read_id, ":", res2$forward_read_position),
                 paste0(df$read_id, ":", df$forward_read_position))
-    expect_identical(sum(!is.na(i2)), 21561L)
+    expect_identical(sum(!is.na(i2)), 29104L)
     expect_identical(res2$ref_position[!is.na(i2)],
                      df$ref_position[i2[!is.na(i2)]])
     expect_true(all(
@@ -213,4 +230,21 @@ test_that("read_modbam_cpp works", {
         ref_position = integer(0), chrom = character(0),
         ref_mod_strand = character(0), call_code = character(0),
         canonical_base = character(0), mod_prob = numeric(0)))
+
+    # ... content of res6a and res6b (res6a should be a subset of res6b)
+    # ... ... check ground truth
+    expect_identical(names(aln6a), names(aln6b)[1])
+    expect_identical(aln6a[[1]], aln6b[[1]])
+    expect_length(aln6a[[1]]$qname, 1L)
+    expect_length(intersect(aln6a[[1]]$qname, aln6b[[2]]$qname), 0L)
+    # ... ... check return values
+    expect_true(all(aln6a[[1]]$qname == res6a$read_id))
+    expect_true(aln6b[[1]]$qname %in% res6b$read_id)
+    expect_identical(length(res6a$read_id), sum(aln6b[[1]]$qname == res6b$read_id))
+    expect_identical(res6a$ref_position[res6a$read_id == aln6a[[1]]$qname],
+                     res6b$ref_position[res6b$read_id == aln6b[[1]]$qname])
+    idx <- match(paste(res6a$chrom, res6a$ref_position, res6a$ref_mod_strand, res6a$read_id),
+                 paste(res6b$chrom, res6b$ref_position, res6b$ref_mod_strand, res6b$read_id))
+    expect_true(all(!is.na(idx)))
+    expect_identical(res6a$mod_prob, res6b$mod_prob[idx])
 })
