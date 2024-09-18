@@ -1,11 +1,11 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person("Michael", "Stadler", email = "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
     person("Charlotte", "Soneson", email = "charlotte.soneson@fmi.ch",
-        role = "aut", comment = c(ORCID = "0000-0003-3833-2169")),
+           role = "aut", comment = c(ORCID = "0000-0003-3833-2169")),
     person("Panagiotis", "Papasaikas", email = "panagiotis.papasaikas@fmi.ch",
            role = "aut", comment = c(ORCID = "0000-0002-1640-7636")),
     person("Sebastien", "Smallwood", email = "sebastien.smallwood@fmi.ch",
@@ -47,7 +47,8 @@ Suggests:
     R.utils,
     withr,
     BiocManager,
-    BiocParallel
+    BiocParallel,
+    Rsamtools
 LinkingTo: 
     Rcpp,
     Rhtslib
