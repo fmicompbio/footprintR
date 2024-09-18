@@ -295,7 +295,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             for (j = 0; j < bamdata->core.l_qseq; j++) {
                 sum_qual += qual[j];
             }
-            qs_value = (double) sum_qual / bamdata->core.l_qseq;
+            qs_value = ((double) sum_qual) / bamdata->core.l_qseq;
         }
 
         // ... extract *forward* read sequence to char*
@@ -307,11 +307,11 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             qseq_len = bamdata->core.l_qseq;
         }
         if (bam_is_rev(bamdata)) {
-            for (j = 0; j < qseq_len; j++) {
-                qseq[qseq_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
+            for (j = 0; j < bamdata->core.l_qseq; j++) {
+                qseq[bamdata->core.l_qseq - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
             }
         } else {
-            for (j = 0; j < qseq_len; j++) {
+            for (j = 0; j < bamdata->core.l_qseq; j++) {
                 qseq[j] = seq_nt16_str[bam_seqi(data, j)];
             }
         }
