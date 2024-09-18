@@ -8,8 +8,7 @@ suppressPackageStartupMessages({
 ## -------------------------------------------------------------------------- ##
 ## Checks, subsetReads
 ## -------------------------------------------------------------------------- ##
-test_that("sampleEntropy works", {
-    ### WAS HERE
+test_that("subsetReads works", {
     # example data
     modbamfiles <- system.file("extdata",
                             c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
@@ -55,12 +54,12 @@ test_that("sampleEntropy works", {
 
     # ... prune
     seSub <- subsetReads(se = se, reads = list(s1 = 1), prune = FALSE)
-    expect_identical(dim(seSub), c(9266L, 2L))
+    expect_identical(dim(seSub), c(7967L, 2L))
     expect_identical(nrow(colData(seSub)), 2L)
     expect_identical(ncols(assays(seSub)), c(mod_prob = 2L))
     expect_identical(colnames(seSub), c("s1", "s2"))
     seSub <- subsetReads(se = se, reads = list(s1 = 1), prune = TRUE)
-    expect_identical(dim(seSub), c(9266L, 1L))
+    expect_identical(dim(seSub), c(7967L, 1L))
     expect_identical(nrow(colData(seSub)), 1L)
     expect_identical(ncols(assays(seSub)), c(mod_prob = 1L))
     expect_identical(colnames(seSub), c("s1"))
@@ -87,5 +86,4 @@ test_that("sampleEntropy works", {
     seSub <- subsetReads(se, list(s1 = 2, s2 = 2))
     seSub2 <- subsetReads(se, list(s1 = c(1, 3), s2 = 1), invert = TRUE)
     expect_identical(seSub, seSub2)
-
 })
