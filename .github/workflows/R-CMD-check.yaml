@@ -38,7 +38,7 @@ jobs:
       - name: Set up modkit
         if: matrix.config.install_modkit == 'yes'
         run: |
-            cargo install --git https://github.com/nanoporetech/modkit.git
+            cargo install --git https://github.com/nanoporetech/modkit.git --tag v0.3.3
             modkit --version
         shell: bash
 
