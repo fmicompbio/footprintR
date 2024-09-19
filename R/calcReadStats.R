@@ -102,7 +102,7 @@
 #' @import ggplot2
 #' @importFrom tidyr gather
 #' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList
-#' @importFrom SparseArray rowSums nzwhich nzvals
+#' @importFrom SparseArray rowSums nnawhich nnavals
 #' @importFrom SummarizedExperiment assay rowData assayNames
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom Biostrings vcountPattern
@@ -216,12 +216,13 @@ calcReadStats <- function(se,
     # Calculate statistics for each sample
     out <- SimpleList(lapply(colnames(se), function(nm) {
         mat <- SummarizedExperiment::assay(se, "mod_prob")[[nm]]
-        # Non-zero indices:
-        NZind <- SparseArray::nzwhich(mat, arr.ind = TRUE)
+
+        # Non-NA indices:
+        NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
 
         # Coverage per row (i.e per position)
         Nobs <- rep(0, nrow(mat))
-        TBL <- table(NZind[, 1])
+        TBL <- table(NNAind[, 1])
         Nobs[as.numeric(names(TBL))] <- unclass(TBL)
 
         # Subset positions by coverage
@@ -242,17 +243,17 @@ calcReadStats <- function(se,
         }
 
         # Create list of non-zero row indices per column (i.e per read)
-        NZind <- SparseArray::nzwhich(mat, arr.ind = TRUE)
-        NZind_byCol <- split(NZind[, 1], NZind[, 2])
-        names(NZind_byCol) <- colnames(mat)[as.numeric(names(NZind_byCol))]
+        NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
+        NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
+        names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
 
         # List of non-zero observations by column (i.e by read):
-        NZvals <- SparseArray::nzvals(mat)
-        NZvals_byCol <- split(NZvals, NZind[, 2])
-        names(NZvals_byCol) <- colnames(mat)[as.numeric(names(NZvals_byCol))]
+        NNAvals <- SparseArray::nnavals(mat)
+        NNAvals_byCol <- split(NNAvals, NNAind[, 2])
+        names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
 
         # Number of (valid) observations per read:
-        NobsReads <- lengths(NZind_byCol)
+        NobsReads <- lengths(NNAind_byCol)
 
         ## TODO:
         # Add stats on removed positions / reads for each filter
@@ -262,7 +263,7 @@ calcReadStats <- function(se,
 
         # "collapsed methylation" over the same positions as the read-level observations
         # READSTATS_6mA$meanMeth_CL <- sapply(1:ncol(Probs_6mA), function(x) {
-        #     obs <- NZindL[[x]]
+        #     obs <- NNAindL[[x]]
         #     mean(collapsed_6mA_f[obs],na.rm=TRUE)
         # })
 
@@ -291,13 +292,13 @@ calcReadStats <- function(se,
                 stats_res[[param]] <- rep(list(rep(NA, length(LagRangeValues))),
                                           ncol(mat))
                 stats_res[use.reads, param] <- I(lapply(use.reads, function(r) {
-                    v <- NZvals_byCol[[r]]
+                    v <- NNAvals_byCol[[r]]
                     statFunctions[[param]](v)
                 }))
             } else {
                 stats_res[[param]] <- rep(NA, ncol(mat))
                 stats_res[use.reads, param] <- vapply(use.reads, function(r) {
-                    v <- NZvals_byCol[[r]]
+                    v <- NNAvals_byCol[[r]]
                     statFunctions[[param]](v)
                 }, numeric(1))
             }
