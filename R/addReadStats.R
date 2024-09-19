@@ -106,7 +106,7 @@
 #' @import ggplot2
 #' @importFrom tidyr gather
 #' @importFrom S4Vectors metadata make_zero_col_DFrame
-#' @importFrom SparseArray rowSums nzwhich nzvals
+#' @importFrom SparseArray rowSums
 #' @importFrom SummarizedExperiment assay rowData assayNames
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom Biostrings vcountPattern
