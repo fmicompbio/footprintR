@@ -625,28 +625,24 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics colnames start
 #' @importFrom SummarizedExperiment assay
-#' @importFrom scuttle sumCountsAcrossFeatures
 #' @importFrom stats cor as.dist
+#' @importFrom SparseArray colMeans
 #'
 #' @noRd
 #' @keywords internal
 .orderReads <- function(x, aname, window_width = 25) {
-    # extract assay matrix and set zero to NA
-    X <- SummarizedExperiment::assay(x, aname)
-    if (!is.null(dim(X[1,1]))) {
-        # `aname` columns are grouped reads -> flatten
-        X <- as.matrix(X)
-    }
-    Y <- X != 0
+    # extract and flatten assay matrix
+    X <- as.matrix(SummarizedExperiment::assay(x, aname))
     # group positions into bins of window_width
     bin <- findInterval(x = start(x),
                         vec = seq(from = min(start(x)),
                                   to = ceiling(max(end(x)) / window_width) * window_width + 1,
                                   by = window_width),
                         rightmost.closed = TRUE, left.open = FALSE)
-    XX <- scuttle::sumCountsAcrossFeatures(x = X, ids = bin)
-    YY <- scuttle::sumCountsAcrossFeatures(x = Y, ids = bin)
-    XX <- XX / YY
+    iByBin <- split(seq.int(nrow(X)), bin)
+    XX <- do.call(rbind, lapply(iByBin, function(i) {
+        SparseArray::colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+    }))
     # calculate distances between reads
     D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
                                                 use = "pairwise.complete")))
