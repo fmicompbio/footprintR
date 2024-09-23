@@ -25,10 +25,12 @@ test_that("calcReadStats works", {
                       "ACModProb", "PACModProb", "sample") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
-                 Matrix::colSums(assay(se)$s1) / Matrix::colSums(assay(se)$s1 > 0),
+                 Matrix::colSums(assay(se)$s1, na.rm = TRUE) /
+                     Matrix::colSums(assay(se)$s1 > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 Matrix::colSums(assay(se)$s1 > 0.5) / Matrix::colSums(assay(se)$s1 > 0),
+                 Matrix::colSums(assay(se)$s1 > 0.5, na.rm = TRUE) /
+                     Matrix::colSums(assay(se)$s1 > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(unique(qc$sample), "s1")
     expect_type(S4Vectors::metadata(qc), "list")
@@ -37,7 +39,7 @@ test_that("calcReadStats works", {
     expect_equal(S4Vectors::metadata(qc)$min.Nobs.ppos, 1L)
 
     ## Default coverage requirement
-    Nobs <- rowSums(SummarizedExperiment::assay(se)[["s1"]] > 0)
+    Nobs <- rowSums(SummarizedExperiment::assay(se)[["s1"]] > 0, na.rm = TRUE)
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
@@ -56,10 +58,12 @@ test_that("calcReadStats works", {
                       "ACModProb", "PACModProb", "sample") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
-                 Matrix::colSums(assay(se)$s1[idx, ]) / Matrix::colSums(assay(se)$s1[idx, ] > 0),
+                 Matrix::colSums(assay(se)$s1[idx, ], na.rm = TRUE) /
+                     Matrix::colSums(assay(se)$s1[idx, ] > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 Matrix::colSums(assay(se)$s1[idx, ] > 0.5) / Matrix::colSums(assay(se)$s1[idx, ] > 0),
+                 Matrix::colSums(assay(se)$s1[idx, ] > 0.5, na.rm = TRUE) /
+                     Matrix::colSums(assay(se)$s1[idx, ] > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(unique(qc$sample), "s1")
     expect_type(S4Vectors::metadata(qc), "list")
@@ -68,7 +72,8 @@ test_that("calcReadStats works", {
     expect_equal(S4Vectors::metadata(qc)$min.Nobs.ppos, thr)
 
     ## Using `regions` and large LagRange
-    rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges("chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256))
+    rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256))
     rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100", LagRange = c(200, 256))
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
