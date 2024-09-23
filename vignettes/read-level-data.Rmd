@@ -130,7 +130,9 @@ manually calculating the average modification probability for positions
 using `rowMeans(..., na.rm = TRUE)`, otherwise the result will be `NA` for
 all incompletely covered positions:
 
-```{r mod-prob-zeros}
+```{r mod-prob-zeros, eval=FALSE}
+# TODO: evaluate this chunk
+
 # modification probabilities at position "chr1:6928850:-"
 m["chr1:6928850:-", ]
 
