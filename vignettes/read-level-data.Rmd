@@ -122,7 +122,7 @@ at positions (rows) that are not covered by a given read, and there
 are typically a large fraction of NA values:
 ```{r nnacount}
 prod(dim(m$sample1)) # total number of values
-nnacount(m$sample1)  # number of NA values
+nnacount(m$sample1)  # number of non-NA values
 ```
 
 **Important: ** These `NA` values have to be ignored when for example
@@ -139,7 +139,7 @@ m["chr1:6928850:-", ]
 # WRONG: take the mean of all values (including NAs)
 lapply(m["chr1:6928850:-", ], rowMeans)
 
-# CORRECT: exclude the zeros (na.rm = TRUE)
+# CORRECT: exclude the NA values (na.rm = TRUE)
 lapply(m["chr1:6928850:-", ], rowMeans, na.rm = TRUE)
 ```
 Note that for sample2, in which no read overlaps the selected position,
