@@ -137,6 +137,192 @@ char get_unmodified_base(char b) {
     }
 }
 
+// process a single bam record:
+// - increase alignment counter (passed by reference)
+// - extract information from record (qscore, modification information, etc.)
+// - add information to vectors (passed by reference) for later returning to R
+int process_bam_record(bam1_t *bamdata,        // bam record
+                       unsigned int &alncnt,   // alignment counter
+                       char *qseq,             // forward read sequence
+                       hts_base_mod_state *ms, // modification state struct
+                       bool &had_error,        // error flag
+                       int &buffer_len,        // length of message buffer
+                       char *buffer,           // message buffer
+                       char modbase,           // modified base to analyze
+                       sam_hdr_t *in_samhdr,   // sam file header
+                       int &n_unaligned,       // number of unaligned modified bases
+                       int &n_total,           // total number of modified bases
+                       // vectors for return values
+                       std::vector<std::string> &read_id,
+                       std::vector<double> &qscore,
+                       std::vector<char> &call_code,
+                       std::vector<char> &canonical_base,
+                       std::vector<char> &ref_mod_strand,
+                       std::vector<std::string> &chrom,
+                       std::vector<int> &aligned_read_position,
+                       std::vector<int> &forward_read_position,
+                       std::vector<int> &ref_position,
+                       std::vector<double> &mod_prob) {
+    // allocate variable only used inside process_bam_record()
+    uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
+    unsigned int sum_qual = 0;
+    double qs_value = -1;
+    int i = 0, j = 0, qseq_len = 0, strand = 0, impl = 0, pos = 0, r = 0;
+    hts_base_mod mod[5] = {{0}};  //for ATCGN
+    char canonical = '0', unmodbase = '0';
+
+    // get expected unmodified base corresponding to `modbase`
+    unmodbase = get_unmodified_base(modbase);
+
+    // count alignment
+    alncnt++;
+
+    // process alignment
+    // ... extract qscore
+    qs_data = bam_aux_get(bamdata, "qs");
+    if (qs_data != NULL) {
+        qs_value = bam_aux2f(qs_data);
+    } else {
+        // qs tag is missing
+        //   --> calculate mean of base QUAL values
+        qual = bam_get_qual(bamdata);
+        sum_qual = 0;
+        for (j = 0; j < bamdata->core.l_qseq; j++) {
+            sum_qual += qual[j];
+        }
+        qs_value = ((double) sum_qual) / bamdata->core.l_qseq;
+    }
+
+    // ... extract *forward* read sequence to char*
+    data = bam_get_seq(bamdata);
+    if (qseq_len < bamdata->core.l_qseq) {
+        if (qseq)
+            free((void*) qseq);
+        qseq = (char*) calloc(bamdata->core.l_qseq + 1, sizeof(char));
+        qseq_len = bamdata->core.l_qseq;
+    }
+    if (bam_is_rev(bamdata)) {
+        for (j = 0; j < bamdata->core.l_qseq; j++) {
+            qseq[bamdata->core.l_qseq - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
+        }
+    } else {
+        for (j = 0; j < bamdata->core.l_qseq; j++) {
+            qseq[j] = seq_nt16_str[bam_seqi(data, j)];
+        }
+    }
+
+    // ... parse base modifications
+    if (bam_parse_basemod(bamdata, ms)) {
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to parse the base mods (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -1;
+    }
+
+    // ... process read if modifications of the right type are present
+    //     bam_mods_query_type:
+    //     - returns 0 on success, -1 if not found
+    //     - also fills out `canonical`, `strand` and `impl`
+    //       (`impl` is a boolean for whether unlisted positions should be
+    //        implicitly assumed to be unmodified, or require an explicit
+    //        score and should be considered as unknown)
+    if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
+        // ... loop over sequence positions i
+        for (i = 0; i < bamdata->core.l_qseq; i++) {
+            // i is the position in the aligned read (possibly reverse-complemented)
+            // pos is the position in the original read (qseq)
+            if (bam_is_rev(bamdata)) {
+                pos = bamdata->core.l_qseq - 1 - i;
+            } else{
+                pos = i;
+            }
+
+            // r: number of found modifications (>=1, 0 or -1 if failed)
+            r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
+            if (r <= -1) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len,
+                         "Failed to get modifications (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -2; // # nocov end
+
+            } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) {
+                had_error = true;
+                snprintf(buffer, buffer_len,
+                         "More modifications than footprintR:::read_modbam_cpp can handle (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -3;
+
+            } else if (!r && impl) {
+                // implied base without modification at position i
+                // if (seq_nt16_str[bam_seqi(data, i)] == unmodbase) {
+                if (qseq[pos] == unmodbase) {
+                    // base of the right type -> add to results
+                    read_id.push_back(bam_get_qname(bamdata));
+                    qscore.push_back(qs_value);
+                    aligned_read_position.push_back(i);
+                    forward_read_position.push_back(pos);
+                    chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
+                    call_code.push_back('-');
+                    canonical_base.push_back(canonical);
+                    ref_mod_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
+                    mod_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
+                }
+            }
+            //modifications
+            for (j = 0; j < r; j++) {
+                if (mod[j].modified_base == modbase) {
+                    // found modified base of the right type -> add to results
+                    read_id.push_back(bam_get_qname(bamdata));
+                    qscore.push_back(qs_value);
+                    aligned_read_position.push_back(i);
+                    forward_read_position.push_back(pos);
+                    chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
+                    call_code.push_back((char) mod[j].modified_base);
+                    canonical_base.push_back((char) mod[j].canonical_base);
+                    ref_mod_strand.push_back(bam_is_rev(bamdata) == mod[j].strand ? '+' : '-');
+                    // `qual` of N corresponds to call probability
+                    //     in [N/256, (N+1)/256] -> store midpoint
+                    mod_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
+                }
+            }
+        }
+    }
+
+    // ... convert 0-based read positions to 1-based reference coordinates
+    //     (a coordinate of -1 means unaligned, e.g. soft-masked)
+    std::vector<int> aligned_read_position_converted =
+        read_to_reference_pos(bamdata, aligned_read_position);
+    ref_position.reserve(ref_position.size() +
+        aligned_read_position_converted.size());
+    ref_position.insert(ref_position.end(),
+                        aligned_read_position_converted.begin(),
+                        aligned_read_position_converted.end());
+    aligned_read_position.clear();
+
+    // ... remove unaligned (e.g. soft-masked) read-bases
+    //     (iterate backwards to avoid messing up indices
+    //      when removing elements)
+    n_total += ref_position.size();
+    for (size_t e = ref_position.size(); e-- > 0;) {
+        if (ref_position[e] == -1) {
+            n_unaligned++;
+            read_id.erase(read_id.begin() + e);
+            qscore.erase(qscore.begin() + e);
+            chrom.erase(chrom.begin() + e);
+            forward_read_position.erase(forward_read_position.begin() + e);
+            ref_position.erase(ref_position.begin() + e);
+            call_code.erase(call_code.begin() + e);
+            canonical_base.erase(canonical_base.begin() + e);
+            ref_mod_strand.erase(ref_mod_strand.begin() + e);
+            mod_prob.erase(mod_prob.begin() + e);
+        }
+    }
+
+    return 0;
+}
+
 
 //' Read base modifications from a bam file.
 //'
@@ -187,19 +373,17 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     hts_set_log_level(HTS_LOG_OFF);
 
     // variable declarations
-    int c = 0, i = 0, j = 0, r = 0, impl = 0, qseq_len = 0, pos = 0, strand = 0;
+    int c = 0, i = 0, success = 0;
     int n_unaligned = 0, n_total = 0;
     bool had_error = false;
     samFile *infile = NULL;
     sam_hdr_t *in_samhdr = NULL;
     bam1_t *bamdata = NULL;
-    uint8_t *data = NULL, *qs_data = NULL;
-    double qs_value = -1;
     hts_base_mod_state *ms = NULL;
     hts_idx_t *idx = NULL;
     hts_itr_t *iter = NULL;
     unsigned int regcnt = 0, alncnt = 0;
-    char unmodbase = '0', canonical = '0', **regions_c = NULL, *qseq = NULL;
+    char **regions_c = NULL, *qseq = NULL;
     int buffer_len = 2000;
     char buffer[2000];
 
@@ -215,9 +399,6 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<double> mod_prob;
 
     const char* inname = inname_str.c_str();
-
-    // get expected unmodified base corresponding to `modbase`
-    unmodbase = get_unmodified_base(modbase);
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
@@ -279,151 +460,30 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     }
     // read overlapping alignments using iterator
     while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
-        // count alignment
-        alncnt++;
-
-        // process alignment
-        // ... extract qscore
-        qs_data = bam_aux_get(bamdata, "qs");
-        if (qs_data != NULL) {
-            qs_value = bam_aux2f(qs_data);
-        } else {
-            // qs tag is missing
-            //   --> calculate mean of base QUAL values
-            uint8_t *qual = bam_get_qual(bamdata);
-            unsigned int sum_qual = 0;
-            for (j = 0; j < bamdata->core.l_qseq; j++) {
-                sum_qual += qual[j];
-            }
-            qs_value = ((double) sum_qual) / bamdata->core.l_qseq;
-        }
-
-        // ... extract *forward* read sequence to char*
-        data = bam_get_seq(bamdata);
-        if (qseq_len < bamdata->core.l_qseq) {
-            if (qseq)
-                free((void*) qseq);
-            qseq = (char*) calloc(bamdata->core.l_qseq + 1, sizeof(char));
-            qseq_len = bamdata->core.l_qseq;
-        }
-        if (bam_is_rev(bamdata)) {
-            for (j = 0; j < bamdata->core.l_qseq; j++) {
-                qseq[bamdata->core.l_qseq - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
-            }
-        } else {
-            for (j = 0; j < bamdata->core.l_qseq; j++) {
-                qseq[j] = seq_nt16_str[bam_seqi(data, j)];
-            }
-        }
-
-        // ... parse base modifications
-        if (bam_parse_basemod(bamdata, ms)) {
-            had_error = true;
-            snprintf(buffer, buffer_len,
-                     "Failed to parse the base mods (read %s)\n",
-                     bam_get_qname(bamdata));
+        success = process_bam_record(bamdata,          // bam record
+                                     alncnt,           // alignment counter
+                                     qseq,             // forward read sequence
+                                     ms,               // modification state struct
+                                     had_error,        // error flag
+                                     buffer_len,       // length of message buffer
+                                     buffer,           // message buffer
+                                     modbase,          // modified base to analyze
+                                     in_samhdr,        // sam file header
+                                     n_unaligned,      // number of unaligned modified bases
+                                     n_total,          // total number of modified bases
+                                     // vectors for return values
+                                     read_id,
+                                     qscore,
+                                     call_code,
+                                     canonical_base,
+                                     ref_mod_strand,
+                                     chrom,
+                                     aligned_read_position,
+                                     forward_read_position,
+                                     ref_position,
+                                     mod_prob);
+        if (success != 0) {
             goto end;
-        }
-        hts_base_mod mod[5] = {{0}};  //for ATCGN
-
-        // ... process read if modifications of the right type are present
-        //     bam_mods_query_type:
-        //     - returns 0 on success, -1 if not found
-        //     - also fills out `canonical`, `strand` and `impl`
-        //       (`impl` is a boolean for whether unlisted positions should be
-        //        implicitly assumed to be unmodified, or require an explicit
-        //        score and should be considered as unknown)
-        if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
-            // ... loop over sequence positions i
-            for (i = 0; i < bamdata->core.l_qseq; i++) {
-                // i is the position in the aligned read (possibly reverse-complemented)
-                // pos is the position in the original read (qseq)
-                if (bam_is_rev(bamdata)) {
-                    pos = bamdata->core.l_qseq - 1 - i;
-                } else{
-                    pos = i;
-                }
-
-                // r: number of found modifications (>=1, 0 or -1 if failed)
-                r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
-                if (r <= -1) {
-                    had_error = true; // # nocov start
-                    snprintf(buffer, buffer_len,
-                             "Failed to get modifications (read %s)\n",
-                             bam_get_qname(bamdata));
-                    goto end; // # nocov end
-
-                } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) {
-                    had_error = true;
-                    snprintf(buffer, buffer_len,
-                             "More modifications than footprintR:::read_modbam_cpp can handle (read %s)\n",
-                             bam_get_qname(bamdata));
-                    goto end;
-
-                } else if (!r && impl) {
-                    // implied base without modification at position i
-                    // if (seq_nt16_str[bam_seqi(data, i)] == unmodbase) {
-                    if (qseq[pos] == unmodbase) {
-                        // base of the right type -> add to results
-                        read_id.push_back(bam_get_qname(bamdata));
-                        qscore.push_back(qs_value);
-                        aligned_read_position.push_back(i);
-                        forward_read_position.push_back(pos);
-                        chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-                        call_code.push_back('-');
-                        canonical_base.push_back(canonical);
-                        ref_mod_strand.push_back(bam_is_rev(bamdata) ? '-' : '+');
-                        mod_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
-                    }
-                }
-                //modifications
-                for (j = 0; j < r; j++) {
-                    if (mod[j].modified_base == modbase) {
-                        // found modified base of the right type -> add to results
-                        read_id.push_back(bam_get_qname(bamdata));
-                        qscore.push_back(qs_value);
-                        aligned_read_position.push_back(i);
-                        forward_read_position.push_back(pos);
-                        chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
-                        call_code.push_back((char) mod[j].modified_base);
-                        canonical_base.push_back((char) mod[j].canonical_base);
-                        ref_mod_strand.push_back(bam_is_rev(bamdata) == mod[j].strand ? '+' : '-');
-                        // `qual` of N corresponds to call probability
-                        //     in [N/256, (N+1)/256] -> store midpoint
-                        mod_prob.push_back(((double) mod[j].qual + 0.5) / 256.0);
-                    }
-                }
-            }
-        }
-
-        // ... convert 0-based read positions to 1-based reference coordinates
-        //     (a coordinate of -1 means unaligned, e.g. soft-masked)
-        std::vector<int> aligned_read_position_converted =
-            read_to_reference_pos(bamdata, aligned_read_position);
-        ref_position.reserve(ref_position.size() +
-            aligned_read_position_converted.size());
-        ref_position.insert(ref_position.end(),
-                            aligned_read_position_converted.begin(),
-                            aligned_read_position_converted.end());
-        aligned_read_position.clear();
-
-        // ... remove unaligned (e.g. soft-masked) read-bases
-        //     (iterate backwards to avoid messing up indices
-        //      when removing elements)
-        n_total += ref_position.size();
-        for (size_t e = ref_position.size(); e-- > 0;) {
-            if (ref_position[e] == -1) {
-                n_unaligned++;
-                read_id.erase(read_id.begin() + e);
-                qscore.erase(qscore.begin() + e);
-                chrom.erase(chrom.begin() + e);
-                forward_read_position.erase(forward_read_position.begin() + e);
-                ref_position.erase(ref_position.begin() + e);
-                call_code.erase(call_code.begin() + e);
-                canonical_base.erase(canonical_base.begin() + e);
-                ref_mod_strand.erase(ref_mod_strand.begin() + e);
-                mod_prob.erase(mod_prob.begin() + e);
-            }
         }
     }
     if (c != -1) {
