@@ -61,12 +61,16 @@ test_that("read_modbam_cpp works", {
     ## invalid arguments
     ## -------------------------------------------------------------------------
     # ... non-existing bam file
-    expect_error(read_modbam_cpp("error", "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(inname_str = "error", regions = "chr1",
+                                 n_alns_to_sample = 0, modbase = "a",
+                                 verbose = FALSE))
 
     # ... no bam index
     tmpbam <- tempfile(fileext = ".bam")
     expect_true(file.copy(from = modbamfile, to = tmpbam))
-    expect_error(read_modbam_cpp(tmpbam, "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(inname_str = tmpbam, regions = "chr1",
+                                 n_alns_to_sample = 0, modbase = "a",
+                                 verbose = FALSE))
     unlink(tmpbam)
 
     # ... corrupted bam file
@@ -80,39 +84,52 @@ test_that("read_modbam_cpp works", {
     writeBin(data[seq.int(length(data) - 77)], con_out)
     close(con_out)
     expect_true(file.copy(from = paste0(modbamfile, ".bai"), to = tmpbai))
-    expect_error(read_modbam_cpp(tmpbam, "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(inname_str = tmpbam, regions = "chr1",
+                                 n_alns_to_sample = 0, modbase = "a",
+                                 verbose = FALSE))
     unlink(c(tmpbam, tmpbai))
 
     # ... requesting a region that is not contained in the bam header
-    expect_error(read_modbam_cpp(bam4, "chr2", "a"))
+    expect_error(read_modbam_cpp(inname_str = bam4, regions = "chr2",
+                                 n_alns_to_sample = 0, modbase = "a"))
 
     # ... MM/ML tags referring to position beyond read length
-    expect_error(read_modbam_cpp(bam7, "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
+                                 n_alns_to_sample = 0, modbase = "a",
+                                 verbose = FALSE))
 
     # ... too many modifications on a single base
-    expect_error(read_modbam_cpp(bam8, "chr1", "a", FALSE))
+    expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
+                                 n_alns_to_sample = 0, modbase = "a",
+                                 verbose = FALSE))
 
     ## expected results
     ## -------------------------------------------------------------------------
     # ... run read_modbam_cpp
     df <- read.delim(extractfile)
     expect_message(expect_message(expect_message(
-        res1 <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+        res1 <- read_modbam_cpp(inname_str = modbamfile,
+                                regions = "chr1:6940000-6955000",
+                                n_alns_to_sample = 0,
+                                modbase = "a",
+                                verbose = TRUE)
     )))
-    res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", FALSE)
-    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", FALSE)
-    res4 <- read_modbam_cpp(bam4, "chr1", "a", FALSE)
-    res5 <- read_modbam_cpp(bam5, "chr1", "a", FALSE)
-    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", "a", FALSE)
-    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), "a", FALSE)
-    aln6a <- scanBam(file = modbamfile, param = ScanBamParam(
-        what = "qname",
-        which = GRanges("chr1:6941000-6941001")
-    ))
-    aln6b <- scanBam(file = modbamfile, param = ScanBamParam(
-        what = "qname",
-        which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
-    ))
+    res2 <- read_modbam_cpp(modbamfile, "chr1:", 0, "a", FALSE)
+    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), 0, "m", FALSE)
+    res4 <- read_modbam_cpp(bam4, "chr1", 0, "a", FALSE)
+    res5 <- read_modbam_cpp(bam5, "chr1", 0, "a", FALSE)
+    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", 0, "a", FALSE)
+    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), 0, "a", FALSE)
+    aln6a <- Rsamtools::scanBam(file = modbamfile,
+                                param = Rsamtools::ScanBamParam(
+                                    what = "qname",
+                                    which = GRanges("chr1:6941000-6941001")
+                                ))
+    aln6b <- Rsamtools::scanBam(file = modbamfile,
+                                param = Rsamtools::ScanBamParam(
+                                    what = "qname",
+                                    which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
+                                ))
 
     # ... results structure
     expect_type(res1, "list")

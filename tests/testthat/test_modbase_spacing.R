@@ -10,7 +10,7 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     ## create modified-base distances using 6mA data (20 reads) from chr1:6940000-6955000
     bamf <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                         package = "footprintR")
-    se <- readModBam(bamf, "chr1:6940000-6955000", "a")
+    se <- readModBam(bamfiles = bamf, regions = "chr1:6940000-6955000", modbase = "a")
     expect_error(calcModbaseSpacing("error"),
                  "must be of class 'RangedSummarizedExperiment'")
     expect_error(calcModbaseSpacing(se, "error"),

@@ -21,21 +21,23 @@ test_that("readModBam works", {
     names(extractfiles) <- names(modbamfiles)
 
     # invalid arguments
-    expect_error(readModBam("error", "chr1:6940000-6955000", "a"),
+    expect_error(readModBam("error", "chr1:6940000-6955000", 0, "a"),
                  "not all `bamfiles` exist")
     expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
-                            "chr1:6940000-6955000", "a"),
+                            "chr1:6940000-6955000", 0, "a"),
                  "are not unique")
-    expect_error(readModBam(modbamfiles, "error", "a"),
+    expect_error(readModBam(modbamfiles, "error", 0, "a"),
                  "GRanges object must contain")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "Z"),
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", -1, "a"),
+                 "must be within .0,Inf.")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", 0, "Z"),
                  "invalid `modbase` values")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", c("a", "a", "a")),
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", 0, c("a", "a", "a")),
                  "must have length")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000",
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", 0,
                             c(sample1 = "a", sample3 = "a")),
                  "names of `modbase` and `bamfiles` don't agree")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", "error"),
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", 0, "a", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
 
     # expected results
@@ -49,34 +51,41 @@ test_that("readModBam works", {
         expect_message(expect_message(expect_message(expect_message(
             expect_message(
                 se1 <- readModBam(bamfiles = modbamfiles,
-                                  regions = reg1,
+                                  regions = reg1, nAlnsToSample = 0,
                                   modbase = "a", verbose = TRUE)
     )))))))))
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
+                      nAlnsToSample = 0,
                       modbase = "a",
                       verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
+                      nAlnsToSample = 0,
                       modbase = "a",
                       verbose = FALSE)
     se4 <- readModBam(bamfiles = modbamfiles,
                       regions = reg4,
+                      nAlnsToSample = 0,
                       modbase = c("a", "m"),
                       verbose = FALSE)
     se5a <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1],
+                       nAlnsToSample = 0,
                        modbase = "a",
                        verbose = FALSE)
     se5b <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1:2],
+                       nAlnsToSample = 0,
                        modbase = "a",
                        verbose = FALSE)
-    aln5a <- scanBam(file = modbamfiles[1], param = ScanBamParam(
+    aln5a <- Rsamtools::scanBam(file = modbamfiles[1],
+                                param = Rsamtools::ScanBamParam(
         what = "qname",
         which = GRanges(reg5[1])
     ))
-    aln5b <- scanBam(file = modbamfiles[1], param = ScanBamParam(
+    aln5b <- Rsamtools::scanBam(file = modbamfiles[1],
+                                param = Rsamtools::ScanBamParam(
         what = "qname",
         which = GRanges(reg5[1:2])
     ))

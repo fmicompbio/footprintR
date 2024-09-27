@@ -46,16 +46,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // read_modbam_cpp
-Rcpp::List read_modbam_cpp(std::string inname_str, std::vector<std::string> regions, char modbase, bool verbose);
-RcppExport SEXP _footprintR_read_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP verboseSEXP) {
+Rcpp::List read_modbam_cpp(std::string inname_str, std::vector<std::string> regions, int n_alns_to_sample, char modbase, bool verbose);
+RcppExport SEXP _footprintR_read_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP n_alns_to_sampleSEXP, SEXP modbaseSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type inname_str(inname_strSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type regions(regionsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_alns_to_sample(n_alns_to_sampleSEXP);
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_modbam_cpp(inname_str, regions, modbase, verbose));
+    rcpp_result_gen = Rcpp::wrap(read_modbam_cpp(inname_str, regions, n_alns_to_sample, modbase, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -77,7 +78,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
-    {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 4},
+    {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 5},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
     {NULL, NULL, 0}
 };

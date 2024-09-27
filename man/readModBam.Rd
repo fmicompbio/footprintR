@@ -6,7 +6,8 @@
 \usage{
 readModBam(
   bamfiles,
-  regions,
+  regions = NULL,
+  nAlnsToSample = 0,
   modbase,
   seqinfo = NULL,
   ncpu = 1L,
@@ -26,7 +27,13 @@ genomic regions to extract the reads from. Alternatively, regions can be
 specified as a character vector (e.g. "chr1:1200-1300") that can be
 coerced into a \code{GRanges} object. Note that the reads are not
 trimmed to the boundaries of the specified ranges. As a result, returned
-positions will typically extend out of the specified regions.}
+positions will typically extend out of the specified regions.
+If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
+ignored.}
+
+\item{nAlnsToSample}{A numeric scalar. If non-zero, \code{regions} is ignored
+and \code{nAlnsToSample} randomly selected alignments are read from each
+of the \code{bamfiles}.}
 
 \item{modbase}{Character vector defining the modified base for each sample.
 If \code{modbase} is a named vector, the names should correspond to

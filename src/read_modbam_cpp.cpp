@@ -367,6 +367,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 // [[Rcpp::export]]
 Rcpp::List read_modbam_cpp(std::string inname_str,
                            std::vector<std::string> regions,
+                           int n_alns_to_sample,
                            char modbase,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
@@ -439,59 +440,78 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         goto end; // # nocov end
     }
 
-    // convert regions to C arrays
-    regcnt = (unsigned int) regions.size();
-    regions_c = (char**) calloc(regcnt, sizeof(char*));
-    for (i = 0; i < (int) regcnt; i++) {
-        regions_c[i] = (char*) regions[i].c_str();
-    }
+    /// WAS HERE
+    /// TODO:
+    /// - add if (n_alns_to_sample > 0)
+    //  - if true: get bam file size, set bgzf file pointer to a random place, bgzf_seek?, sam_read_rec? (similar to what is done in https://github.com/samtools/htslib/blob/5d8a1866501a4e46a6f84e37730292501ccb2180/hts.c#L4272)
+    /// - else: current (region-based) iterator
 
-    // create multi-region iterator
-    if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
+    if (n_alns_to_sample > 0) {
+        // random-sampling-based alignment reading
+        // ---------------------------------------------------------------------
         had_error = true;
-        snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+        snprintf(buffer, buffer_len,
+                 "n_alns_to_sample > 0 is not yet implemented\n");
         goto end;
-    }
 
-    // iterate over regions
-    if (verbose) {
-        snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u regions", regcnt);
-        Rcpp::message(Rcpp::wrap(buffer));
-    }
-    // read overlapping alignments using iterator
-    while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
-        success = process_bam_record(bamdata,          // bam record
-                                     alncnt,           // alignment counter
-                                     qseq,             // forward read sequence
-                                     ms,               // modification state struct
-                                     had_error,        // error flag
-                                     buffer_len,       // length of message buffer
-                                     buffer,           // message buffer
-                                     modbase,          // modified base to analyze
-                                     in_samhdr,        // sam file header
-                                     n_unaligned,      // number of unaligned modified bases
-                                     n_total,          // total number of modified bases
-                                     // vectors for return values
-                                     read_id,
-                                     qscore,
-                                     call_code,
-                                     canonical_base,
-                                     ref_mod_strand,
-                                     chrom,
-                                     aligned_read_position,
-                                     forward_read_position,
-                                     ref_position,
-                                     mod_prob);
-        if (success != 0) {
+    } else {
+        // region-based alignment reading
+        // ---------------------------------------------------------------------
+        // convert regions to C arrays
+        regcnt = (unsigned int) regions.size();
+        regions_c = (char**) calloc(regcnt, sizeof(char*));
+        for (i = 0; i < (int) regcnt; i++) {
+            regions_c[i] = (char*) regions[i].c_str();
+        }
+
+        // create multi-region iterator
+        if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
+            had_error = true;
+            snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+            goto end;
+        }
+
+        // iterate over regions
+        if (verbose) {
+            snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u regions", regcnt);
+            Rcpp::message(Rcpp::wrap(buffer));
+        }
+        // read overlapping alignments using iterator
+        while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
+            success = process_bam_record(bamdata,          // bam record
+                                         alncnt,           // alignment counter
+                                         qseq,             // forward read sequence
+                                         ms,               // modification state struct
+                                         had_error,        // error flag
+                                         buffer_len,       // length of message buffer
+                                         buffer,           // message buffer
+                                         modbase,          // modified base to analyze
+                                         in_samhdr,        // sam file header
+                                         n_unaligned,      // number of unaligned modified bases
+                                         n_total,          // total number of modified bases
+                                         // vectors for return values
+                                         read_id,
+                                         qscore,
+                                         call_code,
+                                         canonical_base,
+                                         ref_mod_strand,
+                                         chrom,
+                                         aligned_read_position,
+                                         forward_read_position,
+                                         ref_position,
+                                         mod_prob);
+            if (success != 0) {
+                goto end;
+            }
+        }
+        if (c != -1) {
+            had_error = true;
+            snprintf(buffer, buffer_len,
+                     "Error while reading from %s - aborting\n", inname);
             goto end;
         }
     }
-    if (c != -1) {
-        had_error = true;
-        snprintf(buffer, buffer_len,
-                 "Error while reading from %s - aborting\n", inname);
-        goto end;
-    }
+
     if (verbose) {
         snprintf(buffer, buffer_len,
                  "    removed %d unaligned (e.g. soft-masked) of %d called bases\n    read %u alignments",

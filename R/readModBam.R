@@ -16,6 +16,11 @@
 #'     coerced into a \code{GRanges} object. Note that the reads are not
 #'     trimmed to the boundaries of the specified ranges. As a result, returned
 #'     positions will typically extend out of the specified regions.
+#'     If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
+#'     ignored.
+#' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
+#'     and \code{nAlnsToSample} randomly selected alignments are read from each
+#'     of the \code{bamfiles}.
 #' @param modbase Character vector defining the modified base for each sample.
 #'     If \code{modbase} is a named vector, the names should correspond to
 #'     the names of \code{bamfiles}. Otherwise, it will be assumed that the
@@ -57,7 +62,8 @@
 #'
 #' @export
 readModBam <- function(bamfiles,
-                       regions,
+                       regions = NULL,
+                       nAlnsToSample = 0,
                        modbase,
                        seqinfo = NULL,
                        ncpu = 1L,
@@ -71,6 +77,13 @@ readModBam <- function(bamfiles,
         names(bamfiles) <- paste0("s", seq_along(bamfiles))
     } else if (any(duplicated(names(bamfiles)))) {
         stop("`names(bamfiles)` are not unique")
+    }
+    .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
+    if (nAlnsToSample > 0) {
+        if (length(regions) > 0) {
+            warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
+        }
+        regions <- GRanges()
     }
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
@@ -116,6 +129,7 @@ readModBam <- function(bamfiles,
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
         resL <- read_modbam_cpp(inname_str = bamfiles[nm],
                                 regions = regions_str,
+                                n_alns_to_sample = as.integer(nAlnsToSample),
                                 modbase = modbase[nm],
                                 verbose = verbose)
 
