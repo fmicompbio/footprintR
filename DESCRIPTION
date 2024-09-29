@@ -39,7 +39,8 @@ Imports:
     purrr,
     SparseArray,
     Matrix,
-    Rcpp
+    Rcpp,
+    stringr
 Suggests:
     rmarkdown,
     knitr,
