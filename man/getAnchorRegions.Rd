@@ -4,41 +4,61 @@
 \alias{getAnchorRegions}
 \title{Extract data for one or more anchor regions}
 \usage{
-getAnchorRegions(se, assay.type = "mod_prob", regionMidpoints, regionWidth)
+getAnchorRegions(
+  se,
+  assay.type = "mod_prob",
+  regionMidpoints,
+  regionWidth,
+  prune = TRUE,
+  ignore.strand = FALSE
+)
 }
 \arguments{
-\item{se}{\code{SummarizedExperiment} object with at least one read-level
-assay.}
+\item{se}{\code{SummarizedExperiment} object.}
 
-\item{assay.type}{Character scalar, the assay from which to extract
-read-level information.}
+\item{assay.type}{Character vector, the assay(s) from which to extract values.}
 
 \item{regionMidpoints}{Either a \code{GPos} object or a character vector
 that can be coerced into a \code{GPos} object, representing the midpoints
 of the desired anchor regions.}
 
 \item{regionWidth}{Integer scalar, the desired width of the anchor regions.}
+
+\item{prune}{Logical scalar. If \code{TRUE} (the default), samples for
+which there are no reads overlapping any of the anchor regions in any
+of the read-level assays in \code{assay.type}
+will be completely removed from the returned \code{SummarizedExperiment}
+(also from \code{colData}). If \code{FALSE},
+such samples are retained (in assays with read-level data as a
+zero-column \code{NAMatrix}, in other assays as a dense matrix with a
+single column of NA values).}
+
+\item{ignore.strand}{Logical scalar, whether to ignore the strand information
+when matching anchor regions with observations. Will be passed on to
+\code{GenomicRanges::match()}.}
 }
 \value{
 A \code{SummarizedExperiment} with rows representing relative
 positions within an anchor region (the midpoint of the region corresponds
 to a relative position of 0) and columns representing samples. Each
-column of the assay is an \code{NaArray}, with columns representing
-read-anchor region combinations. The \code{region} column of the
-\code{colData} records which anchor region a given column corresponds to.
+column of the assay is an \code{NaArray} (if \code{assay.type} is a
+read-level assay) or a dense matrix (otherwise), with columns representing
+read-anchor region (or sample-anchor region) combinations. The \code{region}
+column of the \code{colData} records which anchor region a given column
+corresponds to.
 }
 \description{
-Extract modification probabilities (or other read-level values) for each
-read and each position in a set of anchor regions of the same width. The
-anchor regions are defined by their genomic midpoint coordinate as well as
-the width.
+Extract assay values for each read (or sample) and each position in a set of
+anchor regions of the same width. The anchor regions are defined by their
+genomic midpoint coordinate and the width.
 }
 \examples{
 modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                  modbase = "a", verbose = FALSE)
-ar <- getAnchorRegions(se, assay.type = "mod_prob",
+se <- addReadsSummary(se, keep.reads = TRUE)
+ar <- getAnchorRegions(se, assay.type = c("mod_prob", "FracMod", "Nvalid"),
                        regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                        regionWidth = 9)
 
