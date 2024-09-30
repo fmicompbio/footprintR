@@ -153,7 +153,7 @@ getAnchorRegions <- function(se,
                     val <- as.vector(mat[oldrow, ])
                     idx <- which(!is.na(val))
                     namat[cbind(i[idx], j[idx])] <- val[idx]
-                    if (reverseMinusStrandRegions && strand(reg)[1] == "-") {
+                    if (reverseMinusStrandRegions && as.character(strand(reg)[1]) == "-") {
                         # reverse relative positions
                         namat <- namat[seq(nrow(namat), 1), , drop = FALSE]
                     }
@@ -162,7 +162,7 @@ getAnchorRegions <- function(se,
                 # cbind matrices from different regions
                 cbmat <- do.call(SparseArray::cbind, mats)
                 # only keep read-region pairs with at least one non-NA value
-                keep_reads <- which(SparseArray::colSums(cbmat, na.rm = TRUE) >= 0)
+                keep_reads <- which(SparseArray::colSums(cbmat, na.rm = TRUE) > 0)
                 cbmat[, keep_reads, drop = FALSE]
             })
         } else {
@@ -183,7 +183,7 @@ getAnchorRegions <- function(se,
                     newrow <- which(!is.na(m))
                     oldrow <- m[newrow]
                     newmat[newrow, 1] <- assay(se, atp)[oldrow, s]
-                    if (reverseMinusStrandRegions && strand(reg)[1] == "-") {
+                    if (reverseMinusStrandRegions && as.character(strand(reg)[1]) == "-") {
                         # reverse relative positions
                         newmat <- newmat[seq(nrow(newmat), 1), , drop = FALSE]
                     }

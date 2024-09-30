@@ -8,8 +8,10 @@ test_that("getAnchorRegions works", {
 
     # check that the function fails with the wrong input
     expect_error(getAnchorRegions(se = "error"), "'se' must be of class")
-    expect_error(getAnchorRegions(se = se, assay.type = "missing"),
+    expect_error(getAnchorRegions(se = se, assay.type = 1),
                  "'assay.type' must be of class 'character'")
+    expect_error(getAnchorRegions(se = se, assay.type = "missing"),
+                 "'assay.type' must be one of")
     expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
                                   regionMidpoints = 1),
                  "'regionMidpoints' must be of class 'GPos'")
@@ -24,6 +26,10 @@ test_that("getAnchorRegions works", {
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = c(5, 8)),
                  "'regionWidth' must have length 1")
+    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 8),
+                 "regionWidth must be an odd integer")
     expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = "TRUE"),
@@ -42,6 +48,13 @@ test_that("getAnchorRegions works", {
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = c(TRUE, FALSE)),
                  "'ignore.strand' must have length 1")
+    se1 <- se
+    assayNames(se1) <- paste0(assayNames(se1), "suffix")
+    expect_error(getAnchorRegions(se = se1, assay.type = "mod_probsuffix",
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 9, prune = TRUE,
+                                  ignore.strand = TRUE),
+                 "None of the preferred coverage assays")
 
 
     # check that getAnchorRegions works with correct input
@@ -55,6 +68,13 @@ test_that("getAnchorRegions works", {
                             regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                             regionWidth = 5, prune = TRUE,
                             ignore.strand = TRUE)
+    expect_warning({
+        ar3 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+                                regionMidpoints = c("chr1:6929389:*", "chr1:6935630:-"),
+                                regionWidth = 5, prune = TRUE,
+                                ignore.strand = FALSE)
+        }, "The strand of some region midpoints is undefined")
+
     expect_identical(ar1, ar2)
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
@@ -203,7 +223,11 @@ test_that("getAnchorRegions works", {
     expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-2, 2))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929336-6929340:-"), ignore.strand = TRUE)
+    expect_true(all(c("chr1:6929338:-", "chr1:6929338:+") %in% rownames(se_r1)))
+    se_r1 <- se_r1[!rownames(se_r1) %in% "chr1:6929338:-", ]
     se_r2 <- subsetByOverlaps(se, GRanges("chr1:6938995-6938999:+"), ignore.strand = TRUE)
+    expect_true(all(c("chr1:6938997:-", "chr1:6938997:+") %in% rownames(se_r2)))
+    se_r2 <- se_r2[!rownames(se_r2) %in% "chr1:6938997:+", ]
     s1_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s1 >= 0, na.rm = TRUE) > 0)
     s2_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s2 >= 0, na.rm = TRUE) > 0)
     s1_r2 <- which(SparseArray::colSums(assay(se_r2, "mod_prob")$s1 >= 0, na.rm = TRUE) > 0)
@@ -217,18 +241,17 @@ test_that("getAnchorRegions works", {
                  c(paste0("chr1:6929336-6929340:--", colnames(assay(se_r1, "mod_prob")$s2)[s2_r1]),
                    paste0("chr1:6938995-6938999:+-", colnames(assay(se_r2, "mod_prob")$s2)[s2_r2])))
     # check sum of values
-    # TODO: currently not working
-    # expect_equal(sum(assay(ar1, "mod_prob")$s1, na.rm = TRUE),
-    #              sum(assay(se_r1, "mod_prob")$s1[, s1_r1], na.rm = TRUE) +
-    #                  sum(assay(se_r2, "mod_prob")$s1[, s1_r2], na.rm = TRUE))
-    # expect_equal(sum(assay(ar1, "mod_prob")$s2, na.rm = TRUE),
-    #              sum(assay(se_r1, "mod_prob")$s2[, s2_r1], na.rm = TRUE) +
-    #                  sum(assay(se_r2, "mod_prob")$s2[, s2_r2], na.rm = TRUE))
-    # # check sum of values for Nvalid assay
-    # expect_equal(sum(assay(ar1, "Nvalid")$s1[, 1], na.rm = TRUE),
-    #              sum(assay(se_r1, "Nvalid")[, 1]), ignore_attr = TRUE)
-    # expect_equal(sum(assay(ar1, "Nvalid")$s1[, 2], na.rm = TRUE),
-    #              sum(assay(se_r2, "Nvalid")[, 1]), ignore_attr = TRUE)
+    expect_equal(sum(assay(ar1, "mod_prob")$s1, na.rm = TRUE),
+                 sum(assay(se_r1, "mod_prob")$s1[, s1_r1], na.rm = TRUE) +
+                     sum(assay(se_r2, "mod_prob")$s1[, s1_r2], na.rm = TRUE))
+    expect_equal(sum(assay(ar1, "mod_prob")$s2, na.rm = TRUE),
+                 sum(assay(se_r1, "mod_prob")$s2[, s2_r1], na.rm = TRUE) +
+                     sum(assay(se_r2, "mod_prob")$s2[, s2_r2], na.rm = TRUE))
+    # check sum of values for Nvalid assay
+    expect_equal(sum(assay(ar1, "Nvalid")$s1[, 1], na.rm = TRUE),
+                 sum(assay(se_r1, "Nvalid")[, 1]), ignore_attr = TRUE)
+    expect_equal(sum(assay(ar1, "Nvalid")$s1[, 2], na.rm = TRUE),
+                 sum(assay(se_r2, "Nvalid")[, 1]), ignore_attr = TRUE)
     # colData
     expect_named(colData(ar1), c("sample", "region_mod_prob", "region_Nvalid"))
     expect_s4_class(colData(ar1), "DataFrame")
@@ -255,29 +278,53 @@ test_that("getAnchorRegions works", {
     expect_equal(ar1$region_Nvalid$s2$region,
                  c("chr1:6929336-6929340:-", "chr1:6938995-6938999:+"))
 
+    # ... reverseMinusStrandRegions = TRUE vs FALSE
+    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+                            regionMidpoints = c("chr1:6929338:-", "chr1:6938997:+"),
+                            regionWidth = 5, prune = FALSE,
+                            ignore.strand = TRUE, reverseMinusStrandRegions = FALSE)
+    ar2 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+                            regionMidpoints = c("chr1:6929338:-", "chr1:6938997:+"),
+                            regionWidth = 5, prune = FALSE,
+                            ignore.strand = TRUE, reverseMinusStrandRegions = TRUE)
+    expect_identical(SparseArray::colSums(as.matrix(assay(ar1, "mod_prob"))),
+                     SparseArray::colSums(as.matrix(assay(ar2, "mod_prob"))))
+    expect_identical(SparseArray::colSums(as.matrix(assay(ar1, "Nvalid"))),
+                     SparseArray::colSums(as.matrix(assay(ar2, "Nvalid"))))
+    expect_false(identical(assay(ar1, "mod_prob"), assay(ar2, "mod_prob")))
+    expect_identical(assay(ar1, "mod_prob")$s1[, ar1$region_mod_prob$s1$region == "chr1:6938995-6938999:+"],
+                     assay(ar2, "mod_prob")$s1[, ar2$region_mod_prob$s1$region == "chr1:6938995-6938999:+"])
+    expect_identical(assay(ar1, "Nvalid")$s1[, ar1$region_Nvalid$s1$region == "chr1:6938995-6938999:+"],
+                     assay(ar2, "Nvalid")$s1[, ar2$region_Nvalid$s1$region == "chr1:6938995-6938999:+"])
+    expect_identical(assay(ar1, "mod_prob")$s1[5:1, ar1$region_mod_prob$s1$region == "chr1:6929336-6929340:-"],
+                     assay(ar2, "mod_prob")$s1[, ar2$region_mod_prob$s1$region == "chr1:6929336-6929340:-"])
+    expect_identical(assay(ar1, "Nvalid")$s1[5:1, ar1$region_Nvalid$s1$region == "chr1:6929336-6929340:-"],
+                     assay(ar2, "Nvalid")$s1[, ar2$region_Nvalid$s1$region == "chr1:6929336-6929340:-"])
+    expect_identical(colData(ar1), colData(ar2))
+
     # ... different region, where only s1 has overlapping reads
     # ... ... without pruning
     ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929015:+"),
-                            regionWidth = 8, prune = FALSE,
+                            regionWidth = 9, prune = FALSE,
                             ignore.strand = FALSE)
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
-    expect_equal(dim(ar1), c(8, 2))
+    expect_equal(dim(ar1), c(9, 2))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
-    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-3, 4))
+    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-4, 4))
     # get reads in each sample that overlap each of the regions
-    se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929012-6929019:+"), ignore.strand = FALSE)
+    se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929011-6929019:+"), ignore.strand = FALSE)
     s1_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s1 >= 0, na.rm = TRUE) > 0)
     s2_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s2 >= 0, na.rm = TRUE) > 0)
     expect_equal(ncol(assay(ar1, "mod_prob")$s1), length(s1_r1))
     expect_equal(ncol(assay(ar1, "mod_prob")$s2), length(s2_r1))
     expect_equal(colnames(assay(ar1, "mod_prob")$s1),
-                 paste0("chr1:6929012-6929019:+-", colnames(assay(se_r1, "mod_prob")$s1)[s1_r1]))
+                 paste0("chr1:6929011-6929019:+-", colnames(assay(se_r1, "mod_prob")$s1)[s1_r1]))
     expect_equal(colnames(assay(ar1, "mod_prob")$s2), character(0))
     # check sum of values
     expect_equal(sum(assay(ar1, "mod_prob")$s1, na.rm = TRUE),
@@ -290,7 +337,7 @@ test_that("getAnchorRegions works", {
     expect_equal(assay(ar1, "Nvalid")$s2[, 1][!is.na(assay(ar1, "Nvalid")$s2[, 1])],
                  assay(se_r1, "Nvalid")[, 2], ignore_attr = TRUE)
     expect_equal(assay(ar1, "Nvalid")$s2[, 1][!is.na(assay(ar1, "Nvalid")$s2[, 1])],
-                 c(0, 0, 0), ignore_attr = TRUE)
+                 c(0, 0, 0, 0), ignore_attr = TRUE)
     # colData
     expect_named(colData(ar1), c("sample", "region_mod_prob", "region_Nvalid"))
     expect_s4_class(colData(ar1), "DataFrame")
@@ -299,38 +346,38 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1$region_mod_prob$s1, "DataFrame")
     expect_equal(ar1$region_mod_prob$s1$id, colnames(assay(ar1, "mod_prob")$s1))
     expect_equal(ar1$region_mod_prob$s1$region,
-                 rep("chr1:6929012-6929019:+", length(s1_r1)))
+                 rep("chr1:6929011-6929019:+", length(s1_r1)))
     expect_equal(ar1$region_mod_prob$s2$id, colnames(assay(ar1, "mod_prob")$s2))
     expect_equal(ar1$region_mod_prob$s2$region,
-                 rep("chr1:6929012-6929019:+", length(s2_r1)))
+                 rep("chr1:6929011-6929019:+", length(s2_r1)))
     expect_s4_class(ar1$region_Nvalid, "List")
     expect_named(ar1$region_Nvalid, c("s1", "s2"))
     expect_s4_class(ar1$region_Nvalid$s1, "DataFrame")
-    expect_equal(ar1$region_Nvalid$s1$id, "chr1:6929012-6929019:+-s1")
-    expect_equal(ar1$region_Nvalid$s1$region, "chr1:6929012-6929019:+")
-    expect_equal(ar1$region_Nvalid$s2$id, "chr1:6929012-6929019:+-s2")
-    expect_equal(ar1$region_Nvalid$s2$region, "chr1:6929012-6929019:+")
+    expect_equal(ar1$region_Nvalid$s1$id, "chr1:6929011-6929019:+-s1")
+    expect_equal(ar1$region_Nvalid$s1$region, "chr1:6929011-6929019:+")
+    expect_equal(ar1$region_Nvalid$s2$id, "chr1:6929011-6929019:+-s2")
+    expect_equal(ar1$region_Nvalid$s2$region, "chr1:6929011-6929019:+")
 
     # ... ... with pruning
     ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929015:+"),
-                            regionWidth = 8, prune = TRUE,
+                            regionWidth = 9, prune = TRUE,
                             ignore.strand = FALSE)
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), "s1")
-    expect_equal(dim(ar1), c(8, 1))
+    expect_equal(dim(ar1), c(9, 1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
-    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-3, 4))
+    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-4, 4))
     # get reads in each sample that overlap each of the regions
-    se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929012-6929019:+"), ignore.strand = FALSE)
+    se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929011-6929019:+"), ignore.strand = FALSE)
     s1_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s1 >= 0, na.rm = TRUE) > 0)
     expect_equal(ncol(assay(ar1, "mod_prob")$s1), length(s1_r1))
     expect_equal(colnames(assay(ar1, "mod_prob")$s1),
-                 paste0("chr1:6929012-6929019:+-", colnames(assay(se_r1, "mod_prob")$s1)[s1_r1]))
+                 paste0("chr1:6929011-6929019:+-", colnames(assay(se_r1, "mod_prob")$s1)[s1_r1]))
     # check sum of values
     expect_equal(sum(assay(ar1, "mod_prob")$s1, na.rm = TRUE),
                  sum(assay(se_r1, "mod_prob")$s1[, s1_r1], na.rm = TRUE))
@@ -345,26 +392,26 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1$region_mod_prob$s1, "DataFrame")
     expect_equal(ar1$region_mod_prob$s1$id, colnames(assay(ar1, "mod_prob")$s1))
     expect_equal(ar1$region_mod_prob$s1$region,
-                 rep("chr1:6929012-6929019:+", length(s1_r1)))
+                 rep("chr1:6929011-6929019:+", length(s1_r1)))
     expect_s4_class(ar1$region_Nvalid, "List")
     expect_named(ar1$region_Nvalid, "s1")
     expect_s4_class(ar1$region_Nvalid$s1, "DataFrame")
-    expect_equal(ar1$region_Nvalid$s1$id, "chr1:6929012-6929019:+-s1")
-    expect_equal(ar1$region_Nvalid$s1$region, "chr1:6929012-6929019:+")
+    expect_equal(ar1$region_Nvalid$s1$id, "chr1:6929011-6929019:+-s1")
+    expect_equal(ar1$region_Nvalid$s1$region, "chr1:6929011-6929019:+")
 
     # ... region where neither sample has any overlapping reads
     # ... ... with pruning
     ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:692915:+"),
-                            regionWidth = 8, prune = TRUE,
+                            regionWidth = 9, prune = TRUE,
                             ignore.strand = FALSE)
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
-    expect_equal(dim(ar1), c(8, 0))
+    expect_equal(dim(ar1), c(9, 0))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
-    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-3, 4))
+    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     expect_null(assay(ar1, "mod_prob")$s1)
     expect_null(assay(ar1, "mod_prob")$s2)
@@ -379,19 +426,19 @@ test_that("getAnchorRegions works", {
     # ... ... without pruning
     ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:692915:+"),
-                            regionWidth = 8, prune = FALSE,
+                            regionWidth = 9, prune = FALSE,
                             ignore.strand = FALSE)
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
-    expect_equal(dim(ar1), c(8, 2))
+    expect_equal(dim(ar1), c(9, 2))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
-    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-3, 4))
+    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-4, 4))
     # get reads in each sample that overlap each of the regions
-    se_r1 <- subsetByOverlaps(se, GRanges("chr1:692912-692919:+"), ignore.strand = FALSE)
+    se_r1 <- subsetByOverlaps(se, GRanges("chr1:692911-692919:+"), ignore.strand = FALSE)
     s1_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s1 >= 0, na.rm = TRUE) > 0)
     s2_r1 <- which(SparseArray::colSums(assay(se_r1, "mod_prob")$s2 >= 0, na.rm = TRUE) > 0)
     expect_equal(ncol(assay(ar1, "mod_prob")$s1), length(s1_r1))
@@ -406,10 +453,10 @@ test_that("getAnchorRegions works", {
     # check values for Nvalid assay
     expect_equal(assay(ar1, "Nvalid")$s1[, 1][!is.na(assay(ar1, "Nvalid")$s1[, 1])],
                  assay(se_r1, "Nvalid")[, 1], ignore_attr = TRUE)
-    expect_equal(assay(ar1, "Nvalid")$s1[, 1], rep(NA_real_, 8))
+    expect_equal(assay(ar1, "Nvalid")$s1[, 1], rep(NA_real_, 9))
     expect_equal(assay(ar1, "Nvalid")$s2[, 1][!is.na(assay(ar1, "Nvalid")$s2[, 1])],
                  assay(se_r1, "Nvalid")[, 2], ignore_attr = TRUE)
-    expect_equal(assay(ar1, "Nvalid")$s2[, 1], rep(NA_real_, 8))
+    expect_equal(assay(ar1, "Nvalid")$s2[, 1], rep(NA_real_, 9))
     # colData
     expect_named(colData(ar1), c("sample", "region_mod_prob", "region_Nvalid"))
     expect_s4_class(colData(ar1), "DataFrame")
@@ -423,8 +470,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1$region_Nvalid, "List")
     expect_named(ar1$region_Nvalid, c("s1", "s2"))
     expect_s4_class(ar1$region_Nvalid$s1, "DataFrame")
-    expect_equal(ar1$region_Nvalid$s1$id, "chr1:692912-692919:+-s1")
-    expect_equal(ar1$region_Nvalid$s1$region, "chr1:692912-692919:+")
-    expect_equal(ar1$region_Nvalid$s2$id, "chr1:692912-692919:+-s2")
-    expect_equal(ar1$region_Nvalid$s2$region, "chr1:692912-692919:+")
+    expect_equal(ar1$region_Nvalid$s1$id, "chr1:692911-692919:+-s1")
+    expect_equal(ar1$region_Nvalid$s1$region, "chr1:692911-692919:+")
+    expect_equal(ar1$region_Nvalid$s2$id, "chr1:692911-692919:+-s2")
+    expect_equal(ar1$region_Nvalid$s2$region, "chr1:692911-692919:+")
 })

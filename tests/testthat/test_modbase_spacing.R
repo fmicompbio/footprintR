@@ -14,7 +14,7 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_error(calcModbaseSpacing("error"),
                  "must be of class 'RangedSummarizedExperiment'")
     expect_error(calcModbaseSpacing(se, "error"),
-                 "'assay.type' must be of class 'character'")
+                 "'assay.type' must be one of")
     expect_error(calcModbaseSpacing(se, pool_reads = "error"),
                  "must be of class 'logical'")
     pg1 <- calcModbaseSpacing(se)
