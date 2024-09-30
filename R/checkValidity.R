@@ -45,7 +45,14 @@
         message("Checking assay names")
     }
     stopifnot(!is.null(assayNames(se)) &&
-                  all(assayNames(se) != ""))
+                  all(assayNames(se) != "") &&
+                  !any(duplicated(assayNames(se))))
+
+    if (verbose) {
+        message("Checking row names")
+    }
+    stopifnot(!is.null(rownames(se)) &&
+                  !any(duplicated(rownames(se))))
 
     if (verbose) {
         message("Checking consistency of sample names")
