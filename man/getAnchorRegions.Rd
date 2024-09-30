@@ -10,11 +10,13 @@ getAnchorRegions(
   regionMidpoints,
   regionWidth,
   prune = TRUE,
-  ignore.strand = FALSE
+  ignore.strand = FALSE,
+  reverseMinusStrandRegions = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{se}{\code{SummarizedExperiment} object.}
+\item{se}{A \code{SummarizedExperiment} object.}
 
 \item{assay.type}{Character vector, the assay(s) from which to extract values.}
 
@@ -22,7 +24,8 @@ getAnchorRegions(
 that can be coerced into a \code{GPos} object, representing the midpoints
 of the desired anchor regions.}
 
-\item{regionWidth}{Integer scalar, the desired width of the anchor regions.}
+\item{regionWidth}{Integer scalar, the desired width of the anchor regions.
+Must be an odd value.}
 
 \item{prune}{Logical scalar. If \code{TRUE} (the default), samples for
 which there are no reads overlapping any of the anchor regions in any
@@ -36,6 +39,14 @@ single column of NA values).}
 \item{ignore.strand}{Logical scalar, whether to ignore the strand information
 when matching anchor regions with observations. Will be passed on to
 \code{GenomicRanges::match()}.}
+
+\item{reverseMinusStrandRegions}{Logical scalar. If \code{TRUE}, data
+extracted from regions on the negative strand will be reversed before
+they are concatenated with the rest of the data, so that negative
+relative positions correspond to regions upstream of the region
+midpoint.}
+
+\item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
 \value{
 A \code{SummarizedExperiment} with rows representing relative

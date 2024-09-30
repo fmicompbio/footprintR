@@ -4,12 +4,13 @@
 #' anchor regions of the same width. The anchor regions are defined by their
 #' genomic midpoint coordinate and the width.
 #'
-#' @param se \code{SummarizedExperiment} object.
+#' @param se A \code{SummarizedExperiment} object.
 #' @param assay.type Character vector, the assay(s) from which to extract values.
 #' @param regionMidpoints Either a \code{GPos} object or a character vector
 #'     that can be coerced into a \code{GPos} object, representing the midpoints
 #'     of the desired anchor regions.
 #' @param regionWidth Integer scalar, the desired width of the anchor regions.
+#'     Must be an odd value.
 #' @param prune Logical scalar. If \code{TRUE} (the default), samples for
 #'     which there are no reads overlapping any of the anchor regions in any
 #'     of the read-level assays in \code{assay.type}
@@ -21,6 +22,12 @@
 #' @param ignore.strand Logical scalar, whether to ignore the strand information
 #'     when matching anchor regions with observations. Will be passed on to
 #'     \code{GenomicRanges::match()}.
+#' @param reverseMinusStrandRegions Logical scalar. If \code{TRUE}, data
+#'     extracted from regions on the negative strand will be reversed before
+#'     they are concatenated with the rest of the data, so that negative
+#'     relative positions correspond to regions upstream of the region
+#'     midpoint.
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{SummarizedExperiment} with rows representing relative
 #' positions within an anchor region (the midpoint of the region corresponds
@@ -66,19 +73,15 @@ getAnchorRegions <- function(se,
                              regionMidpoints,
                              regionWidth,
                              prune = TRUE,
-                             ignore.strand = FALSE) {
+                             ignore.strand = FALSE,
+                             reverseMinusStrandRegions = FALSE,
+                             verbose = FALSE) {
 
     # Check arguments
     .assertVector(x = se, type = "SummarizedExperiment")
-    if ((is.numeric(assay.type) &&
-         (any(assay.type < 1) || any(assay.type > length(SummarizedExperiment::assays(se))))) ||
-        (is.character(assay.type) && any(!assay.type %in% SummarizedExperiment::assayNames(se)))) {
-        stop("'assay.type' must be a string or integer vector specifying the ",
-             "assay of se containing the data to be extracted")
-    }
-    if (is.character(assay.type)) {
-        names(assay.type) <- assay.type
-    }
+    .assertVector(x = assay.type, type = "character",
+                  validValues = assayNames(se))
+    names(assay.type) <- assay.type
     .checkSEValidity(se, verbose = FALSE)
     if (is.character(regionMidpoints)) {
         # This checks already that each region has width 1
@@ -86,6 +89,10 @@ getAnchorRegions <- function(se,
     }
     .assertVector(x = regionMidpoints, type = "GPos")
     .assertScalar(x = regionWidth, type = "numeric", rngIncl = c(1, Inf))
+    regionWidth <- round(regionWidth)
+    if (regionWidth %% 2 == 0) {
+        stop("regionWidth must be an odd integer")
+    }
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = ignore.strand, type = "logical")
 
@@ -94,6 +101,18 @@ getAnchorRegions <- function(se,
         warning("The strand of some region midpoints is undefined ",
                 "Setting `ignore.strand` to TRUE.")
         ignore.strand <- TRUE
+    }
+
+    # If ignore.strand = TRUE, first make sure that there is no
+    # position that is represented by two or more rows in the SE
+    if (ignore.strand) {
+        covAssays <- c("Nvalid", "Nmod", "mod_prob")
+        if (!any(covAssays %in% assayNames(se))) {
+            stop("None of the preferred coverage assays ",
+                 "(Nvalid, Nmod, mod_prob) are available.")
+        }
+        se <- .pruneAmbiguousStrandPositions(
+            se, assay.type = intersect(covAssays, assayNames(se))[1])
     }
 
     # Create list of GPos objects, one for each region
@@ -131,13 +150,19 @@ getAnchorRegions <- function(se,
                     oldrow <- m[newrow]
                     i <- rep(newrow, ncol(mat))
                     j <- rep(seq_len(ncol(mat)), each = length(newrow))
-                    namat[cbind(i, j)] <- c(as.matrix(mat[oldrow, ]))
+                    val <- as.vector(mat[oldrow, ])
+                    idx <- which(!is.na(val))
+                    namat[cbind(i[idx], j[idx])] <- val[idx]
+                    if (reverseMinusStrandRegions && strand(reg)[1] == "-") {
+                        # reverse relative positions
+                        namat <- namat[seq(nrow(namat), 1), , drop = FALSE]
+                    }
                     namat
                 })
                 # cbind matrices from different regions
                 cbmat <- do.call(SparseArray::cbind, mats)
                 # only keep read-region pairs with at least one non-NA value
-                keep_reads <- which(SparseArray::colSums(cbmat, na.rm = TRUE) > 0)
+                keep_reads <- which(SparseArray::colSums(cbmat, na.rm = TRUE) >= 0)
                 cbmat[, keep_reads, drop = FALSE]
             })
         } else {
@@ -158,6 +183,10 @@ getAnchorRegions <- function(se,
                     newrow <- which(!is.na(m))
                     oldrow <- m[newrow]
                     newmat[newrow, 1] <- assay(se, atp)[oldrow, s]
+                    if (reverseMinusStrandRegions && strand(reg)[1] == "-") {
+                        # reverse relative positions
+                        newmat <- newmat[seq(nrow(newmat), 1), , drop = FALSE]
+                    }
                     newmat
                 }))
                 assayDF[[s]] <- srmat
