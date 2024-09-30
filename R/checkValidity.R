@@ -39,6 +39,14 @@
 #'
 #' @importFrom SummarizedExperiment colData assayNames assay
 .checkSEValidity <- function(se, verbose = FALSE) {
+    stopifnot(is(se, "SummarizedExperiment"))
+
+    if (verbose) {
+        message("Checking assay names")
+    }
+    stopifnot(!is.null(assayNames(se)) &&
+                  all(assayNames(se) != ""))
+
     if (verbose) {
         message("Checking consistency of sample names")
     }

@@ -29,12 +29,16 @@ test_that("validity checks work", {
     expect_message(
         expect_message(
             expect_message(
-                .checkSEValidity(rme_withreads, verbose = TRUE),
+                expect_message(
+                    .checkSEValidity(rme_withreads, verbose = TRUE),
+                    "Checking assay names"),
                 "Checking consistency of sample names"),
             "Read-level assay found"),
         "QC information found, checking consistency")
     expect_message(
-        .checkSEValidity(rme_withoutreads, verbose = TRUE),
+        expect_message(
+            .checkSEValidity(rme_withoutreads, verbose = TRUE),
+            "Checking assay names"),
         "Checking consistency of sample names")
 
     rme1 <- rme_withreads
@@ -43,11 +47,26 @@ test_that("validity checks work", {
         expect_message(
             expect_message(
                 expect_message(
-                    .checkSEValidity(rme1, verbose = TRUE),
+                    expect_message(
+                        .checkSEValidity(rme1, verbose = TRUE),
+                        "Checking assay names"),
                     "Checking consistency of sample names"),
                 "Read-level assay found"),
             "Comparing mod_prob and test"),
         "QC information found, checking consistency")
+
+    rme1 <- rme_withreads
+    assayNames(rme1) <- c("", "", "", "")
+    expect_error(.checkSEValidity(rme1),
+                 '!is.null(assayNames(se)) && all(assayNames(se) != "") is not TRUE', fixed = TRUE)
+
+    rme1 <- rme_withreads
+    expect_equal(length(assays(rme1)), 4)
+    assays(rme1) <- list(assays(rme1)[[1]], assays(rme1)[[2]], assays(rme1)[[3]],
+                         assays(rme1)[[4]])
+    expect_null(assayNames(rme1))
+    expect_error(.checkSEValidity(rme1),
+                 '!is.null(assayNames(se)) && all(assayNames(se) != "") is not TRUE', fixed = TRUE)
 
     rme1 <- rme_withreads
     rme1$QC <- rme1$QC[c(3, 1, 2)]
