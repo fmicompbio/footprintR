@@ -10,7 +10,7 @@
 #' @param se \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level footprinting data. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A string or integer scalar specifying the assay of \code{se}
+#' @param assay.type A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param statistics Character vector specifying the type of statistics to be
@@ -56,13 +56,8 @@ addReadsSummary <- function(se,
     if (!"sample" %in% colnames(colData(se))) {
         stop("'se' needs to contain sample information in colData(se)$sample")
     }
-    if (length(assay.type) != 1L ||
-        (is.numeric(assay.type) &&
-         (assay.type < 1 || assay.type > length(SummarizedExperiment::assays(se)))) ||
-        (is.character(assay.type) && !assay.type %in% SummarizedExperiment::assayNames(se))) {
-        stop("'assay.type' must be a string or integer scalar specifying the ",
-             "assay of se containing the read-level data to be summarized.")
-    }
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = assayNames(se))
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))

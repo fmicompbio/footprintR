@@ -9,7 +9,7 @@ test_that("getAnchorRegions works", {
     # check that the function fails with the wrong input
     expect_error(getAnchorRegions(se = "error"), "'se' must be of class")
     expect_error(getAnchorRegions(se = se, assay.type = "missing"),
-                 "'assay.type' must be a string or integer vector")
+                 "'assay.type' must be of class 'character'")
     expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
                                   regionMidpoints = 1),
                  "'regionMidpoints' must be of class 'GPos'")

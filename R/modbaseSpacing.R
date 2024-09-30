@@ -14,7 +14,7 @@
 #'     with read-level footprinting data, for example returned by
 #'     \code{\link{readModBam}}. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A string or integer scalar specifying the assay of
+#' @param assay.type A character scalar specifying the assay of
 #'     \code{se} containing the read-level modification probabilities.
 #' @param min_mod_prob Numeric scalar giving the minimal modification
 #'     probability for a modified base.
@@ -82,13 +82,8 @@ calcModbaseSpacing <- function(se,
                                dmax = 1000L) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
-    if (length(assay.type) != 1L ||
-        (is.numeric(assay.type) &&
-         (assay.type < 1 || assay.type > length(SummarizedExperiment::assays(se)))) ||
-        (is.character(assay.type) && !assay.type %in% SummarizedExperiment::assayNames(se))) {
-        stop("'assay.type' must be a string or integer scalar specifying the ",
-             "assay of se containing the read-level data to be summarized.")
-    }
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = assayNames(se))
     .assertScalar(x = min_mod_prob, type = "numeric", rngExcl = c(0, 1))
     .assertScalar(x = pool_reads, type = "logical")
     .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))

@@ -18,7 +18,7 @@ with read-level footprinting data, for example returned by
 \code{\link{readModBam}}. Rows should correspond to positions
 and columns to samples.}
 
-\item{assay.type}{A string or integer scalar specifying the assay of
+\item{assay.type}{A character scalar specifying the assay of
 \code{se} containing the read-level modification probabilities.}
 
 \item{min_mod_prob}{Numeric scalar giving the minimal modification

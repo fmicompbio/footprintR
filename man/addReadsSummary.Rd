@@ -17,7 +17,7 @@ addReadsSummary(
 with read-level footprinting data. Rows should correspond to positions
 and columns to samples.}
 
-\item{assay.type}{A string or integer scalar specifying the assay of \code{se}
+\item{assay.type}{A character scalar specifying the assay of \code{se}
 containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
