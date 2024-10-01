@@ -1,6 +1,7 @@
 #include <htslib/sam.h>
 #include <string>
 #include <vector>
+#include <set>
 #include <cstdlib>
 #include <cstdio>
 #include <Rcpp.h>
@@ -196,8 +197,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
     // ... extract *forward* read sequence to char*
     data = bam_get_seq(bamdata);
     if (qseq_len < bamdata->core.l_qseq) {
-        if (qseq)
-            free((void*) qseq);
+        if (qseq) // # nocov start
+            free((void*) qseq); // # nocov end
         qseq = (char*) calloc(bamdata->core.l_qseq + 1, sizeof(char));
         qseq_len = bamdata->core.l_qseq;
     }
@@ -333,6 +334,11 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //' @param regions Character vector specifying the region(s) for which
 //'     to extract overlapping reads, in the form \code{"chr:start-end"}
 //' @param modbase Character scalar defining the modified base to extract.
+//' @param n_alns_to_sample Integer defining the number of alignments
+//'     to randomly sample.
+//' @param tnames_for_sampling String vector with target names (chromosomes)
+//'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
+//'     \code{n_alns_to_sample = 0}.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
 //' @return A named list with elements \code{"read_id"}, \code{qscore},
@@ -367,8 +373,9 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 // [[Rcpp::export]]
 Rcpp::List read_modbam_cpp(std::string inname_str,
                            std::vector<std::string> regions,
-                           int n_alns_to_sample,
                            char modbase,
+                           int n_alns_to_sample,
+                           std::vector<std::string> tnames_for_sampling,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
     hts_set_log_level(HTS_LOG_OFF);
@@ -440,19 +447,88 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         goto end; // # nocov end
     }
 
-    /// WAS HERE
-    /// TODO:
-    /// - add if (n_alns_to_sample > 0)
-    //  - if true: get bam file size, set bgzf file pointer to a random place, bgzf_seek?, sam_read_rec? (similar to what is done in https://github.com/samtools/htslib/blob/5d8a1866501a4e46a6f84e37730292501ccb2180/hts.c#L4272)
-    /// - else: current (region-based) iterator
-
     if (n_alns_to_sample > 0) {
         // random-sampling-based alignment reading
         // ---------------------------------------------------------------------
-        had_error = true;
-        snprintf(buffer, buffer_len,
-                 "n_alns_to_sample > 0 is not yet implemented\n");
-        goto end;
+
+        // check if tnames_for_sampling exist and count alignments
+        uint64_t mapped = 0, unmapped = 0, total_for_sampling = 0;
+        std::set<std::string> tnames_for_sampling_set(tnames_for_sampling.begin(), tnames_for_sampling.end());
+        double rand_val = 0.0;
+        regcnt = 0;
+        regions_c = (char**) calloc((unsigned int) tnames_for_sampling.size(),
+                                    sizeof(char*));
+        for (i = 0; i < in_samhdr->n_targets; i++) {
+            // for each target i that is in tnames_for_sampling_set,
+            // get the number of mapped and unmapped records
+            // and add it to regions_c
+            if (tnames_for_sampling_set.find(in_samhdr->target_name[i]) !=
+                  tnames_for_sampling_set.end() &&
+                hts_idx_get_stat(idx, i, &mapped, &unmapped) == 0) {
+                total_for_sampling += mapped;
+                regions_c[regcnt] = in_samhdr->target_name[i];
+                regcnt++;
+            }
+        }
+
+        // check if we have enough alignments to sample from
+        if (total_for_sampling < n_alns_to_sample) {
+            had_error = true;
+            snprintf(buffer, buffer_len,
+                     "Cannot sample %d alignments from a total of %" PRIu64 "\n",
+                     n_alns_to_sample, total_for_sampling);
+            goto end;
+        }
+        double keep_aln_fraction = (double) n_alns_to_sample / total_for_sampling;
+        if (verbose) {
+            snprintf(buffer, buffer_len, "    sampling %g%% of alignments", keep_aln_fraction * 100);
+            Rcpp::message(Rcpp::wrap(buffer));
+        }
+
+        // create multi-region iterator
+        if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+            goto end; // # nocov end
+        }
+
+        // iterate over regions
+        if (verbose) {
+            snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u targets", regcnt);
+            Rcpp::message(Rcpp::wrap(buffer));
+        }
+        // read overlapping alignments using iterator
+        while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
+            rand_val = R::runif(0, 1);
+            if (!(bamdata->core.flag & BAM_FUNMAP) &&
+                rand_val < keep_aln_fraction) {
+                success = process_bam_record(bamdata,          // bam record
+                                             alncnt,           // alignment counter
+                                             qseq,             // forward read sequence
+                                             ms,               // modification state struct
+                                             had_error,        // error flag
+                                             buffer_len,       // length of message buffer
+                                             buffer,           // message buffer
+                                             modbase,          // modified base to analyze
+                                             in_samhdr,        // sam file header
+                                             n_unaligned,      // number of unaligned modified bases
+                                             n_total,          // total number of modified bases
+                                             // vectors for return values
+                                             read_id,
+                                             qscore,
+                                             call_code,
+                                             canonical_base,
+                                             ref_mod_strand,
+                                             chrom,
+                                             aligned_read_position,
+                                             forward_read_position,
+                                             ref_position,
+                                             mod_prob);
+                if (success != 0) { // # nocov start
+                    goto end;
+                } // # nocov end
+            }
+        }
 
     } else {
         // region-based alignment reading
@@ -504,12 +580,13 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 goto end;
             }
         }
-        if (c != -1) {
-            had_error = true;
-            snprintf(buffer, buffer_len,
-                     "Error while reading from %s - aborting\n", inname);
-            goto end;
-        }
+    }
+
+    if (c != -1) {
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Error while reading from %s - aborting\n", inname);
+        goto end;
     }
 
     if (verbose) {
@@ -521,10 +598,10 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     end:
         //cleanup
-        if (qseq) {
+        if (qseq) { // # nocov start
             free((void*) qseq);
             qseq = NULL;
-        }
+        } // # nocov end
         if (regions_c) {
             free((void*) regions_c);
             regions_c = NULL;
