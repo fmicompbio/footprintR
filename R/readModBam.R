@@ -18,15 +18,18 @@
 #'     positions will typically extend out of the specified regions.
 #'     If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
 #'     ignored.
-#' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
-#'     and \code{nAlnsToSample} randomly selected alignments are read from each
-#'     of the \code{bamfiles}.
 #' @param modbase Character vector defining the modified base for each sample.
 #'     If \code{modbase} is a named vector, the names should correspond to
 #'     the names of \code{bamfiles}. Otherwise, it will be assumed that the
 #'     elements are in the same order as the files in \code{bamfiles}. If
 #'     \code{modbase} has length 1, the same modified base will be used for
 #'     all samples.
+#' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
+#'     and approximately \code{nAlnsToSample} randomly selected alignments on
+#'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
+#' @param seqnamesToSampleFrom A character vector with one or several sequence
+#'     names (chromosomes) from which to sample alignments from (only used if
+#'     `nAlnsToSample` is greater than zero).
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -63,8 +66,9 @@
 #' @export
 readModBam <- function(bamfiles,
                        regions = NULL,
-                       nAlnsToSample = 0,
                        modbase,
+                       nAlnsToSample = 0,
+                       seqnamesToSampleFrom = "chr19",
                        seqinfo = NULL,
                        ncpu = 1L,
                        verbose = FALSE) {
@@ -78,17 +82,10 @@ readModBam <- function(bamfiles,
     } else if (any(duplicated(names(bamfiles)))) {
         stop("`names(bamfiles)` are not unique")
     }
-    .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
-    if (nAlnsToSample > 0) {
-        if (length(regions) > 0) {
-            warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
-        }
-        regions <- GRanges()
-    }
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
     }
-    .assertVector(x = regions, type = "GRanges")
+    .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
     if (length(modbase) == 1) {
         modbase <- rep(modbase, length(bamfiles))
     }
@@ -107,6 +104,14 @@ readModBam <- function(bamfiles,
         stop("invalid `modbase` values: ",
              paste(unique(modbase[i]), collapse = ", "))
     }
+    .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
+    if (nAlnsToSample > 0) {
+        if (length(regions) > 0) {
+            warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
+        }
+        regions <- GRanges()
+    }
+    .assertVector(x = seqnamesToSampleFrom, type = "character")
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
             (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
@@ -129,8 +134,9 @@ readModBam <- function(bamfiles,
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
         resL <- read_modbam_cpp(inname_str = bamfiles[nm],
                                 regions = regions_str,
-                                n_alns_to_sample = as.integer(nAlnsToSample),
                                 modbase = modbase[nm],
+                                n_alns_to_sample = as.integer(nAlnsToSample),
+                                tnames_for_sampling = seqnamesToSampleFrom,
                                 verbose = verbose)
 
         # convert 0-based ref_position to 1-based

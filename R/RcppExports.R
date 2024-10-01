@@ -48,6 +48,11 @@ get_unmodified_base <- function(b) {
 #' @param regions Character vector specifying the region(s) for which
 #'     to extract overlapping reads, in the form \code{"chr:start-end"}
 #' @param modbase Character scalar defining the modified base to extract.
+#' @param n_alns_to_sample Integer defining the number of alignments
+#'     to randomly sample.
+#' @param tnames_for_sampling String vector with target names (chromosomes)
+#'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
+#'     \code{n_alns_to_sample = 0}.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A named list with elements \code{"read_id"}, \code{qscore},
@@ -79,8 +84,8 @@ get_unmodified_base <- function(b) {
 #'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, n_alns_to_sample, modbase, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, n_alns_to_sample, modbase, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose)
 }
 
 #' @title Sample Entropy of Time series signal
