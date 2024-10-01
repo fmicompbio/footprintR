@@ -17,14 +17,33 @@ test_that(".pruneAmbiguousStrandPositions works", {
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assay.type = c("Nvalid", "Nmod")),
                  "'assay.type' must have length 1")
+    expect_error(.pruneAmbiguousStrandPositions(se = se,
+                                                assay.type = "Nvalid",
+                                                verbose = "TRUE"),
+                 "'verbose' must be of class 'logical'")
+    expect_error(.pruneAmbiguousStrandPositions(se = se,
+                                                assay.type = "Nvalid",
+                                                verbose = c(TRUE, FALSE)),
+                 "'verbose' must have length 1")
 
     expect_equal(nrow(se), 9127L)
     expect_equal(length(unique(paste0(seqnames(rowRanges(se)),
                                       pos(rowRanges(se))))), 8955L)
-    sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "Nvalid")
+    sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "Nvalid",
+                                             verbose = FALSE)
     expect_equal(nrow(sefilt), length(unique(paste0(seqnames(rowRanges(se)),
                                                     pos(rowRanges(se))))))
-    sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "mod_prob")
+    expect_message({
+        sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "mod_prob",
+                                                 verbose = TRUE)},
+        "172 rows removed to ensure"
+    )
     expect_equal(nrow(sefilt), length(unique(paste0(seqnames(rowRanges(se)),
                                                     pos(rowRanges(se))))))
+    expect_identical(se[rownames(sefilt), ], sefilt)
+    expect_message({
+        sefilt <- .pruneAmbiguousStrandPositions(sefilt, assay.type = "mod_prob",
+                                                 verbose = TRUE)},
+        "No genomic positions represented by multiple rows found"
+    )
 })

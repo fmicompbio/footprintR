@@ -21,7 +21,13 @@
 #'     single column of NA values).
 #' @param ignore.strand Logical scalar, whether to ignore the strand information
 #'     when matching anchor regions with observations. Will be passed on to
-#'     \code{GenomicRanges::match()}.
+#'     \code{GenomicRanges::match()}. If \code{TRUE}, a pruning step will be
+#'     applied to ensure that each genomic position is represented by at most
+#'     one row in the object. If multiple rows are found corresponding to the
+#'     same position (on different strands), the one with the highest number of
+#'     supporting reads (determined by the \code{Nvalid}, \code{Nmod},
+#'     or \code{mod_prob} assay, in this preference order, depending on what
+#'     is present in \code{se}) will be retained.
 #' @param reverseMinusStrandRegions Logical scalar. If \code{TRUE}, data
 #'     extracted from regions on the negative strand will be reversed before
 #'     they are concatenated with the rest of the data, so that negative
@@ -95,6 +101,8 @@ getAnchorRegions <- function(se,
     }
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = ignore.strand, type = "logical")
+    .assertScalar(x = reverseMinusStrandRegions, type = "logical")
+    .assertScalar(x = verbose, type = "logical")
 
     if (any(GenomicRanges::strand(regionMidpoints) == "*") &&
         !ignore.strand) {
@@ -106,16 +114,23 @@ getAnchorRegions <- function(se,
     # If ignore.strand = TRUE, first make sure that there is no
     # position that is represented by two or more rows in the SE
     if (ignore.strand) {
+        if (verbose) {
+            message("Checking for positions represented by multiple rows")
+        }
         covAssays <- c("Nvalid", "Nmod", "mod_prob")
         if (!any(covAssays %in% assayNames(se))) {
             stop("None of the preferred coverage assays ",
                  "(Nvalid, Nmod, mod_prob) are available.")
         }
         se <- .pruneAmbiguousStrandPositions(
-            se, assay.type = intersect(covAssays, assayNames(se))[1])
+            se, assay.type = intersect(covAssays, assayNames(se))[1],
+            verbose = verbose)
     }
 
     # Create list of GPos objects, one for each region
+    if (verbose) {
+        message("Creating list of GPos objects for the regions")
+    }
     regions <- lapply(S4Vectors::split(regionMidpoints), function(gp) {
         GPos(seqnames = seqnames(gp),
              pos = seq(pos(gp) - floor((regionWidth - 1) / 2),
@@ -128,6 +143,9 @@ getAnchorRegions <- function(se,
     }, "")
 
     # Create new assays
+    if (verbose) {
+        message("Subsetting assays to selected regions")
+    }
     assayL <- lapply(assay.type, function(atp) {
         if (atp %in% .getReadLevelAssayNames(se)) {
             # read-level assays (DataFrames with NaArrays)
@@ -196,6 +214,9 @@ getAnchorRegions <- function(se,
     })
 
     # Record the region corresponding to each column and add to colData
+    if (verbose) {
+        message("Assembling SummarizedExperiment object")
+    }
     cold <- DataFrame(
         sample = colnames(se)
     )
@@ -216,7 +237,7 @@ getAnchorRegions <- function(se,
 
     # Assemble SE
     suppressWarnings({
-        # currently, assigning to assays triggers a depreceation warning
+        # currently, assigning to assays triggers a deprecation warning
         # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
         # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
         seout <- SummarizedExperiment::SummarizedExperiment(
@@ -240,6 +261,9 @@ getAnchorRegions <- function(se,
                 colnames(assay(seout, atp)[vapply(assay(seout, atp), ncol, 0) > 0]))
         }
         seout <- seout[, keepSamples]
+        if (verbose) {
+            message("Dropping ", ncol(se) - ncol(seout), " samples without reads")
+        }
     }
 
     seout

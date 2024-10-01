@@ -38,7 +38,13 @@ single column of NA values).}
 
 \item{ignore.strand}{Logical scalar, whether to ignore the strand information
 when matching anchor regions with observations. Will be passed on to
-\code{GenomicRanges::match()}.}
+\code{GenomicRanges::match()}. If \code{TRUE}, a pruning step will be
+applied to ensure that each genomic position is represented by at most
+one row in the object. If multiple rows are found corresponding to the
+same position (on different strands), the one with the highest number of
+supporting reads (determined by the \code{Nvalid}, \code{Nmod},
+or \code{mod_prob} assay, in this preference order, depending on what
+is present in \code{se}) will be retained.}
 
 \item{reverseMinusStrandRegions}{Logical scalar. If \code{TRUE}, data
 extracted from regions on the negative strand will be reversed before

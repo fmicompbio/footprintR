@@ -48,6 +48,28 @@ test_that("getAnchorRegions works", {
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = c(TRUE, FALSE)),
                  "'ignore.strand' must have length 1")
+    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 9, prune = TRUE,
+                                  ignore.strand = TRUE,
+                                  reverseMinusStrandRegions = "TRUE"),
+                 "'reverseMinusStrandRegions' must be of class 'logical'")
+    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 9, prune = TRUE,
+                                  ignore.strand = TRUE,
+                                  reverseMinusStrandRegions = c(TRUE, FALSE)),
+                 "'reverseMinusStrandRegions' must have length 1")
+    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 9, prune = TRUE,
+                                  ignore.strand = TRUE, verbose = "TRUE"),
+                 "'verbose' must be of class 'logical'")
+    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+                                  regionMidpoints = "chr1:6930000:-",
+                                  regionWidth = 9, prune = TRUE,
+                                  ignore.strand = TRUE, verbose = c(TRUE, FALSE)),
+                 "'verbose' must have length 1")
     se1 <- se
     assayNames(se1) <- paste0(assayNames(se1), "suffix")
     expect_error(getAnchorRegions(se = se1, assay.type = "mod_probsuffix",
@@ -76,6 +98,14 @@ test_that("getAnchorRegions works", {
         }, "The strand of some region midpoints is undefined")
 
     expect_identical(ar1, ar2)
+    for (i in seq_len(ncol(assay(ar1, "mod_prob")$s1))) {
+        expect_identical(assay(ar1, "mod_prob")$s1[, i],
+                         assay(ar3, "mod_prob")$s1[, i])
+    }
+    for (i in seq_len(ncol(assay(ar1, "Nvalid")$s2))) {
+        expect_identical(assay(ar1, "Nvalid")$s2[, i],
+                         assay(ar3, "Nvalid")$s2[, i])
+    }
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
@@ -401,10 +431,53 @@ test_that("getAnchorRegions works", {
 
     # ... region where neither sample has any overlapping reads
     # ... ... with pruning
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
-                            regionMidpoints = c("chr1:692915:+"),
-                            regionWidth = 9, prune = TRUE,
-                            ignore.strand = FALSE)
+    expect_message(
+        expect_message(
+            expect_message(
+                expect_message(
+                    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+                                            regionMidpoints = c("chr1:692915:+"),
+                                            regionWidth = 9, prune = TRUE,
+                                            ignore.strand = FALSE, verbose = TRUE),
+                    "Creating list of GPos objects for the regions"),
+                "Subsetting assays to selected regions"),
+            "Assembling SummarizedExperiment object"),
+        "Dropping 2 samples without reads")
+    expect_s4_class(ar1, "SummarizedExperiment")
+    expect_equal(colnames(ar1), character(0))
+    expect_equal(dim(ar1), c(9, 0))
+    expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
+    expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
+    expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
+    expect_equal(SummarizedExperiment::rowData(ar1)$relpos, seq(-4, 4))
+    # get reads in each sample that overlap each of the regions
+    expect_null(assay(ar1, "mod_prob")$s1)
+    expect_null(assay(ar1, "mod_prob")$s2)
+    # colData
+    expect_named(colData(ar1), c("sample", "region_mod_prob", "region_Nvalid"))
+    expect_s4_class(colData(ar1), "DataFrame")
+    expect_s4_class(ar1$region_mod_prob, "List")
+    expect_length(ar1$region_mod_prob, 0)
+    expect_s4_class(ar1$region_Nvalid, "List")
+    expect_length(ar1$region_Nvalid, 0)
+
+    # ... ... with pruning, ignore.strand=TRUE
+    expect_message(
+        expect_message(
+            expect_message(
+                expect_message(
+                    expect_message(
+                        expect_message(
+                            ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+                                                    regionMidpoints = c("chr1:692915:+"),
+                                                    regionWidth = 9, prune = TRUE,
+                                                    ignore.strand = TRUE, verbose = TRUE),
+                            "Checking for positions represented by multiple rows"),
+                        "172 rows removed to ensure that each genomic position"),
+                    "Creating list of GPos objects for the regions"),
+                "Subsetting assays to selected regions"),
+            "Assembling SummarizedExperiment object"),
+        "Dropping 2 samples without reads")
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
