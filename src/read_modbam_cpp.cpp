@@ -454,11 +454,14 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         // check if tnames_for_sampling exist and count alignments
         uint64_t mapped = 0, unmapped = 0, total_for_sampling = 0;
         std::set<std::string> tnames_for_sampling_set(tnames_for_sampling.begin(), tnames_for_sampling.end());
+        std::set<std::string> tnames_existing;
         double rand_val = 0.0;
         regcnt = 0;
         regions_c = (char**) calloc((unsigned int) tnames_for_sampling.size(),
                                     sizeof(char*));
         for (i = 0; i < in_samhdr->n_targets; i++) {
+            tnames_existing.insert(in_samhdr->target_name[i]);
+
             // for each target i that is in tnames_for_sampling_set,
             // get the number of mapped and unmapped records
             // and add it to regions_c
@@ -470,9 +473,15 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 regcnt++;
             }
         }
+        for (i = 0; i < (int)tnames_for_sampling.size(); i++) {
+            if (tnames_existing.find(tnames_for_sampling[i]) == tnames_existing.end()) {
+                Rcpp::warning("Ignoring unknown target name: %s",
+                              tnames_for_sampling[i].c_str());
+            }
+        }
 
         // check if we have enough alignments to sample from
-        if (total_for_sampling < n_alns_to_sample) {
+        if (total_for_sampling < (uint64_t)n_alns_to_sample) {
             had_error = true;
             snprintf(buffer, buffer_len,
                      "Cannot sample %d alignments from a total of %" PRIu64 "\n",
@@ -481,7 +490,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         }
         double keep_aln_fraction = (double) n_alns_to_sample / total_for_sampling;
         if (verbose) {
-            snprintf(buffer, buffer_len, "    sampling %g%% of alignments", keep_aln_fraction * 100);
+            snprintf(buffer, buffer_len, "    sampling alignments with probability %g", keep_aln_fraction);
             Rcpp::message(Rcpp::wrap(buffer));
         }
 

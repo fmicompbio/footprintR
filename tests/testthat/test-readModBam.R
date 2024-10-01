@@ -40,8 +40,10 @@ test_that("readModBam works", {
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", "error"),
                  "must be of class 'numeric'")
     expect_error(
-        expect_warning(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 10, "error"),
-                       "Ignoring `regions`"),
+        expect_warning(
+            expect_warning(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 10, "error"),
+                           "Ignoring `regions`"),
+            "Ignoring unknown target name"),
         "Cannot sample 10 alignments from a total of 0")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, "chr1", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
@@ -110,7 +112,7 @@ test_that("readModBam works", {
                                                     verbose = TRUE),
                                 "extracting base modifications"),
                             "opening input file"),
-                        "sampling 50% of alignments"),
+                        "sampling alignments with probability 0.5"),
                     "reading alignments overlapping"),
                 "removed 2006 unaligned"),
             "finding unique genomic"),

@@ -150,7 +150,10 @@ test_that("read_modbam_cpp works", {
                                     which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
                                 ))
     set.seed(1L)
-    res7a <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", FALSE)
+    expect_warning(
+        res7a <- read_modbam_cpp(modbamfile, "chr1", "a", 3, c("chr1", "error"), FALSE),
+        "Ignoring unknown target name"
+    )
     set.seed(1L)
     res7b <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", FALSE)
     expect_message(
