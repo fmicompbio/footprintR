@@ -21,21 +21,31 @@ test_that("readModBam works", {
     names(extractfiles) <- names(modbamfiles)
 
     # invalid arguments
-    expect_error(readModBam("error", "chr1:6940000-6955000", "a"),
+    expect_error(readModBam("error", "chr1:6940000-6955000", "a", 0),
                  "not all `bamfiles` exist")
     expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
-                            "chr1:6940000-6955000", "a"),
+                            "chr1:6940000-6955000", "a", 0),
                  "are not unique")
-    expect_error(readModBam(modbamfiles, "error", "a"),
+    expect_error(readModBam(modbamfiles, "error", "a", 0),
                  "GRanges object must contain")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "Z"),
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "Z", 0),
                  "invalid `modbase` values")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", c("a", "a", "a")),
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", c("a", "a", "a"), 0),
                  "must have length")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000",
-                            c(sample1 = "a", sample3 = "a")),
+                            c(sample1 = "a", sample3 = "a"), 0),
                  "names of `modbase` and `bamfiles` don't agree")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", -1),
+                 "must be within .0,Inf.")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", "error"),
+                 "must be of class 'numeric'")
+    expect_error(
+        expect_warning(
+            expect_warning(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 10, "error"),
+                           "Ignoring `regions`"),
+            "Ignoring unknown target name"),
+        "Cannot sample 10 alignments from a total of 0")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, "chr1", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
 
     # expected results
@@ -48,38 +58,71 @@ test_that("readModBam works", {
     expect_message(expect_message(expect_message(expect_message(
         expect_message(expect_message(expect_message(expect_message(
             expect_message(
-                se1 <- readModBam(bamfiles = modbamfiles,
-                                  regions = reg1,
-                                  modbase = "a", verbose = TRUE)
+                se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                                  modbase = "a", nAlnsToSample = 0,
+                                  seqnamesToSampleFrom = "chr1", verbose = TRUE)
     )))))))))
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
+                      nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
                       modbase = "a",
+                      nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       verbose = FALSE)
     se4 <- readModBam(bamfiles = modbamfiles,
                       regions = reg4,
                       modbase = c("a", "m"),
+                      nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       verbose = FALSE)
     se5a <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1],
                        modbase = "a",
+                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                        verbose = FALSE)
     se5b <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1:2],
                        modbase = "a",
+                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                        verbose = FALSE)
-    aln5a <- scanBam(file = modbamfiles[1], param = ScanBamParam(
+    aln5a <- Rsamtools::scanBam(file = modbamfiles[1],
+                                param = Rsamtools::ScanBamParam(
         what = "qname",
         which = GRanges(reg5[1])
     ))
-    aln5b <- scanBam(file = modbamfiles[1], param = ScanBamParam(
+    aln5b <- Rsamtools::scanBam(file = modbamfiles[1],
+                                param = Rsamtools::ScanBamParam(
         what = "qname",
         which = GRanges(reg5[1:2])
     ))
+    set.seed(55L)
+    expect_message(
+        expect_message(
+            expect_message(
+                expect_message(
+                    expect_message(
+                        expect_message(
+                            expect_message(
+                                se6a  <- readModBam(bamfiles = modbamfiles[1],
+                                                    regions = NULL,
+                                                    modbase = "a",
+                                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                                    verbose = TRUE),
+                                "extracting base modifications"),
+                            "opening input file"),
+                        "sampling alignments with probability 0.5"),
+                    "reading alignments overlapping"),
+                "removed 2006 unaligned"),
+            "finding unique genomic"),
+        "collapsed 16095 positions to 6852")
+    set.seed(55L)
+    se6b  <- readModBam(bamfiles = modbamfiles[1],
+                        regions = NULL,
+                        modbase = "a",
+                        nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                        verbose = FALSE)
 
     # ... structure
     expect_s4_class(se1, "RangedSummarizedExperiment")
@@ -88,6 +131,8 @@ test_that("readModBam works", {
     expect_s4_class(se4, "RangedSummarizedExperiment")
     expect_s4_class(se5a, "RangedSummarizedExperiment")
     expect_s4_class(se5b, "RangedSummarizedExperiment")
+    expect_s4_class(se6a, "RangedSummarizedExperiment")
+    expect_s4_class(se6b, "RangedSummarizedExperiment")
 
     expect_s4_class(rowRanges(se1), "GPos")
     expect_s4_class(rowRanges(se2), "GPos")
@@ -95,6 +140,8 @@ test_that("readModBam works", {
     expect_s4_class(rowRanges(se4), "GPos")
     expect_s4_class(rowRanges(se5a), "GPos")
     expect_s4_class(rowRanges(se5b), "GPos")
+    expect_s4_class(rowRanges(se6a), "GPos")
+    expect_s4_class(rowRanges(se6b), "GPos")
 
     expected_coldata_names <- c("sample", "modbase", "n_reads", "qscore")
     expect_identical(colnames(colData(se1)), expected_coldata_names)
@@ -103,6 +150,8 @@ test_that("readModBam works", {
     expect_identical(colnames(colData(se4)), expected_coldata_names)
     expect_identical(colnames(colData(se5a)), expected_coldata_names)
     expect_identical(colnames(colData(se5b)), expected_coldata_names)
+    expect_identical(colnames(colData(se6a)), expected_coldata_names)
+    expect_identical(colnames(colData(se6b)), expected_coldata_names)
 
     expect_identical(se1$sample, names(modbamfiles))
     expect_identical(se2$sample, c("s1", "s2"))
@@ -110,6 +159,8 @@ test_that("readModBam works", {
     expect_identical(se4$sample, names(modbamfiles))
     expect_identical(se5a$sample, names(modbamfiles)[1])
     expect_identical(se5b$sample, names(modbamfiles)[1])
+    expect_identical(se6a$sample, names(modbamfiles)[1])
+    expect_identical(se6b$sample, names(modbamfiles)[1])
 
     expect_identical(assayNames(se1), "mod_prob")
     expect_identical(assayNames(se2), "mod_prob")
@@ -117,6 +168,8 @@ test_that("readModBam works", {
     expect_identical(assayNames(se4), "mod_prob")
     expect_identical(assayNames(se5a), "mod_prob")
     expect_identical(assayNames(se5b), "mod_prob")
+    expect_identical(assayNames(se6a), "mod_prob")
+    expect_identical(assayNames(se6b), "mod_prob")
 
     expect_s4_class(assay(se1, "mod_prob"), "DFrame")
     expect_s4_class(assay(se2, "mod_prob"), "DFrame")
@@ -124,6 +177,8 @@ test_that("readModBam works", {
     expect_s4_class(assay(se4, "mod_prob"), "DFrame")
     expect_s4_class(assay(se5a, "mod_prob"), "DFrame")
     expect_s4_class(assay(se5b, "mod_prob"), "DFrame")
+    expect_s4_class(assay(se6a, "mod_prob"), "DFrame")
+    expect_s4_class(assay(se6b, "mod_prob"), "DFrame")
 
     expect_s4_class(assay(se1, "mod_prob")[[1]], "NaMatrix")
     expect_s4_class(assay(se2, "mod_prob")[[1]], "NaMatrix")
@@ -131,6 +186,8 @@ test_that("readModBam works", {
     expect_s4_class(assay(se4, "mod_prob")[[1]], "NaMatrix")
     expect_s4_class(assay(se5a, "mod_prob")[[1]], "NaMatrix")
     expect_s4_class(assay(se5b, "mod_prob")[[1]], "NaMatrix")
+    expect_s4_class(assay(se6a, "mod_prob")[[1]], "NaMatrix")
+    expect_s4_class(assay(se6b, "mod_prob")[[1]], "NaMatrix")
 
     expect_equal(vapply(assay(se1, "mod_prob"), ncol, 0), se1$n_reads)
     expect_equal(vapply(assay(se2, "mod_prob"), ncol, 0), se2$n_reads)
@@ -138,6 +195,8 @@ test_that("readModBam works", {
     expect_equal(vapply(assay(se4, "mod_prob"), ncol, 0), se4$n_reads)
     expect_equal(vapply(assay(se5a, "mod_prob"), ncol, 0), se5a$n_reads)
     expect_equal(vapply(assay(se5b, "mod_prob"), ncol, 0), se5b$n_reads)
+    expect_equal(vapply(assay(se6a, "mod_prob"), ncol, 0), se6a$n_reads)
+    expect_equal(vapply(assay(se6b, "mod_prob"), ncol, 0), se6b$n_reads)
 
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -218,4 +277,8 @@ test_that("readModBam works", {
     expect_identical(idx, rownames(se5a))
     expect_identical(mp5a[idx, "sample1"][, paste0("sample1-", aln5a[[1]]$qname)],
                      mp5b[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)])
+
+    # ... content of se6a and se6b
+    expect_identical(se6a, se6b)
+    expect_identical(dim(assay(se6a)$sample1), c(6852L, 6L))
 })
