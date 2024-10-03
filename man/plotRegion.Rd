@@ -33,7 +33,10 @@ types are:
 \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 color representing the values in the assay).}
 \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
-represeting the values in the assay).}
+representing the values in the assay).}
+\item{\code{"HeatmapFilled"}}{: Heatmap plot (tiles with the color
+representing the values in the assay), with gaps between
+observations filled in by linear interpolation.}
 }
 If \code{NULL}, do not plot any read-level tracks.}
 
@@ -106,16 +109,20 @@ plotRegion(seB, region = "chr1:6935800-6935900",
 plotRegion(seB, region = "chr1:6935800-6935900",
            tracks.summary = NULL,
            tracks.reads = list(mod_prob = "Heatmap"))
+plotRegion(seB, region = "chr1:6935800-6935900",
+           tracks.summary = NULL,
+           tracks.reads = list(mod_prob = "HeatmapFilled"))
 
 plotRegion(seB, region = "chr1:6935400-6935450",
            tracks.summary = NULL,
-           tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
+           tracks.reads = list(mod_prob = c("Lollipop", "HeatmapFilled")),
            modbaseSpace = TRUE)
 
 }
 \seealso{
-\code{\link{readModkitExtract}} and \code{\link{readBedMethyl}} for
-reading read-level and summarized footprinting data.
+\code{\link{readModBam}}, \code{\link{readModkitExtract}} and
+\code{\link{readBedMethyl}} for reading read-level and summarized
+footprinting data.
 }
 \author{
 Charlotte Soneson, Michael Stadler

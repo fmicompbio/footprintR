@@ -1,3 +1,14 @@
+# global data.frame of plot types and characteristics
+plotRegionPlotTypes <- data.frame(
+    name = c("Point", "Smooth", "PointSmooth",
+             "Lollipop", "Heatmap", "HeatmapFilled"),
+    type = c("summary", "summary", "summary",
+             "reads", "reads", "reads"),
+    interpolates = c(FALSE, FALSE, FALSE,
+                     FALSE, FALSE, TRUE)
+)
+
+
 #' Plot single-molecule footprinting data for a single genomic region.
 #'
 #' @description
@@ -22,7 +33,10 @@
 #'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
-#'             represeting the values in the assay).}
+#'             representing the values in the assay).}
+#'         \item{\code{"HeatmapFilled"}}{: Heatmap plot (tiles with the color
+#'             representing the values in the assay), with gaps between
+#'             observations filled in by linear interpolation.}
 #'     }
 #'     If \code{NULL}, do not plot any read-level tracks.
 #' @param tracks.summary A named list where the names correspond to assay names
@@ -88,17 +102,21 @@
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "Heatmap"))
+#' plotRegion(seB, region = "chr1:6935800-6935900",
+#'            tracks.summary = NULL,
+#'            tracks.reads = list(mod_prob = "HeatmapFilled"))
 #'
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
+#'            tracks.reads = list(mod_prob = c("Lollipop", "HeatmapFilled")),
 #'            modbaseSpace = TRUE)
 #'
-#' @seealso \code{\link{readModkitExtract}} and \code{\link{readBedMethyl}} for
-#'     reading read-level and summarized footprinting data.
+#' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and
+#'     \code{\link{readBedMethyl}} for reading read-level and summarized
+#'     footprinting data.
 #'
 #' @importFrom BiocGenerics start
-#' @importFrom SummarizedExperiment assay assayNames rowData
+#' @importFrom SummarizedExperiment assay assayNames rowData nrow
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels
 #' @importFrom IRanges IRanges subsetByOverlaps
@@ -129,13 +147,34 @@ plotRegion <- function(se,
         .assertVector(x = names(tracks.reads), type = "character",
                       allowNULL = FALSE, validValues = assayNames(se))
     }
+    if (length(err <- setdiff(
+        unlist(tracks.reads),
+        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "reads"]))) {
+        stop("Unknown plot type in tracks.reads: ", paste(err, collapse = ", "))
+    }
     .assertVector(x = tracks.summary, type = "list", allowNULL = TRUE)
     if (!is.null(tracks.summary)) {
         .assertVector(x = names(tracks.summary), type = "character",
                       allowNULL = FALSE, validValues = c("FracMod", assayNames(se)))
     }
+    if (length(err <- setdiff(
+        unlist(tracks.summary),
+        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "summary"]))) {
+        stop("Unknown plot type in tracks.summary: ", paste(err, collapse = ", "))
+    }
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+
+    # don't allow both modbaseSpace and interpolate
+    if (modbaseSpace && any(unlist(c(tracks.reads, tracks.summary)) %in%
+                            plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates])) {
+        warning("Plotting in `modbaseSpace` is not allowed if using\n",
+                "  plot types that interpolate the data (",
+                paste(plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates],
+                      collapse = ", "), ")\n",
+                "  Setting modbaseSpace=FALSE")
+        modbaseSpace <- FALSE
+    }
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
@@ -145,7 +184,7 @@ plotRegion <- function(se,
         }
         nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
             vcountPattern(pat, rowData(se)$sequence.context, fixed = FALSE)
-        }))
+        }), rep(0, nrow(se)))
         se <- se[nmatch > 0]
     }
 
@@ -186,7 +225,11 @@ plotRegion <- function(se,
                 Lollipop = .plotReadsLollipop(x = se, aname = aname,
                                               modbaseSpace = modbaseSpace),
                 Heatmap = .plotReadsHeatmap(x = se, aname = aname,
-                                            modbaseSpace = modbaseSpace)
+                                            modbaseSpace = modbaseSpace,
+                                            interpolate = FALSE),
+                HeatmapFilled = .plotReadsHeatmap(x = se, aname = aname,
+                                                  modbaseSpace = modbaseSpace,
+                                                  interpolate = TRUE)
             )
         }
     }
@@ -297,6 +340,8 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
+#' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
+#'     observations are filled in by linear interpolation.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -310,9 +355,10 @@ plotRegion <- function(se,
                               drawRead = TRUE,
                               linewidthTiles = 0,
                               orderReads = TRUE,
-                              modbaseSpace = FALSE) {
+                              modbaseSpace = FALSE,
+                              interpolate = FALSE) {
     # prepare plot data
-    df <- .preparePlotdataReads(x, aname, modbaseSpace)
+    df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
 
     # order reads
     if (orderReads) {
@@ -470,6 +516,8 @@ plotRegion <- function(se,
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the "position"
 #'     column in the return data frame is categorical, instead of giving
 #'     the numeric position in the genome.
+#' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
+#'     observations are filled in by linear interpolation.
 #'
 #' @importFrom BiocGenerics start colnames
 #' @importFrom SummarizedExperiment colData assay
@@ -477,23 +525,76 @@ plotRegion <- function(se,
 #'
 #' @noRd
 #' @keywords internal
-.preparePlotdataReads <- function(x, aname, modbaseSpace = FALSE) {
+.preparePlotdataReads <- function(x,
+                                  aname,
+                                  modbaseSpace = FALSE,
+                                  interpolate = FALSE) {
     assaydat <- SummarizedExperiment::assay(x, aname)
     # `aname` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
-    i <- SparseArray::nnawhich(assaydat, arr.ind = TRUE)
-    df <- data.frame(
-        position = start(x)[i[,1]],
-        read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
-        sample = sample_ids[i[,2]],
-        value = SparseArray::nnavals(assaydat))
+    if (interpolate) {
+        assaydat <- .interpolateColumns(assaydat, start(x))
+        df <- data.frame(
+            position = attr(assaydat, "pos"),
+            read = factor(rep(colnames(assaydat), each = nrow(assaydat)),
+                          levels = colnames(assaydat)),
+            sample = rep(sample_ids, each = nrow(assaydat)),
+            value = as.vector(assaydat))
+    } else {
+        i <- SparseArray::nnawhich(assaydat, arr.ind = TRUE)
+        df <- data.frame(
+            position = start(x)[i[,1]],
+            read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
+            sample = sample_ids[i[,2]],
+            value = SparseArray::nnavals(assaydat))
+    }
     if (modbaseSpace) {
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,
                                                    decreasing = FALSE)))
     }
     return(df)
+}
+
+#' Linearly interpolate NA-value gaps in columns of a NaArray
+#'
+#' @param assaydat A \code{\link[SparseArray]{NaArray}} object
+#'     with read-level footprinting data (positions in rows and reads in
+#'     columns).
+#' @param pos A numerical vector giving the positions of rows in \code{assaydat}.
+#'
+#' @returns A dense matrix with \code{diff(range(pos)) + 1} rows (corresponding
+#'     to all positions \code{seq(min(pos), max(pos))}) and \code{ncol(assaydat)}
+#'     columns. In each column, runs of \code{NA} values flanked by non-\code{NA}
+#'     values have been linearly interpolated.
+#'
+#' @importFrom BiocGenerics colnames
+#' @importFrom SparseArray is_nonna
+#' @importFrom zoo na.approx
+#'
+#' @noRd
+#' @keywords internal
+.interpolateColumns <- function(assaydat, pos) {
+    idx <- SparseArray::is_nonna(assaydat)
+    pos_filled <- seq(min(pos), max(pos))
+    npos <- length(pos_filled)
+    res <- do.call(
+        cbind,
+        lapply(
+            structure(colnames(assaydat), names = colnames(assaydat)),
+            function(nm) {
+                x <- rep(NA, npos)
+                x[match(pos[which(idx[, nm], useNames = FALSE)], pos_filled)] <-
+                    SparseArray::nnavals(assaydat[, nm])
+                irng <- range(which(!is.na(x)))
+                ii <- seq(irng[1], irng[2])
+                x[ii] <- zoo::na.approx(object = x)
+                return(x)
+            })
+        )
+    attr(res, "pos") <- pos_filled
+    return(res)
 }
 
 #' Return a base ggplot2 plot (no geometries yet) for summary-level data

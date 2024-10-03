@@ -26,8 +26,10 @@ test_that("plotRegion works", {
     expect_error(plotRegion(se = se0))
     expect_error(plotRegion(se = se, region = -1))
     expect_error(plotRegion(se = se, region = "error"))
-    expect_error(plotRegion(se = se, tracks.reads = "error"))
+    expect_error(plotRegion(se = seR, tracks.reads = "error"))
+    expect_error(plotRegion(se = seR, tracks.reads = list(mod_prob = "error")))
     expect_error(plotRegion(se = se, tracks.summary = "error"))
+    expect_error(plotRegion(se = se, tracks.summary = list(FracMod = "error")))
     expect_error(plotRegion(se = se, modbaseSpace = "error"))
     expect_error(plotRegion(se = se, sequence.context = 1))
     expect_error(plotRegion(se = seR, sequence.context = "C"))
@@ -44,9 +46,12 @@ test_that("plotRegion works", {
     p7 <- plotRegion(se = seR, modbaseSpace = TRUE,
                      tracks.reads = list(mod_prob = c("Heatmap")),
                      tracks.summary = NULL)
-    p8 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
-                     tracks.summary = list(FracMod = "Smooth"),
-                     tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")))
+    expect_warning(
+        p8 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
+                         modbaseSpace = TRUE,
+                         tracks.summary = list(FracMod = "Smooth"),
+                         tracks.reads = list(mod_prob = c("Lollipop", "Heatmap", "HeatmapFilled")))
+    )
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
     expect_s3_class(p3, "ggplot")
@@ -63,7 +68,7 @@ test_that("plotRegion works", {
     expect_identical(p4$data, p5$data)
     expect_identical(nrow(p6$data), 29104L)
     expect_identical(nrow(p7$data), 29104L)
-    expect_identical(nrow(p8$data), 117L)
+    expect_identical(nrow(p8$data), 500L)
 
     # make sure the plotting works
     tmpplot <- tempfile(fileext = ".png")

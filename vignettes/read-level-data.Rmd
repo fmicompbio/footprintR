@@ -241,6 +241,17 @@ plotRegion(se, region = "chr1:6932700-6932800",
            tracks.reads = list(mod_prob = "Lollipop"),
            modbaseSpace = TRUE)
 ```
+6mA modifications can only be observed for adenine positions. The
+`HeatmapFilled` plot type fills in the unobserved positions in each read between
+adenines using linear interpolation. While this makes the plot appear very
+smooth, it should be taken with a grain of salt: These positions are *unobserved*
+and could look different from the interpolated states.
+
+```{r plot-region-interpolated, warning=FALSE, fig.width=8, fig.height=4.5, fig.alt="A read-level heatmap showing modification probabilities, with interpolated unobserved positions."}
+plotRegion(se, region = "chr1:6932700-6932800",
+           tracks.summary = NULL,
+           tracks.reads = list(mod_prob = c("Heatmap", "HeatmapFilled")))
+```
 
 As mentioned above, the read-level data is still contained in the
 summary object `se_summary`, so we can plot both summary-level
