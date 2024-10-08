@@ -8,7 +8,7 @@ addReadsSummary(
   se,
   assay.type = "mod_prob",
   statistics = c("Nmod", "Nvalid", "FracMod"),
-  keep.reads = FALSE,
+  keep.reads = TRUE,
   verbose = FALSE
 )
 }
@@ -27,8 +27,9 @@ probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
 reads), "Pmod" (average modification probability), "AvgConf" (average
 confidence of (non-)modification probabilities).}
 
-\item{keep.reads}{A scalar logical. If \code{TRUE}, the read-level data
-from \code{assay.type} will be retained in an assay of the same name.}
+\item{keep.reads}{A scalar logical. If \code{TRUE} (the default), the
+read-level data from \code{assay.type} will be retained in an assay of
+the same name.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
@@ -49,7 +50,7 @@ exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "fo
 se <- readModkitExtract(exfile, modbase = "a")
 se
 
-se_summary <- addReadsSummary(se, keep.reads = TRUE)
+se_summary <- addReadsSummary(se)
 se_summary
 
 }

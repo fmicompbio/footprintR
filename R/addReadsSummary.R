@@ -18,8 +18,9 @@
 #'     probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
 #'     reads), "Pmod" (average modification probability), "AvgConf" (average
 #'     confidence of (non-)modification probabilities).
-#' @param keep.reads A scalar logical. If \code{TRUE}, the read-level data
-#'     from \code{assay.type} will be retained in an assay of the same name.
+#' @param keep.reads A scalar logical. If \code{TRUE} (the default), the
+#'     read-level data from \code{assay.type} will be retained in an assay of
+#'     the same name.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -33,7 +34,7 @@
 #' se <- readModkitExtract(exfile, modbase = "a")
 #' se
 #'
-#' se_summary <- addReadsSummary(se, keep.reads = TRUE)
+#' se_summary <- addReadsSummary(se)
 #' se_summary
 #'
 #' @seealso \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the
@@ -49,7 +50,7 @@
 addReadsSummary <- function(se,
                             assay.type = "mod_prob",
                             statistics = c("Nmod", "Nvalid", "FracMod"),
-                            keep.reads = FALSE,
+                            keep.reads = TRUE,
                             verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")

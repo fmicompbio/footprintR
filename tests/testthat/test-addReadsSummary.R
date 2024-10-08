@@ -26,10 +26,13 @@ test_that("addReadsSummary works", {
 
     # expected results
     expect_message(expect_message(
-        s1 <- addReadsSummary(se = se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"), verbose = TRUE)
+        s1 <- addReadsSummary(se = se,
+                              statistics = c("Nmod", "Nvalid", "FracMod",
+                                             "Pmod", "AvgConf"),
+                              keep.reads = FALSE, verbose = TRUE)
     ))
-    s2 <- addReadsSummary(se = se, statistics = "FracMod", keep.reads = TRUE)
-    s3 <- addReadsSummary(se = se1, statistics = "FracMod", keep.reads = TRUE)
+    s2 <- addReadsSummary(se = se, statistics = "FracMod")
+    s3 <- addReadsSummary(se = se1, statistics = "FracMod")
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
     expect_s4_class(s3, "SummarizedExperiment")

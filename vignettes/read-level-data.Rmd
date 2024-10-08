@@ -155,7 +155,7 @@ Summarized data can be obtained from the read-level data by calculating
 a per-position summary over the reads in each sample:
 
 ```{r summarise-read-level}
-se_summary <- addReadsSummary(se, keep.reads = TRUE,
+se_summary <- addReadsSummary(se,
                               statistics = c("Nmod", "Nvalid", "FracMod",
                                              "Pmod", "AvgConf"))
 ```
@@ -180,7 +180,7 @@ assay(se_summary, "FracMod")["chr1:6928850:-", ]
 
 In the above example, we in addition also calculate the average modification
 probability (`Pmod`) and the average confidence of the modification calls
-per position (`AvgConf`). As we have set `keep.reads = TRUE`,
+per position (`AvgConf`). As we have not changed the default `keep.reads = TRUE`,
 we in addition also keep the read-level assay from the input object
 (`mod_prob`) in the returned object. In `mod_prob`, the reads are grouped by
 sample:

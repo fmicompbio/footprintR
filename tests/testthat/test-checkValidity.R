@@ -15,7 +15,7 @@ test_that("validity checks work", {
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     rme <- addReadStats(rme)
-    rme_withreads <- addReadsSummary(rme, keep.reads = TRUE)
+    rme_withreads <- addReadsSummary(rme)
     rme_withoutreads <- addReadsSummary(rme, keep.reads = FALSE)
 
     ## Test .getReadLevelAssayNames

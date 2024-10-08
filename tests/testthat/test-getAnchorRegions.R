@@ -4,7 +4,7 @@ test_that("getAnchorRegions works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se, keep.reads = TRUE)
+    se <- addReadsSummary(se)
 
     # check that the function fails with the wrong input
     expect_error(getAnchorRegions(se = "error"), "'se' must be of class")

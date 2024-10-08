@@ -50,7 +50,7 @@
 #'                            package = "footprintR")
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
 #'                  modbase = "a", verbose = FALSE)
-#' se <- addReadsSummary(se, keep.reads = TRUE)
+#' se <- addReadsSummary(se)
 #' ar <- getAnchorRegions(se, assay.type = c("mod_prob", "FracMod", "Nvalid"),
 #'                        regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
 #'                        regionWidth = 9)
