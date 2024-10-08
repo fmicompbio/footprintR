@@ -76,6 +76,14 @@ addReadsSummary <- function(se,
                use.names = FALSE))
 
     # summarize reads
+    # Note: all summarized assays are dense matrices, because:
+    # - Nmod, Nvalid and AvgConf are dense because rowSums is based on
+    #   MatrixGenerics::rowSums, which returns a (dense) numeric vector
+    # - Nvalid typically has few zeros, and the SparseArray version would be
+    #   larger in memory than the dense one
+    # - FracMod and Pmod have to be calculated using dense matrices and would
+    #   have to be converted back to sparse objects  (no "/" method for
+    #   SparseArray objects, as the result wouldn't be sparse)
     if (verbose) {
         message("Summarizing reads")
     }
