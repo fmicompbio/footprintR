@@ -1,25 +1,25 @@
-# This script is provided as a utility via the swissknife package 
-# (https://github.com/fmicompbio/swissknife). This script is provided under 
-# the MIT license, and package authors are permitted to 
-# include the code as-is in other packages, as long as this note and the 
-# information provided below crediting the authors of the respective 
-# functions is retained. 
+# This script is provided as a utility via the swissknife package
+# (https://github.com/fmicompbio/swissknife). This script is provided under
+# the MIT license, and package authors are permitted to
+# include the code as-is in other packages, as long as this note and the
+# information provided below crediting the authors of the respective
+# functions is retained.
 
 #' Utility function to check validity of scalar variable values.
-#' 
+#'
 #' This function provides a convenient way e.g. to check that provided
-#' arguments to functions satisfy required criteria. 
-#'  
+#' arguments to functions satisfy required criteria.
+#'
 #' @param x The variable to be checked.
 #' @param type The desired type of \code{x}.
-#' @param rngIncl The allowed range of the (numeric) variable \code{x}, 
+#' @param rngIncl The allowed range of the (numeric) variable \code{x},
 #'     including the endpoints.
-#' @param rngExcl The allowed range of the (numeric) variable \code{x}, 
+#' @param rngExcl The allowed range of the (numeric) variable \code{x},
 #'     excluding the endpoints.
 #' @param validValues A vector with the allowed values of \code{x}.
-#' @param allowNULL Logical, whether or not \code{NULL} is an acceptable 
+#' @param allowNULL Logical, whether or not \code{NULL} is an acceptable
 #'     value for \code{x}.
-#' 
+#'
 #' @author Michael Stadler, Charlotte Soneson
 #' @noRd
 #' @keywords internal
@@ -30,30 +30,30 @@
                           rngExcl = NULL,
                           validValues = NULL,
                           allowNULL = FALSE) {
-    
+
     .assertVector(x = x, type = type, rngIncl = rngIncl,
                   rngExcl = rngExcl, validValues = validValues,
                   len = 1, rngLen = NULL, allowNULL = allowNULL)
-    
+
 }
 
 #' Utility function to check validity of vector variable values.
-#' 
+#'
 #' This function provides a convenient way e.g. to check that provided
-#' arguments to functions satisfy required criteria. 
-#'  
+#' arguments to functions satisfy required criteria.
+#'
 #' @param x The variable to be checked
 #' @param type The desired type of \code{x}.
-#' @param rngIncl The allowed range of the (numeric) variable \code{x}, 
+#' @param rngIncl The allowed range of the (numeric) variable \code{x},
 #'     including the endpoints.
-#' @param rngExcl The allowed range of the (numeric) variable \code{x}, 
+#' @param rngExcl The allowed range of the (numeric) variable \code{x},
 #'     excluding the endpoints.
 #' @param validValues A vector with the allowed values of \code{x}.
 #' @param len The required length of \code{x}.
 #' @param rngLen The allowed range for the length of \code{x}.
-#' @param allowNULL Logical, whether or not \code{NULL} is an acceptable 
+#' @param allowNULL Logical, whether or not \code{NULL} is an acceptable
 #'     value for \code{x}.
-#' 
+#'
 #' @author Michael Stadler, Charlotte Soneson
 #' @noRd
 #' @keywords internal
@@ -63,7 +63,7 @@
                           rngIncl = NULL,
                           rngExcl = NULL,
                           validValues = NULL,
-                          len = NULL, 
+                          len = NULL,
                           rngLen = NULL,
                           allowNULL = FALSE) {
     sc <- sys.calls()
@@ -85,16 +85,16 @@
     if (!is.null(rngIncl) && !is.null(rngExcl)) {
         stop("'rngIncl' and 'rngExcl' can not both be specified")
     }
-    
+
     ## If there are too many valid values, print only the first 15
     if (length(validValues) > 15) {
-        vvPrint <- paste(c(validValues[seq_len(15)], 
+        vvPrint <- paste(c(validValues[seq_len(15)],
                            "...(truncated)"),
                          collapse = ", ")
     } else {
         vvPrint <- paste(validValues, collapse = ", ")
     }
-    
+
     if (is.null(x)) {
         if (allowNULL) {
             return(invisible(TRUE))
@@ -102,38 +102,38 @@
             stop("'", xname, "' must not be NULL", call. = FALSE)
         }
     }
-    
+
     if (is.null(type) && (!is.null(rngIncl) || !is.null(rngExcl))) {
         type <- "numeric"
     }
-    
+
     if (!is.null(type) && !methods::is(x, type)) {
         stop("'", xname, "' must be of class '", type, "'", call. = FALSE)
     }
-    
+
     if (!is.null(rngIncl)) {
         if (!is.null(validValues)) {
             if (any((x < rngIncl[1] | x > rngIncl[2]) & !(x %in% validValues))) {
-                stop("'", xname, "' must be within [", rngIncl[1], ",", 
+                stop("'", xname, "' must be within [", rngIncl[1], ",",
                      rngIncl[2], "] (inclusive), or one of: ", vvPrint,
                      call. = FALSE)
             }
         } else {
             if (any(x < rngIncl[1] | x > rngIncl[2])) {
-                stop("'", xname, "' must be within [", rngIncl[1], ",", 
+                stop("'", xname, "' must be within [", rngIncl[1], ",",
                      rngIncl[2], "] (inclusive)", call. = FALSE)
             }
         }
     } else if (!is.null(rngExcl)) {
         if (!is.null(validValues)) {
             if (any((x <= rngExcl[1] | x >= rngExcl[2]) & !(x %in% validValues))) {
-                stop("'", xname, "' must be within (", rngExcl[1], ",", 
+                stop("'", xname, "' must be within (", rngExcl[1], ",",
                      rngExcl[2], ") (exclusive), or one of: ", vvPrint,
                      call. = FALSE)
             }
         } else {
             if (any(x <= rngExcl[1] | x >= rngExcl[2])) {
-                stop("'", xname, "' must be within (", rngExcl[1], ",", 
+                stop("'", xname, "' must be within (", rngExcl[1], ",",
                      rngExcl[2], ") (exclusive)", call. = FALSE)
             }
         }
@@ -143,35 +143,35 @@
                  call. = FALSE)
         }
     }
-    
+
 
     if (!is.null(len) && length(x) != len) {
         stop("'", xname, "' must have length ", len, call. = FALSE)
     }
 
     if (!is.null(rngLen) && (length(x) < rngLen[1] || length(x) > rngLen[2])) {
-        stop("length of '", xname, "' must be within [", rngLen[1], ",", 
+        stop("length of '", xname, "' must be within [", rngLen[1], ",",
              rngLen[2], "] (inclusive)", call. = FALSE)
     }
-    
+
     return(invisible(TRUE))
 }
 
 #' Utility function that makes sure that packages are available
-#' 
+#'
 #' The function tries loading the namespaces of the packages given in
 #' \code{pkgs}, and throws an exception with an informative error message if
 #' that is not the case.
-#' 
+#'
 #' @param pkgs Character vector with package names. Can be either just a
 #'   package name or a string of the form \code{"githubuser/packagename"} for
 #'   packages hosted on GitHub.
 #' @param suggestInstallation Logical scalar. If \code{TRUE}, include an
 #'   expression to install the missing package(s) as part of the generated
 #'   error message.
-#' 
+#'
 #' @author Michael Stadler, Charlotte Soneson
-#' 
+#'
 #' @noRd
 #' @keywords internal
 .assertPackagesAvailable <- function(pkgs, suggestInstallation = TRUE) {
@@ -180,12 +180,12 @@
         is.logical(suggestInstallation)
         length(suggestInstallation) == 1L
     })
-    
+
     avail <- unlist(lapply(sub("^[^/]+/", "", pkgs),
                            function(pkg) {
                                requireNamespace(pkg, quietly = TRUE)
                            }))
-    
+
     if (any(!avail)) {
         caller <- deparse(sys.calls()[[sys.nframe() - 1]])
         callerfunc <- sub("\\(.+$", "", caller)
@@ -204,6 +204,47 @@
         }
         stop(msg, call. = FALSE)
     }
-    
+
     invisible(TRUE)
 }
+
+#' Linearly interpolate NA-value gaps in columns of a NaArray
+#'
+#' @param assaydat A \code{\link[SparseArray]{NaArray}} object
+#'     with read-level footprinting data (positions in rows and reads in
+#'     columns).
+#' @param pos A numerical vector giving the positions of rows in \code{assaydat}.
+#'
+#' @returns A dense matrix with \code{diff(range(pos)) + 1} rows (corresponding
+#'     to all positions \code{seq(min(pos), max(pos))}) and \code{ncol(assaydat)}
+#'     columns. In each column, runs of \code{NA} values flanked by non-\code{NA}
+#'     values have been linearly interpolated.
+#'
+#' @importFrom BiocGenerics colnames
+#' @importFrom SparseArray is_nonna
+#' @importFrom zoo na.approx
+#'
+#' @noRd
+#' @keywords internal
+.interpolateColumns <- function(assaydat, pos) {
+    idx <- SparseArray::is_nonna(assaydat)
+    pos_filled <- seq(min(pos), max(pos))
+    npos <- length(pos_filled)
+    res <- do.call(
+        cbind,
+        lapply(
+            structure(colnames(assaydat), names = colnames(assaydat)),
+            function(nm) {
+                x <- rep(NA, npos)
+                x[match(pos[which(idx[, nm], useNames = FALSE)], pos_filled)] <-
+                    SparseArray::nnavals(assaydat[, nm])
+                irng <- range(which(!is.na(x)))
+                ii <- seq(irng[1], irng[2])
+                x[ii] <- zoo::na.approx(object = x)
+                return(x)
+            })
+    )
+    attr(res, "pos") <- pos_filled
+    return(res)
+}
+

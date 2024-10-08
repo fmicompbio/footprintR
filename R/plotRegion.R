@@ -557,46 +557,6 @@ plotRegion <- function(se,
     return(df)
 }
 
-#' Linearly interpolate NA-value gaps in columns of a NaArray
-#'
-#' @param assaydat A \code{\link[SparseArray]{NaArray}} object
-#'     with read-level footprinting data (positions in rows and reads in
-#'     columns).
-#' @param pos A numerical vector giving the positions of rows in \code{assaydat}.
-#'
-#' @returns A dense matrix with \code{diff(range(pos)) + 1} rows (corresponding
-#'     to all positions \code{seq(min(pos), max(pos))}) and \code{ncol(assaydat)}
-#'     columns. In each column, runs of \code{NA} values flanked by non-\code{NA}
-#'     values have been linearly interpolated.
-#'
-#' @importFrom BiocGenerics colnames
-#' @importFrom SparseArray is_nonna
-#' @importFrom zoo na.approx
-#'
-#' @noRd
-#' @keywords internal
-.interpolateColumns <- function(assaydat, pos) {
-    idx <- SparseArray::is_nonna(assaydat)
-    pos_filled <- seq(min(pos), max(pos))
-    npos <- length(pos_filled)
-    res <- do.call(
-        cbind,
-        lapply(
-            structure(colnames(assaydat), names = colnames(assaydat)),
-            function(nm) {
-                x <- rep(NA, npos)
-                x[match(pos[which(idx[, nm], useNames = FALSE)], pos_filled)] <-
-                    SparseArray::nnavals(assaydat[, nm])
-                irng <- range(which(!is.na(x)))
-                ii <- seq(irng[1], irng[2])
-                x[ii] <- zoo::na.approx(object = x)
-                return(x)
-            })
-        )
-    attr(res, "pos") <- pos_filled
-    return(res)
-}
-
 #' Return a base ggplot2 plot (no geometries yet) for summary-level data
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
