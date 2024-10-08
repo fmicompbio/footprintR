@@ -214,6 +214,8 @@
 #'     with read-level footprinting data (positions in rows and reads in
 #'     columns).
 #' @param pos A numerical vector giving the positions of rows in \code{assaydat}.
+#' @param maxgap A numeric scalar giving the maximum number of consecutive
+#'     \code{NA}s to fill. Any longer gaps will be left unchanged.
 #'
 #' @returns A dense matrix with \code{diff(range(pos)) + 1} rows (corresponding
 #'     to all positions \code{seq(min(pos), max(pos))}) and \code{ncol(assaydat)}
@@ -226,7 +228,10 @@
 #'
 #' @noRd
 #' @keywords internal
-.interpolateColumns <- function(assaydat, pos) {
+.interpolateColumns <- function(assaydat, pos, maxgap = Inf) {
+    stopifnot(exprs = {
+        !is.null(colnames(assaydat))
+    })
     idx <- SparseArray::is_nonna(assaydat)
     pos_filled <- seq(min(pos), max(pos))
     npos <- length(pos_filled)
@@ -238,9 +243,12 @@
                 x <- rep(NA, npos)
                 x[match(pos[which(idx[, nm], useNames = FALSE)], pos_filled)] <-
                     SparseArray::nnavals(assaydat[, nm])
-                irng <- range(which(!is.na(x)))
-                ii <- seq(irng[1], irng[2])
-                x[ii] <- zoo::na.approx(object = x)
+                nna <- which(!is.na(x))
+                if (length(nna) > 0) {
+                    irng <- range(nna)
+                    ii <- seq(irng[1], irng[2])
+                    x[ii] <- zoo::na.approx(object = x, maxgap = maxgap)
+                }
                 return(x)
             })
     )
