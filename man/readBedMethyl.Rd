@@ -6,7 +6,7 @@
 \usage{
 readBedMethyl(
   fnames,
-  modbase = NULL,
+  modbase,
   nrows = Inf,
   seqinfo = NULL,
   sequence.context.width = 0,
@@ -27,10 +27,12 @@ If several elements of \code{fnames} have identical
 names, the data from the corresponding files are summed into a single
 column in the returned object.}
 
-\item{modbase}{Character vector defining the modified base (or bases) to
-read. Useful for reading a subset of the data from \code{bedMethyl} files
-that contain multiple types of modified bases. If \code{NULL} (the
-default), all rows in the input file are read.}
+\item{modbase}{Character vector defining the modified base for each sample.
+If \code{modbase} is a named vector, the names should correspond to
+the names of \code{fnames}. Otherwise, it will be assumed that the
+elements are in the same order as the files in \code{fnames}. If
+\code{modbase} has length 1, the same modified base will be used for
+all samples.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
 
@@ -63,7 +65,7 @@ This function will read collapsed single-molecule footprinting data
 }
 \examples{
 bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-readBedMethyl(bmfile)
+readBedMethyl(bmfile, modbase = "m")
 
 }
 \seealso{

@@ -13,7 +13,8 @@ test_that("plotRegion works", {
     fname1 <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
     fname2 <- system.file("extdata", "modkit_pileup_2.bed.gz", package = "footprintR")
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
-    se <- readBedMethyl(fnames = c(fname1, fname2), sequence.context.width = 3,
+    se <- readBedMethyl(fnames = c(fname1, fname2), modbase = "m",
+                        sequence.context.width = 3,
                         sequence.reference = ref)
     se0 <- se
     assayNames(se0) <- c("assay1", "assay2")

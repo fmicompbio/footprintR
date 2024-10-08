@@ -14,10 +14,12 @@
 #'     If several elements of \code{fnames} have identical
 #'     names, the data from the corresponding files are summed into a single
 #'     column in the returned object.
-#' @param modbase Character vector defining the modified base (or bases) to
-#'     read. Useful for reading a subset of the data from \code{bedMethyl} files
-#'     that contain multiple types of modified bases. If \code{NULL} (the
-#'     default), all rows in the input file are read.
+#' @param modbase Character vector defining the modified base for each sample.
+#'     If \code{modbase} is a named vector, the names should correspond to
+#'     the names of \code{fnames}. Otherwise, it will be assumed that the
+#'     elements are in the same order as the files in \code{fnames}. If
+#'     \code{modbase} has length 1, the same modified base will be used for
+#'     all samples.
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
@@ -42,7 +44,7 @@
 #'
 #' @examples
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-#' readBedMethyl(bmfile)
+#' readBedMethyl(bmfile, modbase = "m")
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
 #'     [`bedMethyl` format description](https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output),
@@ -54,7 +56,7 @@
 #' @importFrom data.table fread
 #' @importFrom GenomicRanges GPos match sort resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
-#' @importFrom S4Vectors mcols mcols<-
+#' @importFrom S4Vectors mcols mcols<- DataFrame
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
@@ -63,7 +65,7 @@
 #'
 #' @export
 readBedMethyl <- function(fnames,
-                          modbase = NULL,
+                          modbase,
                           nrows = Inf,
                           seqinfo = NULL,
                           sequence.context.width = 0,
@@ -75,7 +77,27 @@ readBedMethyl <- function(fnames,
     if (any(i <- !file.exists(fnames))) {
         stop("not all `fnames` exist: ", paste(fnames[i], collapse = ", "))
     }
-    .assertVector(x = modbase, type = "character", allowNULL = TRUE)
+    if (is.null(names(fnames))) {
+        names(fnames) <- paste0("s", seq_along(fnames))
+    }
+    if (length(modbase) == 1) {
+        modbase <- rep(modbase, length(fnames))
+    }
+    .assertVector(x = modbase, type = "character", len = length(fnames))
+    if (is.null(names(modbase))) {
+        names(modbase) <- names(fnames)
+    } else {
+        if (!all(names(modbase) %in% names(fnames))) {
+            stop("names of `modbase` and `fnames` don't agree")
+        }
+    }
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
+                                 "U","a","A","o","G","n","N"))) {
+        stop("invalid `modbase` values: ",
+             paste(unique(modbase[i]), collapse = ", "))
+    }
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
@@ -92,11 +114,7 @@ readBedMethyl <- function(fnames,
     }
 
     # get sample names
-    if (!is.null(names(fnames))) {
-        nms <- names(fnames)
-    } else {
-        nms <- paste0("s", seq_along(fnames))
-    }
+    nms <- names(fnames)
 
     # load data
     if (verbose) {
@@ -165,9 +183,15 @@ readBedMethyl <- function(fnames,
     }
 
     # create summarized experiment
-    se <- SummarizedExperiment(
+    se <- SummarizedExperiment::SummarizedExperiment(
         assays = list(Nmod = nmod, Nvalid = nval),
-        rowRanges = gpos)
+        rowRanges = gpos,
+        colData = S4Vectors::DataFrame(
+            row.names = names(fnames),
+            sample = names(fnames),
+            modbase = modbase[names(fnames)]
+        ),
+        metadata = list())
 
     # collapse to unique names
     if (any(duplicated(nms))) {

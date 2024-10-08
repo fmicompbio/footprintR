@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 test_that("sumOverRegions works", {
     # example data
     bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-    se <- readBedMethyl(bmfile)
+    se <- readBedMethyl(bmfile, modbase = "m")
     regions1 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 6940000, end = 7000000, names = "a"))
     regions2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(start = seq(6930000, 7000000, by = 10000), width = 10000))
 
