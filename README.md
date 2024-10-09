@@ -39,7 +39,7 @@ Here is a minimal example to for using `footprintR`:
 library(footprintR)
 
 infile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-se <- readBedMethyl(bmfile)
+se <- readBedMethyl(bmfile, modbase = "m")
 se
 
 assayNames(se)

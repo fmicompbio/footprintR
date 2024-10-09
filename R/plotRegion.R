@@ -81,7 +81,8 @@ plotRegionPlotTypes <- data.frame(
 #'                        package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
-#' seA <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
+#' seA <- readBedMethyl(bmfiles, modbase = "m",
+#'                      sequence.context = 3, sequence.reference = reffile)
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
@@ -96,9 +97,11 @@ plotRegionPlotTypes <- data.frame(
 #'                             package = "footprintR")
 #' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
 #'
+#' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "Lollipop"))
+#' # Heatmap plots (observed only or filled)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "Heatmap"))
@@ -106,9 +109,10 @@ plotRegionPlotTypes <- data.frame(
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "HeatmapFilled"))
 #'
+#' # multiple plots
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = c("Lollipop", "HeatmapFilled")),
+#'            tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
 #'            modbaseSpace = TRUE)
 #'
 #' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and

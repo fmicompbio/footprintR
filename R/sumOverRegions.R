@@ -30,7 +30,7 @@
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
 #'
 #' # read into a RangedSummarizedExperiment
-#' se <- readBedMethyl(bmfile)
+#' se <- readBedMethyl(bmfile, modbase = "m")
 #'
 #' # collaps it to a single region of interest
 #' regions <- GenomicRanges::GRanges(
