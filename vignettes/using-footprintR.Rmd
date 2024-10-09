@@ -64,7 +64,7 @@ an example of how to work with read-level data, see the
 `vignette("read-level-data")`.
 
 The example is using small example data provided as part of the package. Here
-we get the file names for per-position summary modification data in
+we get the file names for per-position summary 5mC modification data in
 `bedMethyl` format:
 
 ```{r data-files}
@@ -78,11 +78,15 @@ bedmethylfiles <- system.file("extdata",
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 ```
 
-This allows us to read the data using `readBedMethyl()`:
+This allows us to read the data using `readBedMethyl()` (`modbase = "m"`
+indicates that we want to read 5mC modifications, for a full list of
+possible modifications see the section about base modifications in the
+[SAM tag specification](https://samtools.github.io/hts-specs/SAMtags.pdf)):
 
 ```{r read-data}
 names(bedmethylfiles) <- c("sample1", "sample2")
 se <- readBedMethyl(bedmethylfiles,
+                    modbase = "m",
                     sequence.context = 3,
                     sequence.reference = reffile)
 se
