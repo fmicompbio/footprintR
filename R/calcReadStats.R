@@ -1,17 +1,22 @@
-#' Calculate a variety of read-level modified basecalling summary statistics
+#' Calculate or add summary statistics for read-level base modification data
 #'
 #' @description
-#' This function calculates various per-read summary statistics on modification
-#' probabilities or calls from a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
-#' object with genomic positions in rows and reads in columns. See details
-#' for more information on the statistics that are calculated.
+#' \code{calcReadStats} calculates various per-read summary statistics on
+#' modification probabilities or calls from a
+#' \code{\link[SummarizedExperiment]{SummarizedExperiment}} object with genomic
+#' positions in rows and samples in columns. \code{addReadStats} adds them to
+#' the \code{colData} under \code{name}. See details for more information on the
+#' statistics that are calculated.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     object with assay \code{"mod_prob"} typically returned by
 #'     \code{\link{readModkitExtract}} or \code{\link{readModBam}}.
+#' @param assay.type A character scalar specifying the assay of \code{se}
+#'     containing the read-level data to be summarized. Typically, this assay
+#'     contains modification probabilities.
 #' @param stats Character vector specifying which statistics to calculate.
 #'     When set to \code{NULL} all available statistics are calculated. See
-#'     details for a complete list of available read statistics.
+#'     details for available read statistics.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object limiting the
 #'     positions included in the calculations to the ones overlapping the
 #'     corresponding genomic regions. Alternatively, regions can be
@@ -42,15 +47,22 @@
 #' @param LagRange A numeric vector of two values (minimum and maxium) defining
 #'     the range of lags for the calculation of autocorrelation and partial
 #'     autocorrelation (see details section).
+#' @param name For \code{addReadStats} only: A character scalar specifying the
+#'     name to be used to store the result in the
+#'     \code{\link[SummarizedExperiment]{colData}} of the output.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
-#' Calculates a collection of location/scatter statistics and information
-#' theoretic/signal-processing metrics for the modification probability,
-#' confidence or modification call value vectors across individual reads. When
-#' \code{sequence.context}, \code{min.coverage} or \code{min.Nobs.ppos} filters
-#' are enforced, only modifiable bases passing the filters are included in the
-#' calculations. The following statistics are available:
+#' \code{calcReadStats} calculates a collection of location/scatter statistics
+#' and information theoretic/signal-processing metrics for the modification
+#' probability, confidence or modification call value vectors across individual
+#' reads (data in assay \code{assay.type}). Only bases matching the criteria
+#' given by\code{regions}, \code{sequence.context}, \code{min.Nobs.ppos} and
+#' \code{min.Nobs.pread} are included in the calculations. The values of these
+#' filtering parameters are stored in the attribute of the output.
+#'
+#' \code{stats} selects the summaries to be calculated. Currently available
+#' values are:
 #' \describe{
 #'     \item{MeanModProb}{: Mean modification probability across the read.}
 #'     \item{FracMod}{: Fraction of confidently modified bases, defined as the
@@ -84,19 +96,30 @@
 #'         typically covers the signal of nucleosome periodicity.}
 #'  }
 #'
-#' @return A \code{SimpleList} object with QC statistics for the samples in
-#' \code{se}.
+#' @return
+#' For \code{calcReadStats}, a \code{SimpleList} object with summary statistics
+#' for the samples (columns) in \code{se}.
 #'
-#' @author Panagiotis Papapasaikas, Charlotte Soneson
+#' For \code{addReadStats}, a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
+#' object with summary statistics added to the \code{name} column of
+#' \code{\link[SummarizedExperiment]{colData}}.
+#'
+#' @author Panagiotis Papapasaikas, Charlotte Soneson, Michael Stadler
+#' @name calcReadStats
 #'
 #' @examples
+#' # load example data
 #' library(SummarizedExperiment)
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
+#'
 #' ReadStats <- calcReadStats(se)
-#' ReadStats[["s1"]]
+#' ReadStats$s1
+#'
+#' se_withReadStats <- addReadStats(se, name = "QC")
+#' colData(se_withReadStats)$QC$s1
 #'
 #' @importFrom BiocGenerics start
 #' @import ggplot2
@@ -111,9 +134,10 @@
 #'
 #' @export
 calcReadStats <- function(se,
+                          assay.type = "mod_prob",
+                          stats = NULL,
                           regions = NULL,
                           sequence.context = NULL,
-                          stats = NULL,
                           min.Nobs.ppos = NULL,
                           min.Nobs.pread = 0,
                           LowConf = 0.7,
@@ -309,5 +333,18 @@ calcReadStats <- function(se,
     names(out) <- colnames(se)
 
     return(out)
+}
+
+#' @importFrom SummarizedExperiment colData
+#' @importFrom BiocGenerics colnames
+#'
+#' @export
+#' @rdname calcReadStats
+addReadStats <- function(se, ..., name = "QC") {
+
+    .assertScalar(x = name, type = "character")
+
+    colData(se)[[name]] <- calcReadStats(se = se, ...)[colnames(se)]
+    return(se)
 }
 
