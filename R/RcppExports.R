@@ -55,20 +55,23 @@ get_unmodified_base <- function(b) {
 #'     \code{n_alns_to_sample = 0}.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"read_id"}, \code{qscore},
+#' @return A named list with elements \code{"read_id"},
 #'     \code{"forward_read_position"}, \code{"ref_position"},
 #'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
-#'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
-#'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
+#'     \code{"canonical_base"}, \code{"mod_prob"} and \code{"read_df"}.
+#'     The meaning of these elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 #'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
 #'     modified bases and equal to \code{1 - call_prob} for unmodified bases
-#'     (\code{call_code == "-"}), and \code{qscore}, which is the read quality
-#'     score recorded in the \code{qs} tag of each bam record.
+#'     (\code{call_code == "-"}), and \code{"read_df"}, which is a
+#'      \code{data.frame} with one row per read and columns \code{"read_id"}
+#'     (the read identifier), \code{"qscore"} (the read quality score recorded
+#'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
+#'     total read length), and \code{"aligned_length"} (the number of
+#'     aligned bases).
 #'
 #' @examples
-#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
-#'                           package = "footprintR")
-#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the

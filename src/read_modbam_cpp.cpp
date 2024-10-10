@@ -138,24 +138,42 @@ char get_unmodified_base(char b) {
     }
 }
 
+// calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
+int calculate_aligned_bases(bam1_t *bamdata) {
+    uint32_t *cigar = bam_get_cigar(bamdata);
+    int aligned_bases = 0;
+
+    // loop over CIGAR operations
+    for (int i = 0; i < bamdata->core.n_cigar; i++) {
+        uint32_t op = bam_cigar_op(cigar[i]);
+
+        // only count 'M', '=', or 'X' operations
+        if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
+            aligned_bases += bam_cigar_oplen(cigar[i]);
+        }
+    }
+
+    return aligned_bases;
+}
+
 // process a single bam record:
 // - increase alignment counter (passed by reference)
 // - extract information from record (qscore, modification information, etc.)
 // - add information to vectors (passed by reference) for later returning to R
 int process_bam_record(bam1_t *bamdata,        // bam record
                        unsigned int &alncnt,   // alignment counter
-                       char *qseq,             // forward read sequence
+                       char *&qseq,            // buffer for forward read sequence
+                       int &qseq_len,          // allocated length of qseq
                        hts_base_mod_state *ms, // modification state struct
                        bool &had_error,        // error flag
-                       int &buffer_len,        // length of message buffer
-                       char *buffer,           // message buffer
+                       char *buffer,           // buffer for message
+                       int &buffer_len,        // allocated length of message buffer
                        char modbase,           // modified base to analyze
                        sam_hdr_t *in_samhdr,   // sam file header
                        int &n_unaligned,       // number of unaligned modified bases
                        int &n_total,           // total number of modified bases
-                       // vectors for return values
+                       // vectors for return values (per modification)
                        std::vector<std::string> &read_id,
-                       std::vector<double> &qscore,
                        std::vector<char> &call_code,
                        std::vector<char> &canonical_base,
                        std::vector<char> &ref_mod_strand,
@@ -163,51 +181,42 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<int> &aligned_read_position,
                        std::vector<int> &forward_read_position,
                        std::vector<int> &ref_position,
-                       std::vector<double> &mod_prob) {
+                       std::vector<double> &mod_prob,
+                       // vectors for return values (per alignment)
+                       std::vector<std::string> &df_read_id,
+                       std::vector<double> &df_qscore,
+                       std::vector<int> &df_read_length,
+                       std::vector<int> &df_aligned_length) {
     // allocate variable only used inside process_bam_record()
     uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
     unsigned int sum_qual = 0;
     double qs_value = -1;
-    int i = 0, j = 0, qseq_len = 0, strand = 0, impl = 0, pos = 0, r = 0;
+    int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
     hts_base_mod mod[5] = {{0}};  //for ATCGN
     char canonical = '0', unmodbase = '0';
+    int this_read_len = bamdata->core.l_qseq;
+    size_t size_before_this_read = read_id.size();
 
     // get expected unmodified base corresponding to `modbase`
     unmodbase = get_unmodified_base(modbase);
 
-    // count alignment
-    alncnt++;
-
     // process alignment
-    // ... extract qscore
-    qs_data = bam_aux_get(bamdata, "qs");
-    if (qs_data != NULL) {
-        qs_value = bam_aux2f(qs_data);
-    } else {
-        // qs tag is missing
-        //   --> calculate mean of base QUAL values
-        qual = bam_get_qual(bamdata);
-        sum_qual = 0;
-        for (j = 0; j < bamdata->core.l_qseq; j++) {
-            sum_qual += qual[j];
-        }
-        qs_value = ((double) sum_qual) / bamdata->core.l_qseq;
-    }
+    alncnt++;
 
     // ... extract *forward* read sequence to char*
     data = bam_get_seq(bamdata);
-    if (qseq_len < bamdata->core.l_qseq) {
+    if (qseq_len < this_read_len) {
         if (qseq) // # nocov start
             free((void*) qseq); // # nocov end
-        qseq = (char*) calloc(bamdata->core.l_qseq + 1, sizeof(char));
-        qseq_len = bamdata->core.l_qseq;
+        qseq = (char*) calloc(this_read_len + 1, sizeof(char));
+        qseq_len = this_read_len;
     }
     if (bam_is_rev(bamdata)) {
-        for (j = 0; j < bamdata->core.l_qseq; j++) {
-            qseq[bamdata->core.l_qseq - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
+        for (j = 0; j < this_read_len; j++) {
+            qseq[this_read_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
         }
     } else {
-        for (j = 0; j < bamdata->core.l_qseq; j++) {
+        for (j = 0; j < this_read_len; j++) {
             qseq[j] = seq_nt16_str[bam_seqi(data, j)];
         }
     }
@@ -230,11 +239,11 @@ int process_bam_record(bam1_t *bamdata,        // bam record
     //        score and should be considered as unknown)
     if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
         // ... loop over sequence positions i
-        for (i = 0; i < bamdata->core.l_qseq; i++) {
+        for (i = 0; i < this_read_len; i++) {
             // i is the position in the aligned read (possibly reverse-complemented)
             // pos is the position in the original read (qseq)
             if (bam_is_rev(bamdata)) {
-                pos = bamdata->core.l_qseq - 1 - i;
+                pos = this_read_len - 1 - i;
             } else{
                 pos = i;
             }
@@ -257,11 +266,9 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 
             } else if (!r && impl) {
                 // implied base without modification at position i
-                // if (seq_nt16_str[bam_seqi(data, i)] == unmodbase) {
                 if (qseq[pos] == unmodbase) {
                     // base of the right type -> add to results
                     read_id.push_back(bam_get_qname(bamdata));
-                    qscore.push_back(qs_value);
                     aligned_read_position.push_back(i);
                     forward_read_position.push_back(pos);
                     chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
@@ -271,12 +278,11 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                     mod_prob.push_back(-1.0); // special value of -1.0 indicates inferred unmodified base
                 }
             }
-            //modifications
+            // modifications
             for (j = 0; j < r; j++) {
                 if (mod[j].modified_base == modbase) {
                     // found modified base of the right type -> add to results
                     read_id.push_back(bam_get_qname(bamdata));
-                    qscore.push_back(qs_value);
                     aligned_read_position.push_back(i);
                     forward_read_position.push_back(pos);
                     chrom.push_back(sam_hdr_tid2name(in_samhdr, bamdata->core.tid));
@@ -310,7 +316,6 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         if (ref_position[e] == -1) {
             n_unaligned++;
             read_id.erase(read_id.begin() + e);
-            qscore.erase(qscore.begin() + e);
             chrom.erase(chrom.begin() + e);
             forward_read_position.erase(forward_read_position.begin() + e);
             ref_position.erase(ref_position.begin() + e);
@@ -319,6 +324,30 @@ int process_bam_record(bam1_t *bamdata,        // bam record
             ref_mod_strand.erase(ref_mod_strand.begin() + e);
             mod_prob.erase(mod_prob.begin() + e);
         }
+    }
+
+    // ... extract read-level information if the read had modified bases
+    if (size_before_this_read < read_id.size()) {
+        // ... extract qscore
+        qs_data = bam_aux_get(bamdata, "qs");
+        if (qs_data != NULL) {
+            qs_value = bam_aux2f(qs_data);
+        } else {
+            // qs tag is missing
+            //   --> calculate mean of base QUAL values
+            qual = bam_get_qual(bamdata);
+            sum_qual = 0;
+            for (j = 0; j < this_read_len; j++) {
+                sum_qual += qual[j];
+            }
+            qs_value = ((double) sum_qual) / this_read_len;
+        }
+
+        // ... add to read-level results
+        df_read_id.push_back(bam_get_qname(bamdata));
+        df_qscore.push_back(qs_value);
+        df_read_length.push_back(this_read_len);
+        df_aligned_length.push_back(calculate_aligned_bases(bamdata));
     }
 
     return 0;
@@ -341,20 +370,23 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'     \code{n_alns_to_sample = 0}.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
-//' @return A named list with elements \code{"read_id"}, \code{qscore},
+//' @return A named list with elements \code{"read_id"},
 //'     \code{"forward_read_position"}, \code{"ref_position"},
 //'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
-//'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
-//'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
+//'     \code{"canonical_base"}, \code{"mod_prob"} and \code{"read_df"}.
+//'     The meaning of these elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 //'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
 //'     modified bases and equal to \code{1 - call_prob} for unmodified bases
-//'     (\code{call_code == "-"}), and \code{qscore}, which is the read quality
-//'     score recorded in the \code{qs} tag of each bam record.
+//'     (\code{call_code == "-"}), and \code{"read_df"}, which is a
+//'      \code{data.frame} with one row per read and columns \code{"read_id"}
+//'     (the read identifier), \code{"qscore"} (the read quality score recorded
+//'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
+//'     total read length), and \code{"aligned_length"} (the number of
+//'     aligned bases).
 //'
 //' @examples
-//' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
-//'                           package = "footprintR")
-//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+//' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -381,6 +413,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     hts_set_log_level(HTS_LOG_OFF);
 
     // variable declarations
+    // ... general variables
     int c = 0, i = 0, success = 0;
     int n_unaligned = 0, n_total = 0;
     bool had_error = false;
@@ -392,11 +425,13 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     hts_itr_t *iter = NULL;
     unsigned int regcnt = 0, alncnt = 0;
     char **regions_c = NULL, *qseq = NULL;
+    int qseq_len = 0;
     int buffer_len = 2000;
     char buffer[2000];
 
+    // ... return values (one per modification)
     std::vector<std::string> read_id;
-    std::vector<double> qscore;
+    std::vector<int> aligned_length;
     std::vector<char> call_code;
     std::vector<char> canonical_base;
     std::vector<char> ref_mod_strand;
@@ -405,6 +440,12 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<int> forward_read_position;
     std::vector<int> ref_position;
     std::vector<double> mod_prob;
+
+    // ... return values (one per aligned read)
+    std::vector<std::string> df_read_id;
+    std::vector<double> df_qscore;
+    std::vector<int> df_read_length;
+    std::vector<int> df_aligned_length;
 
     const char* inname = inname_str.c_str();
 
@@ -513,18 +554,18 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 rand_val < keep_aln_fraction) {
                 success = process_bam_record(bamdata,          // bam record
                                              alncnt,           // alignment counter
-                                             qseq,             // forward read sequence
+                                             qseq,             // buffer for forward read sequence
+                                             qseq_len,         // allocated length of qseq
                                              ms,               // modification state struct
                                              had_error,        // error flag
-                                             buffer_len,       // length of message buffer
-                                             buffer,           // message buffer
+                                             buffer,           // buffer for message
+                                             buffer_len,       // allocated length of message buffer
                                              modbase,          // modified base to analyze
                                              in_samhdr,        // sam file header
                                              n_unaligned,      // number of unaligned modified bases
                                              n_total,          // total number of modified bases
-                                             // vectors for return values
+                                             // vectors for return values (per modification)
                                              read_id,
-                                             qscore,
                                              call_code,
                                              canonical_base,
                                              ref_mod_strand,
@@ -532,7 +573,12 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                              aligned_read_position,
                                              forward_read_position,
                                              ref_position,
-                                             mod_prob);
+                                             mod_prob,
+                                             // vectors for return values (per alignment)
+                                             df_read_id,
+                                             df_qscore,
+                                             df_read_length,
+                                             df_aligned_length);
                 if (success != 0) { // # nocov start
                     goto end;
                 } // # nocov end
@@ -565,18 +611,18 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
             success = process_bam_record(bamdata,          // bam record
                                          alncnt,           // alignment counter
-                                         qseq,             // forward read sequence
+                                         qseq,             // buffer for forward read sequence
+                                         qseq_len,         // allocated length of qseq
                                          ms,               // modification state struct
                                          had_error,        // error flag
-                                         buffer_len,       // length of message buffer
-                                         buffer,           // message buffer
+                                         buffer,           // buffer for message
+                                         buffer_len,       // allocated length of message buffer
                                          modbase,          // modified base to analyze
                                          in_samhdr,        // sam file header
                                          n_unaligned,      // number of unaligned modified bases
                                          n_total,          // total number of modified bases
-                                         // vectors for return values
+                                         // vectors for return values (per modification)
                                          read_id,
-                                         qscore,
                                          call_code,
                                          canonical_base,
                                          ref_mod_strand,
@@ -584,7 +630,12 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                          aligned_read_position,
                                          forward_read_position,
                                          ref_position,
-                                         mod_prob);
+                                         mod_prob,
+                                         // vectors for return values (per alignment)
+                                         df_read_id,
+                                         df_qscore,
+                                         df_read_length,
+                                         df_aligned_length);
             if (success != 0) {
                 goto end;
             }
@@ -639,17 +690,25 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             Rcpp::stop(buffer);
 
         } else {
+            // create data.frame for read-level data
+            Rcpp::DataFrame df = Rcpp::DataFrame::create(
+                Rcpp::_["read_id"] = df_read_id,
+                Rcpp::_["qscore"] = df_qscore,
+                Rcpp::_["read_length"] = df_read_length,
+                Rcpp::_["aligned_length"] = df_aligned_length
+            );
+
             // create return list
             Rcpp::List res = Rcpp::List::create(
                 Rcpp::_["read_id"] = read_id,
-                Rcpp::_["qscore"] = qscore,
                 Rcpp::_["forward_read_position"] = forward_read_position,
                 Rcpp::_["ref_position"] = ref_position,
                 Rcpp::_["chrom"] = chrom,
                 Rcpp::_["ref_mod_strand"] = ref_mod_strand,
                 Rcpp::_["call_code"] = call_code,
                 Rcpp::_["canonical_base"] = canonical_base,
-                Rcpp::_["mod_prob"] = mod_prob);
+                Rcpp::_["mod_prob"] = mod_prob,
+                Rcpp::_["read_df"] = df);
 
             return res;
         }
