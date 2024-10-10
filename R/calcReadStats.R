@@ -9,7 +9,7 @@
 #' statistics that are calculated.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-#'     object with assay \code{"mod_prob"} typically returned by
+#'     object with assay \code{assay.type} typically returned by
 #'     \code{\link{readModkitExtract}} or \code{\link{readModBam}}.
 #' @param assay.type A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
@@ -115,22 +115,19 @@
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
 #'            modbase = "a", verbose = TRUE)
 #'
-#' ReadStats <- calcReadStats(se)
-#' ReadStats$s1
+#' readStats <- calcReadStats(se)
+#' readStats$s1
 #'
 #' se_withReadStats <- addReadStats(se, name = "QC")
-#' colData(se_withReadStats)$QC$s1
+#' se_withReadStats$QC$s1
+#' metadata(se_withReadStats$QC$s1)
 #'
-#' @importFrom BiocGenerics start
-#' @import ggplot2
-#' @importFrom tidyr gather
-#' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList
+#' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList DataFrame
+#' @importFrom SummarizedExperiment assay rowData
 #' @importFrom SparseArray rowSums nnawhich nnavals
-#' @importFrom SummarizedExperiment assay rowData assayNames
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom Biostrings vcountPattern
 #' @importFrom IRanges subsetByOverlaps
-#' @importFrom rlang .data
 #'
 #' @export
 calcReadStats <- function(se,
@@ -138,25 +135,12 @@ calcReadStats <- function(se,
                           stats = NULL,
                           regions = NULL,
                           sequence.context = NULL,
-                          min.Nobs.ppos = NULL,
+                          min.Nobs.ppos = 0,
                           min.Nobs.pread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
                           verbose = FALSE) {
-
-    # digest arguments
-    .assertVector(x = se, type = "RangedSummarizedExperiment")
-    if (!all(c("mod_prob") %in% SummarizedExperiment::assayNames(se))) {
-        stop("`se` needs to have a 'mod_prob' assay")
-    }
-    if (is.character(regions)) {
-        regions <- as(regions, "GRanges")
-    }
-    .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
-    .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
-    .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
-    LagRangeValues <- seq(LagRange[1], LagRange[2])
+    # define functions to calculate summary statistics
     statFunctions <- list(
         MeanModProb = mean,
         FracMod = function(x, c = 0.5) {
@@ -181,12 +165,12 @@ calcReadStats <- function(se,
             stats::sd(x)
         },
         SEntrModProb = function(x) {
-             if (length(x) > 64) {
-                 sampleEntropy(x, 2L, 0.2)
-             } else {
-                 NA
-             }
-         },
+            if (length(x) > 64) {
+                sampleEntropy(x, 2L, 0.2)
+            } else {
+                NA
+            }
+        },
         Lag1DModProb = function(x) {
             xC <- 1 * (x > 0.5)
             mean(abs(diff(xC, lag = 1)))
@@ -210,17 +194,28 @@ calcReadStats <- function(se,
             }
         }
     )
+
+    # digest arguments
+    .assertVector(x = se, type = "RangedSummarizedExperiment")
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = .getReadLevelAssayNames(se))
     .assertVector(x = stats, type = "character", allowNULL = TRUE,
                   validValues = names(statFunctions))
-    .assertScalar(x = min.Nobs.ppos, type = "numeric", allowNULL = TRUE,
-                  rngIncl = c(1, Inf))
+    if (is.character(regions)) {
+        regions <- as(regions, "GRanges")
+    }
+    .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
+    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+    .assertScalar(x = min.Nobs.ppos, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
+    .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
+    LagRangeValues <- seq(LagRange[1], LagRange[2])
     .assertScalar(x = verbose, type = "logical")
 
     # Subset se by region
     if (!is.null(regions)) {
         se <- subsetByOverlaps(x = se, ranges = regions)
-        # % removed
     }
 
     # Subset by sequence.context
@@ -229,17 +224,18 @@ calcReadStats <- function(se,
             stop("No sequence context found in `rowData(se)$sequence.context`")
         }
         nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
-            vcountPattern(pat,
-                          SummarizedExperiment::rowData(se)$sequence.context,
-                          fixed = FALSE)
-        }))
+            Biostrings::vcountPattern(
+                pat,
+                SummarizedExperiment::rowData(se)$sequence.context,
+                fixed = FALSE)
+        }), init = rep(0, nrow(se)))
         se <- se[nmatch > 0, ]
-        # % removed
     }
 
     # Calculate statistics for each sample
-    out <- SimpleList(lapply(colnames(se), function(nm) {
-        mat <- SummarizedExperiment::assay(se, "mod_prob")[[nm]]
+    out <- SimpleList(lapply(structure(colnames(se), names = colnames(se)),
+                             function(nm) {
+        mat <- SummarizedExperiment::assay(se, assay.type)[[nm]]
 
         # Non-NA indices:
         NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
@@ -250,20 +246,13 @@ calcReadStats <- function(se,
         Nobs[as.numeric(names(TBL))] <- unclass(TBL)
 
         # Subset positions by coverage
-        if (is.null(min.Nobs.ppos)) {
-            min.cov <- stats::quantile(Nobs, 0.75) -
-                0.5 * stats::IQR(Nobs)
-        } else{
-            min.cov <- min.Nobs.ppos
-        }
-        min.cov <- max(floor(min.cov), 1)
-        idx <- which(Nobs >= min.cov)
+        idx <- which(Nobs >= min.Nobs.ppos)
         mat <- mat[idx, ]
         Nobs <- Nobs[idx]
         if (verbose) {
             message(
                 "(", nm, ") Applied coverage filter\nPositions with coverage < ",
-                min.cov, " removed.")
+                min.Nobs.ppos, " removed.")
         }
 
         # Create list of non-zero row indices per column (i.e per read)
@@ -279,17 +268,8 @@ calcReadStats <- function(se,
         # Number of (valid) observations per read:
         NobsReads <- lengths(NNAind_byCol)
 
-        ## TODO:
-        # Add stats on removed positions / reads for each filter
-
         # Collapsed mod probs per position:
         MeanModProb <- SparseArray::rowSums(mat) / Nobs
-
-        # "collapsed methylation" over the same positions as the read-level observations
-        # READSTATS_6mA$meanMeth_CL <- sapply(1:ncol(Probs_6mA), function(x) {
-        #     obs <- NNAindL[[x]]
-        #     mean(collapsed_6mA_f[obs],na.rm=TRUE)
-        # })
 
         # Include in calculations only reads with sufficient Number of observations:
         if (min.Nobs.pread > 0) {
@@ -304,33 +284,36 @@ calcReadStats <- function(se,
             param_names <- names(statFunctions)
         }
 
-        # Iterate through the logicals and add columns to stats_res
-        # if the parameter is TRUE
+        # Iterate over param_names and add columns to stats_res
         stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(mat))
         row.names(stats_res) <- colnames(mat)
-        metadata(stats_res) <- list(min.Nobs.ppos = min.cov,
-                                    Lags = LagRangeValues,
-                                    stats = param_names)
         for (param in param_names) {
             if (param %in% c("ACModProb", "PACModProb")) {
-                stats_res[[param]] <- rep(list(rep(NA, length(LagRangeValues))),
-                                          ncol(mat))
-                stats_res[use.reads, param] <- I(lapply(use.reads, function(r) {
-                    v <- NNAvals_byCol[[r]]
-                    statFunctions[[param]](v)
-                }))
+                stats_res[[param]] <- lapply(
+                    structure(colnames(mat), names = colnames(mat)), function(r) {
+                        if (r %in% use.reads) {
+                            statFunctions[[param]](NNAvals_byCol[[r]])
+                        } else {
+                            rep(NA, length(LagRangeValues))
+                        }
+                    })
             } else {
                 stats_res[[param]] <- rep(NA, ncol(mat))
                 stats_res[use.reads, param] <- vapply(use.reads, function(r) {
-                    v <- NNAvals_byCol[[r]]
-                    statFunctions[[param]](v)
+                    statFunctions[[param]](NNAvals_byCol[[r]])
                 }, numeric(1))
             }
         }
         stats_res$sample <- nm
         stats_res
     }))
-    names(out) <- colnames(se)
+
+    # add filtering parameters to `out`
+    metadata(out) <- list(regions = regions,
+                          sequence.context = sequence.context,
+                          min.Nobs.ppos = min.Nobs.ppos,
+                          min.Nobs.pread = min.Nobs.pread,
+                          Lags = LagRangeValues)
 
     return(out)
 }
@@ -344,7 +327,7 @@ addReadStats <- function(se, ..., name = "QC") {
 
     .assertScalar(x = name, type = "character")
 
-    colData(se)[[name]] <- calcReadStats(se = se, ...)[colnames(se)]
+    colData(se)[[name]] <- calcReadStats(se = se, ...)
     return(se)
 }
 

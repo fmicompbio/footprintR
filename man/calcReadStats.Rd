@@ -11,7 +11,7 @@ calcReadStats(
   stats = NULL,
   regions = NULL,
   sequence.context = NULL,
-  min.Nobs.ppos = NULL,
+  min.Nobs.ppos = 0,
   min.Nobs.pread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
@@ -22,7 +22,7 @@ addReadStats(se, ..., name = "QC")
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-object with assay \code{"mod_prob"} typically returned by
+object with assay \code{assay.type} typically returned by
 \code{\link{readModkitExtract}} or \code{\link{readModBam}}.}
 
 \item{assay.type}{A character scalar specifying the assay of \code{se}
@@ -143,11 +143,12 @@ modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
            modbase = "a", verbose = TRUE)
 
-ReadStats <- calcReadStats(se)
-ReadStats$s1
+readStats <- calcReadStats(se)
+readStats$s1
 
 se_withReadStats <- addReadStats(se, name = "QC")
-colData(se_withReadStats)$QC$s1
+se_withReadStats$QC$s1
+metadata(se_withReadStats$QC$s1)
 
 }
 \author{
