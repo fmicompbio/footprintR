@@ -116,6 +116,7 @@ test_that("addReadStats works", {
                            package = "footprintR")
     se <- readModkitExtract(exfiles, modbase = "a")
     se2 <- addReadStats(se, name = "qc2")
+    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2")
 
     # expected errors
     expect_error(addReadStats(se, name = -1), "must be of class 'character'")
@@ -137,4 +138,11 @@ test_that("addReadStats works", {
                       "FracLowConf", "IQRModProb", "sdModProb", "SEntrModProb", "Lag1DModProb",
                       "ACModProb", "PACModProb", "sample") %in%
                         colnames(qc)))
+    expect_identical(metadata(se2$qc2)$min.Nobs.pread, 0)
+    expect_identical(metadata(se3$qc2)$min.Nobs.pread, 2600)
+    na_rows <- lapply(endoapply(assay(se), function(x) colSums(is_nonna(x))),
+                      function(y) which(y < 2600))
+    expect_equal(na_rows, list(c(7,8,9,10), c(5,7,8,9,10)), ignore_attr = TRUE)
+    expect_identical(se2$qc2$s1[-na_rows$s1,], se3$qc2$s1[-na_rows$s1,])
+    expect_identical(se2$qc2$s2[-na_rows$s2,], se3$qc2$s2[-na_rows$s2,])
 })
