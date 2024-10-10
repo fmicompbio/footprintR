@@ -297,7 +297,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         }
     }
 
-    // ... convert 0-based read positions to 1-based reference coordinates
+    // ... convert 0-based read positions to 0-based reference coordinates
     //     (a coordinate of -1 means unaligned, e.g. soft-masked)
     std::vector<int> aligned_read_position_converted =
         read_to_reference_pos(bamdata, aligned_read_position);

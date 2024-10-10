@@ -145,7 +145,7 @@ readModBam <- function(bamfiles,
         # convert inferred `mod_prob` to our minimal value as in
         # readModkitExtract(). Inferred means that the modification was omitted
         # from the BAM file, e.g. DORADO omits base modification probabilities
-        # less than 0.05, and read_modbam_cpp returns a call_probability of -1 for
+        # less than 0.05, and read_modbam_cpp returns a mod_prob of -1 for
         # these.
         resL$mod_prob[resL$mod_prob == -1] <- 0.02
         resL
@@ -167,12 +167,12 @@ readModBam <- function(bamfiles,
                 length(gpos), " unique ones")
     }
 
-    # extract read names
-    readL <- lapply(resLL, function(resL) unique(resL$read_id))
+    # extract unique read names
+    readL <- lapply(resLL, function(resL) resL$read_df$read_id)
 
     # modified probability
     modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
-    qscoreL <- S4Vectors::SimpleList()
+    readdfL <- S4Vectors::SimpleList()
     for (nm in names(bamfiles)) {
         x <- resLL[[nm]]
         if (length(x$read_id) > 0) {
@@ -183,11 +183,17 @@ readModBam <- function(bamfiles,
             j <- match(x$read_id, readL[[nm]])
             namat[cbind(i, j)] <- x$mod_prob
             modmat[[nm]] <- namat
-            qscoreL[[nm]] <- x$qscore[match(readL[[nm]], x$read_id)]
+            x$read_df$read_id <- paste0(nm, "-", x$read_df$read_id)
+            x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
+            readdfL[[nm]] <- x$read_df
         } else {
             modmat[[nm]] <- SparseArray::NaArray(dim = c(length(gpos), 0),
                                                  type = "double")
-            qscoreL[[nm]] <- numeric(0)
+            readdfL[[nm]] <- data.frame(read_id = character(0),
+                                        qscore = numeric(0),
+                                        read_length = integer(0),
+                                        aligned_length = integer(0),
+                                        aligned_fraction = numeric(0))
         }
     }
 
@@ -199,8 +205,8 @@ readModBam <- function(bamfiles,
             row.names = names(bamfiles),
             sample = names(bamfiles),
             modbase = modbase[names(bamfiles)],
-            n_reads = lengths(qscoreL),
-            qscore = qscoreL
+            n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
+            read_info = readdfL
         ),
         metadata = list()
     )

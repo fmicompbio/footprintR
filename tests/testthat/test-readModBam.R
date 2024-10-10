@@ -124,34 +124,27 @@ test_that("readModBam works", {
                         nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
                         verbose = FALSE)
 
+    seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b)
+
     # ... structure
-    expect_s4_class(se1, "RangedSummarizedExperiment")
-    expect_s4_class(se2, "RangedSummarizedExperiment")
-    expect_s4_class(se3, "RangedSummarizedExperiment")
-    expect_s4_class(se4, "RangedSummarizedExperiment")
-    expect_s4_class(se5a, "RangedSummarizedExperiment")
-    expect_s4_class(se5b, "RangedSummarizedExperiment")
-    expect_s4_class(se6a, "RangedSummarizedExperiment")
-    expect_s4_class(se6b, "RangedSummarizedExperiment")
-
-    expect_s4_class(rowRanges(se1), "GPos")
-    expect_s4_class(rowRanges(se2), "GPos")
-    expect_s4_class(rowRanges(se3), "GPos")
-    expect_s4_class(rowRanges(se4), "GPos")
-    expect_s4_class(rowRanges(se5a), "GPos")
-    expect_s4_class(rowRanges(se5b), "GPos")
-    expect_s4_class(rowRanges(se6a), "GPos")
-    expect_s4_class(rowRanges(se6b), "GPos")
-
-    expected_coldata_names <- c("sample", "modbase", "n_reads", "qscore")
-    expect_identical(colnames(colData(se1)), expected_coldata_names)
-    expect_identical(colnames(colData(se2)), expected_coldata_names)
-    expect_identical(colnames(colData(se3)), expected_coldata_names)
-    expect_identical(colnames(colData(se4)), expected_coldata_names)
-    expect_identical(colnames(colData(se5a)), expected_coldata_names)
-    expect_identical(colnames(colData(se5b)), expected_coldata_names)
-    expect_identical(colnames(colData(se6a)), expected_coldata_names)
-    expect_identical(colnames(colData(se6b)), expected_coldata_names)
+    expected_coldata_names <- c("sample", "modbase", "n_reads", "read_info")
+    expected_read_info_names <- c("read_id", "qscore", "read_length",
+                                  "aligned_length", "aligned_fraction")
+    for (se in seL) {
+        expect_s4_class(se, "RangedSummarizedExperiment")
+        expect_s4_class(rowRanges(se), "GPos")
+        expect_identical(colnames(colData(se)), expected_coldata_names)
+        expect_s4_class(colData(se)$read_info, "SimpleList")
+        lapply(colData(se)$read_info, function(df) {
+            expect_s3_class(df, "data.frame")
+            expect_named(df, expected_read_info_names)
+        })
+        expect_identical(assayNames(se), "mod_prob")
+        expect_s4_class(assay(se, "mod_prob"), "DFrame")
+        expect_s4_class(assay(se, "mod_prob")[[1]], "NaMatrix")
+        expect_equal(vapply(assay(se, "mod_prob"), ncol, 0), se$n_reads,
+                     ignore_attr = TRUE)
+    }
 
     expect_identical(se1$sample, names(modbamfiles))
     expect_identical(se2$sample, c("s1", "s2"))
@@ -161,42 +154,6 @@ test_that("readModBam works", {
     expect_identical(se5b$sample, names(modbamfiles)[1])
     expect_identical(se6a$sample, names(modbamfiles)[1])
     expect_identical(se6b$sample, names(modbamfiles)[1])
-
-    expect_identical(assayNames(se1), "mod_prob")
-    expect_identical(assayNames(se2), "mod_prob")
-    expect_identical(assayNames(se3), "mod_prob")
-    expect_identical(assayNames(se4), "mod_prob")
-    expect_identical(assayNames(se5a), "mod_prob")
-    expect_identical(assayNames(se5b), "mod_prob")
-    expect_identical(assayNames(se6a), "mod_prob")
-    expect_identical(assayNames(se6b), "mod_prob")
-
-    expect_s4_class(assay(se1, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se2, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se3, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se4, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se5a, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se5b, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se6a, "mod_prob"), "DFrame")
-    expect_s4_class(assay(se6b, "mod_prob"), "DFrame")
-
-    expect_s4_class(assay(se1, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se2, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se3, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se4, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se5a, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se5b, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se6a, "mod_prob")[[1]], "NaMatrix")
-    expect_s4_class(assay(se6b, "mod_prob")[[1]], "NaMatrix")
-
-    expect_equal(vapply(assay(se1, "mod_prob"), ncol, 0), se1$n_reads)
-    expect_equal(vapply(assay(se2, "mod_prob"), ncol, 0), se2$n_reads)
-    expect_equal(vapply(assay(se3, "mod_prob"), ncol, 0), se3$n_reads)
-    expect_equal(vapply(assay(se4, "mod_prob"), ncol, 0), se4$n_reads)
-    expect_equal(vapply(assay(se5a, "mod_prob"), ncol, 0), se5a$n_reads)
-    expect_equal(vapply(assay(se5b, "mod_prob"), ncol, 0), se5b$n_reads)
-    expect_equal(vapply(assay(se6a, "mod_prob"), ncol, 0), se6a$n_reads)
-    expect_equal(vapply(assay(se6b, "mod_prob"), ncol, 0), se6b$n_reads)
 
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -215,13 +172,25 @@ test_that("readModBam works", {
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
     expect_identical(se1$sample, names(modbamfiles))
-    expect_equal(se1$qscore,
-                 S4Vectors::SimpleList(
+    expect_identical(lapply(se1$read_info, "[[", "read_id"),
+                     lapply(assay(se1, "mod_prob"), colnames))
+    expect_equal(lapply(se1$read_info, "[[", "qscore"),
+                 list(
                      sample1 = c(14.1428003311157, 16.0126991271973,
                                  21.1338005065918, 20.3082008361816),
                      sample2 = c(12.9041996002197, 9.67461013793945,
                                  15.0149002075195, 15.1365995407104,
                                  17.7175006866455, 13.6647996902466)))
+    expect_identical(lapply(se1$read_info, "[[", "read_length"),
+                     list(
+                         sample1 = c(20058L, 11305L, 9246L, 12277L),
+                         sample2 = c(13108L, 11834L, 9674L, 10047L, 8973L, 10057L)
+                     ))
+    expect_identical(lapply(se1$read_info, "[[", "aligned_length"),
+                     list(
+                         sample1 = c(14801L, 11214L, 9227L, 12227L),
+                         sample2 = c(9656L, 11234L, 9579L, 9967L, 8915L, 9898L)
+                     ))
 
     # ... content se2
     expect_identical(unname(se2$n_reads), c(3L, 2L))
@@ -230,7 +199,11 @@ test_that("readModBam works", {
                      unname(as.matrix(assay(se3, "mod_prob"))))
     expect_identical(sub("^s", "sample", colnames(se2)), colnames(se3))
     expect_identical(se2$sample, sub("sample", "s", se3$sample))
-    expect_identical(unname(se2$qscore), unname(se3$qscore))
+    for (nm in setdiff(expected_read_info_names, "read_id")) {
+        expect_equal(lapply(se2$read_info, "[[", nm),
+                     lapply(se3$read_info, "[[", nm),
+                     ignore_attr = TRUE)
+    }
 
     # ... content se3
     expect_identical(unname(se3$n_reads), c(3L, 2L))
@@ -247,20 +220,43 @@ test_that("readModBam works", {
     expect_equal(as.vector(modprob3[shared_rows, shared_cols])[nonzero],
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
-    expect_equal(se3$qscore,
-                 S4Vectors::SimpleList(
+    expect_identical(lapply(se3$read_info, "[[", "read_id"),
+                     lapply(assay(se3, "mod_prob"), colnames))
+    expect_equal(lapply(se3$read_info, "[[", "qscore"),
+                 list(
                      sample1 = c(14.1428003311157, 16.0126991271973, 20.3082008361816),
                      sample2 = c(9.67461013793945, 13.6647996902466)))
+    expect_identical(lapply(se3$read_info, "[[", "read_length"),
+                     list(
+                         sample1 = c(20058L, 11305L, 12277L),
+                         sample2 = c(11834L, 10057L)
+                     ))
+    expect_identical(lapply(se3$read_info, "[[", "aligned_length"),
+                     list(
+                         sample1 = c(14801L, 11214L, 12227L),
+                         sample2 = c(11234L, 9898L)
+                     ))
 
     # ... content se4
     expect_identical(unname(se4$n_reads), c(3L, 0L))
     expect_identical(dim(se4), c(4772L, 2L))
     expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(4772L, 3L))
-    expect_equal(se4$qscore,
-                 S4Vectors::SimpleList(sample1 = c(14.1428003311157,
-                                                   16.0126991271973,
-                                                   20.3082008361816),
-                                       sample2 = numeric(0)))
+    expect_identical(unlist(lapply(se4$read_info, "[[", "read_id"), use.names = FALSE),
+                     unlist(lapply(assay(se4, "mod_prob"), colnames), use.names = FALSE))
+    expect_equal(lapply(se4$read_info, "[[", "qscore"),
+                 list(
+                     sample1 = c(14.1428003311157, 16.0126991271973, 20.3082008361816),
+                     sample2 = numeric(0)))
+    expect_identical(lapply(se4$read_info, "[[", "read_length"),
+                     list(
+                         sample1 = c(20058L, 11305L, 12277L),
+                         sample2 = integer(0)
+                     ))
+    expect_identical(lapply(se4$read_info, "[[", "aligned_length"),
+                     list(
+                         sample1 = c(14801L, 11214L, 12227L),
+                         sample2 = integer(0)
+                     ))
 
     # ... content of se5a and se5b (se5a should be a subset of se5b)
     # ... ... check ground truth
