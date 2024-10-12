@@ -1,5 +1,23 @@
 #' @keywords internal
 #' @noRd
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SparseArray rowSums is_nonna
+#' 
+.removeAllNAPositions <- function(se, assay.type = "mod_prob") {
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = .getReadLevelAssayNames(se))
+    
+    # Get requested assay and convert to a single NaMatrix
+    mat <- as.matrix(assay(se, assay.type))
+    
+    # Find positions to keep and subset se
+    keep <- which(rowSums(is_nonna(mat)) > 0)
+    se[keep, ]
+} 
+
+#' @keywords internal
+#' @noRd
 #' @importFrom SummarizedExperiment rowRanges assayNames assay
 #'
 .pruneAmbiguousStrandPositions <- function(se, assay.type = "Nvalid",
