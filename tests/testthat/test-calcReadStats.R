@@ -42,9 +42,7 @@ test_that("calcReadStats works", {
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
-    expect_message(
-        rs <- calcReadStats(se, verbose = TRUE, min.Nobs.ppos = thr)
-    )
+    rs <- calcReadStats(se, verbose = TRUE, min.Nobs.ppos = thr)
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")

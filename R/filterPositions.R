@@ -1,5 +1,29 @@
 #' @keywords internal
 #' @noRd
+#' @importFrom SummarizedExperiment assay assayNames
+#' 
+.filterPositionsByCoverage <- function(se, assay.type = "Nvalid", min.cov = 1) {
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = assay.type, type = "character", 
+                  validValues = assayNames(se))
+    .assertScalar(x = min.cov, type = "numeric")
+    
+    # If assay.type is a read-level assay, first calculate the number of 
+    # non-NA values in each row
+    if (assay.type %in% .getReadLevelAssayNames(se)) {
+        mat <- assay(addReadsSummary(se, assay.type = assay.type, 
+                                     statistics = "Nvalid", keep.reads = FALSE,
+                                     verbose = FALSE), "Nvalid")
+    } else {
+        mat <- assay(se, assay.type)
+    }
+    
+    keep <- rownames(mat)[which(rowSums(mat) >= min.cov)]
+    se[keep, ]
+}
+
+#' @keywords internal
+#' @noRd
 #' @importFrom SummarizedExperiment rowData
 #' @importFrom Biostrings vcountPattern
 #' 

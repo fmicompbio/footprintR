@@ -221,80 +221,74 @@ calcReadStats <- function(se,
     se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
 
     # Calculate statistics for each sample
-    out <- SimpleList(lapply(structure(colnames(se), names = colnames(se)),
-                             function(nm) {
-        mat <- SummarizedExperiment::assay(se, assay.type)[[nm]]
+    out <- SimpleList(lapply(
+        structure(colnames(se), names = colnames(se)), function(nm) {
+            sesub <- .filterPositionsByCoverage(
+                se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos)
+            
+            mat <- SummarizedExperiment::assay(sesub, assay.type)[[nm]]
 
-        # Non-NA indices:
-        NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
+            # Non-NA indices:
+            NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
 
-        # Coverage per row (i.e per position)
-        Nobs <- rep(0, nrow(mat))
-        TBL <- table(NNAind[, 1])
-        Nobs[as.numeric(names(TBL))] <- unclass(TBL)
-
-        # Subset positions by coverage
-        idx <- which(Nobs >= min.Nobs.ppos)
-        mat <- mat[idx, ]
-        Nobs <- Nobs[idx]
-        if (verbose) {
-            message(
-                "(", nm, ") Applied coverage filter\nPositions with coverage < ",
-                min.Nobs.ppos, " removed.")
-        }
-
-        # Create list of non-zero row indices per column (i.e per read)
-        NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
-        NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
-        names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
-
-        # List of non-zero observations by column (i.e by read):
-        NNAvals <- SparseArray::nnavals(mat)
-        NNAvals_byCol <- split(NNAvals, NNAind[, 2])
-        names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
-
-        # Number of (valid) observations per read:
-        NobsReads <- lengths(NNAind_byCol)
-
-        # Collapsed mod probs per position:
-        MeanModProb <- SparseArray::rowSums(mat) / Nobs
-
-        # Include in calculations only reads with sufficient Number of observations:
-        if (min.Nobs.pread > 0) {
-            use.reads <- colnames(mat)[NobsReads > min.Nobs.pread]
-        } else {
-            use.reads <- colnames(mat)
-        }
-
-        if (!is.null(stats)) {
-            param_names <- stats
-        } else {
-            param_names <- names(statFunctions)
-        }
-
-        # Iterate over param_names and add columns to stats_res
-        stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(mat))
-        row.names(stats_res) <- colnames(mat)
-        for (param in param_names) {
-            if (param %in% c("ACModProb", "PACModProb")) {
-                stats_res[[param]] <- lapply(
-                    structure(colnames(mat), names = colnames(mat)), function(r) {
-                        if (r %in% use.reads) {
-                            statFunctions[[param]](NNAvals_byCol[[r]])
-                        } else {
-                            rep(NA, length(LagRangeValues))
-                        }
-                    })
+            # Coverage per row (i.e per position)
+            Nobs <- rep(0, nrow(mat))
+            TBL <- table(NNAind[, 1])
+            Nobs[as.numeric(names(TBL))] <- unclass(TBL)
+            
+            # Create list of non-zero row indices per column (i.e per read)
+            NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
+            NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
+            names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
+            
+            # List of non-zero observations by column (i.e by read):
+            NNAvals <- SparseArray::nnavals(mat)
+            NNAvals_byCol <- split(NNAvals, NNAind[, 2])
+            names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
+            
+            # Number of (valid) observations per read:
+            NobsReads <- lengths(NNAind_byCol)
+            
+            # Collapsed mod probs per position:
+            MeanModProb <- SparseArray::rowSums(mat) / Nobs
+            
+            # Include in calculations only reads with sufficient Number of observations:
+            if (min.Nobs.pread > 0) {
+                use.reads <- colnames(mat)[NobsReads > min.Nobs.pread]
             } else {
-                stats_res[[param]] <- rep(NA, ncol(mat))
-                stats_res[use.reads, param] <- vapply(use.reads, function(r) {
-                    statFunctions[[param]](NNAvals_byCol[[r]])
-                }, numeric(1))
+                use.reads <- colnames(mat)
             }
-        }
-        stats_res$sample <- nm
-        stats_res
-    }))
+            
+            if (!is.null(stats)) {
+                param_names <- stats
+            } else {
+                param_names <- names(statFunctions)
+            }
+            
+            # Iterate over param_names and add columns to stats_res
+            stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(mat))
+            row.names(stats_res) <- colnames(mat)
+            for (param in param_names) {
+                if (param %in% c("ACModProb", "PACModProb")) {
+                    stats_res[[param]] <- lapply(
+                        structure(colnames(mat), names = colnames(mat)), function(r) {
+                            if (r %in% use.reads) {
+                                statFunctions[[param]](NNAvals_byCol[[r]])
+                            } else {
+                                rep(NA, length(LagRangeValues))
+                            }
+                        })
+                } else {
+                    stats_res[[param]] <- rep(NA, ncol(mat))
+                    stats_res[use.reads, param] <- vapply(use.reads, function(r) {
+                        statFunctions[[param]](NNAvals_byCol[[r]])
+                    }, numeric(1))
+                }
+            }
+            stats_res$sample <- nm
+            stats_res
+        })
+    )
 
     # add filtering parameters to `out`
     metadata(out) <- list(regions = regions,

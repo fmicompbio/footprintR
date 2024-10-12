@@ -1,3 +1,35 @@
+test_that(".filterPositionsByCoverage works", {
+    modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
+                     modbase = "a", verbose = FALSE)
+    se <- addReadsSummary(se, keep.reads = TRUE)
+    cov <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) > 0), na.rm = TRUE)
+    
+    expect_error(.filterPositionsByCoverage(se = "error"),
+                 "'se' must be of class 'SummarizedExperiment'")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = "missing"),
+                 "must be one of")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = c("Nvalid", "Nmod")),
+                 "'assay.type' must have length 1")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = 1),
+                 "'assay.type' must be of class 'character'")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid", 
+                                            min.cov = "1"),
+                 "'min.cov' must be of class 'numeric'")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid", 
+                                            min.cov = c(1, 2)),
+                 "'min.cov' must have length 1")
+    
+    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 10)
+    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 10)
+    expect_identical(se1, se2)
+    w <- which(cov >= 10)
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), names(w))
+    expect_equal(nrow(se1), 1783L)
+})
+
 test_that(".keepPositionsBySequenceContext works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
