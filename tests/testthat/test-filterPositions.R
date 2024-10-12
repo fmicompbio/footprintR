@@ -142,3 +142,29 @@ test_that(".pruneAmbiguousStrandPositions works", {
         "No genomic positions represented by multiple rows found"
     )
 })
+
+test_that("filterPositions works", {
+    modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+    se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
+                     modbase = "a", verbose = FALSE)
+    se <- addReadsSummary(se)
+    se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
+    
+    expect_error(filterPositions(se = "missing"), 
+                 "'se' must be of class 'SummarizedExperiment'")
+    expect_error(filterPositions(se = se, filters = 1),
+                 "'filters' must be of class 'character'")
+    expect_error(filterPositions(se = se, filters = "error"),
+                 "must be one of")
+
+    sefilt <- filterPositions(se, c("sequence.context", "coverage",
+                                    "repeated.positions", "all.na"),
+                              min.cov = 5, sequence.context = "TAG")
+    expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
+    expect_equal(nrow(sefilt), 4934L)
+    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("NNN", "TAG")))
+    expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
+                                       pos(rowRanges(sefilt))))))
+})
