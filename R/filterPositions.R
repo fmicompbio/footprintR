@@ -5,7 +5,7 @@
 #' 
 .keepPositionsBySequenceContext <- function(se, sequence.context = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = sequence.context, type = "character", allowNULL = TRUE)
+    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
     
     if (!is.null(sequence.context)) {
         if (is.null(rowData(se)$sequence.context)) {
