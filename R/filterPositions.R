@@ -1,5 +1,28 @@
 #' @keywords internal
 #' @noRd
+#' @importFrom SummarizedExperiment rowData
+#' @importFrom Biostrings vcountPattern
+#' 
+.keepPositionsBySequenceContext <- function(se, sequence.context = NULL) {
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = sequence.context, type = "character", allowNULL = TRUE)
+    
+    if (!is.null(sequence.context)) {
+        if (is.null(rowData(se)$sequence.context)) {
+            stop("No sequence context found in `rowData(se)$sequence.context`")
+        }
+        nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
+            vcountPattern(pat,
+                          rowData(se)$sequence.context,
+                          fixed = FALSE)
+        }), init = rep(0, nrow(se)))
+        se <- se[nmatch > 0, ]
+    }
+    se
+}
+
+#' @keywords internal
+#' @noRd
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums is_nonna
 #' 

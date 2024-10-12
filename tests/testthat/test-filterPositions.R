@@ -1,3 +1,30 @@
+test_that(".keepPositionsBySequenceContext works", {
+    modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
+                     modbase = "a", verbose = FALSE)
+    
+    expect_error(.keepPositionsBySequenceContext(se = "error"),
+                 "'se' must be of class 'SummarizedExperiment'")
+    expect_error(.keepPositionsBySequenceContext(se = se, 
+                                                 sequence.context = "ACT"), 
+                 "No sequence context found in `rowData(se)$sequence.context`",
+                 fixed = TRUE)
+    expect_identical(se, .keepPositionsBySequenceContext(se = se))
+    
+    gnm <- Biostrings::readDNAStringSet(system.file("extdata", "reference.fa.gz", 
+                                                    package = "footprintR"))
+    se <- addSeqContext(se, sequence.context.width = 3, 
+                        sequence.reference = gnm)
+    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "TAG")
+    w <- which(as.character(rowData(se)$sequence.context) %in% c("TAG", "NNN"))
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), rownames(se)[w])
+    ## Applying the same filter again doesn't do anything
+    se2 <- .keepPositionsBySequenceContext(se = se1, sequence.context = "TAG")
+    expect_identical(se1, se2)
+})
+
 test_that(".removeAllNAPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -29,7 +56,7 @@ test_that(".removeAllNAPositions works", {
     w <- which(rowSums(!is.na(as.matrix(as.matrix(assay(se, "mod_prob"))))) > 0)
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), names(w))
-    
+    ## Applying the same filter again doesn't do anything
     se2 <- .removeAllNAPositions(se1, assay.type = "mod_prob")
     expect_identical(se1, se2)
 })

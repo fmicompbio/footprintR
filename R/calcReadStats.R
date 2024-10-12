@@ -123,10 +123,9 @@
 #' metadata(se_withReadStats$QC$s1)
 #'
 #' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList DataFrame
-#' @importFrom SummarizedExperiment assay rowData
+#' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums nnawhich nnavals
 #' @importFrom stats sd IQR acf pacf na.pass
-#' @importFrom Biostrings vcountPattern
 #' @importFrom IRanges subsetByOverlaps
 #'
 #' @export
@@ -219,18 +218,7 @@ calcReadStats <- function(se,
     }
 
     # Subset by sequence.context
-    if (!is.null(sequence.context)) {
-        if (is.null(SummarizedExperiment::rowData(se)$sequence.context)) {
-            stop("No sequence context found in `rowData(se)$sequence.context`")
-        }
-        nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
-            Biostrings::vcountPattern(
-                pat,
-                SummarizedExperiment::rowData(se)$sequence.context,
-                fixed = FALSE)
-        }), init = rep(0, nrow(se)))
-        se <- se[nmatch > 0, ]
-    }
+    se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
 
     # Calculate statistics for each sample
     out <- SimpleList(lapply(structure(colnames(se), names = colnames(se)),
