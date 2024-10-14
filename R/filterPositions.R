@@ -43,10 +43,11 @@
         if (is.null(rowData(se)$sequence.context)) {
             stop("No sequence context found in `rowData(se)$sequence.context`")
         }
+        .assertVector(x = rowData(se)$sequence.context, type = "DNAStringSet")
         nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
             vcountPattern(pat,
                           rowData(se)$sequence.context,
-                          fixed = FALSE)
+                          fixed = "subject")
         }), init = rep(0, nrow(se)))
         se <- se[nmatch > 0, ]
     }

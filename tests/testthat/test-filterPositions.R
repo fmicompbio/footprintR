@@ -89,6 +89,13 @@ test_that(".keepPositionsBySequenceContext works", {
                                                     package = "footprintR"))
     se <- addSeqContext(se, sequence.context.width = 3,
                         sequence.reference = gnm)
+
+    setmp <- se
+    rowData(setmp)$sequence.context <- as.character(rowData(setmp)$sequence.context)
+    expect_error(.keepPositionsBySequenceContext(se = setmp,
+                                                 sequence.context = "ACT"),
+                 "must be of class 'DNAStringSet'")
+
     se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "TAG")
     w <- which(as.character(rowData(se)$sequence.context) == "TAG")
     expect_equal(nrow(se1), length(w))
@@ -97,11 +104,34 @@ test_that(".keepPositionsBySequenceContext works", {
     se2 <- .keepPositionsBySequenceContext(se = se1, sequence.context = "TAG")
     expect_identical(se1, se2)
 
-    ## TODO: Add test to check that any positions with sequence context
-    ## including N is removed
-    ## TODO: Add test with padding - extract larger sequence contexts, then
-    ## match with shorter patterns padded with N (extracting 5nt contexts,
-    ## then filtering for NTAGN, should give the same results as above)
+    ## Try with IUPAC
+    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "WAG")
+    w <- which(as.character(rowData(se)$sequence.context) %in% c("TAG", "AAG"))
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), rownames(se)[w])
+
+    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "NNN")
+    expect_identical(rowData(se), rowData(se1))
+
+    ## Manually insert Ns - make sure that these are not retained
+    secopy <- se
+    rowData(secopy)$sequence.context[1:5] <- rep("NNN", 5)
+    se1 <- .keepPositionsBySequenceContext(se = secopy, sequence.context = "WAG")
+    w <- which(as.character(rowData(secopy)$sequence.context) %in% c("TAG", "AAG"))
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), rownames(secopy)[w])
+
+    ## Padding
+    sec5 <- addSeqContext(se, sequence.context.width = 5,
+                          sequence.reference = gnm)
+    sec3 <- addSeqContext(se, sequence.context.width = 3,
+                          sequence.reference = gnm)
+    se1 <- .keepPositionsBySequenceContext(se = sec5, sequence.context = "NTAGN")
+    se2 <- .keepPositionsBySequenceContext(se = sec3, sequence.context = "TAG")
+    se3 <- .keepPositionsBySequenceContext(se = sec5, sequence.context = "TAG")
+    expect_equal(nrow(se1), nrow(se2))
+    expect_equal(rownames(se1), rownames(se2))
+    expect_false(nrow(se1) == nrow(se3))
 })
 
 test_that(".removeAllNAPositions works", {
