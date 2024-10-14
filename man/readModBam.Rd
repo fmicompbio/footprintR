@@ -11,6 +11,8 @@ readModBam(
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
   seqinfo = NULL,
+  sequence.context.width = 0,
+  sequence.reference = NULL,
   ncpu = 1L,
   verbose = FALSE
 )
@@ -51,6 +53,12 @@ names (chromosomes) from which to sample alignments from (only used if
 containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
+
+\item{sequence.context.width, sequence.reference}{Define the sequence
+context to be extracted around modified bases. By default (
+\code{sequence.context.width = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+See \code{\link{addSeqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readModBam}.}

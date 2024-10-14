@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
 ## -------------------------------------------------------------------------- ##
 test_that("readModBam works", {
     # example data
+    ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -57,11 +58,12 @@ test_that("readModBam works", {
     reg5 <- c("chr1:6941000-6941001", "chr1:6928000-6928001")
     expect_message(expect_message(expect_message(expect_message(
         expect_message(expect_message(expect_message(expect_message(
-            expect_message(
+            expect_message(expect_message(
                 se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
                                   modbase = "a", nAlnsToSample = 0,
+                                  sequence.context.width = 1, sequence.reference = ref,
                                   seqnamesToSampleFrom = "chr1", verbose = TRUE)
-    )))))))))
+    ))))))))))
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
@@ -191,6 +193,8 @@ test_that("readModBam works", {
                          sample1 = c(14801L, 11214L, 9227L, 12227L),
                          sample2 = c(9656L, 11234L, 9579L, 9967L, 8915L, 9898L)
                      ))
+    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequence.context))),
+                 c(A = 8108L, C = 128L, G = 393L, T = 62L), ignore_attr = TRUE)
 
     # ... content se2
     expect_identical(unname(se2$n_reads), c(3L, 2L))
