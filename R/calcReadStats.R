@@ -50,6 +50,8 @@
 #' @param name For \code{addReadStats} only: A character scalar specifying the
 #'     name to be used to store the result in the
 #'     \code{\link[SummarizedExperiment]{colData}} of the output.
+#' @param ... For \code{addReadStats} only: Additional arguments passed on to
+#'     \code{calcReadStats}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
@@ -225,7 +227,7 @@ calcReadStats <- function(se,
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
                 se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos)
-            
+
             mat <- SummarizedExperiment::assay(sesub, assay.type)[[nm]]
 
             # Non-NA indices:
@@ -235,36 +237,36 @@ calcReadStats <- function(se,
             Nobs <- rep(0, nrow(mat))
             TBL <- table(NNAind[, 1])
             Nobs[as.numeric(names(TBL))] <- unclass(TBL)
-            
+
             # Create list of non-zero row indices per column (i.e per read)
             NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
-            
+
             # List of non-zero observations by column (i.e by read):
             NNAvals <- SparseArray::nnavals(mat)
             NNAvals_byCol <- split(NNAvals, NNAind[, 2])
             names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
-            
+
             # Number of (valid) observations per read:
             NobsReads <- lengths(NNAind_byCol)
-            
+
             # Collapsed mod probs per position:
             MeanModProb <- SparseArray::rowSums(mat) / Nobs
-            
+
             # Include in calculations only reads with sufficient Number of observations:
             if (min.Nobs.pread > 0) {
                 use.reads <- colnames(mat)[NobsReads > min.Nobs.pread]
             } else {
                 use.reads <- colnames(mat)
             }
-            
+
             if (!is.null(stats)) {
                 param_names <- stats
             } else {
                 param_names <- names(statFunctions)
             }
-            
+
             # Iterate over param_names and add columns to stats_res
             stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(mat))
             row.names(stats_res) <- colnames(mat)

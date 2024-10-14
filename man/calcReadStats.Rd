@@ -71,6 +71,9 @@ autocorrelation (see details section).}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 
+\item{...}{For \code{addReadStats} only: Additional arguments passed on to
+\code{calcReadStats}.}
+
 \item{name}{For \code{addReadStats} only: A character scalar specifying the
 name to be used to store the result in the
 \code{\link[SummarizedExperiment]{colData}} of the output.}
