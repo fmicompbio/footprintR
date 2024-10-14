@@ -144,7 +144,7 @@ int calculate_aligned_bases(bam1_t *bamdata) {
     int aligned_bases = 0;
 
     // loop over CIGAR operations
-    for (int i = 0; i < bamdata->core.n_cigar; i++) {
+    for (uint32_t i = 0; i < bamdata->core.n_cigar; i++) {
         uint32_t op = bam_cigar_op(cigar[i]);
 
         // only count 'M', '=', or 'X' operations
