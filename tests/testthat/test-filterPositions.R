@@ -49,12 +49,18 @@ test_that(".keepPositionsBySequenceContext works", {
     se <- addSeqContext(se, sequence.context.width = 3,
                         sequence.reference = gnm)
     se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "TAG")
-    w <- which(as.character(rowData(se)$sequence.context) %in% c("TAG", "NNN"))
+    w <- which(as.character(rowData(se)$sequence.context) == "TAG")
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(se)[w])
     ## Applying the same filter again doesn't do anything
     se2 <- .keepPositionsBySequenceContext(se = se1, sequence.context = "TAG")
     expect_identical(se1, se2)
+
+    ## TODO: Add test to check that any positions with sequence context
+    ## including N is removed
+    ## TODO: Add test with padding - extract larger sequence contexts, then
+    ## match with shorter patterns padded with N (extracting 5nt contexts,
+    ## then filtering for NTAGN, should give the same results as above)
 })
 
 test_that(".removeAllNAPositions works", {
