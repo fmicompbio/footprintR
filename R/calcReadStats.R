@@ -226,7 +226,8 @@ calcReadStats <- function(se,
     out <- SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
-                se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos)
+                se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos,
+                min.nbr.samples = NULL)
 
             mat <- SummarizedExperiment::assay(sesub, assay.type)[[nm]]
 

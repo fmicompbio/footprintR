@@ -10,6 +10,7 @@ filterPositions(
   sequence.context = NULL,
   assay.type.cov = "Nvalid",
   min.cov = 1,
+  min.nbr.samples = NULL,
   assay.type.ambig = "Nvalid",
   assay.type.na = "mod_prob"
 )
@@ -32,6 +33,12 @@ calculated using \code{addReadsSummary(..., statistics = "Nvalid")}.}
 
 \item{min.cov}{A numeric scalar indicating the lowest acceptable
 coverage in order to keep a position.}
+
+\item{min.nbr.samples}{A numeric scalar, or \code{NULL}. If \code{NULL}
+(default), the row sum of \code{assay.type.cov} (i.e., the total
+coverage across all samples) is used for the coverage filtering. If
+not \code{NULL}, a position is required to have at least \code{min.cov}
+coverage in at least \code{min.nbr.samples} to be retained.}
 
 \item{assay.type.ambig}{A character scalar indicating the assay to use to
 decide which row to retain if multiple rows represent the same

@@ -4,7 +4,13 @@ test_that(".filterPositionsByCoverage works", {
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
     se <- addReadsSummary(se, keep.reads = TRUE)
-    cov <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) > 0), na.rm = TRUE)
+
+    ## Calculate coverage
+    cov_total <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) > 0), na.rm = TRUE)
+    cov_bysample <- as.matrix(endoapply(assay(se, "mod_prob"), function(x) {
+        rowSums(x > 0, na.rm = TRUE)
+    }))
+    expect_equal(rowSums(cov_bysample), cov_total, ignore_attr = TRUE)
 
     expect_error(.filterPositionsByCoverage(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
@@ -20,14 +26,49 @@ test_that(".filterPositionsByCoverage works", {
     expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
                                             min.cov = c(1, 2)),
                  "'min.cov' must have length 1")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
+                                            min.cov = 1, min.nbr.samples = "1"),
+                 "'min.nbr.samples' must be of class 'numeric'")
+    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
+                                            min.cov = 1, min.nbr.samples = c(1, 2)),
+                 "'min.nbr.samples' must have length 1")
 
-    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 10)
-    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 10)
+    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 10,
+                                      min.nbr.samples = NULL)
+    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 10,
+                                      min.nbr.samples = NULL)
     expect_identical(se1, se2)
-    w <- which(cov >= 10)
+    w <- which(cov_total >= 10)
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), names(w))
     expect_equal(nrow(se1), 1783L)
+
+    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
+                                      min.nbr.samples = 1)
+    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
+                                      min.nbr.samples = 1)
+    expect_identical(se1, se2)
+    w <- which(cov_bysample[, 1] >= 5 | cov_bysample[, 2] >= 5)
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), rownames(se)[w])
+    expect_equal(nrow(se1), 4212L)
+
+    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
+                                      min.nbr.samples = 2)
+    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
+                                      min.nbr.samples = 2)
+    expect_identical(se1, se2)
+    w <- which(cov_bysample[, 1] >= 5 & cov_bysample[, 2] >= 5)
+    expect_equal(nrow(se1), length(w))
+    expect_equal(rownames(se1), rownames(se)[w])
+    expect_equal(nrow(se1), 1606L)
+
+    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
+                                      min.nbr.samples = 3)
+    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
+                                      min.nbr.samples = 3)
+    expect_identical(se1, se2)
+    expect_equal(nrow(se1), 0L)
 })
 
 test_that(".keepPositionsBySequenceContext works", {
