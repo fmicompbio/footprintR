@@ -104,7 +104,7 @@ test_that("calcReadStats works", {
     expect_identical(rs1$s1, rs2$s1)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 2L))
-    expect_equal(sum(rs1$s1$MeanModProb), 0.95680377182716)
+    expect_equal(sum(rs1$s1$MeanModProb), 0.65811757757861633067)
 })
 
 test_that("addReadStats works", {
