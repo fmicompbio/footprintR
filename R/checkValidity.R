@@ -70,6 +70,11 @@
     stopifnot(!is.null(rownames(se)) &&
                   !any(duplicated(rownames(se))))
 
+    stopifnot(!is.null(metadata(se)$readLevelData) && 
+                  is.list(metadata(se)$readLevelData) && 
+                  all(c("assayNames", "colDataColumns") %in%
+                          names(metadata(se)$readLevelData)))
+    
     if (verbose) {
         message("Checking consistency of sample names")
     }
