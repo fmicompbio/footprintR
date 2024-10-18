@@ -62,8 +62,10 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     .checkSEValidity(se)
     .assertScalar(x = assay.type.read, type = "character", 
                   validValues = .getReadLevelAssayNames(se))
-    .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE)
-    .assertScalar(x = qcCol, type = "character", allowNULL = TRUE)
+    .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE,
+                  validValues = colnames(SummarizedExperiment::colData(se)))
+    .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
+                  validValues = colnames(SummarizedExperiment::colData(se)))
     .assertScalar(x = minQscore, type = "numeric")
     .assertScalar(x = minEntropy, type = "numeric")
     .assertScalar(x = minReadLength, type = "numeric")
@@ -110,7 +112,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
         }
         
         ## KS entropy
-        if (!is.null(qc) && "EntrModProb" %in% colnames(qc)) {
+        if (!is.null(qc) && "SEntrModProb" %in% colnames(qc)) {
             readsToRemove[[nm]][which(qc$SEntrModProb < minEntropy),
                                 "Entropy"] <- TRUE
         }
@@ -151,6 +153,9 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
                          prune = prune, invert = TRUE)
     metadata(sesub)$filteredOutReads <- readsToRemove
+    
+    ## Remove any positions with all NA values
+    sesub <- .removeAllNAPositions(sesub, assay.type = assay.type.read)
     
     sesub
 }
