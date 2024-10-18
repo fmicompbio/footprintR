@@ -253,7 +253,7 @@ readModkitExtract <- function(fnames,
         metadata = list(modkit_threshold = modkit_threshold,
                         filter_threshold = filter_threshold,
                         readLevelData = list(assayNames = "mod_prob",
-                                             colDataColumns = c()))
+                                             colDataColumns = character(0)))
     )
     rownames(se) <- paste0(
         GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),

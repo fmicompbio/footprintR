@@ -138,23 +138,26 @@ addReadsSummary <- function(se,
     if (verbose) {
         message("Creating SummarizedExperiment")
     }
-    for (stat in statistics) {
-        suppressWarnings(
-            # currently, assigning to assays triggers a deprecation warning
-            # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
-            # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
-            SummarizedExperiment::assay(se, stat, withDimnames = FALSE) <- assL[[stat]]
-        )
-    }
+    tmpList <- as.list(SummarizedExperiment::assays(se))
+    tmpList[statistics] <- lapply(assL[statistics], function(a) {
+        rownames(a) <- rownames(se)
+        a
+    })
+    SummarizedExperiment::assays(se) <- tmpList
 
     # keep read-level data
     if (!keep.reads) {
         rlAssays <- .getReadLevelAssayNames(se)
-        SummarizedExperiment::assays(se) <- 
-            SummarizedExperiment::assays(se)[setdiff(
-                SummarizedExperiment::assayNames(se), rlAssays)]
+        suppressWarnings(
+            # currently, assigning to assays triggers a deprecation warning
+            # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
+            # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
+            SummarizedExperiment::assays(se) <- 
+                SummarizedExperiment::assays(se)[setdiff(
+                    SummarizedExperiment::assayNames(se), rlAssays)]
+        )
         ## Remove read-level assays from the metadata
-        S4Vectors::metadata(se)$readLevelData$assayNames <- c()
+        S4Vectors::metadata(se)$readLevelData$assayNames <- character(0)
     }
 
     # return
