@@ -134,11 +134,16 @@ subsetReads <- function(se,
             dframe[[snm]] <- dframe[[snm]][, reads[[snm]], drop = FALSE]
         }
         suppressWarnings(
-            # currently, assigning to assays triggers a depreceation warning
+            # currently, assigning to assays triggers a deprecation warning
             # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
             # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
             SummarizedExperiment::assay(se, anm) <- dframe
         )
+    }
+    for (cn in .getReadLevelColDataNames(se)) {
+        for (snm in names(reads)) {
+            se[[cn]][[snm]] <- se[[cn]][[snm]][reads[[snm]], , drop = FALSE]
+        }
     }
 
     ## subset samples
