@@ -115,7 +115,7 @@ test_that("modkitExtract works", {
     #                     rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
     expect_true(all(start(se1[!i1]) == 0 |
                         apply(assay(se1, "mod_prob")[!i1, ], 1, max, na.rm = TRUE) <= 0.02))
-    expect_identical(colData(se1)$sample, colData(se2)$sample)
+    expect_identical(rownames(colData(se1)), rownames(colData(se2)))
     expect_identical(rowData(se1)[i1,], rowData(se2)[i2,])
     # workaround (missing NaArray methods)
     # inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &

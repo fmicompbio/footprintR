@@ -21,10 +21,10 @@ test_that("calcReadStats works", {
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 13L)
+    expect_equal(ncol(qc), 12L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm", "MeanConfMod",
                       "FracLowConf", "IQRModProb", "sdModProb", "SEntrModProb", "Lag1DModProb",
-                      "ACModProb", "PACModProb", "sample") %in%
+                      "ACModProb", "PACModProb") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1, na.rm = TRUE) /
@@ -34,7 +34,6 @@ test_that("calcReadStats works", {
                  colSums(assay(se)$s1 > 0.5, na.rm = TRUE) /
                      colSums(assay(se)$s1 > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
-    expect_equal(unique(qc$sample), "s1")
     expect_type(S4Vectors::metadata(qc), "list")
 
     ## Default coverage requirement
@@ -55,10 +54,10 @@ test_that("calcReadStats works", {
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 13L)
+    expect_equal(ncol(qc), 12L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm", "MeanConfMod",
                       "FracLowConf", "IQRModProb", "sdModProb", "SEntrModProb", "Lag1DModProb",
-                      "ACModProb", "PACModProb", "sample") %in%
+                      "ACModProb", "PACModProb") %in%
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1[idx, ], na.rm = TRUE) /
@@ -68,7 +67,6 @@ test_that("calcReadStats works", {
                  colSums(assay(se)$s1[idx, ] > 0.5, na.rm = TRUE) /
                      colSums(assay(se)$s1[idx, ] > 0, na.rm = TRUE),
                  ignore_attr = TRUE)
-    expect_equal(unique(qc$sample), "s1")
 
     ## Using `regions` and large LagRange
     rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
@@ -78,7 +76,7 @@ test_that("calcReadStats works", {
                          LagRange = c(200, 256), min.Nobs.ppos = 5)
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
-    expect_identical(dim(rs1$s1), c(10L, 13L))
+    expect_identical(dim(rs1$s1), c(10L, 12L))
     expect_equal(sum(rs1$s1$MeanModProb), 1.52775200714286)
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
@@ -103,7 +101,7 @@ test_that("calcReadStats works", {
     expect_identical(metadata(rs1)[meta_names], metadata(rs2)[meta_names])
     expect_identical(rs1$s1, rs2$s1)
     expect_s4_class(rs1$s1, "DFrame")
-    expect_identical(dim(rs1$s1), c(10L, 2L))
+    expect_identical(dim(rs1$s1), c(10L, 1L))
     expect_equal(sum(rs1$s1$MeanModProb), 0.65811757757861633067)
 })
 
@@ -131,10 +129,10 @@ test_that("addReadStats works", {
     qc <- se2$qc2[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 13L)
+    expect_equal(ncol(qc), 12L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm", "MeanConfMod",
                       "FracLowConf", "IQRModProb", "sdModProb", "SEntrModProb", "Lag1DModProb",
-                      "ACModProb", "PACModProb", "sample") %in%
+                      "ACModProb", "PACModProb") %in%
                         colnames(qc)))
     expect_identical(metadata(se2$qc2)$min.Nobs.pread, 0)
     expect_identical(metadata(se3$qc2)$min.Nobs.pread, 2600)

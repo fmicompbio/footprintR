@@ -288,7 +288,6 @@ calcReadStats <- function(se,
                     }, numeric(1))
                 }
             }
-            stats_res$sample <- nm
             stats_res
         })
     )

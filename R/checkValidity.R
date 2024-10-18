@@ -82,11 +82,10 @@
 
     for (an in SummarizedExperiment::assayNames(se)) {
         stopifnot(colnames(SummarizedExperiment::assay(
-            se, an, withDimnames = FALSE)) == se$sample)
+            se, an, withDimnames = FALSE)) == colnames(se))
     }
-    stopifnot(rownames(SummarizedExperiment::colData(se)) == se$sample)
     for (cn in .getReadLevelColDataNames(se)) {
-        stopifnot(names(se[[cn]]) == se$sample)
+        stopifnot(names(se[[cn]]) == colnames(se))
     }
 
     rlAssays <- .getReadLevelAssayNames(se)
@@ -102,7 +101,7 @@
             if (verbose) {
                 message("Comparing ", refAssay, " and ", an)
             }
-            for (sn in se$sample) {
+            for (sn in colnames(se)) {
                 if (!all(colnames(SummarizedExperiment::assay(se, an)[[sn]]) ==
                          refReads[[sn]])) {
                     stop("Mismatching reads for assays ", refAssay, " and ",
@@ -114,7 +113,7 @@
             if (verbose) {
                 message("Read-level column data found, checking consistency")
             }
-            for (sn in se$sample) {
+            for (sn in colnames(se)) {
                 if (!all(rownames(se[[cn]][[sn]]) == refReads[[sn]])) {
                     stop("Mismatching reads for assay ", refAssay, " and ",
                          "colData column ", cn, ", sample ", sn)

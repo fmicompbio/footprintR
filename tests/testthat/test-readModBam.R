@@ -148,14 +148,14 @@ test_that("readModBam works", {
                      ignore_attr = TRUE)
     }
 
-    expect_identical(se1$sample, names(modbamfiles))
-    expect_identical(se2$sample, c("s1", "s2"))
-    expect_identical(se3$sample, names(modbamfiles))
-    expect_identical(se4$sample, names(modbamfiles))
-    expect_identical(se5a$sample, names(modbamfiles)[1])
-    expect_identical(se5b$sample, names(modbamfiles)[1])
-    expect_identical(se6a$sample, names(modbamfiles)[1])
-    expect_identical(se6b$sample, names(modbamfiles)[1])
+    expect_identical(colnames(se1), names(modbamfiles))
+    expect_identical(colnames(se2), c("s1", "s2"))
+    expect_identical(colnames(se3), names(modbamfiles))
+    expect_identical(colnames(se4), names(modbamfiles))
+    expect_identical(colnames(se5a), names(modbamfiles)[1])
+    expect_identical(colnames(se5b), names(modbamfiles)[1])
+    expect_identical(colnames(se6a), names(modbamfiles)[1])
+    expect_identical(colnames(se6b), names(modbamfiles)[1])
 
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -173,7 +173,7 @@ test_that("readModBam works", {
     expect_equal(as.vector(modprob1[shared_rows, shared_cols])[nonzero],
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
-    expect_identical(se1$sample, names(modbamfiles))
+    expect_identical(colnames(se1), names(modbamfiles))
     expect_identical(lapply(se1$read_info, rownames),
                      lapply(assay(se1, "mod_prob"), colnames))
     expect_equal(lapply(se1$read_info, "[[", "qscore"),
@@ -202,7 +202,7 @@ test_that("readModBam works", {
     expect_identical(unname(as.matrix(assay(se2, "mod_prob"))),
                      unname(as.matrix(assay(se3, "mod_prob"))))
     expect_identical(sub("^s", "sample", colnames(se2)), colnames(se3))
-    expect_identical(se2$sample, sub("sample", "s", se3$sample))
+    expect_identical(colnames(se2), sub("sample", "s", colnames(se3)))
     for (nm in expected_read_info_names) {
         expect_equal(lapply(se2$read_info, "[[", nm),
                      lapply(se3$read_info, "[[", nm),

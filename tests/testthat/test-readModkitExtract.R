@@ -79,7 +79,7 @@ test_that("readModkitExtract works", {
     ))
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6432, 1)) ## number of unique positions
-    expect_equal(rme$sample, "s1_5mC")
+    expect_equal(colnames(rme), "s1_5mC")
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -109,7 +109,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6415, 1)) ## number of unique positions
-    expect_equal(rme$sample, "s1")
+    expect_equal(colnames(rme), "s1")
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -137,7 +137,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(5893, 1)) ## number of unique positions
-    expect_equal(rme$sample, "s1_5mC")
+    expect_equal(colnames(rme), "s1_5mC")
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
@@ -166,7 +166,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
-    expect_equal(rme$sample, c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
     expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
@@ -203,7 +203,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18615, 3)) ## number of unique positions
-    expect_equal(rme$sample, c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
     expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
@@ -241,7 +241,7 @@ test_that("readModkitExtract works", {
                              ncpu = 1L, verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(17459, 3)) ## number of unique positions
-    expect_equal(rme$sample, c("s1_5mC", "s1_6mA", "s2_5mC"))
+    expect_equal(colnames(rme), c("s1_5mC", "s1_6mA", "s2_5mC"))
     expect_equal(rme$modbase, c("m", "a", "m"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")

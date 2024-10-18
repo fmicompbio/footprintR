@@ -24,6 +24,7 @@
 #'
 #' @import ggplot2
 #' @importFrom tidyr pivot_longer
+#' @importFrom tibble rownames_to_column
 #' @importFrom BiocGenerics as.data.frame
 #' @importFrom SummarizedExperiment colData
 #'
@@ -35,7 +36,8 @@ plotReadStats <- function(se, qcCol = "QC") {
     
     df <- BiocGenerics::as.data.frame(se[[qcCol]])
     df <- df[, !grepl("AC", colnames(df))]
-    df <- df[, !colnames(df) %in% c("group", "group_name")]
+    df <- df[, !colnames(df) %in% c("group", "group_name")] |>
+        tibble::rownames_to_column("sample")
 
     ggplot(pivot_longer(df, names_to = "key",
                         values_to = "value", -sample),

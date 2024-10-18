@@ -16,7 +16,6 @@ test_that("addReadsSummary works", {
 
     # invalid arguments
     expect_error(addReadsSummary(se = "error"))
-    expect_error(addReadsSummary(se = se0))
     expect_error(addReadsSummary(se = se, assay.type = "error"))
     expect_error(addReadsSummary(se = se, statistics = "error"))
     expect_error(addReadsSummary(se = se, keep.reads = "error"))
@@ -41,8 +40,8 @@ test_that("addReadsSummary works", {
     expect_identical(s2, s3)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")
-    expect_identical(dim(s1), c(nrow(se), length(unique(se$sample))))
-    expect_identical(dim(s2), c(nrow(se), length(unique(se$sample))))
+    expect_identical(dim(s1), c(nrow(se), length(colnames(se))))
+    expect_identical(dim(s2), c(nrow(se), length(colnames(se))))
     expect_identical(assayNames(s1), c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"))
     expect_identical(assayNames(s2), c("mod_prob", "FracMod"))
     expect_identical(rownames(s1), rownames(se))

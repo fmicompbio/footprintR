@@ -79,7 +79,7 @@ test_that("validity checks work", {
     rme1 <- rme_withreads
     rme1$QC <- rme1$QC[c(3, 1, 2)]
     expect_error(.checkSEValidity(rme1),
-                 "se$sample are not all TRUE", fixed = TRUE)
+                 "colnames(se) are not all TRUE", fixed = TRUE)
 
     rme1 <- rme_withreads
     SummarizedExperiment::colData(rme1) <- SummarizedExperiment::colData(rme1)[c(3, 1, 2), ]
@@ -88,12 +88,6 @@ test_that("validity checks work", {
 
     rme1 <- rme_withreads
     colnames(rme1) <- colnames(rme1)[c(3, 1, 2)]
-    expect_error(.checkSEValidity(rme1),
-                 "rownames(SummarizedExperiment::colData(se)) == se$sample are not all TRUE", fixed = TRUE)
-
-    rme1 <- rme_withreads
-    colnames(rme1) <- colnames(rme1)[c(3, 1, 2)]
-    rme1$sample <- colnames(rme1)
     expect_error(.checkSEValidity(rme1),
                  "colnames(SummarizedExperiment::assay(se, an, withDimnames = FALSE))", fixed = TRUE)
 

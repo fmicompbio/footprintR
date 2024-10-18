@@ -40,7 +40,8 @@ Imports:
     SparseArray,
     Rcpp,
     stringr,
-    zoo
+    zoo,
+    tibble
 Suggests:
     rmarkdown,
     knitr,

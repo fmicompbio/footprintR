@@ -59,9 +59,6 @@ addReadsSummary <- function(se,
                             verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
-    if (!"sample" %in% colnames(colData(se))) {
-        stop("'se' needs to contain sample information in colData(se)$sample")
-    }
     .assertScalar(x = assay.type, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertVector(x = statistics, type = "character",
