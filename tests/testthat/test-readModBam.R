@@ -130,15 +130,15 @@ test_that("readModBam works", {
 
     # ... structure
     expected_coldata_names <- c("sample", "modbase", "n_reads", "read_info")
-    expected_read_info_names <- c("read_id", "qscore", "read_length",
+    expected_read_info_names <- c("qscore", "read_length",
                                   "aligned_length", "aligned_fraction")
     for (se in seL) {
         expect_s4_class(se, "RangedSummarizedExperiment")
         expect_s4_class(rowRanges(se), "GPos")
         expect_identical(colnames(colData(se)), expected_coldata_names)
         expect_s4_class(colData(se)$read_info, "SimpleList")
-        lapply(colData(se)$read_info, function(df) {
-            expect_s3_class(df, "data.frame")
+        res_se <- lapply(colData(se)$read_info, function(df) {
+            expect_s4_class(df, "DataFrame")
             expect_named(df, expected_read_info_names)
         })
         expect_identical(assayNames(se), "mod_prob")
@@ -174,7 +174,7 @@ test_that("readModBam works", {
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
     expect_identical(se1$sample, names(modbamfiles))
-    expect_identical(lapply(se1$read_info, "[[", "read_id"),
+    expect_identical(lapply(se1$read_info, rownames),
                      lapply(assay(se1, "mod_prob"), colnames))
     expect_equal(lapply(se1$read_info, "[[", "qscore"),
                  list(
@@ -203,7 +203,7 @@ test_that("readModBam works", {
                      unname(as.matrix(assay(se3, "mod_prob"))))
     expect_identical(sub("^s", "sample", colnames(se2)), colnames(se3))
     expect_identical(se2$sample, sub("sample", "s", se3$sample))
-    for (nm in setdiff(expected_read_info_names, "read_id")) {
+    for (nm in expected_read_info_names) {
         expect_equal(lapply(se2$read_info, "[[", nm),
                      lapply(se3$read_info, "[[", nm),
                      ignore_attr = TRUE)
@@ -224,7 +224,7 @@ test_that("readModBam works", {
     expect_equal(as.vector(modprob3[shared_rows, shared_cols])[nonzero],
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
-    expect_identical(lapply(se3$read_info, "[[", "read_id"),
+    expect_identical(lapply(se3$read_info, rownames),
                      lapply(assay(se3, "mod_prob"), colnames))
     expect_equal(lapply(se3$read_info, "[[", "qscore"),
                  list(
@@ -245,7 +245,7 @@ test_that("readModBam works", {
     expect_identical(unname(se4$n_reads), c(3L, 0L))
     expect_identical(dim(se4), c(4772L, 2L))
     expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(4772L, 3L))
-    expect_identical(unlist(lapply(se4$read_info, "[[", "read_id"), use.names = FALSE),
+    expect_identical(unlist(lapply(se4$read_info, rownames), use.names = FALSE),
                      unlist(lapply(assay(se4, "mod_prob"), colnames), use.names = FALSE))
     expect_equal(lapply(se4$read_info, "[[", "qscore"),
                  list(

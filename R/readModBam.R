@@ -202,17 +202,17 @@ readModBam <- function(bamfiles,
             j <- match(x$read_id, readL[[nm]])
             namat[cbind(i, j)] <- x$mod_prob
             modmat[[nm]] <- namat
-            x$read_df$read_id <- paste0(nm, "-", x$read_df$read_id)
+            rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
+            x$read_df$read_id <- NULL
             x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
-            readdfL[[nm]] <- x$read_df
+            readdfL[[nm]] <- S4Vectors::DataFrame(x$read_df)
         } else {
             modmat[[nm]] <- SparseArray::NaArray(dim = c(length(gpos), 0),
                                                  type = "double")
-            readdfL[[nm]] <- data.frame(read_id = character(0),
-                                        qscore = numeric(0),
-                                        read_length = integer(0),
-                                        aligned_length = integer(0),
-                                        aligned_fraction = numeric(0))
+            readdfL[[nm]] <- S4Vectors::DataFrame(qscore = numeric(0),
+                                                  read_length = integer(0),
+                                                  aligned_length = integer(0),
+                                                  aligned_fraction = numeric(0))
         }
     }
 
