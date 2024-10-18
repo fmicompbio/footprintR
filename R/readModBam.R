@@ -227,7 +227,8 @@ readModBam <- function(bamfiles,
             n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
             read_info = readdfL
         ),
-        metadata = list()
+        metadata = list(readLevelData = list(assayNames = "mod_prob",
+                                             colDataColumns = "read_info"))
     )
     if (nrow(se) > 0) {
         rownames(se) <- paste0(

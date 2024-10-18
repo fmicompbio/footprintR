@@ -41,7 +41,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment assays colData
 #' @importFrom GenomicRanges findOverlaps
-#' @importFrom S4Vectors queryHits subjectHits
+#' @importFrom S4Vectors queryHits subjectHits metadata
 #' @importFrom scuttle aggregateAcrossFeatures
 #'
 #' @export
@@ -96,7 +96,8 @@ sumOverRegions <- function(se, regions, keepZero = FALSE, verbose = FALSE, ...) 
     }
     seC <- SummarizedExperiment(assays = assayList,
                                 rowRanges = rrng,
-                                colData = colData(se))
+                                colData = colData(se),
+                                metadata = metadata(se))
     if (!is.null(names(regions))) {
         rownames(seC) <- names(regions)[u]
     }

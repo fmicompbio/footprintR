@@ -303,8 +303,9 @@ calcReadStats <- function(se,
     return(out)
 }
 
-#' @importFrom SummarizedExperiment colData
+#' @importFrom SummarizedExperiment colData 
 #' @importFrom BiocGenerics colnames
+#' @importFrom S4Vectors metadata
 #'
 #' @export
 #' @rdname calcReadStats
@@ -313,6 +314,9 @@ addReadStats <- function(se, ..., name = "QC") {
     .assertScalar(x = name, type = "character")
 
     colData(se)[[name]] <- calcReadStats(se = se, ...)
+    metadata(se)$readLevelData$colDataColumns <- c(
+        metadata(se)$readLevelData$colDataColumns, name
+    )
     return(se)
 }
 

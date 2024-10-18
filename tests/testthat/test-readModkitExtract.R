@@ -87,9 +87,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[1]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
     expect_false(is.null(colnames(SummarizedExperiment::assay(rme)[[1]])))
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold",
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031)),
                  ignore_attr = TRUE)
@@ -116,9 +117,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[1]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
     expect_false(is.null(colnames(SummarizedExperiment::assay(rme)[[1]])))
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold",
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031)),
                  ignore_attr = TRUE)
@@ -143,9 +145,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[1]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
     expect_false(is.null(colnames(SummarizedExperiment::assay(rme)[[1]])))
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold",
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031)),
                  ignore_attr = TRUE)
@@ -176,9 +179,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[2]], "NaMatrix")
     expect_s4_class(SummarizedExperiment::assay(rme)[[3]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold",
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
                       s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906),
@@ -212,10 +216,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[2]], "NaMatrix")
     expect_s4_class(SummarizedExperiment::assay(rme)[[3]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
-    expect_length(S4Vectors::metadata(rme), 2)
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold", 
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
                       s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906),
@@ -250,9 +254,10 @@ test_that("readModkitExtract works", {
     expect_s4_class(SummarizedExperiment::assay(rme)[[2]], "NaMatrix")
     expect_s4_class(SummarizedExperiment::assay(rme)[[3]], "NaMatrix")
     expect_false(is.null(colnames(rme)))
-    expect_length(S4Vectors::metadata(rme), 2)
+    expect_length(S4Vectors::metadata(rme), 3)
     expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
-                                             "filter_threshold"))
+                                             "filter_threshold",
+                                             "readLevelData"))
     expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
                       s1_6mA = c(`a` = -Inf, `-` = 0.8964844),

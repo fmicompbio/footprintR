@@ -12,10 +12,26 @@
 #'
 #' @importFrom SummarizedExperiment assayNames assay
 .getReadLevelAssayNames <- function(se) {
-    isReadLevel <- vapply(SummarizedExperiment::assayNames(se), function(nm) {
-        !is.null(dim(SummarizedExperiment::assay(se, nm)[1, 1]))
-    }, FALSE)
-    SummarizedExperiment::assayNames(se)[isReadLevel]
+    intersect(metadata(se)$readLevelData$assayNames, 
+              SummarizedExperiment::assayNames(se))
+}
+
+#' Get names of colData columns containing read-level data
+#'
+#' @keywords internal
+#' @noRd
+#'
+#' @param se A \code{SummarizedExperiment} object.
+#'
+#' @author Charlotte Soneson
+#'
+#' @return A (possibly empty) character vector with the names of the columns of
+#' colData(se) containing read-level data.
+#'
+#' @importFrom SummarizedExperiment colData
+.getReadLevelColDataNames <- function(se) {
+    intersect(metadata(se)$readLevelData$colDataColumns, 
+              colnames(SummarizedExperiment::colData(se)))
 }
 
 #' Check internal consistency of SummarizedExperiment object
@@ -64,10 +80,8 @@
             se, an, withDimnames = FALSE)) == se$sample)
     }
     stopifnot(rownames(SummarizedExperiment::colData(se)) == se$sample)
-    if ("QC" %in% colnames(SummarizedExperiment::colData(se))) {
-        if (!is.null(dim(se$QC[[1]]))) {
-            stopifnot(names(se$QC) == se$sample)
-        }
+    for (cn in .getReadLevelColDataNames(se)) {
+        stopifnot(names(se[[cn]]) == se$sample)
     }
 
     rlAssays <- .getReadLevelAssayNames(se)
@@ -91,16 +105,14 @@
                 }
             }
         }
-        if ("QC" %in% colnames(SummarizedExperiment::colData(se))) {
-            if (!is.null(dim(se$QC[[1]]))) {
-                if (verbose) {
-                    message("QC information found, checking consistency")
-                }
-                for (sn in se$sample) {
-                    if (!all(rownames(se$QC[[sn]]) == refReads[[sn]])) {
-                        stop("Mismatching reads for assay ", refAssay, " and ",
-                             "sample QC data, sample ", sn)
-                    }
+        for (cn in .getReadLevelColDataNames(se)) {
+            if (verbose) {
+                message("Read-level column data found, checking consistency")
+            }
+            for (sn in se$sample) {
+                if (!all(rownames(se[[cn]][[sn]]) == refReads[[sn]])) {
+                    stop("Mismatching reads for assay ", refAssay, " and ",
+                         "colData column ", cn, ", sample ", sn)
                 }
             }
         }

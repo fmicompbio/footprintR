@@ -19,6 +19,7 @@ test_that("subsetReads works", {
     se3 <- se
     assays(se3) <- SimpleList(mod_prob = assay(se, "mod_prob"),
                               mod_prob2 = assay(se, "mod_prob"))
+    metadata(se3)$readLevelData$assayNames <- c("mod_prob", "mod_prob2")
 
     read_ids <- c("s1-233e48a7-f379-4dcf-9270-958231125563",
                   "s2-034b625e-6230-4f8d-a713-3a32cd96c298")

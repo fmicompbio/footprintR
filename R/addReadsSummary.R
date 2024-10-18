@@ -43,7 +43,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment assays assayNames
 #'     assay assay<- rowRanges rowRanges<- rowData rowData<-
-#' @importFrom S4Vectors endoapply
+#' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums
 #'
 #' @export
@@ -58,7 +58,7 @@ addReadsSummary <- function(se,
         stop("'se' needs to contain sample information in colData(se)$sample")
     }
     .assertScalar(x = assay.type, type = "character",
-                  validValues = assayNames(se))
+                  validValues = .getReadLevelAssayNames(se))
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))
@@ -123,7 +123,8 @@ addReadsSummary <- function(se,
     }
     se_summary <- SummarizedExperiment::SummarizedExperiment(
         assays = assL[statistics],
-        colData = SummarizedExperiment::colData(se)
+        colData = SummarizedExperiment::colData(se),
+        metadata = metadata(se)
     )
     if (!is.null(SummarizedExperiment::rowRanges(se))) {
         SummarizedExperiment::rowRanges(se_summary) <- SummarizedExperiment::rowRanges(se)
@@ -135,6 +136,11 @@ addReadsSummary <- function(se,
     if (keep.reads) {
         SummarizedExperiment::assay(se_summary, assay.type,
                                     withDimnames = FALSE) <- dfReads
+    } else {
+        ## Remove assay.type from the list of read-level assay names
+        metadata(se_summary)$readLevelData$assayNames <- 
+            setdiff(metadata(se_summary)$readLevelData$assayNames, 
+                    assay.type)
     }
 
     # return

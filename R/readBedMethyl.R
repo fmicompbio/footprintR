@@ -191,7 +191,8 @@ readBedMethyl <- function(fnames,
             sample = names(fnames),
             modbase = modbase[names(fnames)]
         ),
-        metadata = list())
+        metadata = list(readLevelData = list(assayNames = c(),
+                                             colDataColumns = c())))
 
     # collapse to unique names
     if (any(duplicated(nms))) {
