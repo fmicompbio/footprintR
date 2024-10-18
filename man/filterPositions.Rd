@@ -69,6 +69,7 @@ se <- addReadsSummary(se)
 se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
                           min.cov = 5, sequence.context = "TAG")
+
 }
 \author{
 Charlotte Soneson

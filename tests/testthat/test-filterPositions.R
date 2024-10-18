@@ -241,7 +241,23 @@ test_that("filterPositions works", {
                               min.cov = 5, sequence.context = "TAG")
     expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
     expect_equal(nrow(sefilt), 251L)
-    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("NNN", "TAG")))
+    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("TAG")))
     expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
                                        pos(rowRanges(sefilt))))))
+    
+    ## Filter out reads that are NA in all positions
+    sefilt <- filterPositions(se, c("sequence.context"),
+                              sequence.context = "ATG")
+    expect_equal(nrow(sefilt), 8L)
+    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("ATG")))
+    expect_equal(ncol(assay(sefilt, "mod_prob")$s1), 7L)
+    expect_equal(colnames(assay(sefilt, "mod_prob")$s1),
+                 colnames(assay(se, "mod_prob")$s1)[c(1, 3, 5, 6, 7, 8, 9)])
+    expect_equal(colSums(is_nonna(assay(sefilt, "mod_prob")$s1)), c(1, 1, 1, 1, 1, 1, 1),
+                 ignore_attr = TRUE)
+    expect_equal(ncol(assay(sefilt, "mod_prob")$s2), 5L)
+    expect_equal(colnames(assay(sefilt, "mod_prob")$s2),
+                 colnames(assay(se, "mod_prob")$s2)[c(2, 4, 6, 7, 8)])
+    expect_equal(colSums(is_nonna(assay(sefilt, "mod_prob")$s2)), c(1, 1, 1, 2, 3),
+                 ignore_attr = TRUE)
 })

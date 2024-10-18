@@ -75,6 +75,8 @@
 #' @keywords internal
 #' @noRd
 #' @importFrom SummarizedExperiment rowRanges assayNames assay
+#' @importFrom BiocGenerics pos
+#' @importFrom GenomeInfoDb seqnames
 #'
 .pruneAmbiguousStrandPositions <- function(se, assay.type = "Nvalid",
                                            verbose = FALSE) {
@@ -179,6 +181,8 @@
 #' se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 #' sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
 #'                           min.cov = 5, sequence.context = "TAG")
+#' 
+#' @importFrom SparseArray colSums is_nonna
 filterPositions <- function(se,
                             filters = c("sequence.context", "coverage",
                                         "all.na"),
@@ -213,5 +217,12 @@ filterPositions <- function(se,
             )
         }
     }
+    
+    ## Remove reads that are NA in all retained positions
+    readsToKeep <- lapply(assay(se, assay.type.na), function(x) {
+        which(SparseArray::colSums(SparseArray::is_nonna(x)) > 0)
+    })
+    se <- subsetReads(se, readsToKeep)
+
     se
 }
