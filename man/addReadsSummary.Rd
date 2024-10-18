@@ -9,6 +9,7 @@ addReadsSummary(
   assay.type = "mod_prob",
   statistics = c("Nmod", "Nvalid", "FracMod"),
   keep.reads = TRUE,
+  replace.existing = TRUE,
   verbose = FALSE
 )
 }
@@ -27,9 +28,14 @@ probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
 reads), "Pmod" (average modification probability), "AvgConf" (average
 confidence of (non-)modification probabilities).}
 
-\item{keep.reads}{A scalar logical. If \code{TRUE} (the default), the
+\item{keep.reads}{A logical scalar. If \code{TRUE} (the default), the
 read-level data from \code{assay.type} will be retained in an assay of
 the same name.}
+
+\item{replace.existing}{A logical scalar. If \code{TRUE} (the default),
+any existing assays with the same name as the ones requested will be
+overwritten. Otherwise, existing assays will be retained and the
+corresponding summary statistic(s) will not be recalculated.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }

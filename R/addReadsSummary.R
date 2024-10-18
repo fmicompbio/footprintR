@@ -18,9 +18,13 @@
 #'     probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
 #'     reads), "Pmod" (average modification probability), "AvgConf" (average
 #'     confidence of (non-)modification probabilities).
-#' @param keep.reads A scalar logical. If \code{TRUE} (the default), the
+#' @param keep.reads A logical scalar. If \code{TRUE} (the default), the
 #'     read-level data from \code{assay.type} will be retained in an assay of
 #'     the same name.
+#' @param replace.existing A logical scalar. If \code{TRUE} (the default), 
+#'     any existing assays with the same name as the ones requested will be 
+#'     overwritten. Otherwise, existing assays will be retained and the 
+#'     corresponding summary statistic(s) will not be recalculated. 
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -51,6 +55,7 @@ addReadsSummary <- function(se,
                             assay.type = "mod_prob",
                             statistics = c("Nmod", "Nvalid", "FracMod"),
                             keep.reads = TRUE,
+                            replace.existing = TRUE, 
                             verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -63,7 +68,19 @@ addReadsSummary <- function(se,
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))
     .assertScalar(x = keep.reads, type = "logical")
+    .assertScalar(x = replace.existing, type = "logical")
     .assertScalar(x = verbose, type = "logical")
+    
+    # if replace.existing is FALSE, exclude all assays that already exist in se
+    if (!replace.existing) {
+        existing_assays <- intersect(statistics, SummarizedExperiment::assayNames(se))
+        if (length(existing_assays) > 0) {
+            warning("Assay(s) ", paste(existing_assays, ", "), 
+                    " already exist and replace.existing is FALSE - will not ",
+                    "recalculate these assays.")
+            statistics <- setdiff(statistics, SummarizedExperiment::assayNames(se))
+        }
+    }
 
     # add statistics that are indirectly required
     statistics_use <- union(
@@ -121,28 +138,25 @@ addReadsSummary <- function(se,
     if (verbose) {
         message("Creating SummarizedExperiment")
     }
-    se_summary <- SummarizedExperiment::SummarizedExperiment(
-        assays = assL[statistics],
-        colData = SummarizedExperiment::colData(se),
-        metadata = metadata(se)
-    )
-    if (!is.null(SummarizedExperiment::rowRanges(se))) {
-        SummarizedExperiment::rowRanges(se_summary) <- SummarizedExperiment::rowRanges(se)
-    } else {
-        SummarizedExperiment::rowData(se_summary) <- SummarizedExperiment::rowData(se)
+    for (stat in statistics) {
+        suppressWarnings(
+            # currently, assigning to assays triggers a deprecation warning
+            # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
+            # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
+            SummarizedExperiment::assay(se, stat, withDimnames = FALSE) <- assL[[stat]]
+        )
     }
 
     # keep read-level data
-    if (keep.reads) {
-        SummarizedExperiment::assay(se_summary, assay.type,
-                                    withDimnames = FALSE) <- dfReads
-    } else {
-        ## Remove assay.type from the list of read-level assay names
-        metadata(se_summary)$readLevelData$assayNames <- 
-            setdiff(metadata(se_summary)$readLevelData$assayNames, 
-                    assay.type)
+    if (!keep.reads) {
+        rlAssays <- .getReadLevelAssayNames(se)
+        SummarizedExperiment::assays(se) <- 
+            SummarizedExperiment::assays(se)[setdiff(
+                SummarizedExperiment::assayNames(se), rlAssays)]
+        ## Remove read-level assays from the metadata
+        S4Vectors::metadata(se)$readLevelData$assayNames <- c()
     }
 
     # return
-    return(se_summary)
+    return(se)
 }
