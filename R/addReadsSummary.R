@@ -72,7 +72,8 @@ addReadsSummary <- function(se,
     if (!replace.existing) {
         existing_assays <- intersect(statistics, SummarizedExperiment::assayNames(se))
         if (length(existing_assays) > 0) {
-            warning("Assay(s) ", paste(existing_assays, ", "), 
+            existing_assays <- paste(existing_assays, ", ")
+            warning("Assay(s) ", existing_assays, 
                     " already exist and replace.existing is FALSE - will not ",
                     "recalculate these assays.")
             statistics <- setdiff(statistics, SummarizedExperiment::assayNames(se))
