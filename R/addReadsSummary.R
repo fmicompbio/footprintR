@@ -21,10 +21,10 @@
 #' @param keep.reads A logical scalar. If \code{TRUE} (the default), the
 #'     read-level data from \code{assay.type} will be retained in an assay of
 #'     the same name.
-#' @param replace.existing A logical scalar. If \code{TRUE} (the default), 
-#'     any existing assays with the same name as the ones requested will be 
-#'     overwritten. Otherwise, existing assays will be retained and the 
-#'     corresponding summary statistic(s) will not be recalculated. 
+#' @param replace.existing A logical scalar. If \code{TRUE} (the default),
+#'     any existing assays with the same name as the ones requested will be
+#'     overwritten. Otherwise, existing assays will be retained and the
+#'     corresponding summary statistic(s) will not be recalculated.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -55,7 +55,7 @@ addReadsSummary <- function(se,
                             assay.type = "mod_prob",
                             statistics = c("Nmod", "Nvalid", "FracMod"),
                             keep.reads = TRUE,
-                            replace.existing = TRUE, 
+                            replace.existing = TRUE,
                             verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -67,13 +67,13 @@ addReadsSummary <- function(se,
     .assertScalar(x = keep.reads, type = "logical")
     .assertScalar(x = replace.existing, type = "logical")
     .assertScalar(x = verbose, type = "logical")
-    
+
     # if replace.existing is FALSE, exclude all assays that already exist in se
     if (!replace.existing) {
         existing_assays <- intersect(statistics, SummarizedExperiment::assayNames(se))
         if (length(existing_assays) > 0) {
             existing_assays <- paste(existing_assays, ", ")
-            warning("Assay(s) ", existing_assays, 
+            warning("Assay(s) ", existing_assays,
                     " already exist and replace.existing is FALSE - will not ",
                     "recalculate these assays.")
             statistics <- setdiff(statistics, SummarizedExperiment::assayNames(se))
@@ -119,12 +119,13 @@ addReadsSummary <- function(se,
         assL[["FracMod"]] <- assL[["Nmod"]] / assL[["Nvalid"]]
     }
     if ("Pmod" %in% statistics) {
-        assL[["Pmod"]] <- as.matrix(endoapply(dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
+        assL[["Pmod"]] <- as.matrix(S4Vectors::endoapply(
+            dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)
         assL[["AvgConf"]] <- as.matrix(
-            endoapply(dfReads, function(y) {
+            S4Vectors::endoapply(dfReads, function(y) {
                 SparseArray::nnavals(y) <- pmax(SparseArray::nnavals(y),
                                                 1 - SparseArray::nnavals(y))
                 rowSums(y, na.rm = TRUE)
@@ -132,9 +133,9 @@ addReadsSummary <- function(se,
         ) / assL[["Nvalid"]]
     }
 
-    # create summarized experiment
+    # add to summarized experiment
     if (verbose) {
-        message("Creating SummarizedExperiment")
+        message("Adding summarized assay(s) to SummarizedExperiment")
     }
     tmpList <- as.list(SummarizedExperiment::assays(se))
     tmpList[statistics] <- lapply(assL[statistics], function(a) {
@@ -150,7 +151,7 @@ addReadsSummary <- function(se,
             # currently, assigning to assays triggers a deprecation warning
             # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
             # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
-            SummarizedExperiment::assays(se) <- 
+            SummarizedExperiment::assays(se) <-
                 SummarizedExperiment::assays(se)[setdiff(
                     SummarizedExperiment::assayNames(se), rlAssays)]
         )
