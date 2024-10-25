@@ -50,7 +50,8 @@ Suggests:
     withr,
     BiocManager,
     BiocParallel,
-    Rsamtools
+    Rsamtools,
+    sessioninfo
 LinkingTo: 
     Rcpp,
     Rhtslib

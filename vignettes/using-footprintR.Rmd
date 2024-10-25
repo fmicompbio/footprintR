@@ -161,6 +161,6 @@ plotRegion(se,
 ## Session info
 
 ```{r session-info}
-sessionInfo()
+sessioninfo::session_info()
 ```
 
