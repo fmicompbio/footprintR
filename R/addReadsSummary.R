@@ -103,14 +103,14 @@ addReadsSummary <- function(se,
         message("Summarizing reads")
     }
     dfReads <- SummarizedExperiment::assay(se, assay.type)
-    assL <- lapply(structure(statistics_use, names = statistics_use), function(statistic) {
+    assL <- lapply(structure(statistics_use, names = statistics_use),
+                   function(statistic) {
         switch(statistic,
-            Nmod = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
-            Nvalid = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
-            # these ones will be calculated later:
-            FracMod = NULL,
-            Pmod = NULL,
-            AvgConf = NULL
+            Nmod = as.matrix(S4Vectors::endoapply(
+                dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+            Nvalid = as.matrix(S4Vectors::endoapply(
+                dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
+            NULL # default value for all others
         )
     })
 

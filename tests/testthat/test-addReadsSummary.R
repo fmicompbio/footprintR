@@ -31,7 +31,7 @@ test_that("addReadsSummary works", {
                               keep.reads = FALSE, verbose = TRUE)
     ))
     s2 <- addReadsSummary(se = se, statistics = "FracMod")
-    s3 <- addReadsSummary(se = s2, statistics = "FracMod", 
+    s3 <- addReadsSummary(se = s2, statistics = "FracMod",
                           replace.existing = TRUE)
     expect_identical(s2, s3)
     expect_warning(
