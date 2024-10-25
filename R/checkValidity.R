@@ -10,9 +10,9 @@
 #' @return A (possibly empty) character vector with the names of the assays of
 #' se containing read-level data.
 #'
-#' @importFrom SummarizedExperiment assayNames assay
+#' @importFrom SummarizedExperiment assayNames
 .getReadLevelAssayNames <- function(se) {
-    intersect(metadata(se)$readLevelData$assayNames, 
+    intersect(metadata(se)$readLevelData$assayNames,
               SummarizedExperiment::assayNames(se))
 }
 
@@ -29,8 +29,9 @@
 #' colData(se) containing read-level data.
 #'
 #' @importFrom SummarizedExperiment colData
+#' @importFrom BiocGenerics colnames
 .getReadLevelColDataNames <- function(se) {
-    intersect(metadata(se)$readLevelData$colDataColumns, 
+    intersect(metadata(se)$readLevelData$colDataColumns,
               colnames(SummarizedExperiment::colData(se)))
 }
 
@@ -60,9 +61,9 @@
     if (verbose) {
         message("Checking assay names")
     }
-    stopifnot(!is.null(assayNames(se)) &&
-                  all(assayNames(se) != "") &&
-                  !any(duplicated(assayNames(se))))
+    stopifnot(!is.null(SummarizedExperiment::assayNames(se)) &&
+                  all(SummarizedExperiment::assayNames(se) != "") &&
+                  !any(duplicated(SummarizedExperiment::assayNames(se))))
 
     if (verbose) {
         message("Checking row names")
@@ -70,11 +71,11 @@
     stopifnot(!is.null(rownames(se)) &&
                   !any(duplicated(rownames(se))))
 
-    stopifnot(!is.null(metadata(se)$readLevelData) && 
-                  is.list(metadata(se)$readLevelData) && 
+    stopifnot(!is.null(metadata(se)$readLevelData) &&
+                  is.list(metadata(se)$readLevelData) &&
                   all(c("assayNames", "colDataColumns") %in%
                           names(metadata(se)$readLevelData)))
-    
+
     if (verbose) {
         message("Checking consistency of sample names")
     }

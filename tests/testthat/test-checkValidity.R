@@ -47,7 +47,7 @@ test_that("validity checks work", {
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
-    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames, 
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
                                                  "test")
     expect_message(
         expect_message(
@@ -66,7 +66,7 @@ test_that("validity checks work", {
     rme1 <- rme_withreads
     assayNames(rme1) <- c("", "", "", "")
     expect_error(.checkSEValidity(rme1),
-                 '!is.null(assayNames(se)) && all(assayNames(se) != "") && !any(duplicated(assayNames(se))) is not TRUE', fixed = TRUE)
+                 '!is.null(SummarizedExperiment::assayNames(se)) && all(SummarizedExperiment::assayNames(se) !=  .... is not TRUE', fixed = TRUE)
 
     rme1 <- rme_withreads
     expect_equal(length(assays(rme1)), 4)
@@ -74,7 +74,7 @@ test_that("validity checks work", {
                          assays(rme1)[[4]])
     expect_null(assayNames(rme1))
     expect_error(.checkSEValidity(rme1),
-                 '!is.null(assayNames(se)) && all(assayNames(se) != "") && !any(duplicated(assayNames(se))) is not TRUE', fixed = TRUE)
+                 '!is.null(SummarizedExperiment::assayNames(se)) && all(SummarizedExperiment::assayNames(se) !=  .... is not TRUE', fixed = TRUE)
 
     rme1 <- rme_withreads
     rme1$QC <- rme1$QC[c(3, 1, 2)]
@@ -110,7 +110,7 @@ test_that("validity checks work", {
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
-    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames, 
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
                                                  "test")
     SummarizedExperiment::assay(rme1, "mod_prob")[[1]] <-
         SummarizedExperiment::assay(rme1, "mod_prob")[[1]][, 1:5]
@@ -119,7 +119,7 @@ test_that("validity checks work", {
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
-    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames, 
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
                                                  "test")
     N <- ncol(SummarizedExperiment::assay(rme1, "mod_prob")[[1]])
     set.seed(123L)
