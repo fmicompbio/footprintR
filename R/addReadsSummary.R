@@ -45,8 +45,7 @@
 #'     returned object type, \code{\link{readModkitExtract}} for the function
 #'     used to read the input files.
 #'
-#' @importFrom SummarizedExperiment SummarizedExperiment assays assayNames
-#'     assay assay<- rowRanges rowRanges<- rowData rowData<-
+#' @importFrom SummarizedExperiment assays assayNames assay
 #' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums
 #'
@@ -107,9 +106,9 @@ addReadsSummary <- function(se,
                    function(statistic) {
         switch(statistic,
             Nmod = as.matrix(S4Vectors::endoapply(
-                dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+                dfReads, function(y) SparseArray::rowSums(y >= 0.5, na.rm = TRUE))),
             Nvalid = as.matrix(S4Vectors::endoapply(
-                dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
+                dfReads, function(y) SparseArray::rowSums(y >= 0, na.rm = TRUE))),
             NULL # default value for all others
         )
     })
@@ -120,15 +119,15 @@ addReadsSummary <- function(se,
     }
     if ("Pmod" %in% statistics) {
         assL[["Pmod"]] <- as.matrix(S4Vectors::endoapply(
-            dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
+            dfReads, SparseArray::rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)
         assL[["AvgConf"]] <- as.matrix(
             S4Vectors::endoapply(dfReads, function(y) {
-                SparseArray::nnavals(y) <- pmax(SparseArray::nnavals(y),
-                                                1 - SparseArray::nnavals(y))
-                rowSums(y, na.rm = TRUE)
+                SparseArray::nnavals(y) <- SparseArray::pmax(
+                    SparseArray::nnavals(y), 1 - SparseArray::nnavals(y))
+                SparseArray::rowSums(y, na.rm = TRUE)
             })
         ) / assL[["Nvalid"]]
     }
