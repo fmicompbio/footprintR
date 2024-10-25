@@ -124,11 +124,12 @@
 #' se_withReadStats$QC$s1
 #' metadata(se_withReadStats$QC$s1)
 #'
-#' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList DataFrame
+#' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums nnawhich nnavals
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom IRanges subsetByOverlaps
+#' @importFrom BiocGenerics colnames
 #'
 #' @export
 calcReadStats <- function(se,
@@ -173,7 +174,7 @@ calcReadStats <- function(se,
             }
         },
         Lag1DModProb = function(x) {
-            xC <- 1 * (x > 0.5)
+            xC <- as.numeric(x > 0.5)
             mean(abs(diff(xC, lag = 1)))
         },
         ACModProb = function(x, lag.max = max(LagRange),
@@ -216,14 +217,14 @@ calcReadStats <- function(se,
 
     # Subset se by region
     if (!is.null(regions)) {
-        se <- subsetByOverlaps(x = se, ranges = regions)
+        se <- IRanges::subsetByOverlaps(x = se, ranges = regions)
     }
 
     # Subset by sequence.context
     se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
 
     # Calculate statistics for each sample
-    out <- SimpleList(lapply(
+    out <- S4Vectors::SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
                 se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos,
@@ -293,17 +294,16 @@ calcReadStats <- function(se,
     )
 
     # add filtering parameters to `out`
-    metadata(out) <- list(regions = regions,
-                          sequence.context = sequence.context,
-                          min.Nobs.ppos = min.Nobs.ppos,
-                          min.Nobs.pread = min.Nobs.pread,
-                          Lags = LagRangeValues)
+    S4Vectors::metadata(out) <- list(regions = regions,
+                                     sequence.context = sequence.context,
+                                     min.Nobs.ppos = min.Nobs.ppos,
+                                     min.Nobs.pread = min.Nobs.pread,
+                                     Lags = LagRangeValues)
 
     return(out)
 }
 
-#' @importFrom SummarizedExperiment colData 
-#' @importFrom BiocGenerics colnames
+#' @importFrom SummarizedExperiment colData
 #' @importFrom S4Vectors metadata
 #'
 #' @export
@@ -312,9 +312,9 @@ addReadStats <- function(se, ..., name = "QC") {
 
     .assertScalar(x = name, type = "character")
 
-    colData(se)[[name]] <- calcReadStats(se = se, ...)
-    metadata(se)$readLevelData$colDataColumns <- c(
-        metadata(se)$readLevelData$colDataColumns, name
+    SummarizedExperiment::colData(se)[[name]] <- calcReadStats(se = se, ...)
+    S4Vectors::metadata(se)$readLevelData$colDataColumns <- c(
+        S4Vectors::metadata(se)$readLevelData$colDataColumns, name
     )
     return(se)
 }
