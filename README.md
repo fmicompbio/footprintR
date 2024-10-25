@@ -1,3 +1,5 @@
+<img src="man/figures/footprintR_logo.png" align="right" alt="footprintR" width="150"/>
+
 <br>
 
 # `footprintR`: Tools for working with single-molecule footprinting data
