@@ -32,12 +32,12 @@
 plotReadStats <- function(se, qcCol = "QC") {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = qcCol, type = "character")
-    stopifnot(qcCol %in% colnames(SummarizedExperiment::colData(se)))
-    
-    df <- BiocGenerics::as.data.frame(se[[qcCol]])
+    stopifnot(qcCol %in% colnames(colData(se)))
+
+    df <- as.data.frame(se[[qcCol]])
     df <- df[, !grepl("AC", colnames(df))]
     df <- df[, !colnames(df) %in% c("group", "group_name")] |>
-        tibble::rownames_to_column("sample")
+        rownames_to_column("sample")
 
     ggplot(pivot_longer(df, names_to = "key",
                         values_to = "value", -sample),

@@ -135,8 +135,7 @@ readModBam <- function(bamfiles,
         message("extracting base modifications from modBAM files")
     }
     regions_str <- as.character(regions, ignore.strand = TRUE)
-    resLL <- parallel::mclapply(structure(names(bamfiles),
-                                          names = names(bamfiles)),
+    resLL <- mclapply(structure(names(bamfiles), names = names(bamfiles)),
                                 function(nm) {
         # extract modifications (returned list is similar to modkit extract
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
@@ -160,16 +159,16 @@ readModBam <- function(bamfiles,
     }, mc.cores = ncpu)
 
     # create GPos objects for each input
-    gposL <- parallel::mclapply(resLL, function(resL) {
-        GenomicRanges::GPos(seqnames = resL$chrom, pos = resL$ref_position,
-                            strand = resL$ref_mod_strand, seqinfo = seqinfo)
+    gposL <- mclapply(resLL, function(resL) {
+        GPos(seqnames = resL$chrom, pos = resL$ref_position,
+             strand = resL$ref_mod_strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos, reduce to unique positions
     if (verbose) {
         message("finding unique genomic positions...", appendLF = FALSE)
     }
-    gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
+    gpos <- sort(unique(do.call(c, unname(gposL))))
     if (verbose) {
         message("collapsed ", sum(lengths(gposL)), " positions to ",
                 length(gpos), " unique ones")
@@ -190,37 +189,36 @@ readModBam <- function(bamfiles,
     readL <- lapply(resLL, function(resL) resL$read_df$read_id)
 
     # modified probability
-    modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
-    readdfL <- S4Vectors::SimpleList()
+    modmat <- make_zero_col_DFrame(nrow = length(gpos))
+    readdfL <- SimpleList()
     for (nm in names(bamfiles)) {
         x <- resLL[[nm]]
         if (length(x$read_id) > 0) {
-            namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
-                                          dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
-                                          type = "double")
-            i <- GenomicRanges::match(gposL[[nm]], gpos)
+            namat <- NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                             dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                             type = "double")
+            i <- match(gposL[[nm]], gpos)
             j <- match(x$read_id, readL[[nm]])
             namat[cbind(i, j)] <- x$mod_prob
             modmat[[nm]] <- namat
             rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
             x$read_df$read_id <- NULL
             x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
-            readdfL[[nm]] <- S4Vectors::DataFrame(x$read_df)
+            readdfL[[nm]] <- DataFrame(x$read_df)
         } else {
-            modmat[[nm]] <- SparseArray::NaArray(dim = c(length(gpos), 0),
-                                                 type = "double")
-            readdfL[[nm]] <- S4Vectors::DataFrame(qscore = numeric(0),
-                                                  read_length = integer(0),
-                                                  aligned_length = integer(0),
-                                                  aligned_fraction = numeric(0))
+            modmat[[nm]] <- NaArray(dim = c(length(gpos), 0), type = "double")
+            readdfL[[nm]] <- DataFrame(qscore = numeric(0),
+                                       read_length = integer(0),
+                                       aligned_length = integer(0),
+                                       aligned_fraction = numeric(0))
         }
     }
 
     # create SummarizedExperiment object
-    se <- SummarizedExperiment::SummarizedExperiment(
+    se <- SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
-        colData = S4Vectors::DataFrame(
+        colData = DataFrame(
             row.names = names(bamfiles),
             sample = names(bamfiles),
             modbase = modbase[names(bamfiles)],
@@ -232,10 +230,9 @@ readModBam <- function(bamfiles,
     )
     if (nrow(se) > 0) {
         rownames(se) <- paste0(
-            GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),
-            ":", BiocGenerics::pos(SummarizedExperiment::rowRanges(se)), ":",
-            BiocGenerics::strand(SummarizedExperiment::rowRanges(se)))
-        colnames(se) <- rownames(SummarizedExperiment::colData(se))
+            seqnames(rowRanges(se)), ":", pos(rowRanges(se)), ":",
+            strand(rowRanges(se)))
+        colnames(se) <- rownames(colData(se))
     }
 
     se

@@ -107,7 +107,7 @@ readBedMethyl <- function(fnames,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, parallel::detectCores()))
+    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, detectCores()))
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
@@ -124,11 +124,10 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("    ", fname)
         }
-        data.table::fread(
-            file = fname, sep = "\t", nrows = nrows, header = FALSE,
-            nThread = ncpu, data.table = FALSE, verbose = FALSE,
-            col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
-            select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
+        fread(file = fname, sep = "\t", nrows = nrows, header = FALSE,
+              nThread = ncpu, data.table = FALSE, verbose = FALSE,
+              col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
+              select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
     })
 
     # filter by `modbase`
@@ -136,16 +135,16 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("filtering modifications (retaining ", paste(modbase, collapse = ", "), ")")
         }
-        dfL <- parallel::mclapply(dfL, function(df) {
+        dfL <- mclapply(dfL, function(df) {
             df[df$modbase %in% modbase, ]
         }, mc.cores = ncpu)
     }
 
     # create GPos objects for each input
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
-    gposL <- parallel::mclapply(dfL, function(df) {
-        GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
-                            strand = df$strand, seqinfo = seqinfo)
+    gposL <- mclapply(dfL, function(df) {
+        GPos(seqnames = df$chr, pos = df$start + 1L,
+             strand = df$strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos
@@ -153,13 +152,13 @@ readBedMethyl <- function(fnames,
         if (verbose) {
             message("finding unique genomic positions...", appendLF = FALSE)
         }
-        gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
+        gpos <- sort(unique(do.call(c, unname(gposL))))
         if (verbose) {
             message("collapsed ", sum(lengths(gposL)), " positions to ",
                     length(gpos), " unique ones")
         }
     } else {
-        gpos <- GenomicRanges::sort(gposL[[1]])
+        gpos <- sort(gposL[[1]])
     }
 
     # add sequence context
@@ -177,16 +176,16 @@ readBedMethyl <- function(fnames,
     nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(dfL),
                            dimnames = list(NULL, nms))
     for (i in seq_along(dfL)) {
-        i_row <- GenomicRanges::match(gposL[[i]], gpos)
+        i_row <- match(gposL[[i]], gpos)
         nmod[i_row, i] <- dfL[[i]]$N_mod
         nval[i_row, i] <- dfL[[i]]$N_valid
     }
 
     # create summarized experiment
-    se <- SummarizedExperiment::SummarizedExperiment(
+    se <- SummarizedExperiment(
         assays = list(Nmod = nmod, Nvalid = nval),
         rowRanges = gpos,
-        colData = S4Vectors::DataFrame(
+        colData = DataFrame(
             row.names = names(fnames),
             sample = names(fnames),
             modbase = modbase[names(fnames)]
@@ -196,7 +195,7 @@ readBedMethyl <- function(fnames,
 
     # collapse to unique names
     if (any(duplicated(nms))) {
-        se <- scuttle::aggregateAcrossCells(
+        se <- aggregateAcrossCells(
             x = se,
             ids = nms,
             statistics = "sum",

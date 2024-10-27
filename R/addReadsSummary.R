@@ -69,13 +69,13 @@ addReadsSummary <- function(se,
 
     # if replace.existing is FALSE, exclude all assays that already exist in se
     if (!replace.existing) {
-        existing_assays <- intersect(statistics, SummarizedExperiment::assayNames(se))
+        existing_assays <- intersect(statistics, assayNames(se))
         if (length(existing_assays) > 0) {
             existing_assays <- paste(existing_assays, ", ")
             warning("Assay(s) ", existing_assays,
                     " already exist and replace.existing is FALSE - will not ",
                     "recalculate these assays.")
-            statistics <- setdiff(statistics, SummarizedExperiment::assayNames(se))
+            statistics <- setdiff(statistics, assayNames(se))
         }
     }
 
@@ -101,14 +101,14 @@ addReadsSummary <- function(se,
     if (verbose) {
         message("Summarizing reads")
     }
-    dfReads <- SummarizedExperiment::assay(se, assay.type)
+    dfReads <- assay(se, assay.type)
     assL <- lapply(structure(statistics_use, names = statistics_use),
                    function(statistic) {
         switch(statistic,
-            Nmod = as.matrix(S4Vectors::endoapply(
-                dfReads, function(y) SparseArray::rowSums(y >= 0.5, na.rm = TRUE))),
-            Nvalid = as.matrix(S4Vectors::endoapply(
-                dfReads, function(y) SparseArray::rowSums(y >= 0, na.rm = TRUE))),
+            Nmod = as.matrix(endoapply(
+                dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+            Nvalid = as.matrix(endoapply(
+                dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
             NULL # default value for all others
         )
     })
@@ -118,16 +118,16 @@ addReadsSummary <- function(se,
         assL[["FracMod"]] <- assL[["Nmod"]] / assL[["Nvalid"]]
     }
     if ("Pmod" %in% statistics) {
-        assL[["Pmod"]] <- as.matrix(S4Vectors::endoapply(
-            dfReads, SparseArray::rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
+        assL[["Pmod"]] <- as.matrix(endoapply(
+            dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)
         assL[["AvgConf"]] <- as.matrix(
-            S4Vectors::endoapply(dfReads, function(y) {
-                SparseArray::nnavals(y) <- SparseArray::pmax(
-                    SparseArray::nnavals(y), 1 - SparseArray::nnavals(y))
-                SparseArray::rowSums(y, na.rm = TRUE)
+            endoapply(dfReads, function(y) {
+                nnavals(y) <- pmax(
+                    nnavals(y), 1 - nnavals(y))
+                rowSums(y, na.rm = TRUE)
             })
         ) / assL[["Nvalid"]]
     }
@@ -136,12 +136,12 @@ addReadsSummary <- function(se,
     if (verbose) {
         message("Adding summarized assay(s) to SummarizedExperiment")
     }
-    tmpList <- as.list(SummarizedExperiment::assays(se))
+    tmpList <- as.list(assays(se))
     tmpList[statistics] <- lapply(assL[statistics], function(a) {
         rownames(a) <- rownames(se)
         a
     })
-    SummarizedExperiment::assays(se) <- tmpList
+    assays(se) <- tmpList
 
     # keep read-level data
     if (!keep.reads) {
@@ -150,12 +150,10 @@ addReadsSummary <- function(se,
             # currently, assigning to assays triggers a deprecation warning
             # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
             # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
-            SummarizedExperiment::assays(se) <-
-                SummarizedExperiment::assays(se)[setdiff(
-                    SummarizedExperiment::assayNames(se), rlAssays)]
+            assays(se) <- assays(se)[setdiff(assayNames(se), rlAssays)]
         )
         ## Remove read-level assays from the metadata
-        S4Vectors::metadata(se)$readLevelData$assayNames <- character(0)
+        metadata(se)$readLevelData$assayNames <- character(0)
     }
 
     # return

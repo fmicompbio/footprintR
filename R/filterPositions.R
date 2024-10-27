@@ -15,7 +15,8 @@
     if (assay.type %in% .getReadLevelAssayNames(se)) {
         mat <- assay(addReadsSummary(se, assay.type = assay.type,
                                      statistics = "Nvalid", keep.reads = FALSE,
-                                     verbose = FALSE), "Nvalid")
+                                     verbose = FALSE),
+                     "Nvalid")
     } else {
         mat <- assay(se, assay.type)
     }
@@ -43,11 +44,10 @@
         if (is.null(rowData(se)$sequence.context)) {
             stop("No sequence context found in `rowData(se)$sequence.context`")
         }
-        .assertVector(x = rowData(se)$sequence.context, type = "DNAStringSet")
+        .assertVector(x = rowData(se)$sequence.context,
+                      type = "DNAStringSet")
         nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
-            vcountPattern(pat,
-                          rowData(se)$sequence.context,
-                          fixed = "subject")
+            vcountPattern(pat, rowData(se)$sequence.context, fixed = "subject")
         }), init = rep(0, nrow(se)))
         se <- se[nmatch > 0, ]
     }
@@ -88,13 +88,15 @@
     .assertScalar(x = verbose, type = "logical")
 
     # Group positions by chromosome and position
-    pGroup <- split(rownames(se), f = paste0(seqnames(rowRanges(se)), ":",
-                                             pos(rowRanges(se))))
+    pGroup <- split(x = rownames(se),
+                    f = paste0(seqnames(rowRanges(se)),
+                               ":", pos(rowRanges(se))))
     pGroup <- pGroup[lengths(pGroup) > 1]
 
     # For all groups of >1 row, find the one with lowest total count and
     # record the row name for later removal
-    tmpmat <- as.matrix(assay(se, assay.type)[unlist(pGroup, use.names = FALSE), ])
+    tmpmat <- as.matrix(assay(se, assay.type)[
+        unlist(pGroup, use.names = FALSE), ])
     if (assay.type %in% .getReadLevelAssayNames(se)) {
         rs <- rowSums(tmpmat >= 0, na.rm = TRUE)
     } else {
@@ -181,8 +183,9 @@
 #' se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 #' sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
 #'                           min.cov = 5, sequence.context = "TAG")
-#' 
+#'
 #' @importFrom SparseArray colSums is_nonna
+#' @importFrom SummarizedExperiment assay
 filterPositions <- function(se,
                             filters = c("sequence.context", "coverage",
                                         "all.na"),
@@ -217,11 +220,12 @@ filterPositions <- function(se,
             )
         }
     }
-    
+
     ## Remove reads that are NA in all retained positions
-    readsToKeep <- lapply(assay(se, assay.type.na), function(x) {
-        which(SparseArray::colSums(SparseArray::is_nonna(x)) > 0)
-    })
+    readsToKeep <- lapply(assay(se, assay.type.na),
+                          function(x) {
+                              which(colSums(is_nonna(x)) > 0)
+                          })
     se <- subsetReads(se, readsToKeep)
 
     se

@@ -160,12 +160,8 @@ calcReadStats <- function(se,
         FracLowConf = function(x, c = LowConf) {
             sum(abs(0.5 - x) < (c - 0.5)) / length(x)
         },
-        IQRModProb = function(x) {
-            stats::IQR(x)
-        },
-        sdModProb = function(x) {
-            stats::sd(x)
-        },
+        IQRModProb = IQR,
+        sdModProb = sd,
         SEntrModProb = function(x) {
             if (length(x) > 64) {
                 sampleEntropy(x, 2L, 0.2)
@@ -180,7 +176,7 @@ calcReadStats <- function(se,
         ACModProb = function(x, lag.max = max(LagRange),
                              xrange = LagRangeValues) {
             if (length(x) > lag.max) {
-                stats::acf(x, na.action = stats::na.pass, lag.max = lag.max,
+                acf(x, na.action = na.pass, lag.max = lag.max,
                            plot = FALSE)$acf[xrange]
             } else {
                 rep(0, length(xrange))
@@ -189,7 +185,7 @@ calcReadStats <- function(se,
         PACModProb = function(x, lag.max = max(LagRange),
                               xrange = LagRangeValues) {
             if (length(x) > lag.max) {
-                stats::pacf(x, na.action = stats::na.pass, lag.max = lag.max,
+                pacf(x, na.action = na.pass, lag.max = lag.max,
                             plot = FALSE)$acf[xrange]
             } else {
                 rep(0, length(xrange))
@@ -217,23 +213,23 @@ calcReadStats <- function(se,
 
     # Subset se by region
     if (!is.null(regions)) {
-        se <- IRanges::subsetByOverlaps(x = se, ranges = regions)
+        se <- subsetByOverlaps(x = se, ranges = regions)
     }
 
     # Subset by sequence.context
     se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
 
     # Calculate statistics for each sample
-    out <- S4Vectors::SimpleList(lapply(
+    out <- SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
                 se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos,
                 min.nbr.samples = NULL)
 
-            mat <- SummarizedExperiment::assay(sesub, assay.type)[[nm]]
+            mat <- assay(sesub, assay.type)[[nm]]
 
             # Non-NA indices:
-            NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
+            NNAind <- nnawhich(mat, arr.ind = TRUE)
 
             # Coverage per row (i.e per position)
             Nobs <- rep(0, nrow(mat))
@@ -241,12 +237,12 @@ calcReadStats <- function(se,
             Nobs[as.numeric(names(TBL))] <- unclass(TBL)
 
             # Create list of non-zero row indices per column (i.e per read)
-            NNAind <- SparseArray::nnawhich(mat, arr.ind = TRUE)
+            NNAind <- nnawhich(mat, arr.ind = TRUE)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
 
             # List of non-zero observations by column (i.e by read):
-            NNAvals <- SparseArray::nnavals(mat)
+            NNAvals <- nnavals(mat)
             NNAvals_byCol <- split(NNAvals, NNAind[, 2])
             names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
 
@@ -254,7 +250,7 @@ calcReadStats <- function(se,
             NobsReads <- lengths(NNAind_byCol)
 
             # Collapsed mod probs per position:
-            MeanModProb <- SparseArray::rowSums(mat) / Nobs
+            MeanModProb <- rowSums(mat) / Nobs
 
             # Include in calculations only reads with sufficient Number of observations:
             if (min.Nobs.pread > 0) {
@@ -270,7 +266,7 @@ calcReadStats <- function(se,
             }
 
             # Iterate over param_names and add columns to stats_res
-            stats_res <- S4Vectors::make_zero_col_DFrame(nrow = ncol(mat))
+            stats_res <- make_zero_col_DFrame(nrow = ncol(mat))
             row.names(stats_res) <- colnames(mat)
             for (param in param_names) {
                 if (param %in% c("ACModProb", "PACModProb")) {
@@ -294,11 +290,11 @@ calcReadStats <- function(se,
     )
 
     # add filtering parameters to `out`
-    S4Vectors::metadata(out) <- list(regions = regions,
-                                     sequence.context = sequence.context,
-                                     min.Nobs.ppos = min.Nobs.ppos,
-                                     min.Nobs.pread = min.Nobs.pread,
-                                     Lags = LagRangeValues)
+    metadata(out) <- list(regions = regions,
+                          sequence.context = sequence.context,
+                          min.Nobs.ppos = min.Nobs.ppos,
+                          min.Nobs.pread = min.Nobs.pread,
+                          Lags = LagRangeValues)
 
     return(out)
 }
@@ -312,9 +308,9 @@ addReadStats <- function(se, ..., name = "QC") {
 
     .assertScalar(x = name, type = "character")
 
-    SummarizedExperiment::colData(se)[[name]] <- calcReadStats(se = se, ...)
-    S4Vectors::metadata(se)$readLevelData$colDataColumns <- c(
-        S4Vectors::metadata(se)$readLevelData$colDataColumns, name
+    colData(se)[[name]] <- calcReadStats(se = se, ...)
+    metadata(se)$readLevelData$colDataColumns <- c(
+        metadata(se)$readLevelData$colDataColumns, name
     )
     return(se)
 }

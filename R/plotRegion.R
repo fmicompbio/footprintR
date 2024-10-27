@@ -196,9 +196,9 @@ plotRegion <- function(se,
     pL <- list()
     ## ... summary tracks
     for (aname in names(tracks.summary)) {
-        if (aname == "FracMod" && !"FracMod" %in% SummarizedExperiment::assayNames(se)) {
+        if (aname == "FracMod" && !"FracMod" %in% assayNames(se)) {
             if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
-                assay(se, "FracMod") <- SummarizedExperiment::assay(se, "Nmod") / SummarizedExperiment::assay(se, "Nvalid")
+                assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
             } else {
                 stop("Cannot plot 'FracMod' - need either an assay called ",
                      "'FracMod' or both 'Nmod' and 'Nvalid' assays")
@@ -241,12 +241,12 @@ plotRegion <- function(se,
     ## assemble composite plot
     if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
         for (i in seq.int(length(pL) - 1L)) {
-            pL[[i]] <- pL[[i]] + ggplot2::labs(x = ggplot2::element_blank())
+            pL[[i]] <- pL[[i]] + labs(x = element_blank())
         }
     }
-    p <- patchwork::wrap_plots(pL, ncol = 1)
+    p <- wrap_plots(pL, ncol = 1)
     if (!is.null(sequence.context)) {
-        p <- p + ggplot2::labs(caption = paste0("Sequence contexts: ",
+        p <- p + labs(caption = paste0("Sequence contexts: ",
                                paste(sequence.context, collapse = ", ")))
     }
 
@@ -308,16 +308,16 @@ plotRegion <- function(se,
     # add segments
     if (drawRead) {
         dfRead <- .summarizePlotdataPerRead(df)
-        p <- p + ggplot2::geom_segment(data = dfRead, inherit.aes = FALSE,
-                                       mapping = ggplot2::aes(
-                                           x = .data[["start"]],
-                                           y = .data[["read"]],
-                                           xend = .data[["end"]]
-                                       ), colour = "gray80")
+        p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
+                              mapping = aes(
+                                  x = .data[["start"]],
+                                  y = .data[["read"]],
+                                  xend = .data[["end"]]
+                              ), colour = "gray80")
     }
 
     # add lollipops
-    p <- p + ggplot2::geom_point(shape = 21, size = size, colour = "black")
+    p <- p + geom_point(shape = 21, size = size, colour = "black")
 
     # return plot
     return(p)
@@ -376,17 +376,17 @@ plotRegion <- function(se,
     # add segments
     if (drawRead) {
         dfRead <- .summarizePlotdataPerRead(df)
-        p <- p + ggplot2::geom_segment(data = dfRead, inherit.aes = FALSE,
-                                       mapping = ggplot2::aes(
-                                           x = .data[["start"]],
-                                           y = .data[["read"]],
-                                           xend = .data[["end"]]
-                                       ), colour = "gray80")
+        p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
+                              mapping = aes(
+                                  x = .data[["start"]],
+                                  y = .data[["read"]],
+                                  xend = .data[["end"]]
+                              ), colour = "gray80")
     }
 
     # add tiles
-    p <- p + ggplot2::geom_tile(colour = "gray20", width = 1, height = 1,
-                                linewidth = linewidthTiles)
+    p <- p + geom_tile(colour = "gray20", width = 1, height = 1,
+                       linewidth = linewidthTiles)
 
     # return plot
     return(p)
@@ -443,14 +443,14 @@ plotRegion <- function(se,
 
     # add points
     if (doPoint) {
-        p <- p + do.call(ggplot2::geom_point, arglistPoint)
+        p <- p + do.call(geom_point, arglistPoint)
     }
 
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
         compute_smooth <- function(data) {
             ok <- is.finite(data[["value"]])
-            smooth <- stats::smooth.spline(
+            smooth <- smooth.spline(
                 x = data[["position"]][ok],
                 y = data[["value"]][ok],
                 keep.data = FALSE,
@@ -462,12 +462,12 @@ plotRegion <- function(se,
 
         # apply the function to each sample
         smooth_data <- df |>
-            base::split(df[["sample"]]) |>
-            purrr::map(compute_smooth) |>
-            dplyr::bind_rows()
+            split(df[["sample"]]) |>
+            map(compute_smooth) |>
+            bind_rows()
 
         # add the smoothed line
-        p <- p + ggplot2::geom_line(
+        p <- p + geom_line(
             data = smooth_data, inherit.aes = FALSE,
             mapping = aes(x = .data[["position"]],
                           y = .data[["value_smooth"]],
@@ -497,7 +497,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .preparePlotdataSummary <- function(x, aname, modbaseSpace = FALSE) {
-    assaydat <- SummarizedExperiment::assay(x, aname)
+    assaydat <- assay(x, aname)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,"row"]],
@@ -533,7 +533,7 @@ plotRegion <- function(se,
                                   aname,
                                   modbaseSpace = FALSE,
                                   interpolate = FALSE) {
-    assaydat <- SummarizedExperiment::assay(x, aname)
+    assaydat <- assay(x, aname)
     # `aname` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
@@ -546,12 +546,12 @@ plotRegion <- function(se,
             sample = rep(sample_ids, each = nrow(assaydat)),
             value = as.vector(assaydat))
     } else {
-        i <- SparseArray::nnawhich(assaydat, arr.ind = TRUE)
+        i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(
             position = start(x)[i[,1]],
             read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
             sample = sample_ids[i[,2]],
-            value = SparseArray::nnavals(assaydat))
+            value = nnavals(assaydat))
     }
     if (modbaseSpace) {
         df$position <- factor(df$position,
@@ -575,16 +575,16 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotSummary <- function(df, aname, chr) {
-    p0 <- ggplot2::ggplot(
+    p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
-        ggplot2::labs(x = paste0("Position on ", chr),
-                      y = aname,
-                      colour = "Sample") +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "right")
+        labs(x = paste0("Position on ", chr),
+             y = aname,
+             colour = "Sample") +
+        theme_bw() +
+        theme(legend.position = "right")
 
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0)
@@ -610,35 +610,33 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotReads <- function(df, aname, chr) {
-    p0 <- ggplot2::ggplot(
+    p0 <- ggplot(
         data = df,
-        mapping = ggplot2::aes(x = .data[["position"]],
-                               y = .data[["read"]],
-                               fill = .data[["value"]])) +
-        ggplot2::scale_fill_viridis_c(begin = 0, end = 1,
-                                      option = "cividis",
-                                      direction = -1, na.value = "beige") +
-        ggplot2::facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
-        ggplot2::labs(x = ifelse(is.numeric(df$position),
-                                 paste0("Position on ", chr),
-                                 paste0("Modified positions in ", chr,
-                                        ":", levels(df$position)[1], "-",
-                                        levels(df$position)[nlevels(df$position)])),
-                      y = "Reads",
-                      fill = aname) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "right",
-                       axis.text.y = element_blank(),
-                       axis.ticks.y = element_blank(),
-                       panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(),
-                       strip.background.x = element_blank(),
-                       strip.text.x = element_text(hjust = 0,
-                                                   margin = ggplot2::margin(
-                                                       t = 0, r = 0, b = 2, l = 0)))
+        mapping = aes(x = .data[["position"]],
+                      y = .data[["read"]],
+                      fill = .data[["value"]])) +
+        scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
+                             direction = -1, na.value = "beige") +
+        facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
+        labs(x = ifelse(is.numeric(df$position),
+                        paste0("Position on ", chr),
+                        paste0("Modified positions in ", chr,
+                               ":", levels(df$position)[1], "-",
+                               levels(df$position)[nlevels(df$position)])),
+             y = "Reads",
+             fill = aname) +
+        theme_bw() +
+        theme(legend.position = "right",
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              strip.background.x = element_blank(),
+              strip.text.x = element_text(
+                  hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
     if (is.factor(df$position)) {
-        p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
+        p0 <- p0 + theme(axis.text.x = element_blank())
 
     } else {
         p0 <- .addCoordAxisFormat(p0)
@@ -659,8 +657,8 @@ plotRegion <- function(se,
 #' @keywords internal
 .summarizePlotdataPerRead <- function(df) {
     df |>
-        dplyr::group_by(.data[["read"]]) |>
-        dplyr::summarise(
+        group_by(.data[["read"]]) |>
+        summarise(
             start = ifelse(is.factor(.data[["position"]]),
                            levels(.data[["position"]])[1],
                            min(.data[["position"]])),
@@ -690,14 +688,14 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics colnames start
 #' @importFrom SummarizedExperiment assay
-#' @importFrom stats cor as.dist
+#' @importFrom stats cor as.dist hclust
 #' @importFrom SparseArray colMeans
 #'
 #' @noRd
 #' @keywords internal
 .orderReads <- function(x, aname, window_width = 25) {
     # extract and flatten assay matrix
-    X <- as.matrix(SummarizedExperiment::assay(x, aname))
+    X <- as.matrix(assay(x, aname))
     # group positions into bins of window_width
     bin <- findInterval(x = start(x),
                         vec = seq(from = min(start(x)),
@@ -706,14 +704,14 @@ plotRegion <- function(se,
                         rightmost.closed = TRUE, left.open = FALSE)
     iByBin <- split(seq.int(nrow(X)), bin)
     XX <- do.call(rbind, lapply(iByBin, function(i) {
-        SparseArray::colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+        colMeans(X[i, , drop = FALSE], na.rm = TRUE)
     }))
     # calculate distances between reads
-    D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
-                                                use = "pairwise.complete")))
+    D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
+                                  use = "pairwise.complete")))
     D[is.na(D)] <- 1.0
     # cluster reads and return order
-    cl <- stats::hclust(D, method = "ward.D2")
+    cl <- hclust(D, method = "ward.D2")
     return(colnames(X)[cl$order])
 }
 
@@ -734,8 +732,8 @@ plotRegion <- function(se,
 .addCoordAxisFormat <- function(p0) {
     rng <- range(p0$data$position)
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
-    p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
-        ggplot2::scale_x_continuous(labels = scales::label_number(
+    p0 <- p0 + coord_cartesian(xlim = rng) +
+        scale_x_continuous(labels = label_number(
             accuracy = acc,
             scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
     return(p0)

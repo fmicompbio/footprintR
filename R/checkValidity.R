@@ -13,7 +13,7 @@
 #' @importFrom SummarizedExperiment assayNames
 .getReadLevelAssayNames <- function(se) {
     intersect(metadata(se)$readLevelData$assayNames,
-              SummarizedExperiment::assayNames(se))
+              assayNames(se))
 }
 
 #' Get names of colData columns containing read-level data
@@ -32,7 +32,7 @@
 #' @importFrom BiocGenerics colnames
 .getReadLevelColDataNames <- function(se) {
     intersect(metadata(se)$readLevelData$colDataColumns,
-              colnames(SummarizedExperiment::colData(se)))
+              colnames(colData(se)))
 }
 
 #' Check internal consistency of SummarizedExperiment object
@@ -61,9 +61,9 @@
     if (verbose) {
         message("Checking assay names")
     }
-    stopifnot(!is.null(SummarizedExperiment::assayNames(se)) &&
-                  all(SummarizedExperiment::assayNames(se) != "") &&
-                  !any(duplicated(SummarizedExperiment::assayNames(se))))
+    stopifnot(!is.null(assayNames(se)) &&
+                  all(assayNames(se) != "") &&
+                  !any(duplicated(assayNames(se))))
 
     if (verbose) {
         message("Checking row names")
@@ -79,10 +79,10 @@
     if (verbose) {
         message("Checking consistency of sample names")
     }
-    stopifnot("sample" %in% colnames(SummarizedExperiment::colData(se)))
+    stopifnot("sample" %in% colnames(colData(se)))
 
-    for (an in SummarizedExperiment::assayNames(se)) {
-        stopifnot(colnames(SummarizedExperiment::assay(
+    for (an in assayNames(se)) {
+        stopifnot(colnames(assay(
             se, an, withDimnames = FALSE)) == colnames(se))
     }
     for (cn in .getReadLevelColDataNames(se)) {
@@ -96,15 +96,13 @@
         }
         ## Choose one assay as the reference to compare to
         refAssay <- rlAssays[1]
-        refReads <- lapply(SummarizedExperiment::assay(se, refAssay),
-                           colnames)
+        refReads <- lapply(assay(se, refAssay), colnames)
         for (an in setdiff(rlAssays, refAssay)) {
             if (verbose) {
                 message("Comparing ", refAssay, " and ", an)
             }
             for (sn in colnames(se)) {
-                if (!all(colnames(SummarizedExperiment::assay(se, an)[[sn]]) ==
-                         refReads[[sn]])) {
+                if (!all(colnames(assay(se, an)[[sn]]) == refReads[[sn]])) {
                     stop("Mismatching reads for assays ", refAssay, " and ",
                          an, ", sample ", sn)
                 }

@@ -63,7 +63,7 @@
 #'
 #' @author Charlotte Soneson
 #'
-#' @importFrom GenomicRanges GPos match
+#' @importFrom GenomicRanges GPos match strand
 #' @importFrom SparseArray NaArray cbind colSums
 #' @importFrom S4Vectors split endoapply make_zero_col_DFrame DataFrame
 #' @importFrom IRanges DataFrameList
@@ -104,8 +104,7 @@ getAnchorRegions <- function(se,
     .assertScalar(x = reverseMinusStrandRegions, type = "logical")
     .assertScalar(x = verbose, type = "logical")
 
-    if (any(GenomicRanges::strand(regionMidpoints) == "*") &&
-        !ignore.strand) {
+    if (any(strand(regionMidpoints) == "*") && !ignore.strand) {
         warning("The strand of some region midpoints is undefined ",
                 "Setting `ignore.strand` to TRUE.")
         ignore.strand <- TRUE
@@ -131,7 +130,7 @@ getAnchorRegions <- function(se,
     if (verbose) {
         message("Creating list of GPos objects for the regions")
     }
-    regions <- lapply(S4Vectors::split(regionMidpoints), function(gp) {
+    regions <- lapply(split(regionMidpoints), function(gp) {
         GPos(seqnames = seqnames(gp),
              pos = seq(pos(gp) - floor((regionWidth - 1) / 2),
                        pos(gp) + ceiling((regionWidth - 1) / 2)),
@@ -157,13 +156,12 @@ getAnchorRegions <- function(se,
                     # initialize NaArray with one row per base in the region
                     # no row names, as they won't be interpretable across
                     # regions anyway
-                    namat <- SparseArray::NaArray(
+                    namat <- NaArray(
                         dim = c(length(reg), ncol(mat)),
                         dimnames = list(NULL, paste0(regnm, "-", colnames(mat))),
                         type = "double")
                     # populate NaArray with values from observed positions
-                    m <- GenomicRanges::match(reg, rowRanges(se),
-                                              ignore.strand = ignore.strand)
+                    m <- match(reg, rowRanges(se), ignore.strand = ignore.strand)
                     newrow <- which(!is.na(m))
                     oldrow <- m[newrow]
                     i <- rep(newrow, ncol(mat))
@@ -178,16 +176,16 @@ getAnchorRegions <- function(se,
                     namat
                 })
                 # cbind matrices from different regions
-                cbmat <- do.call(SparseArray::cbind, mats)
+                cbmat <- do.call(cbind, mats)
                 # only keep read-region pairs with at least one non-NA value
-                keep_reads <- which(SparseArray::colSums(cbmat, na.rm = TRUE) > 0)
+                keep_reads <- which(colSums(cbmat, na.rm = TRUE) > 0)
                 cbmat[, keep_reads, drop = FALSE]
             })
         } else {
             # summary assays (matrices)
             # generate a DataFrame assay with dense matrices as columns, where
             # in each of these, one column is a sample-region pair
-            assayDF <- S4Vectors::make_zero_col_DFrame(nrow = regionWidth)
+            assayDF <- make_zero_col_DFrame(nrow = regionWidth)
             for (s in colnames(assay(se, atp))) {
                 # create sample-region matrix
                 srmat <- do.call(cbind, lapply(names(regions), function(regnm) {
@@ -196,8 +194,7 @@ getAnchorRegions <- function(se,
                                      nrow = length(reg),
                                      ncol = 1,
                                      dimnames = list(NULL, paste0(regnm, "-", s)))
-                    m <- GenomicRanges::match(reg, rowRanges(se),
-                                              ignore.strand = ignore.strand)
+                    m <- match(reg, rowRanges(se), ignore.strand = ignore.strand)
                     newrow <- which(!is.na(m))
                     oldrow <- m[newrow]
                     newmat[newrow, 1] <- assay(se, atp)[oldrow, s]
@@ -222,9 +219,9 @@ getAnchorRegions <- function(se,
     )
     for (atp in names(assayL)) {
         regs <- SimpleList(lapply(assayL[[atp]], function(m) {
-            S4Vectors::DataFrame(
+            DataFrame(
                 id = colnames(m),
-                region = stringr::str_extract(
+                region = str_extract(
                     colnames(m),
                     paste(sub("*", "\\*", sub("+", "\\+",
                                               paste0("^", names(regions)),
@@ -240,9 +237,9 @@ getAnchorRegions <- function(se,
         # currently, assigning to assays triggers a deprecation warning
         # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
         # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
-        seout <- SummarizedExperiment::SummarizedExperiment(
+        seout <- SummarizedExperiment(
             assays = DataFrameList(assayL),
-            rowData = S4Vectors::DataFrame(
+            rowData = DataFrame(
                 relpos = seq_len(regionWidth) - floor((regionWidth + 1) / 2)
             ),
             colData = cold,

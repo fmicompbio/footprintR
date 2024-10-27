@@ -156,7 +156,7 @@ readModkitExtract <- function(fnames,
             message("    ", fnames[nm])
         }
         # read data
-        tmp <- data.table::fread(
+        tmp <- fread(
             file = fnames[nm], sep = "\t", nrows = nrows, header = TRUE,
             nThread = ncpu, data.table = FALSE, verbose = FALSE,
             select = list(character = c("chrom", "call_code", "read_id", "ref_strand"),
@@ -199,16 +199,16 @@ readModkitExtract <- function(fnames,
     }
 
     # create GPos objects for each input
-    gposL <- parallel::mclapply(dfL, function(df) {
-        GenomicRanges::GPos(seqnames = df$chrom, pos = df$ref_position,
-                            strand = df$ref_strand, seqinfo = seqinfo)
+    gposL <- mclapply(dfL, function(df) {
+        GPos(seqnames = df$chrom, pos = df$ref_position,
+             strand = df$ref_strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos, reduce to unique positions
     if (verbose) {
         message("finding unique genomic positions...", appendLF = FALSE)
     }
-    gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
+    gpos <- sort(unique(do.call(c, unname(gposL))))
     if (verbose) {
         message("collapsed ", sum(lengths(gposL)), " positions to ",
                 length(gpos), " unique ones")
@@ -229,23 +229,23 @@ readModkitExtract <- function(fnames,
     readL <- lapply(dfL, function(df) unique(df$read_id))
 
     # modified probability
-    modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
+    modmat <- make_zero_col_DFrame(nrow = length(gpos))
     for (nm in names(fnames)) {
         x <- dfL[[nm]]
-        namat <- SparseArray::NaArray(dim = c(length(gpos), length(readL[[nm]])),
-                                      dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
-                                      type = "double")
-        i <- GenomicRanges::match(gposL[[nm]], gpos)
+        namat <- NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                         dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                         type = "double")
+        i <- match(gposL[[nm]], gpos)
         j <- match(x$read_id, readL[[nm]])
         namat[cbind(i, j)] <- x$mod_prob
         modmat[[nm]] <- namat
     }
 
     # create SummarizedExperiment object
-    se <- SummarizedExperiment::SummarizedExperiment(
+    se <- SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
-        colData = S4Vectors::DataFrame(
+        colData = DataFrame(
             row.names = names(modmat),
             sample = names(modmat),
             modbase = modbase[names(modmat)]
@@ -256,10 +256,9 @@ readModkitExtract <- function(fnames,
                                              colDataColumns = character(0)))
     )
     rownames(se) <- paste0(
-        GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),
-        ":", BiocGenerics::pos(SummarizedExperiment::rowRanges(se)), ":",
-        BiocGenerics::strand(SummarizedExperiment::rowRanges(se)))
-    colnames(se) <- rownames(SummarizedExperiment::colData(se))
+        seqnames(rowRanges(se)), ":", pos(rowRanges(se)), ":",
+        strand(rowRanges(se)))
+    colnames(se) <- rownames(colData(se))
 
     se
 }

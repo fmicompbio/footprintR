@@ -60,13 +60,12 @@ subsetReads <- function(se,
     .assertVector(x = se, type = "SummarizedExperiment")
     .checkSEValidity(se, verbose = FALSE)
     rlAssays <- .getReadLevelAssayNames(se)
-    sampleNms <- SummarizedExperiment::colnames(se)
+    sampleNms <- colnames(se)
     if (length(rlAssays) == 0) {
         warning("'se' contains no read-level assays - no subsetting done")
         return(se)
     }
-    rlAssayColnames <- lapply(SummarizedExperiment::assay(se, rlAssays[1]),
-                              colnames)
+    rlAssayColnames <- lapply(assay(se, rlAssays[1]), colnames)
     .assertScalar(x = prune, type = "logical")
 
     ## make sure that 'reads' is a named list with all samples and
@@ -129,7 +128,7 @@ subsetReads <- function(se,
 
     ## subset reads
     for (anm in rlAssays) {
-        dframe <- SummarizedExperiment::assay(se, anm)
+        dframe <- assay(se, anm)
         for (snm in names(reads)) {
             dframe[[snm]] <- dframe[[snm]][, reads[[snm]], drop = FALSE]
         }
@@ -137,7 +136,7 @@ subsetReads <- function(se,
             # currently, assigning to assays triggers a deprecation warning
             # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
             # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
-            SummarizedExperiment::assay(se, anm) <- dframe
+            assay(se, anm) <- dframe
         )
     }
     for (cn in .getReadLevelColDataNames(se)) {

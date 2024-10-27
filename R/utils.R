@@ -107,7 +107,7 @@
         type <- "numeric"
     }
 
-    if (!is.null(type) && !methods::is(x, type)) {
+    if (!is.null(type) && !is(x, type)) {
         stop("'", xname, "' must be of class '", type, "'", call. = FALSE)
     }
 
@@ -223,7 +223,7 @@
 #'     values have been linearly interpolated.
 #'
 #' @importFrom BiocGenerics colnames
-#' @importFrom SparseArray is_nonna
+#' @importFrom SparseArray is_nonna nnavals
 #' @importFrom zoo na.approx
 #'
 #' @noRd
@@ -232,7 +232,7 @@
     stopifnot(exprs = {
         !is.null(colnames(assaydat))
     })
-    idx <- SparseArray::is_nonna(assaydat)
+    idx <- is_nonna(assaydat)
     pos_filled <- seq(min(pos), max(pos))
     npos <- length(pos_filled)
     res <- do.call(
@@ -242,12 +242,12 @@
             function(nm) {
                 x <- rep(NA, npos)
                 x[match(pos[which(idx[, nm], useNames = FALSE)], pos_filled)] <-
-                    SparseArray::nnavals(assaydat[, nm])
+                    nnavals(assaydat[, nm])
                 nna <- which(!is.na(x))
                 if (length(nna) > 0) {
                     irng <- range(nna)
                     ii <- seq(irng[1], irng[2])
-                    x[ii] <- zoo::na.approx(object = x, maxgap = maxgap)
+                    x[ii] <- na.approx(object = x, maxgap = maxgap)
                 }
                 return(x)
             })
@@ -255,4 +255,3 @@
     attr(res, "pos") <- pos_filled
     return(res)
 }
-
