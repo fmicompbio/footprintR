@@ -36,7 +36,6 @@ Imports:
     ggplot2,
     scales,
     patchwork,
-    purrr,
     SparseArray,
     Rcpp,
     stringr,

@@ -418,8 +418,7 @@ plotRegion <- function(se,
 #'
 #' @import ggplot2
 #' @importFrom BiocGenerics start nrow
-#' @importFrom dplyr group_by arrange mutate ungroup bind_rows
-#' @importFrom purrr map
+#' @importFrom dplyr group_by arrange mutate ungroup group_modify
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
 #'
@@ -456,15 +455,14 @@ plotRegion <- function(se,
                 keep.data = FALSE,
                 spar = spar.smooth)
             data.frame(position = smooth$x,
-                       value_smooth = smooth$y,
-                       sample = unique(data$sample))
+                       value_smooth = smooth$y)
         }
 
         # apply the function to each sample
         smooth_data <- df |>
-            split(df[["sample"]]) |>
-            map(compute_smooth) |>
-            bind_rows()
+            group_by(sample) |>
+            group_modify(~ compute_smooth(.x)) |>
+            ungroup()
 
         # add the smoothed line
         p <- p + geom_line(
