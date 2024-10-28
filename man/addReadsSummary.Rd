@@ -25,8 +25,9 @@ contains modification probabilities.}
 \item{statistics}{Character vector specifying the type of statistics to be
 computed. Currently supported values are "Nmod" (number of modification
 probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-reads), "Pmod" (average modification probability), "AvgConf" (average
-confidence of (non-)modification probabilities).}
+reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
+probability), "AvgConf" (average confidence of (non-)modification
+probabilities).}
 
 \item{keep.reads}{A logical scalar. If \code{TRUE} (the default), the
 read-level data from \code{assay.type} will be retained in an assay of
