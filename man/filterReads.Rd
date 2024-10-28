@@ -11,6 +11,7 @@ filterReads(
   qcCol = "QC",
   minQscore = 0,
   minEntropy = 0,
+  maxFracLowConf = 1,
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
@@ -40,6 +41,11 @@ out.}
 \item{minEntropy}{A numeric scalar representing the smallest acceptable
 read-level entropy. Reads with entropy below this value will be filtered
 out.}
+
+\item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
+fraction of low-confidence modified base calls in a read. Reads with
+a fraction of low confidence calls greater than this value will be
+filtered out.}
 
 \item{minReadLength}{A numeric scalar representing the smallest acceptable
 read length. Reads that are shorter than this value will be filtered
@@ -80,5 +86,5 @@ sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
 
 }
 \author{
-Charlotte Soneson
+Charlotte Soneson, Michael Stadler
 }
