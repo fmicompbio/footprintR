@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 ```
 
 <img src="../man/figures/footprintR_logo.png" style="display: block; margin-left: auto;
-margin-right: auto; width: 20%; border: 0" />
+margin-right: auto; width: 20%; border: 0" alt="footprintR logo" />
 
 ## Load data
 
@@ -73,22 +73,22 @@ Just like with summary-level data, columns correspond to samples
 # ... and columns are samples
 colData(se)
 ```
-The sample names are obtained from the input files (here `extractfiles`), or
-if the files are not named will be automatically assigned (each file
-corresponding to a separate sample).
+The sample names in the `sample` column are obtained from the input files
+(here `extractfiles`), or if the files are not named will be automatically
+assigned (using `"s1"`, `"s2"` and so on, assuming that each file corresponds
+to a separate sample).
 
-However, as each sample typically contains several reads (see `se$n_reads`),
-the `qscore` column that stores the quality scores for individual reads, is
-not a simple vector, but a list of vectors, in which scores are grouped by
-sample.
-```{r coldata-list-columns1}
-se$qscore
+Read-level information is contained in a list under `read_info`, with one
+element per sample:
+```{r coldata-read-info}
+se$read_info
 ```
-It may be needed to `unlist()` it if a flat vector is needed:
-```{r coldata-list-columns2}
-unlist(se$qscore)
+
+Each sample typically contains several reads (see `se$n_reads`),
+which correspond to the rows of `se$read_info`, for example for `"sample1"`:
+```{r coldata-read-info-sample1}
+se$read_info$sample1
 ```
- 
 ## Explore assay data
 
 The single assay `mod_prob` is a `DataFrame` with modification probabilities.
@@ -99,20 +99,26 @@ assayNames(se)
 m <- assay(se, "mod_prob")
 m
 ```
-Again, to store read-level data for variable numbers of reads in each sample,
-each column (sample) is not just a simple vector, but a position-by-read
-`NaMatrix`.
+In order to store read-level data for variable numbers of reads per sample,
+each sample column is not just a simple vector, but a position-by-read
+`NaMatrix` (a sparse matrix object defined in the
+[`SparseArray`](https://bioconductor.org/packages/SparseArray) package).
 ```{r mod-prob-columns1}
 m$sample1
 ```
 
 If a 'flat' matrix is needed, in which columns correspond to
-reads instead of samples, it can be created using `as.matrix()`:
+reads instead of samples, it can be created using `as.matrix()`.
+Notice the number of columns in each of the objects:
+
 ```{r mod-prob-columns2}
-as.matrix(m)
+ncol(se)           # 2 samples
+ncol(m$sample1)    # 3 reads in "sample1"
+ncol(m$sample2)    # 2 reads in "sample2"
+ncol(as.matrix(m)) # 5 reads in total
 ```
 
-One advantage of the this grouping of reads per sample is that you can easily
+One advantage of the grouping of reads per sample is that you can easily
 perform per-sample operations using `lapply` (returns a `list`) or `endoapply`
 (returns a `DataFrame`):
 ```{r mod-prob-lapply}
@@ -121,15 +127,15 @@ endoapply(m, ncol)
 ```
 The `NaMatrix` objects do not store `NA` values and thus use much less
 memory compared to a normal (dense) matrix. The `NA` values here occur
-at positions (rows) that are not covered by a given read, and there
+at positions (rows) that are not covered by the read of that column, and there
 are typically a large fraction of NA values:
 ```{r nnacount}
 prod(dim(m$sample1)) # total number of values
 nnacount(m$sample1)  # number of non-NA values
 ```
 
-**Important: ** These `NA` values have to be ignored when for example
-manually calculating the average modification probability for positions
+**Important: ** These `NA` values have to be excluded for example when
+calculating the average modification probability for a position
 using `mean(..., na.rm = TRUE)`, otherwise the result will be `NA` for
 all incompletely covered positions:
 
@@ -146,7 +152,7 @@ lapply(m["chr1:6928850:-", ], mean, na.rm = TRUE)
 Note that for sample2, in which no read overlaps the selected position,
 `mean(..., na.rm = TRUE)` returns `NaN`.
 
-In most cases it is preferred to use the convenience functions provided by
+In most cases it is preferrable to use the convenience functions in
 `footprintR`, such as `addReadsSummary()` (see next section), to calculate
 summaries over reads instead of the `lapply(...)` used above for illustration.
 
@@ -162,7 +168,9 @@ se_summary <- addReadsSummary(se,
 ```
 
 As discussed above, this will correctly exclude non-observed values
-and return `NaN` for positions without any observed data (`Pmod` assay):
+and return zero values (for count assays `"Nmod"`, "`Nvalid`") or `NaN` for
+assays with fractions (`"FracMod"`, `"Pmod"` and `"AvgConf"`), for positions
+without any observed data (see for example `"Pmod"` in `"sample2"`):
 
 ```{r summarized-pmod}
 assay(se_summary, "Pmod")["chr1:6928850:-", ]
@@ -183,8 +191,9 @@ In the above example, we in addition also calculate the average modification
 probability (`Pmod`) and the average confidence of the modification calls
 per position (`AvgConf`). As we have not changed the default `keep.reads = TRUE`,
 we in addition also keep the read-level assay from the input object
-(`mod_prob`) in the returned object. In `mod_prob`, the reads are grouped by
-sample:
+(`mod_prob`) in the returned object. Because of the grouping of reads by sample
+in `mod_prob`, the dimensions of read-level or summary-level objects remain
+identical:
 
 ```{r collapsed-assays}
 # read-level data is retained in "mod_prob" assay
@@ -275,13 +284,13 @@ estimate. By switching to measuring distances between modified bases within
 reads, we can extract much more information per read and already manage to get
 accurate estimates from a handful of reads:
 
-```{r estimate-nrl, fig.width=8, fig.height=4}
+```{r estimate-nrl, fig.width=8, fig.height=4, fig.alt="A plot of the distribution of observed distances between modified bases, which shows a typical periodicity corresponding to nucleosomal particles."}
 moddist <- calcModbaseSpacing(se)
 print(estimateNRL(moddist$sample1)[1:2])
 plotModbaseSpacing(moddist$sample1)
 ```
 
-```{r plot-nrl-detailed, fig.width=12, fig.height=4}
+```{r plot-nrl-detailed, fig.width=12, fig.height=4, fig.alt="Three plots showing the distribution of observed distances between modified bases, a smoothed version with identified peaks and a linear fit of peak count to peak coordinate from which the nucleosome repeat length is estimated."}
 plotModbaseSpacing(moddist$sample1, detailedPlots = TRUE)
 ```
 

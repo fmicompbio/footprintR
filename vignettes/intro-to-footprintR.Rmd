@@ -1,11 +1,11 @@
 ---
-title: "Using `footprintR`"
+title: "Introduction to `footprintR`"
 output:
     rmarkdown::html_document:
         toc: true
         toc_float: true
 vignette: >
-  %\VignetteIndexEntry{Using `footprintR`}
+  %\VignetteIndexEntry{Introduction to `footprintR`}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 ```
 
 <img src="../man/figures/footprintR_logo.png" style="display: block; margin-left: auto;
-margin-right: auto; width: 20%; border: 0" />
+margin-right: auto; width: 20%; border: 0" alt="footprintR logo" />
 
 ## Overview
 

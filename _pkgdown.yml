@@ -3,6 +3,16 @@ url: https://fmicompbio.github.io/footprintR
 template:
   bootstrap: 5
 
+navbar:
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: "Introduction to footprinR"
+        href: articles/intro-to-footprintR.html
+      - text: "Exploring read-level data with footprintR"
+        href: articles/read-level-data.html
+
 reference:
 - title: Reading data into R
   contents:
