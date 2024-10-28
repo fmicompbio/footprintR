@@ -71,7 +71,6 @@
 #' @importFrom methods as
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics pos strand
-#' @importFrom stringr str_extract
 #'
 #' @export
 getAnchorRegions <- function(se,
@@ -213,12 +212,8 @@ getAnchorRegions <- function(se,
         regs <- SimpleList(lapply(assayL[[atp]], function(m) {
             DataFrame(
                 id = colnames(m),
-                region = str_extract(
-                    colnames(m),
-                    paste(sub("*", "\\*", sub("+", "\\+",
-                                              paste0("^", names(regions)),
-                                              fixed = TRUE), fixed = TRUE),
-                          collapse = "|"))
+                region = sub("^([^:]+:[0-9]+-[0-9]+:([+]|[-]|[*])).*$",
+                             "\\1", colnames(m))
             )
         }))
         cold[[paste0("region_", atp)]] <- regs
