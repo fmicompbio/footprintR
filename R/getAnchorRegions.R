@@ -113,9 +113,7 @@ getAnchorRegions <- function(se,
     # If ignore.strand = TRUE, first make sure that there is no
     # position that is represented by two or more rows in the SE
     if (ignore.strand) {
-        if (verbose) {
-            message("Checking for positions represented by multiple rows")
-        }
+        .message("Checking for positions represented by multiple rows")
         covAssays <- c("Nvalid", "Nmod", "mod_prob")
         if (!any(covAssays %in% assayNames(se))) {
             stop("None of the preferred coverage assays ",
@@ -127,9 +125,7 @@ getAnchorRegions <- function(se,
     }
 
     # Create list of GPos objects, one for each region
-    if (verbose) {
-        message("Creating list of GPos objects for the regions")
-    }
+    .message("Creating list of GPos objects for the regions")
     regions <- lapply(split(regionMidpoints), function(gp) {
         GPos(seqnames = seqnames(gp),
              pos = seq(pos(gp) - floor((regionWidth - 1) / 2),
@@ -142,9 +138,7 @@ getAnchorRegions <- function(se,
     }, "")
 
     # Create new assays
-    if (verbose) {
-        message("Subsetting assays to selected regions")
-    }
+    .message("Subsetting assays to selected regions")
     assayL <- lapply(assay.type, function(atp) {
         if (atp %in% .getReadLevelAssayNames(se)) {
             # read-level assays (DataFrames with NaArrays)
@@ -211,9 +205,7 @@ getAnchorRegions <- function(se,
     })
 
     # Record the region corresponding to each column and add to colData
-    if (verbose) {
-        message("Assembling SummarizedExperiment object")
-    }
+    .message("Assembling SummarizedExperiment object")
     cold <- DataFrame(
         sample = colnames(se)
     )
@@ -258,9 +250,7 @@ getAnchorRegions <- function(se,
                 colnames(assay(seout, atp)[vapply(assay(seout, atp), ncol, 0) > 0]))
         }
         seout <- seout[, keepSamples]
-        if (verbose) {
-            message("Dropping ", ncol(se) - ncol(seout), " samples without reads")
-        }
+        .message("Dropping {ncol(se) - ncol(seout)} sample{?s} without reads")
     }
 
     seout

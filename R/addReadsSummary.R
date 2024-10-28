@@ -98,9 +98,7 @@ addReadsSummary <- function(se,
     # - FracMod and Pmod have to be calculated using dense matrices and would
     #   have to be converted back to sparse objects  (no "/" method for
     #   SparseArray objects, as the result wouldn't be sparse)
-    if (verbose) {
-        message("Summarizing reads")
-    }
+    .message("Summarizing reads")
     dfReads <- assay(se, assay.type)
     assL <- lapply(structure(statistics_use, names = statistics_use),
                    function(statistic) {
@@ -133,9 +131,7 @@ addReadsSummary <- function(se,
     }
 
     # add to summarized experiment
-    if (verbose) {
-        message("Adding summarized assay(s) to SummarizedExperiment")
-    }
+    .message("Adding {length(statistics)} summarized assay{?s} to SummarizedExperiment")
     tmpList <- as.list(assays(se))
     tmpList[statistics] <- lapply(assL[statistics], function(a) {
         rownames(a) <- rownames(se)

@@ -75,7 +75,7 @@
 #'     \code{\link[GenomicRanges]{GRanges}} for the object used to specify
 #'     genomic regions.
 #'
-#' @importFrom GenomicRanges as.character
+#' @importFrom GenomicRanges GRanges
 #'
 #' @export
 modkitExtract <- function(modkit_bin = NULL,
@@ -100,9 +100,7 @@ modkitExtract <- function(modkit_bin = NULL,
     if (is.na(modkit_version)) {
         stop("'modkit' was not found on the path or via 'modkit_bin'.")
     } else {
-        if (verbose) {
-            message("Using ", modkit_version)
-        }
+        .message("Using {modkit_version}")
     }
     .assertScalar(x = bamfile, type = "character")
     if (!file.exists(bamfile)) {
@@ -140,9 +138,8 @@ modkitExtract <- function(modkit_bin = NULL,
     # Prepare --log-filepath argument
     if (!is.null(out_log_file)) {
         pass_ARGS <- c(pass_ARGS, paste0("--log-filepath ", out_log_file))
-        if (verbose) {
-            message("Specified path to run log: ", normalizePath(out_log_file, mustWork = FALSE))
-        }
+        tmppath <- normalizePath(out_log_file, mustWork = FALSE)
+        .message("Specified path to run log: {.file tmppath}")
         if (file.exists(out_log_file)) {
             warning("Specified `out_log_file` already exists.",
                     " The log will be appened to the existing file.")
@@ -155,10 +152,8 @@ modkitExtract <- function(modkit_bin = NULL,
     # Prepare separately --read-calls-path argument
     if (!is.null(out_read_calls)) {
         pass_out_read_calls <- paste0("--read-calls-path ", out_read_calls)
-        if (verbose) {
-            message("Specified path to read-calls table: ",
-                    normalizePath(out_read_calls, mustWork = FALSE))
-        }
+        tmppath <- normalizePath(out_read_calls, mustWork = FALSE)
+        .message("Specified path to read-calls table: {.file tmppath}")
     } else {
         pass_out_read_calls <- NULL
     }
@@ -168,10 +163,8 @@ modkitExtract <- function(modkit_bin = NULL,
         pass_out_extract_table <-  'null'
     } else{
         pass_out_extract_table <- out_extract_table
-        if (verbose) {
-            message("Specified path to extract table: ",
-                    normalizePath(out_extract_table, mustWork = FALSE))
-        }
+        tmppath <- normalizePath(out_extract_table, mustWork = FALSE)
+        .message("Specified path to extract table: {.file tmppath}")
     }
 
 

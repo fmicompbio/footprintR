@@ -117,13 +117,9 @@ readBedMethyl <- function(fnames,
     nms <- names(fnames)
 
     # load data
-    if (verbose) {
-        message("reading input files")
-    }
+    .message("reading input files")
     dfL <- lapply(fnames, function(fname) {
-        if (verbose) {
-            message("    ", fname)
-        }
+        .message("    {.file fname}")
         fread(file = fname, sep = "\t", nrows = nrows, header = FALSE,
               nThread = ncpu, data.table = FALSE, verbose = FALSE,
               col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
@@ -132,9 +128,7 @@ readBedMethyl <- function(fnames,
 
     # filter by `modbase`
     if (!is.null(modbase)) {
-        if (verbose) {
-            message("filtering modifications (retaining ", paste(modbase, collapse = ", "), ")")
-        }
+        .message("filtering modifications (retaining {modbase})")
         dfL <- mclapply(dfL, function(df) {
             df[df$modbase %in% modbase, ]
         }, mc.cores = ncpu)
@@ -149,23 +143,16 @@ readBedMethyl <- function(fnames,
 
     # create combined GPos
     if (length(dfL) > 1) {
-        if (verbose) {
-            message("finding unique genomic positions...", appendLF = FALSE)
-        }
+        .message("finding unique genomic positions...")
         gpos <- sort(unique(do.call(c, unname(gposL))))
-        if (verbose) {
-            message("collapsed ", sum(lengths(gposL)), " positions to ",
-                    length(gpos), " unique ones")
-        }
+        .message("collapsed {sum(lengths(gposL))} position{?s} to {length(gpos)} unique one{?s}")
     } else {
         gpos <- sort(gposL[[1]])
     }
 
     # add sequence context
     if (sequence.context.width > 0) {
-        if (verbose) {
-            message("extracting sequence contexts")
-        }
+        .message("extracting sequence contexts")
         mcols(gpos)$sequence.context <- extractSeqContext(
             x = as(gpos, "GRanges"),
             sequence.context.width = sequence.context.width,

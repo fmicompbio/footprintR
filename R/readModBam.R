@@ -131,9 +131,7 @@ readModBam <- function(bamfiles,
     .assertScalar(x = verbose, type = "logical")
 
     # extract modification probabilities from `bamfiles`
-    if (verbose) {
-        message("extracting base modifications from modBAM files")
-    }
+    .message("extracting base modifications from modBAM files")
     regions_str <- as.character(regions, ignore.strand = TRUE)
     resLL <- mclapply(structure(names(bamfiles), names = names(bamfiles)),
                                 function(nm) {
@@ -165,20 +163,13 @@ readModBam <- function(bamfiles,
     }, mc.cores = ncpu)
 
     # create combined GPos, reduce to unique positions
-    if (verbose) {
-        message("finding unique genomic positions...", appendLF = FALSE)
-    }
+    .message("finding unique genomic positions...")
     gpos <- sort(unique(do.call(c, unname(gposL))))
-    if (verbose) {
-        message("collapsed ", sum(lengths(gposL)), " positions to ",
-                length(gpos), " unique ones")
-    }
+    .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
     # add sequence context
     if (sequence.context.width > 0) {
-        if (verbose) {
-            message("extracting sequence contexts")
-        }
+        .message("extracting sequence contexts")
         mcols(gpos)$sequence.context <- extractSeqContext(
             x = as(gpos, "GRanges"),
             sequence.context.width = sequence.context.width,

@@ -41,7 +41,8 @@ Imports:
     Rcpp,
     stringr,
     zoo,
-    tibble
+    tibble,
+    cli
 Suggests:
     rmarkdown,
     knitr,

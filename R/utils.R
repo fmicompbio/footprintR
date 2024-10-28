@@ -255,3 +255,31 @@
     attr(res, "pos") <- pos_filled
     return(res)
 }
+
+#' Generate console output messages
+#'
+#' This is drop-in a replacement for \code{base::message}, which only
+#' creates a message if \code{verbose} exists in the calling environment and
+#' is set to \code{TRUE}. It also supports inline-markup via the \code{cli}
+#' package.
+#'
+#' @param message The message to be written to the console. It will be
+#'     forwarded to \code{\link[cli]{cli_inform}} and thus supports
+#'     inline markup (see \code{\link[cli]{inline-markup}}).
+#' @param ... Additional arguments passed to \code{\link[rlang]{inform}}.
+#'
+#' @importFrom cli cli_inform
+#' @importFrom rlang caller_env
+#'
+#' @noRd
+#' @keywords internal
+.message <- function(message, ...) {
+    # Try to get 'verbose' from the calling environment
+    env <- caller_env(n = 1)
+    verbose <- tryCatch(get("verbose", envir = env),
+                        error = function(e) FALSE)
+    if (verbose) {
+        cli_inform(message = message, ..., call = env,
+                   .envir = env, .frame = env)
+    }
+}

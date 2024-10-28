@@ -58,16 +58,12 @@
 .checkSEValidity <- function(se, verbose = FALSE) {
     stopifnot(is(se, "SummarizedExperiment"))
 
-    if (verbose) {
-        message("Checking assay names")
-    }
+    .message("Checking assay names")
     stopifnot(!is.null(assayNames(se)) &&
                   all(assayNames(se) != "") &&
                   !any(duplicated(assayNames(se))))
 
-    if (verbose) {
-        message("Checking row names")
-    }
+    .message("Checking row names")
     stopifnot(!is.null(rownames(se)) &&
                   !any(duplicated(rownames(se))))
 
@@ -76,9 +72,7 @@
                   all(c("assayNames", "colDataColumns") %in%
                           names(metadata(se)$readLevelData)))
 
-    if (verbose) {
-        message("Checking consistency of sample names")
-    }
+    .message("Checking consistency of sample names")
     stopifnot("sample" %in% colnames(colData(se)))
 
     for (an in assayNames(se)) {
@@ -91,16 +85,12 @@
 
     rlAssays <- .getReadLevelAssayNames(se)
     if (length(rlAssays) > 0) {
-        if (verbose) {
-            message("Read-level assay found")
-        }
+        .message("Read-level assay found")
         ## Choose one assay as the reference to compare to
         refAssay <- rlAssays[1]
         refReads <- lapply(assay(se, refAssay), colnames)
         for (an in setdiff(rlAssays, refAssay)) {
-            if (verbose) {
-                message("Comparing ", refAssay, " and ", an)
-            }
+            .message("Comparing {refAssay} and {an}")
             for (sn in colnames(se)) {
                 if (!all(colnames(assay(se, an)[[sn]]) == refReads[[sn]])) {
                     stop("Mismatching reads for assays ", refAssay, " and ",
@@ -109,9 +99,7 @@
             }
         }
         for (cn in .getReadLevelColDataNames(se)) {
-            if (verbose) {
-                message("Read-level column data found, checking consistency")
-            }
+            .message("Read-level column data found, checking consistency")
             for (sn in colnames(se)) {
                 if (!all(rownames(se[[cn]][[sn]]) == refReads[[sn]])) {
                     stop("Mismatching reads for assay ", refAssay, " and ",

@@ -257,7 +257,7 @@ estimateNRL <- function(x,
 #' @examples
 #'   # see the help for calcModbaseSpacing() for a full example
 #'
-#' @importFrom stats residuals
+#' @importFrom stats residuals summary.lm
 #' @importFrom IRanges IRanges start end
 #' @importFrom methods as
 #' @importFrom dplyr filter

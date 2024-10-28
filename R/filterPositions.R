@@ -109,14 +109,11 @@
     # Remove the recorded positions
     if (length(posToRemove) > 0) {
         se <- se[!rownames(se) %in% posToRemove, ]
-        if (verbose) {
-            message(length(posToRemove), " rows removed to ensure that each ",
-                    "genomic position is represented by at most one row")
-        }
+        .message(
+            paste0("{length(posToRemove)} row{?s} removed to ensure that each ",
+                   "genomic position is represented by at most one row"))
     } else {
-        if (verbose) {
-            message("No genomic positions represented by multiple rows found")
-        }
+        .message("No genomic positions represented by multiple rows found")
     }
 
     # Check that removal worked as expected, i.e. that all remaining
