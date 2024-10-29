@@ -416,8 +416,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     // variable declarations
     // ... R functions
-    Rcpp::Function cli_alert_info("cli_alert_info");
-    Rcpp::Function cli_alert_success("cli_alert_success");
+    Rcpp::Environment cli = Rcpp::Environment::namespace_env("cli");
+    Rcpp::Function cli_alert_info = cli["cli_alert_info"];
+    Rcpp::Function cli_alert_success = cli["cli_alert_success"];
 
     // ... general variables
     int c = 0, i = 0, success = 0;
