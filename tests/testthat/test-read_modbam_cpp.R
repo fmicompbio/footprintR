@@ -125,14 +125,14 @@ test_that("read_modbam_cpp works", {
     ## -------------------------------------------------------------------------
     # ... run read_modbam_cpp
     df <- read.delim(extractfile)
-    expect_message(expect_message(expect_message(
+    expect_message(expect_message(expect_message(expect_message(
         res1 <- read_modbam_cpp(inname_str = modbamfile,
                                 regions = "chr1:6940000-6955000",
                                 modbase = "a",
                                 n_alns_to_sample = 0,
                                 tnames_for_sampling = "chr1",
                                 verbose = TRUE)
-    )))
+    ))))
     res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", 0, "", FALSE)
     res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", 0, "", FALSE)
     res4 <- read_modbam_cpp(bam4, "chr1", "a", 0, "", FALSE)
@@ -156,7 +156,7 @@ test_that("read_modbam_cpp works", {
     )
     set.seed(1L)
     res7b <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", FALSE)
-    expect_message(
+    expect_message(expect_message(
         expect_message(
             expect_message(
                 expect_message(
@@ -165,7 +165,7 @@ test_that("read_modbam_cpp works", {
                 ), "sampling"
             ), "reading alignments overlapping"
         ), "removed"
-    )
+    ))
 
     # ... results structure
     expect_type(res1, "list")

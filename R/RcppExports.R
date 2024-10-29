@@ -85,6 +85,8 @@ get_unmodified_base <- function(b) {
 #'
 #' @author Michael Stadler
 #'
+#' @importFrom cli cli_alert_info cli_alert_success
+#'
 #' @noRd
 #' @keywords internal
 read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose = FALSE) {

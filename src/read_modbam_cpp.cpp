@@ -400,6 +400,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'
 //' @author Michael Stadler
 //'
+//' @importFrom cli cli_alert_info cli_alert_success
+//'
 //' @noRd
 //' @keywords internal
 // [[Rcpp::export]]
@@ -413,6 +415,10 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     hts_set_log_level(HTS_LOG_OFF);
 
     // variable declarations
+    // ... R functions
+    Rcpp::Function cli_alert_info("cli_alert_info");
+    Rcpp::Function cli_alert_success("cli_alert_success");
+
     // ... general variables
     int c = 0, i = 0, success = 0;
     int n_unaligned = 0, n_total = 0;
@@ -463,8 +469,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     // open input file
     if (verbose) {
-        snprintf(buffer, buffer_len, "    opening input file %s", inname);
-        Rcpp::message(Rcpp::wrap(buffer));
+        snprintf(buffer, buffer_len, "opening input file {.file %s}", inname);
+        cli_alert_info(buffer);
     }
     if (!(infile = sam_open(inname, "r"))) {
         had_error = true;
@@ -531,8 +537,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         }
         double keep_aln_fraction = (double) n_alns_to_sample / total_for_sampling;
         if (verbose) {
-            snprintf(buffer, buffer_len, "    sampling alignments with probability %g", keep_aln_fraction);
-            Rcpp::message(Rcpp::wrap(buffer));
+            snprintf(buffer, buffer_len, "sampling alignments with probability %g", keep_aln_fraction);
+            cli_alert_info(buffer);
         }
 
         // create multi-region iterator
@@ -544,8 +550,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u targets", regcnt);
-            Rcpp::message(Rcpp::wrap(buffer));
+            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
+                     regcnt, regcnt > 1 ? "s" : "");
+            cli_alert_info(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -604,8 +611,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "    reading alignments overlapping any of %u regions", regcnt);
-            Rcpp::message(Rcpp::wrap(buffer));
+            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
+                     regcnt, regcnt > 1 ? "s" : "");
+            cli_alert_info(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -651,9 +659,11 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     if (verbose) {
         snprintf(buffer, buffer_len,
-                 "    removed %d unaligned (e.g. soft-masked) of %d called bases\n    read %u alignments",
-                 n_unaligned, n_total, alncnt);
-        Rcpp::message(Rcpp::wrap(buffer));
+                 "removed %d unaligned (e.g. soft-masked) of %d called bases",
+                 n_unaligned, n_total);
+        cli_alert_info(buffer);
+        snprintf(buffer, buffer_len, "read %u alignments", alncnt);
+        cli_alert_success(buffer);
     }
 
     end:
