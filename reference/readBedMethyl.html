@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,9 +20,10 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/read-level-data.html">Exploring read-level footprinting data with `footprintR`</a></li>
-    <li><a class="dropdown-item" href="../articles/using-footprintR.html">Using `footprintR`</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/intro-to-footprintR.html">Introduction to footprinR</a></li>
+    <li><a class="dropdown-item" href="../articles/read-level-data.html">Exploring read-level data with footprintR</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/fmicompbio/footprintR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -48,7 +49,7 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">readBedMethyl</span><span class="op">(</span></span>
 <span>  <span class="va">fnames</span>,</span>
-<span>  modbase <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">modbase</span>,</span>
 <span>  nrows <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sequence.context.width <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -76,10 +77,12 @@ column in the returned object.</p></dd>
 
 
 <dt id="arg-modbase">modbase<a class="anchor" aria-label="anchor" href="#arg-modbase"></a></dt>
-<dd><p>Character vector defining the modified base (or bases) to
-read. Useful for reading a subset of the data from <code>bedMethyl</code> files
-that contain multiple types of modified bases. If <code>NULL</code> (the
-default), all rows in the input file are read.</p></dd>
+<dd><p>Character vector defining the modified base for each sample.
+If <code>modbase</code> is a named vector, the names should correspond to
+the names of <code>fnames</code>. Otherwise, it will be assumed that the
+elements are in the same order as the files in <code>fnames</code>. If
+<code>modbase</code> has length 1, the same modified base will be used for
+all samples.</p></dd>
 
 
 <dt id="arg-nrows">nrows<a class="anchor" aria-label="anchor" href="#arg-nrows"></a></dt>
@@ -134,15 +137,15 @@ object with the extracted sequences.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">bmfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"modkit_pileup_1.bed.gz"</span>, package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">readBedMethyl</span><span class="op">(</span><span class="va">bmfile</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">readBedMethyl</span><span class="op">(</span><span class="va">bmfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> dim: 10000 1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(1): readLevelData</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(2): Nmod Nvalid</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rownames: NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -155,7 +158,7 @@ object with the extracted sequences.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
 </div>
 
     </footer></div>

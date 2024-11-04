@@ -3,11 +3,11 @@
 <url><loc>https://fmicompbio.github.io/footprintR/LICENSE-text.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/LICENSE.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/articles/index.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/articles/intro-to-footprintR.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/articles/read-level-data.html</loc></url>
-<url><loc>https://fmicompbio.github.io/footprintR/articles/using-footprintR.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/authors.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/index.html</loc></url>
-<url><loc>https://fmicompbio.github.io/footprintR/reference/addReadStats.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/news/index.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/addReadsSummary.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/addSeqContext.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/calcAndCountDist.html</loc></url>
@@ -15,6 +15,9 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/calcReadStats.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNRL.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/extractSeqContext.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/filterPositions.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/filterReads.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/getAnchorRegions.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/index.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/modkitExtract.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotModbaseSpacing.html</loc></url>
@@ -24,6 +27,5 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/readModBam.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/readModkitExtract.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/subsetReads.html</loc></url>
-<url><loc>https://fmicompbio.github.io/footprintR/reference/sumOverRegions.html</loc></url>
 </urlset>
 

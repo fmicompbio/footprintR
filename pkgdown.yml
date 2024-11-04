@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.1.0.9000
-pkgdown_sha: ae56105fc19c8968d35bbd3227903321db420e54
+pkgdown: 2.1.1.9000
+pkgdown_sha: ffe60d5f60934e95285d416dae12c05e24ed1dac
 articles:
+  intro-to-footprintR: intro-to-footprintR.html
   read-level-data: read-level-data.html
-  using-footprintR: using-footprintR.html
-last_built: 2024-09-18T08:37Z
+last_built: 2024-11-04T16:11Z
 urls:
   reference: https://fmicompbio.github.io/footprintR/reference
   article: https://fmicompbio.github.io/footprintR/articles
