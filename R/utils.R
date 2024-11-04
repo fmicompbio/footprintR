@@ -258,7 +258,7 @@
 
 #' Generate console output messages
 #'
-#' This is drop-in a replacement for \code{base::message}, which only
+#' This is a drop-in replacement for \code{base::message}, which only
 #' creates a message if \code{verbose} exists in the calling environment and
 #' is set to \code{TRUE}. It also supports inline-markup via the \code{cli}
 #' package.
