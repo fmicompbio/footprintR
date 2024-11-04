@@ -83,7 +83,6 @@ se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
 se <- addReadStats(se, name = "QC")
 sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
 
-
 }
 \author{
 Charlotte Soneson, Michael Stadler

@@ -53,8 +53,8 @@
 #' se <- addReadStats(se, name = "QC")
 #' sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
 #'
-#'
-#' @importFrom SparseArray SVT_SparseArray rowSums
+#' @importFrom SparseArray SVT_SparseArray rowSums colSums
+#' @importFrom SummarizedExperiment colData
 #'
 filterReads <- function(se, assay.type.read = "mod_prob",
                         readInfoCol = "read_info", qcCol = "QC",
@@ -68,9 +68,9 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     .assertScalar(x = assay.type.read, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE,
-                  validValues = colnames(SummarizedExperiment::colData(se)))
+                  validValues = colnames(colData(se)))
     .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
-                  validValues = colnames(SummarizedExperiment::colData(se)))
+                  validValues = colnames(colData(se)))
     .assertScalar(x = minQscore, type = "numeric")
     .assertScalar(x = minEntropy, type = "numeric")
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
@@ -87,7 +87,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     readsToRemove <- lapply(
         structure(colnames(se), names = colnames(se)),
         function(nm) {
-            SparseArray::SVT_SparseArray(
+            SVT_SparseArray(
                 dim = c(ncol(assay(se, assay.type.read)[[nm]]),
                         length(filterNames)),
                 dimnames = list(colnames(assay(se, assay.type.read)[[nm]]),
@@ -149,7 +149,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
 
         ## NA in all positions
         readsToRemove[[nm]][colnames(
-            assay(se, assay.type.read)[[nm]][, SparseArray::colSums(
+            assay(se, assay.type.read)[[nm]][, colSums(
                 assay(se, assay.type.read)[[nm]],
                 na.rm = TRUE) == 0]),
             "AllNA"] <- TRUE
@@ -157,7 +157,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
 
     ## Subset
     readsToRemove <- lapply(readsToRemove, function(rr) {
-        rr[SparseArray::rowSums(rr, na.rm = TRUE) > 0, ]
+        rr[rowSums(rr, na.rm = TRUE) > 0, ]
     })
     sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
                          prune = prune, invert = TRUE)
