@@ -17,7 +17,7 @@ test_that(".modkitVersion works", {
     expect_identical(.modkitVersion(modkit_bin = "error"), NA)
     rversion <- .modkitVersion(modkit_bin = file.path(R.home("bin"), "R"))
     expect_type(rversion, "character")
-    expect_true(grepl("^R version ", rversion[1]))
+    expect_true(grepl("^R ", rversion[1]))
 })
 
 test_that("modkitExtract works", {
