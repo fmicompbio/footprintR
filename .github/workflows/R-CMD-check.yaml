@@ -19,7 +19,7 @@ jobs:
       matrix:
         config:
           - { os: windows-latest, bioc: 'devel', deploy: 'no', install_modkit: 'no'}
-          - { os: macOS-12, bioc: 'devel', deploy: 'no', install_modkit: 'no'}
+          - { os: macOS-13, bioc: 'devel', deploy: 'no', install_modkit: 'no'}
           - { os: macOS-14, bioc: 'devel', deploy: 'yes', install_modkit: 'yes'}
           #- { os: ubuntu-latest, image: 'bioconductor/bioconductor_docker:devel', deploy: 'no', install_modkit: 'yes'}
           - { os: ubuntu-latest, bioc: 'devel', deploy: 'no', install_modkit: 'yes'}
