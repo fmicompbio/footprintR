@@ -13,11 +13,13 @@ test_that("subsetReads works", {
     modbamfiles <- system.file("extdata",
                             c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                             package = "footprintR")
-    se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+    se <- readModBam(bamfiles = modbamfiles,
+                     regions = "chr1:6940000-6955000", modbase = "a")
     se2 <- addReadsSummary(se, keep.reads = FALSE)
     se3 <- se
     assays(se3) <- SimpleList(mod_prob = assay(se, "mod_prob"),
                               mod_prob2 = assay(se, "mod_prob"))
+    metadata(se3)$readLevelData$assayNames <- c("mod_prob", "mod_prob2")
 
     read_ids <- c("s1-233e48a7-f379-4dcf-9270-958231125563",
                   "s2-034b625e-6230-4f8d-a713-3a32cd96c298")

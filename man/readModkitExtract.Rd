@@ -10,6 +10,8 @@ readModkitExtract(
   filter = NULL,
   nrows = Inf,
   seqinfo = NULL,
+  sequence.context.width = 0,
+  sequence.reference = NULL,
   ncpu = 1L,
   verbose = FALSE
 )
@@ -44,6 +46,12 @@ containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
 
+\item{sequence.context.width, sequence.reference}{Define the sequence
+context to be extracted around modified bases. By default (
+\code{sequence.context.width = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+See \code{\link{addSeqContext}} for details.}
+
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readModkitExtract()}.}
 
@@ -54,7 +62,7 @@ A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples in columns. The assay
 \code{"mod_prob"} contains per-read modification probabilities,
 with each column (sample) corresponding to a position-by-read
-\code{\link[SparseArray]{SparseMatrix}}.
+\code{\link[SparseArray]{NaMatrix}}.
 }
 \description{
 This function reads one or more modkit extract files and generates a
@@ -62,7 +70,7 @@ single SummarizedExperiment object with rows representing positions and
 columns representing samples. The SummarizedExperiment object
 contains one assay (\code{mod_prob}) with modification probabilities for
 each position in each read. Unobserved read/position combinations are
-represented by a zero, while all values that are 'implicitly' called by
+represented by \code{NA}, while all values that are 'implicitly' called by
 modkit (with a modification probability less than 5\%) are represented with
 a value of 0.02.
 }

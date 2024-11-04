@@ -6,7 +6,7 @@
 #' columns representing samples. The SummarizedExperiment object
 #' contains one assay (\code{mod_prob}) with modification probabilities for
 #' each position in each read. Unobserved read/position combinations are
-#' represented by a zero, while all values that are 'implicitly' called by
+#' represented by `NA`, while all values that are 'implicitly' called by
 #' modkit (with a modification probability less than 5%) are represented with
 #' a value of 0.02.
 #'
@@ -34,6 +34,11 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
+#' @param sequence.context.width,sequence.reference Define the sequence
+#'     context to be extracted around modified bases. By default (
+#'     \code{sequence.context.width = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+#'     See \code{\link{addSeqContext}} for details.
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
 #'     to use for some of the steps in \code{readModkitExtract()}.
 #' @param verbose If \code{TRUE}, report on progress.
@@ -42,7 +47,7 @@
 #'     with genomic positions in rows and samples in columns. The assay
 #'     \code{"mod_prob"} contains per-read modification probabilities,
 #'     with each column (sample) corresponding to a position-by-read
-#'     \code{\link[SparseArray]{SparseMatrix}}.
+#'     \code{\link[SparseArray]{NaMatrix}}.
 #'
 #' @author Charlotte Soneson
 #'
@@ -63,8 +68,7 @@
 #' @importFrom parallel mclapply
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors make_zero_col_DFrame DataFrame
-#' @importFrom SparseArray SparseArray
-#' @importFrom Matrix sparseMatrix
+#' @importFrom SparseArray NaArray
 #' @importFrom BiocGenerics pos strand do.call cbind
 #' @importFrom GenomeInfoDb seqnames
 #'
@@ -74,6 +78,8 @@ readModkitExtract <- function(fnames,
                               filter = NULL,
                               nrows = Inf,
                               seqinfo = NULL,
+                              sequence.context.width = 0,
+                              sequence.reference = NULL,
                               ncpu = 1L,
                               verbose = FALSE) {
 
@@ -128,6 +134,7 @@ readModkitExtract <- function(fnames,
                  " numeric vector with genomic sequence lengths.")
         }
     }
+    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
     .assertScalar(x = ncpu, type = "numeric")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
@@ -135,9 +142,7 @@ readModkitExtract <- function(fnames,
     }
 
     # load data
-    if (verbose) {
-        message("reading input files")
-    }
+    .message("reading input {length(fnames)} file{?s}")
     # pre-allocate lists for data and filter thresholds
     dfL <- vector("list", length = length(fnames))
     modkit_threshold <- vector("list", length = length(fnames))
@@ -145,11 +150,9 @@ readModkitExtract <- function(fnames,
     names(dfL) <- names(modkit_threshold) <-
         names(filter_threshold) <- names(fnames)
     for (nm in names(fnames)) {
-        if (verbose) {
-            message("    ", fnames[nm])
-        }
+        .message("    {.file {fnames[nm]}}")
         # read data
-        tmp <- data.table::fread(
+        tmp <- fread(
             file = fnames[nm], sep = "\t", nrows = nrows, header = TRUE,
             nThread = ncpu, data.table = FALSE, verbose = FALSE,
             select = list(character = c("chrom", "call_code", "read_id", "ref_strand"),
@@ -192,56 +195,59 @@ readModkitExtract <- function(fnames,
     }
 
     # create GPos objects for each input
-    gposL <- parallel::mclapply(dfL, function(df) {
-        GenomicRanges::GPos(seqnames = df$chrom, pos = df$ref_position,
-                            strand = df$ref_strand, seqinfo = seqinfo)
+    gposL <- mclapply(dfL, function(df) {
+        GPos(seqnames = df$chrom, pos = df$ref_position,
+             strand = df$ref_strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos, reduce to unique positions
-    if (verbose) {
-        message("finding unique genomic positions...", appendLF = FALSE)
-    }
-    gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
-    if (verbose) {
-        message("collapsed ", sum(lengths(gposL)), " positions to ",
-                length(gpos), " unique ones")
+    .message("finding unique genomic positions...")
+    gpos <- sort(unique(do.call(c, unname(gposL))))
+    .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
+
+    # add sequence context
+    if (sequence.context.width > 0) {
+        .message("extracting sequence contexts")
+        mcols(gpos)$sequence.context <- extractSeqContext(
+            x = as(gpos, "GRanges"),
+            sequence.context.width = sequence.context.width,
+            sequence.reference = sequence.reference)
     }
 
     # extract read names
     readL <- lapply(dfL, function(df) unique(df$read_id))
 
     # modified probability
-    modmat <- S4Vectors::make_zero_col_DFrame(nrow = length(gpos))
+    modmat <- make_zero_col_DFrame(nrow = length(gpos))
     for (nm in names(fnames)) {
         x <- dfL[[nm]]
-        # only record observed values
-        idx <- which(x$mod_prob != 0)
-        modmat[[nm]] <- SparseArray::SparseArray(Matrix::sparseMatrix(
-            i = GenomicRanges::match(gposL[[nm]][idx], gpos),
-            j = match(x$read_id[idx], readL[[nm]]),
-            x = x$mod_prob[idx],
-            dims = c(length(gpos), length(readL[[nm]])),
-            dimnames = list(NULL, paste0(nm, "-", readL[[nm]]))
-        ))
+        namat <- NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                         dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                         type = "double")
+        i <- match(gposL[[nm]], gpos)
+        j <- match(x$read_id, readL[[nm]])
+        namat[cbind(i, j)] <- x$mod_prob
+        modmat[[nm]] <- namat
     }
 
     # create SummarizedExperiment object
-    se <- SummarizedExperiment::SummarizedExperiment(
+    se <- SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
-        colData = S4Vectors::DataFrame(
+        colData = DataFrame(
             row.names = names(modmat),
             sample = names(modmat),
             modbase = modbase[names(modmat)]
         ),
         metadata = list(modkit_threshold = modkit_threshold,
-                        filter_threshold = filter_threshold)
+                        filter_threshold = filter_threshold,
+                        readLevelData = list(assayNames = "mod_prob",
+                                             colDataColumns = character(0)))
     )
     rownames(se) <- paste0(
-        GenomeInfoDb::seqnames(SummarizedExperiment::rowRanges(se)),
-        ":", BiocGenerics::pos(SummarizedExperiment::rowRanges(se)), ":",
-        BiocGenerics::strand(SummarizedExperiment::rowRanges(se)))
-    colnames(se) <- rownames(SummarizedExperiment::colData(se))
+        seqnames(rowRanges(se)), ":", pos(rowRanges(se)), ":",
+        strand(rowRanges(se)))
+    colnames(se) <- rownames(colData(se))
 
     se
 }

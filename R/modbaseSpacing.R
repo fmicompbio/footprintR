@@ -14,7 +14,7 @@
 #'     with read-level footprinting data, for example returned by
 #'     \code{\link{readModBam}}. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A string or integer scalar specifying the assay of
+#' @param assay.type A character scalar specifying the assay of
 #'     \code{se} containing the read-level modification probabilities.
 #' @param min_mod_prob Numeric scalar giving the minimal modification
 #'     probability for a modified base.
@@ -71,8 +71,7 @@
 #' moddistComb <- Reduce("+", moddist)
 #' print(estimateNRL(moddistComb)[1:2])
 #'
-#' @importFrom SummarizedExperiment assays assayNames assay
-#' @importFrom BiocGenerics start
+#' @importFrom SummarizedExperiment assays assayNames assay start
 #'
 #' @export
 calcModbaseSpacing <- function(se,
@@ -82,20 +81,15 @@ calcModbaseSpacing <- function(se,
                                dmax = 1000L) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
-    if (length(assay.type) != 1L ||
-        (is.numeric(assay.type) &&
-         (assay.type < 1 || assay.type > length(SummarizedExperiment::assays(se)))) ||
-        (is.character(assay.type) && !assay.type %in% SummarizedExperiment::assayNames(se))) {
-        stop("'assay.type' must be a string or integer scalar specifying the ",
-             "assay of se containing the read-level data to be summarized.")
-    }
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = assayNames(se))
     .assertScalar(x = min_mod_prob, type = "numeric", rngExcl = c(0, 1))
     .assertScalar(x = pool_reads, type = "logical")
     .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))
 
     # assay and positions from 'se'
-    modprobL <- SummarizedExperiment::assay(se, assay.type)
-    s <- BiocGenerics::start(se)
+    modprobL <- assay(se, assay.type)
+    s <- start(se)
 
     # for each sample
     cntL <- lapply(modprobL, function(modprob) {
@@ -106,7 +100,7 @@ calcModbaseSpacing <- function(se,
             # for each read i
             for (i in seq.int(ncol(modprob))) {
                 # extract positions of modified bases
-                pos <- s[modprob[, i] >= min_mod_prob]
+                pos <- s[which(modprob[, i] >= min_mod_prob)]
                 # add distances in (1..dmax) to 'cnt'
                 calcAndCountDist(query = pos, reference = pos, cnt = cnt)
             }
@@ -114,7 +108,7 @@ calcModbaseSpacing <- function(se,
             # for each read i
             cnt <- do.call(cbind, lapply(seq.int(ncol(modprob)), function(i) {
                 # extract positions of modified bases
-                pos <- s[modprob[, i] >= min_mod_prob]
+                pos <- s[which(modprob[, i] >= min_mod_prob)]
                 # add distances in (1..dmax) to 'cnt'
                 cntR <- numeric(dmax)
                 calcAndCountDist(query = pos, reference = pos, cnt = cntR)
@@ -196,27 +190,23 @@ estimateNRL <- function(x,
     }
 
     pos <- seq_along(x)
-    xs <- stats::predict(stats::loess(x ~ pos, subset = pos > mind,
-                                      span = span1),
-                         pos)
-    fit <- stats::loess(xs ~ pos, subset = pos > mind, span = span2)
-    rx <- stats::residuals(fit)
+    xs <- predict(loess(x ~ pos, subset = pos > mind, span = span1), pos)
+    fit <- loess(xs ~ pos, subset = pos > mind, span = span2)
+    rx <- residuals(fit)
     irpos <- as(rx >= 0, "IRanges")
-    xposmax <- IRanges::viewApply(
-        X = IRanges::Views(rx, irpos),
-        FUN = function(y) which.max(as.vector(y))
-    ) + mind + start(irpos) - 1
+    xposmax <- viewApply(X = Views(rx, irpos),
+                         FUN = function(y) which.max(as.vector(y))) + mind + start(irpos) - 1
     if (any(!usePeaks %in% seq_along(xposmax))) {
         warning("less peaks detected than selected by `usePeaks`")
         usePeaks <- intersect(usePeaks, seq_along(xposmax))
     }
-    lmfit <- stats::lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
+    lmfit <- lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
     cilmfit <- c(`2.5 %` = NA_real_, `97.5 %` = NA_real_)
-    if (!is.na(stats::coefficients(lmfit)[2])) {
-        cilmfit <- stats::confint(lmfit)[2,]
+    if (!is.na(coefficients(lmfit)[2])) {
+        cilmfit <- confint(lmfit)[2,]
     }
 
-    res <- list(nrl = unname(stats::coefficients(lmfit)[2]),
+    res <- list(nrl = unname(coefficients(lmfit)[2]),
                 nrl.CI95 = cilmfit,
                 xs = xs, loessfit = fit, lmfit = lmfit,
                 peaks = xposmax, mind = mind,
@@ -267,7 +257,7 @@ estimateNRL <- function(x,
 #' @examples
 #'   # see the help for calcModbaseSpacing() for a full example
 #'
-#' @importFrom stats residuals
+#' @importFrom stats residuals summary.lm
 #' @importFrom IRanges IRanges start end
 #' @importFrom methods as
 #' @importFrom dplyr filter
@@ -305,7 +295,7 @@ plotModbaseSpacing <- function(x,
                      type = factor(rep(types, each = length(x)), levels = types),
                      cnt = c(x, nrl$xs,
                              c(rep(NA, nrl$mind), nrl$loessfit$fitted))) |>
-        dplyr::filter(!is.na(.data[["cnt"]]))
+        filter(!is.na(.data[["cnt"]]))
     ylim <- range(pd$cnt, na.rm = TRUE)
 
     # create distance vs. count plot
@@ -332,15 +322,15 @@ plotModbaseSpacing <- function(x,
 
     if (detailedPlots) {
         # residual distances plot
-        rx <- stats::residuals(nrl$loessfit)
+        rx <- residuals(nrl$loessfit)
         pd2 <- data.frame(pos = seq_along(x),
                           resid = c(rep(NA, nrl$mind), rx)) |>
-            dplyr::filter(!is.na(.data[["resid"]]))
+            filter(!is.na(.data[["resid"]]))
         irpos <- as(pd2$resid >= 0, "IRanges")
 
         p2 <- ggplot(pd2, aes(.data[["pos"]], .data[["resid"]])) +
-            geom_rect(data = data.frame(xmin = nrl$mind + IRanges::start(irpos),
-                                        xmax = nrl$mind + IRanges::end(irpos),
+            geom_rect(data = data.frame(xmin = nrl$mind + start(irpos),
+                                        xmax = nrl$mind + end(irpos),
                                         ymin = -Inf,
                                         ymax = Inf),
                       inherit.aes = FALSE,
@@ -362,7 +352,7 @@ plotModbaseSpacing <- function(x,
                   panel.grid.minor = element_blank())
 
         # linear fit plot
-        slmfit <- stats::summary.lm(nrl$lmfit)
+        slmfit <- summary.lm(nrl$lmfit)
         pd3 <- data.frame(peak = seq_along(nrl$peaks)[nrl$usePeaks],
                           pos = nrl$peaks[nrl$usePeaks])
 
@@ -390,7 +380,7 @@ plotModbaseSpacing <- function(x,
                   panel.grid.minor = element_blank())
 
         # assemble plots
-        p <- patchwork::wrap_plots(p, p2, p3, nrow = 1)
+        p <- wrap_plots(p, p2, p3, nrow = 1)
 
     } else {
         # add peak points and NRL estimate

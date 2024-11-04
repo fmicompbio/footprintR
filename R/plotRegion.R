@@ -1,3 +1,14 @@
+# global data.frame of plot types and characteristics
+plotRegionPlotTypes <- data.frame(
+    name = c("Point", "Smooth", "PointSmooth",
+             "Lollipop", "Heatmap", "HeatmapFilled"),
+    type = c("summary", "summary", "summary",
+             "reads", "reads", "reads"),
+    interpolates = c(FALSE, FALSE, FALSE,
+                     FALSE, FALSE, TRUE)
+)
+
+
 #' Plot single-molecule footprinting data for a single genomic region.
 #'
 #' @description
@@ -22,7 +33,10 @@
 #'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
-#'             represeting the values in the assay).}
+#'             representing the values in the assay).}
+#'         \item{\code{"HeatmapFilled"}}{: Heatmap plot (tiles with the color
+#'             representing the values in the assay), with gaps between
+#'             observations filled in by linear interpolation.}
 #'     }
 #'     If \code{NULL}, do not plot any read-level tracks.
 #' @param tracks.summary A named list where the names correspond to assay names
@@ -67,7 +81,8 @@
 #'                        package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
-#' seA <- readBedMethyl(bmfiles, sequence.context = 3, sequence.reference = reffile)
+#' seA <- readBedMethyl(bmfiles, modbase = "m",
+#'                      sequence.context = 3, sequence.reference = reffile)
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
@@ -82,23 +97,30 @@
 #'                             package = "footprintR")
 #' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
 #'
+#' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "Lollipop"))
+#' # Heatmap plots (observed only or filled)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = "Heatmap"))
+#' plotRegion(seB, region = "chr1:6935800-6935900",
+#'            tracks.summary = NULL,
+#'            tracks.reads = list(mod_prob = "HeatmapFilled"))
 #'
+#' # multiple plots
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks.summary = NULL,
 #'            tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
 #'            modbaseSpace = TRUE)
 #'
-#' @seealso \code{\link{readModkitExtract}} and \code{\link{readBedMethyl}} for
-#'     reading read-level and summarized footprinting data.
+#' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and
+#'     \code{\link{readBedMethyl}} for reading read-level and summarized
+#'     footprinting data.
 #'
 #' @importFrom BiocGenerics start
-#' @importFrom SummarizedExperiment assay assayNames rowData
+#' @importFrom SummarizedExperiment assay assayNames rowData nrow
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels
 #' @importFrom IRanges IRanges subsetByOverlaps
@@ -129,13 +151,34 @@ plotRegion <- function(se,
         .assertVector(x = names(tracks.reads), type = "character",
                       allowNULL = FALSE, validValues = assayNames(se))
     }
+    if (length(err <- setdiff(
+        unlist(tracks.reads),
+        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "reads"]))) {
+        stop("Unknown plot type in tracks.reads: ", paste(err, collapse = ", "))
+    }
     .assertVector(x = tracks.summary, type = "list", allowNULL = TRUE)
     if (!is.null(tracks.summary)) {
         .assertVector(x = names(tracks.summary), type = "character",
                       allowNULL = FALSE, validValues = c("FracMod", assayNames(se)))
     }
+    if (length(err <- setdiff(
+        unlist(tracks.summary),
+        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "summary"]))) {
+        stop("Unknown plot type in tracks.summary: ", paste(err, collapse = ", "))
+    }
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+
+    # don't allow both modbaseSpace and interpolate
+    if (modbaseSpace && any(unlist(c(tracks.reads, tracks.summary)) %in%
+                            plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates])) {
+        warning("Plotting in `modbaseSpace` is not allowed if using\n",
+                "  plot types that interpolate the data (",
+                paste(plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates],
+                      collapse = ", "), ")\n",
+                "  Setting modbaseSpace=FALSE")
+        modbaseSpace <- FALSE
+    }
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
@@ -145,7 +188,7 @@ plotRegion <- function(se,
         }
         nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
             vcountPattern(pat, rowData(se)$sequence.context, fixed = FALSE)
-        }))
+        }), rep(0, nrow(se)))
         se <- se[nmatch > 0]
     }
 
@@ -153,9 +196,9 @@ plotRegion <- function(se,
     pL <- list()
     ## ... summary tracks
     for (aname in names(tracks.summary)) {
-        if (aname == "FracMod" && !"FracMod" %in% SummarizedExperiment::assayNames(se)) {
+        if (aname == "FracMod" && !"FracMod" %in% assayNames(se)) {
             if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
-                assay(se, "FracMod") <- SummarizedExperiment::assay(se, "Nmod") / SummarizedExperiment::assay(se, "Nvalid")
+                assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
             } else {
                 stop("Cannot plot 'FracMod' - need either an assay called ",
                      "'FracMod' or both 'Nmod' and 'Nvalid' assays")
@@ -186,7 +229,11 @@ plotRegion <- function(se,
                 Lollipop = .plotReadsLollipop(x = se, aname = aname,
                                               modbaseSpace = modbaseSpace),
                 Heatmap = .plotReadsHeatmap(x = se, aname = aname,
-                                            modbaseSpace = modbaseSpace)
+                                            modbaseSpace = modbaseSpace,
+                                            interpolate = FALSE),
+                HeatmapFilled = .plotReadsHeatmap(x = se, aname = aname,
+                                                  modbaseSpace = modbaseSpace,
+                                                  interpolate = TRUE)
             )
         }
     }
@@ -194,12 +241,12 @@ plotRegion <- function(se,
     ## assemble composite plot
     if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
         for (i in seq.int(length(pL) - 1L)) {
-            pL[[i]] <- pL[[i]] + ggplot2::labs(x = ggplot2::element_blank())
+            pL[[i]] <- pL[[i]] + labs(x = element_blank())
         }
     }
-    p <- patchwork::wrap_plots(pL, ncol = 1)
+    p <- wrap_plots(pL, ncol = 1)
     if (!is.null(sequence.context)) {
-        p <- p + ggplot2::labs(caption = paste0("Sequence contexts: ",
+        p <- p + labs(caption = paste0("Sequence contexts: ",
                                paste(sequence.context, collapse = ", ")))
     }
 
@@ -261,16 +308,16 @@ plotRegion <- function(se,
     # add segments
     if (drawRead) {
         dfRead <- .summarizePlotdataPerRead(df)
-        p <- p + ggplot2::geom_segment(data = dfRead, inherit.aes = FALSE,
-                                       mapping = ggplot2::aes(
-                                           x = .data[["start"]],
-                                           y = .data[["read"]],
-                                           xend = .data[["end"]]
-                                       ), colour = "gray80")
+        p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
+                              mapping = aes(
+                                  x = .data[["start"]],
+                                  y = .data[["read"]],
+                                  xend = .data[["end"]]
+                              ), colour = "gray80")
     }
 
     # add lollipops
-    p <- p + ggplot2::geom_point(shape = 21, size = size, colour = "black")
+    p <- p + geom_point(shape = 21, size = size, colour = "black")
 
     # return plot
     return(p)
@@ -297,6 +344,8 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
+#' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
+#'     observations are filled in by linear interpolation.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -310,9 +359,10 @@ plotRegion <- function(se,
                               drawRead = TRUE,
                               linewidthTiles = 0,
                               orderReads = TRUE,
-                              modbaseSpace = FALSE) {
+                              modbaseSpace = FALSE,
+                              interpolate = FALSE) {
     # prepare plot data
-    df <- .preparePlotdataReads(x, aname, modbaseSpace)
+    df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
 
     # order reads
     if (orderReads) {
@@ -326,17 +376,17 @@ plotRegion <- function(se,
     # add segments
     if (drawRead) {
         dfRead <- .summarizePlotdataPerRead(df)
-        p <- p + ggplot2::geom_segment(data = dfRead, inherit.aes = FALSE,
-                                       mapping = ggplot2::aes(
-                                           x = .data[["start"]],
-                                           y = .data[["read"]],
-                                           xend = .data[["end"]]
-                                       ), colour = "gray80")
+        p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
+                              mapping = aes(
+                                  x = .data[["start"]],
+                                  y = .data[["read"]],
+                                  xend = .data[["end"]]
+                              ), colour = "gray80")
     }
 
     # add tiles
-    p <- p + ggplot2::geom_tile(colour = "gray20", width = 1, height = 1,
-                                linewidth = linewidthTiles)
+    p <- p + geom_tile(colour = "gray20", width = 1, height = 1,
+                       linewidth = linewidthTiles)
 
     # return plot
     return(p)
@@ -368,8 +418,7 @@ plotRegion <- function(se,
 #'
 #' @import ggplot2
 #' @importFrom BiocGenerics start nrow
-#' @importFrom dplyr group_by arrange mutate ungroup bind_rows
-#' @importFrom purrr map
+#' @importFrom dplyr group_by arrange mutate ungroup group_modify
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
 #'
@@ -393,31 +442,30 @@ plotRegion <- function(se,
 
     # add points
     if (doPoint) {
-        p <- p + do.call(ggplot2::geom_point, arglistPoint)
+        p <- p + do.call(geom_point, arglistPoint)
     }
 
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
         compute_smooth <- function(data) {
             ok <- is.finite(data[["value"]])
-            smooth <- stats::smooth.spline(
+            smooth <- smooth.spline(
                 x = data[["position"]][ok],
                 y = data[["value"]][ok],
                 keep.data = FALSE,
                 spar = spar.smooth)
             data.frame(position = smooth$x,
-                       value_smooth = smooth$y,
-                       sample = unique(data$sample))
+                       value_smooth = smooth$y)
         }
 
         # apply the function to each sample
         smooth_data <- df |>
-            base::split(df[["sample"]]) |>
-            purrr::map(compute_smooth) |>
-            dplyr::bind_rows()
+            group_by(sample) |>
+            group_modify(~ compute_smooth(.x)) |>
+            ungroup()
 
         # add the smoothed line
-        p <- p + ggplot2::geom_line(
+        p <- p + geom_line(
             data = smooth_data, inherit.aes = FALSE,
             mapping = aes(x = .data[["position"]],
                           y = .data[["value_smooth"]],
@@ -447,7 +495,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .preparePlotdataSummary <- function(x, aname, modbaseSpace = FALSE) {
-    assaydat <- SummarizedExperiment::assay(x, aname)
+    assaydat <- assay(x, aname)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,"row"]],
@@ -470,24 +518,39 @@ plotRegion <- function(se,
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the "position"
 #'     column in the return data frame is categorical, instead of giving
 #'     the numeric position in the genome.
+#' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
+#'     observations are filled in by linear interpolation.
 #'
 #' @importFrom BiocGenerics start colnames
 #' @importFrom SummarizedExperiment colData assay
-#' @importFrom SparseArray nzwhich nzvals
+#' @importFrom SparseArray nnawhich nnavals
 #'
 #' @noRd
 #' @keywords internal
-.preparePlotdataReads <- function(x, aname, modbaseSpace = FALSE) {
-    assaydat <- SummarizedExperiment::assay(x, aname)
+.preparePlotdataReads <- function(x,
+                                  aname,
+                                  modbaseSpace = FALSE,
+                                  interpolate = FALSE) {
+    assaydat <- assay(x, aname)
     # `aname` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
-    i <- SparseArray::nzwhich(assaydat, arr.ind = TRUE)
-    df <- data.frame(
-        position = start(x)[i[,1]],
-        read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
-        sample = sample_ids[i[,2]],
-        value = nzvals(assaydat))
+    if (interpolate) {
+        assaydat <- .interpolateColumns(assaydat, start(x))
+        df <- data.frame(
+            position = attr(assaydat, "pos"),
+            read = factor(rep(colnames(assaydat), each = nrow(assaydat)),
+                          levels = colnames(assaydat)),
+            sample = rep(sample_ids, each = nrow(assaydat)),
+            value = as.vector(assaydat))
+    } else {
+        i <- nnawhich(assaydat, arr.ind = TRUE)
+        df <- data.frame(
+            position = start(x)[i[,1]],
+            read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
+            sample = sample_ids[i[,2]],
+            value = nnavals(assaydat))
+    }
     if (modbaseSpace) {
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,
@@ -510,16 +573,16 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotSummary <- function(df, aname, chr) {
-    p0 <- ggplot2::ggplot(
+    p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
-        ggplot2::labs(x = paste0("Position on ", chr),
-                      y = aname,
-                      colour = "Sample") +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "right")
+        labs(x = paste0("Position on ", chr),
+             y = aname,
+             colour = "Sample") +
+        theme_bw() +
+        theme(legend.position = "right")
 
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0)
@@ -545,35 +608,33 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotReads <- function(df, aname, chr) {
-    p0 <- ggplot2::ggplot(
+    p0 <- ggplot(
         data = df,
-        mapping = ggplot2::aes(x = .data[["position"]],
-                               y = .data[["read"]],
-                               fill = .data[["value"]])) +
-        ggplot2::scale_fill_viridis_c(begin = 0, end = 1,
-                                      option = "cividis",
-                                      direction = -1, na.value = "beige") +
-        ggplot2::facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
-        ggplot2::labs(x = ifelse(is.numeric(df$position),
-                                 paste0("Position on ", chr),
-                                 paste0("Modified positions in ", chr,
-                                        ":", levels(df$position)[1], "-",
-                                        levels(df$position)[nlevels(df$position)])),
-                      y = "Reads",
-                      fill = aname) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(legend.position = "right",
-                       axis.text.y = element_blank(),
-                       axis.ticks.y = element_blank(),
-                       panel.grid.major = element_blank(),
-                       panel.grid.minor = element_blank(),
-                       strip.background.x = element_blank(),
-                       strip.text.x = element_text(hjust = 0,
-                                                   margin = ggplot2::margin(
-                                                       t = 0, r = 0, b = 2, l = 0)))
+        mapping = aes(x = .data[["position"]],
+                      y = .data[["read"]],
+                      fill = .data[["value"]])) +
+        scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
+                             direction = -1, na.value = "beige") +
+        facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
+        labs(x = ifelse(is.numeric(df$position),
+                        paste0("Position on ", chr),
+                        paste0("Modified positions in ", chr,
+                               ":", levels(df$position)[1], "-",
+                               levels(df$position)[nlevels(df$position)])),
+             y = "Reads",
+             fill = aname) +
+        theme_bw() +
+        theme(legend.position = "right",
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              strip.background.x = element_blank(),
+              strip.text.x = element_text(
+                  hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
     if (is.factor(df$position)) {
-        p0 <- p0 + ggplot2::theme(axis.text.x = element_blank())
+        p0 <- p0 + theme(axis.text.x = element_blank())
 
     } else {
         p0 <- .addCoordAxisFormat(p0)
@@ -594,8 +655,8 @@ plotRegion <- function(se,
 #' @keywords internal
 .summarizePlotdataPerRead <- function(df) {
     df |>
-        dplyr::group_by(.data[["read"]]) |>
-        dplyr::summarise(
+        group_by(.data[["read"]]) |>
+        summarise(
             start = ifelse(is.factor(.data[["position"]]),
                            levels(.data[["position"]])[1],
                            min(.data[["position"]])),
@@ -625,34 +686,30 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics colnames start
 #' @importFrom SummarizedExperiment assay
-#' @importFrom scuttle sumCountsAcrossFeatures
-#' @importFrom stats cor as.dist
+#' @importFrom stats cor as.dist hclust
+#' @importFrom SparseArray colMeans
 #'
 #' @noRd
 #' @keywords internal
 .orderReads <- function(x, aname, window_width = 25) {
-    # extract assay matrix and set zero to NA
-    X <- SummarizedExperiment::assay(x, aname)
-    if (!is.null(dim(X[1,1]))) {
-        # `aname` columns are grouped reads -> flatten
-        X <- as.matrix(X)
-    }
-    Y <- X != 0
+    # extract and flatten assay matrix
+    X <- as.matrix(assay(x, aname))
     # group positions into bins of window_width
     bin <- findInterval(x = start(x),
                         vec = seq(from = min(start(x)),
                                   to = ceiling(max(end(x)) / window_width) * window_width + 1,
                                   by = window_width),
                         rightmost.closed = TRUE, left.open = FALSE)
-    XX <- scuttle::sumCountsAcrossFeatures(x = X, ids = bin)
-    YY <- scuttle::sumCountsAcrossFeatures(x = Y, ids = bin)
-    XX <- XX / YY
+    iByBin <- split(seq.int(nrow(X)), bin)
+    XX <- do.call(rbind, lapply(iByBin, function(i) {
+        colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+    }))
     # calculate distances between reads
-    D <- stats::as.dist(sqrt(2 - 2 * stats::cor(XX, method = "pearson",
-                                                use = "pairwise.complete")))
+    D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
+                                  use = "pairwise.complete")))
     D[is.na(D)] <- 1.0
     # cluster reads and return order
-    cl <- stats::hclust(D, method = "ward.D2")
+    cl <- hclust(D, method = "ward.D2")
     return(colnames(X)[cl$order])
 }
 
@@ -673,8 +730,8 @@ plotRegion <- function(se,
 .addCoordAxisFormat <- function(p0) {
     rng <- range(p0$data$position)
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
-    p0 <- p0 + ggplot2::coord_cartesian(xlim = rng) +
-        ggplot2::scale_x_continuous(labels = scales::label_number(
+    p0 <- p0 + coord_cartesian(xlim = rng) +
+        scale_x_continuous(labels = label_number(
             accuracy = acc,
             scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
     return(p0)

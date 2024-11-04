@@ -14,10 +14,12 @@
 #'     If several elements of \code{fnames} have identical
 #'     names, the data from the corresponding files are summed into a single
 #'     column in the returned object.
-#' @param modbase Character vector defining the modified base (or bases) to
-#'     read. Useful for reading a subset of the data from \code{bedMethyl} files
-#'     that contain multiple types of modified bases. If \code{NULL} (the
-#'     default), all rows in the input file are read.
+#' @param modbase Character vector defining the modified base for each sample.
+#'     If \code{modbase} is a named vector, the names should correspond to
+#'     the names of \code{fnames}. Otherwise, it will be assumed that the
+#'     elements are in the same order as the files in \code{fnames}. If
+#'     \code{modbase} has length 1, the same modified base will be used for
+#'     all samples.
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
@@ -42,7 +44,7 @@
 #'
 #' @examples
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-#' readBedMethyl(bmfile)
+#' readBedMethyl(bmfile, modbase = "m")
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
 #'     [`bedMethyl` format description](https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output),
@@ -54,7 +56,7 @@
 #' @importFrom data.table fread
 #' @importFrom GenomicRanges GPos match sort resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
-#' @importFrom S4Vectors mcols mcols<-
+#' @importFrom S4Vectors mcols mcols<- DataFrame
 #' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
@@ -63,7 +65,7 @@
 #'
 #' @export
 readBedMethyl <- function(fnames,
-                          modbase = NULL,
+                          modbase,
                           nrows = Inf,
                           seqinfo = NULL,
                           sequence.context.width = 0,
@@ -75,7 +77,27 @@ readBedMethyl <- function(fnames,
     if (any(i <- !file.exists(fnames))) {
         stop("not all `fnames` exist: ", paste(fnames[i], collapse = ", "))
     }
-    .assertVector(x = modbase, type = "character", allowNULL = TRUE)
+    if (is.null(names(fnames))) {
+        names(fnames) <- paste0("s", seq_along(fnames))
+    }
+    if (length(modbase) == 1) {
+        modbase <- rep(modbase, length(fnames))
+    }
+    .assertVector(x = modbase, type = "character", len = length(fnames))
+    if (is.null(names(modbase))) {
+        names(modbase) <- names(fnames)
+    } else {
+        if (!all(names(modbase) %in% names(fnames))) {
+            stop("names of `modbase` and `fnames` don't agree")
+        }
+    }
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
+                                 "U","a","A","o","G","n","N"))) {
+        stop("invalid `modbase` values: ",
+             paste(unique(modbase[i]), collapse = ", "))
+    }
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
@@ -85,70 +107,52 @@ readBedMethyl <- function(fnames,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, parallel::detectCores()))
+    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, detectCores()))
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
     }
 
     # get sample names
-    if (!is.null(names(fnames))) {
-        nms <- names(fnames)
-    } else {
-        nms <- paste0("s", seq_along(fnames))
-    }
+    nms <- names(fnames)
 
     # load data
-    if (verbose) {
-        message("reading input files")
-    }
+    .message("reading input files")
     dfL <- lapply(fnames, function(fname) {
-        if (verbose) {
-            message("    ", fname)
-        }
-        data.table::fread(
-            file = fname, sep = "\t", nrows = nrows, header = FALSE,
-            nThread = ncpu, data.table = FALSE, verbose = FALSE,
-            col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
-            select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
+        .message("    {.file fname}")
+        fread(file = fname, sep = "\t", nrows = nrows, header = FALSE,
+              nThread = ncpu, data.table = FALSE, verbose = FALSE,
+              col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
+              select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
     })
 
     # filter by `modbase`
     if (!is.null(modbase)) {
-        if (verbose) {
-            message("filtering modifications (retaining ", paste(modbase, collapse = ", "), ")")
-        }
-        dfL <- parallel::mclapply(dfL, function(df) {
+        .message("filtering modifications (retaining {modbase})")
+        dfL <- mclapply(dfL, function(df) {
             df[df$modbase %in% modbase, ]
         }, mc.cores = ncpu)
     }
 
     # create GPos objects for each input
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
-    gposL <- parallel::mclapply(dfL, function(df) {
-        GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
-                            strand = df$strand, seqinfo = seqinfo)
+    gposL <- mclapply(dfL, function(df) {
+        GPos(seqnames = df$chr, pos = df$start + 1L,
+             strand = df$strand, seqinfo = seqinfo)
     }, mc.cores = ncpu)
 
     # create combined GPos
     if (length(dfL) > 1) {
-        if (verbose) {
-            message("finding unique genomic positions...", appendLF = FALSE)
-        }
-        gpos <- GenomicRanges::sort(unique(do.call(c, unname(gposL))))
-        if (verbose) {
-            message("collapsed ", sum(lengths(gposL)), " positions to ",
-                    length(gpos), " unique ones")
-        }
+        .message("finding unique genomic positions...")
+        gpos <- sort(unique(do.call(c, unname(gposL))))
+        .message("collapsed {sum(lengths(gposL))} position{?s} to {length(gpos)} unique one{?s}")
     } else {
-        gpos <- GenomicRanges::sort(gposL[[1]])
+        gpos <- sort(gposL[[1]])
     }
 
     # add sequence context
     if (sequence.context.width > 0) {
-        if (verbose) {
-            message("extracting sequence contexts")
-        }
+        .message("extracting sequence contexts")
         mcols(gpos)$sequence.context <- extractSeqContext(
             x = as(gpos, "GRanges"),
             sequence.context.width = sequence.context.width,
@@ -159,7 +163,7 @@ readBedMethyl <- function(fnames,
     nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(dfL),
                            dimnames = list(NULL, nms))
     for (i in seq_along(dfL)) {
-        i_row <- GenomicRanges::match(gposL[[i]], gpos)
+        i_row <- match(gposL[[i]], gpos)
         nmod[i_row, i] <- dfL[[i]]$N_mod
         nval[i_row, i] <- dfL[[i]]$N_valid
     }
@@ -167,11 +171,18 @@ readBedMethyl <- function(fnames,
     # create summarized experiment
     se <- SummarizedExperiment(
         assays = list(Nmod = nmod, Nvalid = nval),
-        rowRanges = gpos)
+        rowRanges = gpos,
+        colData = DataFrame(
+            row.names = names(fnames),
+            sample = names(fnames),
+            modbase = modbase[names(fnames)]
+        ),
+        metadata = list(readLevelData = list(assayNames = character(0),
+                                             colDataColumns = character(0))))
 
     # collapse to unique names
     if (any(duplicated(nms))) {
-        se <- scuttle::aggregateAcrossCells(
+        se <- aggregateAcrossCells(
             x = se,
             ids = nms,
             statistics = "sum",

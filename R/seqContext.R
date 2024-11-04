@@ -58,7 +58,7 @@ extractSeqContext <- function(x,
                        sequence.reference) {
     # digest arguments
     if (is(x, "RangedSummarizedExperiment")) {
-        x <- as(SummarizedExperiment::rowRanges(x), "GRanges")
+        x <- as(rowRanges(x), "GRanges")
     }
     .assertVector(x = x, type = "GRanges")
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(1, 1000))
@@ -75,11 +75,11 @@ extractSeqContext <- function(x,
     }
 
     # resize x
-    xcontext <- GenomicRanges::resize(x, width = sequence.context.width, fix = "center")
+    xcontext <- resize(x, width = sequence.context.width, fix = "center")
 
     # obtain reference sequences
     if (is.character(sequence.reference)) {
-        ref <- Biostrings::readDNAStringSet(sequence.reference)
+        ref <- readDNAStringSet(sequence.reference)
         names(ref) <- sub(" .*$", "", names(ref))
     } else {
         ref <- sequence.reference
@@ -93,7 +93,7 @@ extractSeqContext <- function(x,
         suppressWarnings(
             seqlengths(xcontext) <- seqlengths(ref)
         )
-        xcontext <- GenomicRanges::trim(xcontext)
+        xcontext <- trim(xcontext)
         seqcontext <- DNAStringSet(
             x = paste0(strrep("N", Npre),
                        getSeq(ref, xcontext),
@@ -173,7 +173,7 @@ addSeqContext <- function(x,
                           sequence.reference) {
     .assertVector(x = x, type = "RangedSummarizedExperiment")
     rowData(x)$sequence.context <- extractSeqContext(
-        x = as(SummarizedExperiment::rowRanges(x), "GRanges"),
+        x = as(rowRanges(x), "GRanges"),
         sequence.context.width = sequence.context.width,
         sequence.reference = sequence.reference
     )

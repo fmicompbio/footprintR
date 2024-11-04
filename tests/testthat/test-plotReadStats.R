@@ -1,10 +1,21 @@
 test_that("plotReadStats works", {
     # example data
-    exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
-                          package = "footprintR")
-    se <- readModkitExtract(exfile, modbase = "a")
+    bamf <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+    se <- readModBam(bamf, regions = "chr1:6940000-6955000", modbase = "a")
     se <- addReadStats(se)
 
+    setmp <- se
+    names(setmp$QC) <- "wrong_name"
+    expect_error(plotReadStats(setmp),
+                 "names of se\\$read_info and  se\\$QC are not identical")
+    rm(setmp)
+
     gg <- plotReadStats(se)
+    expect_s3_class(gg, "ggplot")
+
+    gg <- plotReadStats(se, readInfoCol = NULL)
+    expect_s3_class(gg, "ggplot")
+
+    gg <- plotReadStats(se, qcCol = NULL)
     expect_s3_class(gg, "ggplot")
 })

@@ -3,6 +3,16 @@ url: https://fmicompbio.github.io/footprintR
 template:
   bootstrap: 5
 
+navbar:
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: "Introduction to footprinR"
+        href: articles/intro-to-footprintR.html
+      - text: "Exploring read-level data with footprintR"
+        href: articles/read-level-data.html
+
 reference:
 - title: Reading data into R
   contents:
@@ -14,7 +24,8 @@ reference:
   - addReadStats
   - addSeqContext
   - addReadsSummary
-  - sumOverRegions
+  - filterPositions
+  - filterReads
   - subsetReads
 - title: Visualization
   contents:
@@ -24,6 +35,7 @@ reference:
   contents:
   - calcReadStats
   - extractSeqContext
+  - getAnchorRegions
   - modkitExtract
 - title: Nucleosome repeat length (NRL) analysis
   desc: "Functions for calculating and visualizing distance distributions between modified bases and estimate NRL."

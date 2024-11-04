@@ -48,22 +48,30 @@ get_unmodified_base <- function(b) {
 #' @param regions Character vector specifying the region(s) for which
 #'     to extract overlapping reads, in the form \code{"chr:start-end"}
 #' @param modbase Character scalar defining the modified base to extract.
+#' @param n_alns_to_sample Integer defining the number of alignments
+#'     to randomly sample.
+#' @param tnames_for_sampling String vector with target names (chromosomes)
+#'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
+#'     \code{n_alns_to_sample = 0}.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"read_id"}, \code{qscore},
+#' @return A named list with elements \code{"read_id"},
 #'     \code{"forward_read_position"}, \code{"ref_position"},
 #'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
-#'     \code{"canonical_base"} and \code{"mod_prob"}. The meaning of these
-#'     elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
+#'     \code{"canonical_base"}, \code{"mod_prob"} and \code{"read_df"}.
+#'     The meaning of these elements is described in https://nanoporetech.github.io/modkit/intro_extract.html,
 #'     apart from \code{"mod_prob"}, which is equal to \code{call_prob} for
 #'     modified bases and equal to \code{1 - call_prob} for unmodified bases
-#'     (\code{call_code == "-"}), and \code{qscore}, which is the read quality
-#'     score recorded in the \code{qs} tag of each bam record.
+#'     (\code{call_code == "-"}), and \code{"read_df"}, which is a
+#'      \code{data.frame} with one row per read and columns \code{"read_id"}
+#'     (the read identifier), \code{"qscore"} (the read quality score recorded
+#'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
+#'     total read length), and \code{"aligned_length"} (the number of
+#'     aligned bases).
 #'
 #' @examples
-#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
-#'                           package = "footprintR")
-#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", TRUE)
+#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -77,10 +85,12 @@ get_unmodified_base <- function(b) {
 #'
 #' @author Michael Stadler
 #'
+#' @importFrom cli cli_alert_info cli_alert_success
+#'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, modbase, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose)
 }
 
 #' @title Sample Entropy of Time series signal

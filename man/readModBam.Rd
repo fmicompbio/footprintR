@@ -6,9 +6,13 @@
 \usage{
 readModBam(
   bamfiles,
-  regions,
+  regions = NULL,
   modbase,
+  nAlnsToSample = 0,
+  seqnamesToSampleFrom = "chr19",
   seqinfo = NULL,
+  sequence.context.width = 0,
+  sequence.reference = NULL,
   ncpu = 1L,
   verbose = FALSE
 )
@@ -26,7 +30,9 @@ genomic regions to extract the reads from. Alternatively, regions can be
 specified as a character vector (e.g. "chr1:1200-1300") that can be
 coerced into a \code{GRanges} object. Note that the reads are not
 trimmed to the boundaries of the specified ranges. As a result, returned
-positions will typically extend out of the specified regions.}
+positions will typically extend out of the specified regions.
+If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
+ignored.}
 
 \item{modbase}{Character vector defining the modified base for each sample.
 If \code{modbase} is a named vector, the names should correspond to
@@ -35,10 +41,24 @@ elements are in the same order as the files in \code{bamfiles}. If
 \code{modbase} has length 1, the same modified base will be used for
 all samples.}
 
+\item{nAlnsToSample}{A numeric scalar. If non-zero, \code{regions} is ignored
+and approximately \code{nAlnsToSample} randomly selected alignments on
+\code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.}
+
+\item{seqnamesToSampleFrom}{A character vector with one or several sequence
+names (chromosomes) from which to sample alignments from (only used if
+\code{nAlnsToSample} is greater than zero).}
+
 \item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
+
+\item{sequence.context.width, sequence.reference}{Define the sequence
+context to be extracted around modified bases. By default (
+\code{sequence.context.width = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+See \code{\link{addSeqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readModBam}.}
@@ -50,7 +70,7 @@ A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples in columns. The assay
 \code{"mod_prob"} contains per-read modification probabilities,
 with each column (sample) corresponding to a position-by-read
-\code{\link[SparseArray]{SparseMatrix}}.
+\code{\link[SparseArray]{NaMatrix}}.
 }
 \description{
 Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,

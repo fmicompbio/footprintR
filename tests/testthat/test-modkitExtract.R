@@ -17,7 +17,7 @@ test_that(".modkitVersion works", {
     expect_identical(.modkitVersion(modkit_bin = "error"), NA)
     rversion <- .modkitVersion(modkit_bin = file.path(R.home("bin"), "R"))
     expect_type(rversion, "character")
-    expect_true(grepl("^R version ", rversion[1]))
+    expect_true(grepl("^R ", rversion[1]))
 })
 
 test_that("modkitExtract works", {
@@ -110,14 +110,23 @@ test_that("modkitExtract works", {
     )
     i1 <- overlapsAny(se1, se2)
     i2 <- match(se1[i1], se2)
+    # workaround (missing NaArray methods)
+    # expect_true(all(start(se1[!i1]) == 0 |
+    #                     rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
     expect_true(all(start(se1[!i1]) == 0 |
-                        rowMaxs(assay(se1, "mod_prob")[!i1, ]) <= 0.02))
-    expect_identical(colData(se1)$sample, colData(se2)$sample)
+                        apply(assay(se1, "mod_prob")[!i1, ], 1, max, na.rm = TRUE) <= 0.02))
+    expect_identical(rownames(colData(se1)), rownames(colData(se2)))
     expect_identical(rowData(se1)[i1,], rowData(se2)[i2,])
-    inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &
-                       assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)
-    expect_equal(assay(se1, "mod_prob")[i1, ][inz],
-                 assay(se2, "mod_prob")[i2, ][inz], tolerance = 1e-6)
+    # workaround (missing NaArray methods)
+    # inz <- nzwhich(assay(se1, "mod_prob")[i1, ] > 0 &
+    #                    assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)
+    # expect_equal(assay(se1, "mod_prob")[i1, ][inz],
+    #              assay(se2, "mod_prob")[i2, ][inz], tolerance = 1e-6)
+    inz1 <- nnawhich(assay(se1, "mod_prob")[i1, ] > 0, arr.ind = TRUE)
+    inz2 <- nnawhich(assay(se2, "mod_prob")[i2, ] > 0, arr.ind = TRUE)
+    inz <- inz1[paste0(inz1[,1], "_", inz1[,2]) %in% paste0(inz2[,1], "_", inz2[,2]), ]
+    expect_equal(as.matrix(assay(se1, "mod_prob")[i1, ])[inz],
+                 as.matrix(assay(se2, "mod_prob")[i2, ])[inz], tolerance = 1e-6)
     unlink(c(tmp_tab, tmp_calls, tmp_log))
 
     # ... one bamfile, no regions

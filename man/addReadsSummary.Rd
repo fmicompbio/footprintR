@@ -8,7 +8,8 @@ addReadsSummary(
   se,
   assay.type = "mod_prob",
   statistics = c("Nmod", "Nvalid", "FracMod"),
-  keep.reads = FALSE,
+  keep.reads = TRUE,
+  replace.existing = TRUE,
   verbose = FALSE
 )
 }
@@ -17,18 +18,25 @@ addReadsSummary(
 with read-level footprinting data. Rows should correspond to positions
 and columns to samples.}
 
-\item{assay.type}{A string or integer scalar specifying the assay of \code{se}
+\item{assay.type}{A character scalar specifying the assay of \code{se}
 containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
 \item{statistics}{Character vector specifying the type of statistics to be
 computed. Currently supported values are "Nmod" (number of modification
 probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-reads), "Pmod" (average modification probability), "AvgConf" (average
-confidence of (non-)modification probabilities).}
+reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
+probability), "AvgConf" (average confidence of (non-)modification
+probabilities).}
 
-\item{keep.reads}{A scalar logical. If \code{TRUE}, the read-level data
-from \code{assay.type} will be retained in an assay of the same name.}
+\item{keep.reads}{A logical scalar. If \code{TRUE} (the default), the
+read-level data from \code{assay.type} will be retained in an assay of
+the same name.}
+
+\item{replace.existing}{A logical scalar. If \code{TRUE} (the default),
+any existing assays with the same name as the ones requested will be
+overwritten. Otherwise, existing assays will be retained and the
+corresponding summary statistic(s) will not be recalculated.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
@@ -49,7 +57,7 @@ exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "fo
 se <- readModkitExtract(exfile, modbase = "a")
 se
 
-se_summary <- addReadsSummary(se, keep.reads = TRUE)
+se_summary <- addReadsSummary(se)
 se_summary
 
 }

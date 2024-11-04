@@ -15,7 +15,7 @@ test_that("validity checks work", {
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     rme <- addReadStats(rme)
-    rme_withreads <- addReadsSummary(rme, keep.reads = TRUE)
+    rme_withreads <- addReadsSummary(rme)
     rme_withoutreads <- addReadsSummary(rme, keep.reads = FALSE)
 
     ## Test .getReadLevelAssayNames
@@ -29,66 +29,89 @@ test_that("validity checks work", {
     expect_message(
         expect_message(
             expect_message(
-                .checkSEValidity(rme_withreads, verbose = TRUE),
+                expect_message(
+                    expect_message(
+                        .checkSEValidity(rme_withreads, verbose = TRUE),
+                        "Checking assay names"),
+                    "Checking row names"),
                 "Checking consistency of sample names"),
             "Read-level assay found"),
-        "QC information found, checking consistency")
+        "Read-level column data found, checking consistency")
     expect_message(
-        .checkSEValidity(rme_withoutreads, verbose = TRUE),
+        expect_message(
+            expect_message(
+                .checkSEValidity(rme_withoutreads, verbose = TRUE),
+                "Checking assay names"),
+            "Checking row names"),
         "Checking consistency of sample names")
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
+                                                 "test")
     expect_message(
         expect_message(
             expect_message(
                 expect_message(
-                    .checkSEValidity(rme1, verbose = TRUE),
+                    expect_message(
+                        expect_message(
+                            .checkSEValidity(rme1, verbose = TRUE),
+                            "Checking assay names"),
+                        "Checking row names"),
                     "Checking consistency of sample names"),
                 "Read-level assay found"),
             "Comparing mod_prob and test"),
-        "QC information found, checking consistency")
+        "Read-level column data found, checking consistency")
+
+    rme1 <- rme_withreads
+    assayNames(rme1) <- c("", "", "", "")
+    expect_error(.checkSEValidity(rme1),
+                 '!is.null(assayNames(se)) && all(assayNames(se) != "") && !any(duplicated(assayNames(se))) is not TRUE', fixed = TRUE)
+
+    rme1 <- rme_withreads
+    expect_equal(length(assays(rme1)), 4)
+    assays(rme1) <- list(assays(rme1)[[1]], assays(rme1)[[2]], assays(rme1)[[3]],
+                         assays(rme1)[[4]])
+    expect_null(assayNames(rme1))
+    expect_error(.checkSEValidity(rme1),
+                 '!is.null(assayNames(se)) && all(assayNames(se) != "") && !any(duplicated(assayNames(se))) is not TRUE', fixed = TRUE)
 
     rme1 <- rme_withreads
     rme1$QC <- rme1$QC[c(3, 1, 2)]
     expect_error(.checkSEValidity(rme1),
-                 "names(se$QC) == se$sample are not all TRUE", fixed = TRUE)
+                 "colnames(se) are not all TRUE", fixed = TRUE)
 
     rme1 <- rme_withreads
     SummarizedExperiment::colData(rme1) <- SummarizedExperiment::colData(rme1)[c(3, 1, 2), ]
     expect_error(.checkSEValidity(rme1),
-                 "colnames(SummarizedExperiment::assay(se, an, withDimnames = FALSE))", fixed = TRUE)
+                 "colnames(assay(se, an, withDimnames = FALSE)) == colnames(se) are not all TRUE", fixed = TRUE)
 
     rme1 <- rme_withreads
     colnames(rme1) <- colnames(rme1)[c(3, 1, 2)]
     expect_error(.checkSEValidity(rme1),
-                 "rownames(SummarizedExperiment::colData(se)) == se$sample are not all TRUE", fixed = TRUE)
-
-    rme1 <- rme_withreads
-    colnames(rme1) <- colnames(rme1)[c(3, 1, 2)]
-    rme1$sample <- colnames(rme1)
-    expect_error(.checkSEValidity(rme1),
-                 "colnames(SummarizedExperiment::assay(se, an, withDimnames = FALSE))", fixed = TRUE)
+                 "colnames(assay(se, an, withDimnames = FALSE)) == colnames(se) are not all TRUE", fixed = TRUE)
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "mod_prob", withDimnames = FALSE) <-
         SummarizedExperiment::assay(rme1, "mod_prob")[, c(3, 1, 2)]
     expect_error(.checkSEValidity(rme1),
-                 "colnames(SummarizedExperiment::assay(se, an, withDimnames = FALSE))", fixed = TRUE)
+                 "colnames(assay(se, an, withDimnames = FALSE)) == colnames(se) are not all TRUE", fixed = TRUE)
 
     rme1 <- rme_withreads
     rme1$QC[[2]] <- rme1$QC[[2]][1:5, ]
     expect_error(.checkSEValidity(rme1),
-                 "Mismatching reads for assay mod_prob and sample QC data, sample s2_5mC")
+                 "Mismatching reads for assay mod_prob and colData column QC, sample s2_5mC")
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "mod_prob")[[1]] <-
         SummarizedExperiment::assay(rme1, "mod_prob")[[1]][, 1:5]
     expect_error(.checkSEValidity(rme1),
-                 "Mismatching reads for assay mod_prob and sample QC data, sample s1_5mC")
+                 "Mismatching reads for assay mod_prob and colData column QC, sample s1_5mC")
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
+                                                 "test")
     SummarizedExperiment::assay(rme1, "mod_prob")[[1]] <-
         SummarizedExperiment::assay(rme1, "mod_prob")[[1]][, 1:5]
     expect_error(.checkSEValidity(rme1),
@@ -96,6 +119,8 @@ test_that("validity checks work", {
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
+    metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
+                                                 "test")
     N <- ncol(SummarizedExperiment::assay(rme1, "mod_prob")[[1]])
     set.seed(123L)
     SummarizedExperiment::assay(rme1, "mod_prob")[[1]] <-

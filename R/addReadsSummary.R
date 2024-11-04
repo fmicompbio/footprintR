@@ -10,16 +10,22 @@
 #' @param se \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level footprinting data. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A string or integer scalar specifying the assay of \code{se}
+#' @param assay.type A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param statistics Character vector specifying the type of statistics to be
 #'     computed. Currently supported values are "Nmod" (number of modification
 #'     probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-#'     reads), "Pmod" (average modification probability), "AvgConf" (average
-#'     confidence of (non-)modification probabilities).
-#' @param keep.reads A scalar logical. If \code{TRUE}, the read-level data
-#'     from \code{assay.type} will be retained in an assay of the same name.
+#'     reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
+#'     probability), "AvgConf" (average confidence of (non-)modification
+#'     probabilities).
+#' @param keep.reads A logical scalar. If \code{TRUE} (the default), the
+#'     read-level data from \code{assay.type} will be retained in an assay of
+#'     the same name.
+#' @param replace.existing A logical scalar. If \code{TRUE} (the default),
+#'     any existing assays with the same name as the ones requested will be
+#'     overwritten. Otherwise, existing assays will be retained and the
+#'     corresponding summary statistic(s) will not be recalculated.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -33,41 +39,46 @@
 #' se <- readModkitExtract(exfile, modbase = "a")
 #' se
 #'
-#' se_summary <- addReadsSummary(se, keep.reads = TRUE)
+#' se_summary <- addReadsSummary(se)
 #' se_summary
 #'
 #' @seealso \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the
 #'     returned object type, \code{\link{readModkitExtract}} for the function
 #'     used to read the input files.
 #'
-#' @importFrom SummarizedExperiment SummarizedExperiment assays assayNames
-#'     assay assay<- rowRanges rowRanges<- rowData rowData<-
-#' @importFrom S4Vectors endoapply
-#' @importFrom SparseArray pmax nzvals nzvals<- rowSums
+#' @importFrom SummarizedExperiment assays assayNames assay
+#' @importFrom S4Vectors endoapply metadata
+#' @importFrom SparseArray pmax nnavals nnavals<- rowSums
 #'
 #' @export
 addReadsSummary <- function(se,
                             assay.type = "mod_prob",
                             statistics = c("Nmod", "Nvalid", "FracMod"),
-                            keep.reads = FALSE,
+                            keep.reads = TRUE,
+                            replace.existing = TRUE,
                             verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
-    if (!"sample" %in% colnames(colData(se))) {
-        stop("'se' needs to contain sample information in colData(se)$sample")
-    }
-    if (length(assay.type) != 1L ||
-        (is.numeric(assay.type) &&
-         (assay.type < 1 || assay.type > length(SummarizedExperiment::assays(se)))) ||
-        (is.character(assay.type) && !assay.type %in% SummarizedExperiment::assayNames(se))) {
-        stop("'assay.type' must be a string or integer scalar specifying the ",
-             "assay of se containing the read-level data to be summarized.")
-    }
+    .assertScalar(x = assay.type, type = "character",
+                  validValues = .getReadLevelAssayNames(se))
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))
     .assertScalar(x = keep.reads, type = "logical")
+    .assertScalar(x = replace.existing, type = "logical")
     .assertScalar(x = verbose, type = "logical")
+
+    # if replace.existing is FALSE, exclude all assays that already exist in se
+    if (!replace.existing) {
+        existing_assays <- intersect(statistics, assayNames(se))
+        if (length(existing_assays) > 0) {
+            existing_assays <- paste(existing_assays, ", ")
+            warning("Assay(s) ", existing_assays,
+                    " already exist and replace.existing is FALSE - will not ",
+                    "recalculate these assays.")
+            statistics <- setdiff(statistics, assayNames(se))
+        }
+    }
 
     # add statistics that are indirectly required
     statistics_use <- union(
@@ -80,18 +91,24 @@ addReadsSummary <- function(se,
                use.names = FALSE))
 
     # summarize reads
-    if (verbose) {
-        message("Summarizing reads")
-    }
-    dfReads <- SummarizedExperiment::assay(se, assay.type)
-    assL <- lapply(structure(statistics_use, names = statistics_use), function(statistic) {
+    # Note: all summarized assays are dense matrices, because:
+    # - Nmod, Nvalid and AvgConf are dense because rowSums is based on
+    #   MatrixGenerics::rowSums, which returns a (dense) numeric vector
+    # - Nvalid typically has few zeros, and the SparseArray version would be
+    #   larger in memory than the dense one
+    # - FracMod and Pmod have to be calculated using dense matrices and would
+    #   have to be converted back to sparse objects  (no "/" method for
+    #   SparseArray objects, as the result wouldn't be sparse)
+    .message("Summarizing reads")
+    dfReads <- assay(se, assay.type)
+    assL <- lapply(structure(statistics_use, names = statistics_use),
+                   function(statistic) {
         switch(statistic,
-            Nmod = as.matrix(endoapply(dfReads, function(y) rowSums(y >= 0.5))),
-            Nvalid = as.matrix(endoapply(dfReads, function(y) rowSums(y != 0))),
-            # these ones will be calculated later:
-            FracMod = NULL,
-            Pmod = NULL,
-            AvgConf = NULL
+            Nmod = as.matrix(endoapply(
+                dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+            Nvalid = as.matrix(endoapply(
+                dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
+            NULL # default value for all others
         )
     })
 
@@ -100,38 +117,42 @@ addReadsSummary <- function(se,
         assL[["FracMod"]] <- assL[["Nmod"]] / assL[["Nvalid"]]
     }
     if ("Pmod" %in% statistics) {
-        assL[["Pmod"]] <- as.matrix(endoapply(dfReads, rowSums)) / assL[["Nvalid"]]
+        assL[["Pmod"]] <- as.matrix(endoapply(
+            dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)
         assL[["AvgConf"]] <- as.matrix(
             endoapply(dfReads, function(y) {
-                nzvals(y) <- pmax(nzvals(y), 1 - nzvals(y))
-                rowSums(y)
+                nnavals(y) <- pmax(
+                    nnavals(y), 1 - nnavals(y))
+                rowSums(y, na.rm = TRUE)
             })
         ) / assL[["Nvalid"]]
     }
 
-    # create summarized experiment
-    if (verbose) {
-        message("Creating SummarizedExperiment")
-    }
-    se_summary <- SummarizedExperiment::SummarizedExperiment(
-        assays = assL[statistics],
-        colData = SummarizedExperiment::colData(se)
-    )
-    if (!is.null(SummarizedExperiment::rowRanges(se))) {
-        SummarizedExperiment::rowRanges(se_summary) <- SummarizedExperiment::rowRanges(se)
-    } else {
-        SummarizedExperiment::rowData(se_summary) <- SummarizedExperiment::rowData(se)
-    }
+    # add to summarized experiment
+    .message("Adding {length(statistics)} summarized assay{?s} to SummarizedExperiment")
+    tmpList <- as.list(assays(se))
+    tmpList[statistics] <- lapply(assL[statistics], function(a) {
+        rownames(a) <- rownames(se)
+        a
+    })
+    assays(se) <- tmpList
 
     # keep read-level data
-    if (keep.reads) {
-        SummarizedExperiment::assay(se_summary, assay.type,
-                                    withDimnames = FALSE) <- dfReads
+    if (!keep.reads) {
+        rlAssays <- .getReadLevelAssayNames(se)
+        suppressWarnings(
+            # currently, assigning to assays triggers a deprecation warning
+            # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
+            # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
+            assays(se) <- assays(se)[setdiff(assayNames(se), rlAssays)]
+        )
+        ## Remove read-level assays from the metadata
+        metadata(se)$readLevelData$assayNames <- character(0)
     }
 
     # return
-    return(se_summary)
+    return(se)
 }

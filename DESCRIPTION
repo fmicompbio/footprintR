@@ -1,6 +1,6 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: c(
     person("Michael", "Stadler", email = "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
@@ -36,10 +36,11 @@ Imports:
     ggplot2,
     scales,
     patchwork,
-    purrr,
     SparseArray,
-    Matrix,
-    Rcpp
+    Rcpp,
+    zoo,
+    tibble,
+    cli
 Suggests:
     rmarkdown,
     knitr,
@@ -48,7 +49,8 @@ Suggests:
     withr,
     BiocManager,
     BiocParallel,
-    Rsamtools
+    Rsamtools,
+    sessioninfo
 LinkingTo: 
     Rcpp,
     Rhtslib
@@ -60,4 +62,4 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-biocViews: Epigenetics
+biocViews: Epigenetics, LongRead
