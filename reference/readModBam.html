@@ -60,6 +60,7 @@ object with information on modified bases.</p>
 <span>  sequence.context.width <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  sequence.reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ncpu <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  ncpuDecompression <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -126,7 +127,15 @@ See <code><a href="addSeqContext.html">addSeqContext</a></code> for details.</p>
 
 <dt id="arg-ncpu">ncpu<a class="anchor" aria-label="anchor" href="#arg-ncpu"></a></dt>
 <dd><p>A numeric scalar giving the number of parallel CPU threads to
-to use for some of the steps in <code>readModBam</code>.</p></dd>
+to use for some of the steps in <code>readModBam</code> (e.g. the number of
+bam files to process in parallel).</p></dd>
+
+
+<dt id="arg-ncpudecompression">ncpuDecompression<a class="anchor" aria-label="anchor" href="#arg-ncpudecompression"></a></dt>
+<dd><p>A numeric scalar giving the number of parallel CPU
+threads to use for decompressing bam records. When reading from multiple
+bam files in parallel (<code>ncpu &gt; 1</code>), the total number of threads
+used may be as many as <code>ncpu * ncpuDecompression</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -158,7 +167,7 @@ SAM ML and MM tags for base modifications.</p></div>
 <span class="r-in"><span><span class="fu">readModBam</span><span class="op">(</span>bamfiles <span class="op">=</span> <span class="va">modbamfile</span>, regions <span class="op">=</span> <span class="st">"chr1:6940000-6955000"</span>,</span></span>
 <span class="r-in"><span>           modbase <span class="op">=</span> <span class="st">"a"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> extracting base modifications from modBAM files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span> using 2 threads</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> reading alignments overlapping 1 target</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> read 3 alignments</span>
