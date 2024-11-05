@@ -368,6 +368,10 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //' @param tnames_for_sampling String vector with target names (chromosomes)
 //'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
 //'     \code{n_alns_to_sample = 0}.
+//' @param n_threads Integer scalar defining the number of threads to
+//'     use for decompressing a sam record. Especially using in sampling mode
+//'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
+//'     decompressing bam records than processing them.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
 //' @return A named list with elements \code{"read_id"},
@@ -386,7 +390,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", TRUE)
+//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", 1, TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -410,6 +414,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                            char modbase,
                            int n_alns_to_sample,
                            std::vector<std::string> tnames_for_sampling,
+                           int n_threads = 2,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
     hts_set_log_level(HTS_LOG_OFF);
@@ -470,13 +475,20 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
     // open input file
     if (verbose) {
-        snprintf(buffer, buffer_len, "opening input file {.file %s}", inname);
+        snprintf(buffer, buffer_len, "opening input file {.file %s} using {%d} thread{?s}", inname, n_threads);
         cli_alert_info(buffer);
     }
     if (!(infile = sam_open(inname, "r"))) {
         had_error = true;
         snprintf(buffer, buffer_len, "Could not open input file %s\n", inname);
         goto end;
+    }
+    if (n_threads > 1) {
+        if (hts_set_threads(infile, n_threads)) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Error setting htslib threads to %d\n", n_threads);
+            goto end; // # nocov end
+        }
     }
 
     // load index file

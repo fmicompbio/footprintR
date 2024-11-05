@@ -48,6 +48,10 @@ test_that("readModBam works", {
         "Cannot sample 10 alignments from a total of 0")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, "chr1", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpu = -1),
+                 "'ncpu' must be within \\[1,Inf\\]")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpuDecompression = "error"),
+                 "'ncpuDecompression' must be of class 'numeric'")
 
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a")
@@ -107,6 +111,7 @@ test_that("readModBam works", {
                                     regions = NULL,
                                     modbase = "a",
                                     nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                    ncpuDecompression = 2,
                                     verbose = TRUE),
                 "extracting base modifications"),
                 "opening input file"),

@@ -14,6 +14,7 @@ readModBam(
   sequence.context.width = 0,
   sequence.reference = NULL,
   ncpu = 1L,
+  ncpuDecompression = 2L,
   verbose = FALSE
 )
 }
@@ -61,7 +62,13 @@ extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
 See \code{\link{addSeqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
-to use for some of the steps in \code{readModBam}.}
+to use for some of the steps in \code{readModBam} (e.g. the number of
+bam files to process in parallel).}
+
+\item{ncpuDecompression}{A numeric scalar giving the number of parallel CPU
+threads to use for decompressing bam records. When reading from multiple
+bam files in parallel (\code{ncpu > 1}), the total number of threads
+used may be as many as \code{ncpu * ncpuDecompression}.}
 
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }

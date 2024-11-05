@@ -40,7 +40,12 @@
 #'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
 #'     See \code{\link{addSeqContext}} for details.
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
-#'     to use for some of the steps in \code{readModBam}.
+#'     to use for some of the steps in \code{readModBam} (e.g. the number of
+#'     bam files to process in parallel).
+#' @param ncpuDecompression A numeric scalar giving the number of parallel CPU
+#'     threads to use for decompressing bam records. When reading from multiple
+#'     bam files in parallel (\code{ncpu > 1}), the total number of threads
+#'     used may be as many as \code{ncpu * ncpuDecompression}.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -78,6 +83,7 @@ readModBam <- function(bamfiles,
                        sequence.context.width = 0,
                        sequence.reference = NULL,
                        ncpu = 1L,
+                       ncpuDecompression = 2L,
                        verbose = FALSE) {
     # digest arguments
     .assertVector(x = bamfiles, type = "character")
@@ -127,7 +133,8 @@ readModBam <- function(bamfiles,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric")
+    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, Inf))
+    .assertScalar(x = ncpuDecompression, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = verbose, type = "logical")
 
     # extract modification probabilities from `bamfiles`
@@ -142,6 +149,7 @@ readModBam <- function(bamfiles,
                                 modbase = modbase[nm],
                                 n_alns_to_sample = as.integer(nAlnsToSample),
                                 tnames_for_sampling = seqnamesToSampleFrom,
+                                n_threads = as.integer(ncpuDecompression),
                                 verbose = verbose)
 
         # convert 0-based ref_position to 1-based

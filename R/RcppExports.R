@@ -53,6 +53,10 @@ get_unmodified_base <- function(b) {
 #' @param tnames_for_sampling String vector with target names (chromosomes)
 #'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
 #'     \code{n_alns_to_sample = 0}.
+#' @param n_threads Integer scalar defining the number of threads to
+#'     use for decompressing a sam record. Especially using in sampling mode
+#'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
+#'     decompressing bam records than processing them.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A named list with elements \code{"read_id"},
@@ -71,7 +75,7 @@ get_unmodified_base <- function(b) {
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", TRUE)
+#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", 1, TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -89,8 +93,8 @@ get_unmodified_base <- function(b) {
 #'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads, verbose)
 }
 
 #' @title Sample Entropy of Time series signal
