@@ -12,18 +12,18 @@
 // convert 0-based read position to 0-based reference sequence position
 // (a position of -1 means unaligned)
 std::vector<int> read_to_reference_pos(const bam1_t *aln,
-                                       const std::vector<int> &read_pos) {
+                                       const std::vector<int> &read_positions) {
     // variables
-    size_t read_pos_index = 0; // index to elements of read_pos
+    size_t read_positions_index = 0; // index to elements of read_positions
     const uint32_t *cigar = bam_get_cigar(aln);  // cigar array
     int ref_pos = aln->core.pos;  // reference position (0-based)
-    int read_seq_index = 0;  // current index in the read sequence
+    int read_pos = 0;  // read position (0-based)
 
     // return value: 0-based reference positions, initialized to -1
-    std::vector<int> ref_positions(read_pos.size(), -1);
+    std::vector<int> ref_positions(read_positions.size(), -1);
 
     // iterate over the CIGAR operations i
-    for (unsigned int i = 0; i < aln->core.n_cigar && read_pos_index < read_pos.size(); i++) {
+    for (unsigned int i = 0; i < aln->core.n_cigar && read_positions_index < read_positions.size(); i++) {
         int op = bam_cigar_op(cigar[i]);  // operation type
         int op_len = bam_cigar_oplen(cigar[i]);  // operation length
 
@@ -31,26 +31,26 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
         case BAM_CMATCH:  // match or mismatch (M)
         case BAM_CEQUAL:  // match (=)
         case BAM_CDIFF:   // mismatch (X)
-            while (read_pos_index < read_pos.size() &&
-                   read_seq_index + op_len > read_pos[read_pos_index]) {
-                ref_positions[read_pos_index] = ref_pos + (read_pos[read_pos_index] - read_seq_index);
-                read_pos_index++;
+            while (read_positions_index < read_positions.size() &&
+                   read_pos + op_len > read_positions[read_positions_index]) {
+                ref_positions[read_positions_index] = ref_pos + (read_positions[read_positions_index] - read_pos);
+                read_positions_index++;
             }
             ref_pos += op_len;
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CINS:  // insertion (I)
-            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+            if (read_pos + op_len > read_positions[read_positions_index]) {
                 // the current read position is within an insertion -->
                 //     no corresponding reference position
-                while (read_pos_index < read_pos.size() &&
-                       read_seq_index + op_len > read_pos[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;
-                    read_pos_index++;
+                while (read_positions_index < read_positions.size() &&
+                       read_pos + op_len > read_positions[read_positions_index]) {
+                    ref_positions[read_positions_index] = -1;
+                    read_positions_index++;
                 }
             }
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CDEL:       // deletion (D)
@@ -59,16 +59,16 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
             break;
 
         case BAM_CSOFT_CLIP:  // soft clipping (S)
-            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+            if (read_pos + op_len > read_positions[read_positions_index]) {
                 // the current read position is within a soft-clipped region -->
                 //     no corresponding reference position
-                while (read_pos_index < read_pos.size() &&
-                       read_seq_index + op_len > read_pos[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;
-                    read_pos_index++;
+                while (read_positions_index < read_positions.size() &&
+                       read_pos + op_len > read_positions[read_positions_index]) {
+                    ref_positions[read_positions_index] = -1;
+                    read_positions_index++;
                 }
             }
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CHARD_CLIP:  // hard clipping (H)
