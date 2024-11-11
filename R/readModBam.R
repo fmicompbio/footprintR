@@ -238,8 +238,8 @@ readModBam <- function(bamfiles,
             readdfL[[nm]] <- DataFrame(qscore = numeric(0),
                                        read_length = integer(0),
                                        aligned_length = integer(0),
-                                       aligned_fraction = numeric(0),
-                                       variant_label = character(0))
+                                       variant_label = character(0),
+                                       aligned_fraction = numeric(0))
         }
     }
 
