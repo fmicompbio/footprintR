@@ -141,9 +141,9 @@ std::vector<int> reference_to_read_pos(const bam1_t *aln,
         case BAM_CHARD_CLIP:  // hard clipping (H)
         case BAM_CPAD:        // padding (P)
             // these do not consume any positions in the read or reference
-            break;
+            break; // # nocov start
 
-        default: // # nocov start
+        default:
             Rcpp::warning("Unknown CIGAR operation: %d", op);
         return read_positions; // # nocov end
         }
@@ -167,24 +167,18 @@ std::string construct_read_label(const bam1_t *aln,
     int aln_end = bam_endpos(aln);
     size_t from = 0, to = 0;
 
-    Rprintf("starting label construction\n");
     while (from < ref_names.size() &&
            (ref_names[from] != tname || ref_positions[from] < aln_start ||
            ref_positions[from] > aln_end)) {
         from++;
     }
 
-    Rprintf("ref_names.size = %zu, tname = %s, aln_start = %d, aln_end = %d\n", ref_names.size(), tname.c_str(), aln_start, aln_end);
-    Rprintf("from = %zu\n", from);
     if (from < ref_names.size()) {
         to = from;
-        Rprintf("to = %zu (start)\n", to);
         while ((to < ref_names.size()) &&
                (ref_names[to] == tname && ref_positions[to] < aln_end)) {
             to++;
         }
-        // to--;
-        Rprintf("to = %zu\n", to);
 
         // subset ref_positions and convert to read_positions
         uint8_t *seqdata = bam_get_seq(aln);
@@ -197,7 +191,6 @@ std::string construct_read_label(const bam1_t *aln,
                 label[from + i] = seq_nt16_str[bam_seqi(seqdata, read_positions[i])];
             }
         }
-        Rprintf("label = %s\n\n", label.c_str());
     }
 
     return label;
@@ -325,8 +318,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
     alncnt++;
 
     // check for interrupt every 100 alignments
-    if (alncnt % 100 == 0)
-        Rcpp::checkUserInterrupt();
+    if (alncnt % 100 == 0) // # nocov start
+        Rcpp::checkUserInterrupt(); // # nocov end
 
     // ... extract *forward* read sequence to char*
     data = bam_get_seq(bamdata);
