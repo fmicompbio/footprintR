@@ -178,13 +178,12 @@ std::string construct_read_label(const bam1_t *aln,
     Rprintf("from = %zu\n", from);
     if (from < ref_names.size()) {
         to = from;
-        // ### WAS HERE
         Rprintf("to = %zu (start)\n", to);
         while ((to < ref_names.size()) &&
                (ref_names[to] == tname && ref_positions[to] < aln_end)) {
             to++;
         }
-        to--;
+        // to--;
         Rprintf("to = %zu\n", to);
 
         // subset ref_positions and convert to read_positions
