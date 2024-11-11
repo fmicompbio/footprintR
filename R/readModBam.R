@@ -71,7 +71,8 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
 #' @importFrom SparseArray NaArray
-#' @importFrom GenomicRanges GPos sort match subsetByOverlaps
+#' @importFrom GenomicRanges GPos sort match
+#' @importFrom IRanges subsetByOverlaps
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand

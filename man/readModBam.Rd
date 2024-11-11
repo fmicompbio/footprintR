@@ -13,6 +13,7 @@ readModBam(
   seqinfo = NULL,
   sequence.context.width = 0,
   sequence.reference = NULL,
+  variantPositions = NULL,
   ncpu = 1L,
   ncpuDecompression = 2L,
   verbose = FALSE
@@ -60,6 +61,11 @@ context to be extracted around modified bases. By default (
 \code{sequence.context.width = 0}), no sequence context will be
 extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
 See \code{\link{addSeqContext}} for details.}
+
+\item{variantPositions}{An optional \code{GPos} object with seqnames and
+coordinates of single nucleotide variant positions, to be used to
+construct read labels for allele-specific analysis. Ignored if \code{NULL}
+or \code{nAlnsToSample > 0} (sampling-mode).}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
 to use for some of the steps in \code{readModBam} (e.g. the number of
