@@ -39,6 +39,10 @@
 #'     \code{sequence.context.width = 0}), no sequence context will be
 #'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
 #'     See \code{\link{addSeqContext}} for details.
+#' @param variantPositions An optional \code{GPos} object with seqnames and
+#'     coordinates of single nucleotide variant positions, to be used to
+#'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
+#'     or \code{nAlnsToSample > 0} (sampling-mode).
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
 #'     to use for some of the steps in \code{readModBam} (e.g. the number of
 #'     bam files to process in parallel).
@@ -67,7 +71,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
 #' @importFrom SparseArray NaArray
-#' @importFrom GenomicRanges GPos sort match
+#' @importFrom GenomicRanges GPos sort match subsetByOverlaps
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand
@@ -82,6 +86,7 @@ readModBam <- function(bamfiles,
                        seqinfo = NULL,
                        sequence.context.width = 0,
                        sequence.reference = NULL,
+                       variantPositions = NULL,
                        ncpu = 1L,
                        ncpuDecompression = 2L,
                        verbose = FALSE) {
@@ -123,6 +128,14 @@ readModBam <- function(bamfiles,
             warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
         }
         regions <- GRanges()
+        if (!is.null(variantPositions)) {
+            warning("Ignoring `variantPositions` because `nAlnsToSample` is greater than zero")
+        }
+        variantPositions <- NULL
+    } else {
+        if (length(regions) == 0) {
+            stop("`regions` must contain at least one genomic range if not in sampling mode")
+        }
     }
     .assertVector(x = seqnamesToSampleFrom, type = "character")
     if (!is.null(seqinfo)) {
@@ -133,9 +146,22 @@ readModBam <- function(bamfiles,
         }
     }
     .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
+    .assertVector(x = variantPositions, type = "GPos", allowNULL = TRUE)
     .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = ncpuDecompression, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = verbose, type = "logical")
+
+    # sort and subset variantPositions
+    if (length(variantPositions) > 0) {
+        variantPositions <- sort(subsetByOverlaps(x = variantPositions,
+                                                  ranges = regions,
+                                                  ignore.strand = TRUE))
+        variantRefNames <- as.character(seqnames(variantPositions))
+        variantRefPositions <- pos(variantPositions)
+    } else {
+        variantRefNames <- character(0L)
+        variantRefPositions <- integer(0L)
+    }
 
     # extract modification probabilities from `bamfiles`
     .message("extracting base modifications from modBAM files")
@@ -149,6 +175,8 @@ readModBam <- function(bamfiles,
                                 modbase = modbase[nm],
                                 n_alns_to_sample = as.integer(nAlnsToSample),
                                 tnames_for_sampling = seqnamesToSampleFrom,
+                                variantRefNames = variantRefNames,
+                                variantRefPositions = as.integer(variantRefPositions),
                                 n_threads = as.integer(ncpuDecompression),
                                 verbose = verbose)
 
@@ -209,7 +237,8 @@ readModBam <- function(bamfiles,
             readdfL[[nm]] <- DataFrame(qscore = numeric(0),
                                        read_length = integer(0),
                                        aligned_length = integer(0),
-                                       aligned_fraction = numeric(0))
+                                       aligned_fraction = numeric(0),
+                                       variant_label = character(0))
         }
     }
 
@@ -225,7 +254,8 @@ readModBam <- function(bamfiles,
             read_info = readdfL
         ),
         metadata = list(readLevelData = list(assayNames = "mod_prob",
-                                             colDataColumns = "read_info"))
+                                             colDataColumns = "read_info"),
+                        variantPositions = variantPositions)
     )
     if (nrow(se) > 0) {
         rownames(se) <- paste0(

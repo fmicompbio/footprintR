@@ -167,18 +167,24 @@ std::string construct_read_label(const bam1_t *aln,
     int aln_end = bam_endpos(aln);
     size_t from = 0, to = 0;
 
+    Rprintf("starting label construction\n");
     while (from < ref_names.size() &&
            (ref_names[from] != tname || ref_positions[from] < aln_start)) {
         from++;
     }
 
+    Rprintf("ref_names.size = %zu, tname = %s, aln_end = %d\n", ref_names.size(), tname.c_str(), aln_end);
+    Rprintf("from = %zu\n", from);
     if (from < ref_names.size()) {
         to = from;
-        while (to < ref_names.size() &&
+        // ### WAS HERE
+        Rprintf("to = %zu (start)\n", to);
+        while ((to < ref_names.size()) &&
                (ref_names[to] == tname && ref_positions[to] < aln_end)) {
             to++;
         }
         to--;
+        Rprintf("to = %zu\n", to);
 
         // subset ref_positions and convert to read_positions
         uint8_t *seqdata = bam_get_seq(aln);
@@ -191,6 +197,7 @@ std::string construct_read_label(const bam1_t *aln,
                 label[from + i] = seq_nt16_str[bam_seqi(seqdata, i)];
             }
         }
+        Rprintf("label = %s\n\n", label.c_str());
     }
 
     return label;
@@ -283,6 +290,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        sam_hdr_t *in_samhdr,   // sam file header
                        int &n_unaligned,       // number of unaligned modified bases
                        int &n_total,           // total number of modified bases
+                       std::vector<std::string> &variantRefNames, // seqnames of SNV sites
+                       std::vector<int> &variantRefPositions,     // coordinates of SNV sites
                        // vectors for return values (per modification)
                        std::vector<std::string> &read_id,
                        std::vector<char> &call_code,
@@ -297,7 +306,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<std::string> &df_read_id,
                        std::vector<double> &df_qscore,
                        std::vector<int> &df_read_length,
-                       std::vector<int> &df_aligned_length) {
+                       std::vector<int> &df_aligned_length,
+                       Rcpp::CharacterVector &df_variant_label) {
     // allocate variable only used inside process_bam_record()
     uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
     unsigned int sum_qual = 0;
@@ -463,6 +473,15 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         df_qscore.push_back(qs_value);
         df_read_length.push_back(this_read_len);
         df_aligned_length.push_back(calculate_aligned_bases(bamdata));
+
+        // ... ... variant_label
+        if (variantRefNames.size() > 0) {
+            df_variant_label.push_back(
+                construct_read_label(bamdata, variantRefNames,
+                                     variantRefPositions, in_samhdr));
+        } else {
+            df_variant_label.push_back(NA_STRING);
+        }
     }
 
     return 0;
@@ -529,6 +548,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                            char modbase,
                            int n_alns_to_sample,
                            std::vector<std::string> tnames_for_sampling,
+                           std::vector<std::string> variantRefNames,
+                           std::vector<int> variantRefPositions,
                            int n_threads = 2,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
@@ -573,6 +594,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<double> df_qscore;
     std::vector<int> df_read_length;
     std::vector<int> df_aligned_length;
+    Rcpp::CharacterVector df_variant_label;
 
     const char* inname = inname_str.c_str();
 
@@ -699,6 +721,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                              in_samhdr,        // sam file header
                                              n_unaligned,      // number of unaligned modified bases
                                              n_total,          // total number of modified bases
+                                             variantRefNames,  // seqnames of SNV sites
+                                             variantRefPositions, // coordinates of SNV sites
                                              // vectors for return values (per modification)
                                              read_id,
                                              call_code,
@@ -713,7 +737,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                              df_read_id,
                                              df_qscore,
                                              df_read_length,
-                                             df_aligned_length);
+                                             df_aligned_length,
+                                             df_variant_label);
                 if (success != 0) { // # nocov start
                     goto end;
                 } // # nocov end
@@ -757,6 +782,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                          in_samhdr,        // sam file header
                                          n_unaligned,      // number of unaligned modified bases
                                          n_total,          // total number of modified bases
+                                         variantRefNames,  // seqnames of SNV sites
+                                         variantRefPositions, // coordinates of SNV sites
                                          // vectors for return values (per modification)
                                          read_id,
                                          call_code,
@@ -771,7 +798,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                          df_read_id,
                                          df_qscore,
                                          df_read_length,
-                                         df_aligned_length);
+                                         df_aligned_length,
+                                         df_variant_label);
             if (success != 0) {
                 goto end;
             }
@@ -833,7 +861,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 Rcpp::_["read_id"] = df_read_id,
                 Rcpp::_["qscore"] = df_qscore,
                 Rcpp::_["read_length"] = df_read_length,
-                Rcpp::_["aligned_length"] = df_aligned_length
+                Rcpp::_["aligned_length"] = df_aligned_length,
+                Rcpp::_["variant_label"] = df_variant_label
             );
 
             // create return list

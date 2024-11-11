@@ -93,8 +93,8 @@ get_unmodified_base <- function(b) {
 #'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads, verbose)
 }
 
 #' @title Sample Entropy of Time series signal
