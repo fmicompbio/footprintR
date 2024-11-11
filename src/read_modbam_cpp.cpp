@@ -169,11 +169,12 @@ std::string construct_read_label(const bam1_t *aln,
 
     Rprintf("starting label construction\n");
     while (from < ref_names.size() &&
-           (ref_names[from] != tname || ref_positions[from] < aln_start)) {
+           (ref_names[from] != tname || ref_positions[from] < aln_start ||
+           ref_positions[from] > aln_end)) {
         from++;
     }
 
-    Rprintf("ref_names.size = %zu, tname = %s, aln_end = %d\n", ref_names.size(), tname.c_str(), aln_end);
+    Rprintf("ref_names.size = %zu, tname = %s, aln_start = %d, aln_end = %d\n", ref_names.size(), tname.c_str(), aln_start, aln_end);
     Rprintf("from = %zu\n", from);
     if (from < ref_names.size()) {
         to = from;
