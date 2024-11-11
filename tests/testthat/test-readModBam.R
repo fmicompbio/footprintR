@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
     library(footprintR)
     library(GenomicRanges)
     library(Rsamtools)
+    library(Biostrings)
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -24,6 +25,8 @@ test_that("readModBam works", {
     # invalid arguments
     expect_error(readModBam("error", "chr1:6940000-6955000", "a", 0),
                  "not all `bamfiles` exist")
+    expect_error(readModBam(modbamfiles, NULL, "a", 0),
+                 "`regions` must contain at least one genomic range if not in sampling mode")
     expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
                             "chr1:6940000-6955000", "a", 0),
                  "are not unique")
@@ -107,12 +110,15 @@ test_that("readModBam works", {
     expect_message(expect_message(expect_message(
         expect_message(expect_message(expect_message(
             expect_message(expect_message(
-                se6a  <- readModBam(bamfiles = modbamfiles[1],
-                                    regions = NULL,
-                                    modbase = "a",
-                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                                    ncpuDecompression = 2,
-                                    verbose = TRUE),
+                expect_warning(
+                    se6a  <- readModBam(bamfiles = modbamfiles[1],
+                                        regions = NULL,
+                                        modbase = "a",
+                                        nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                        variantPositions = GPos("chr1", pos = 63000000),
+                                        ncpuDecompression = 2,
+                                        verbose = TRUE),
+                    "Ignoring `variantPositions`"),
                 "extracting base modifications"),
                 "opening input file"),
             "sampling alignments with probability 0.5"),
@@ -132,8 +138,8 @@ test_that("readModBam works", {
 
     # ... structure
     expected_coldata_names <- c("sample", "modbase", "n_reads", "read_info")
-    expected_read_info_names <- c("qscore", "read_length",
-                                  "aligned_length", "aligned_fraction")
+    expected_read_info_names <- c("qscore", "read_length", "aligned_length",
+                                  "variant_label", "aligned_fraction")
     for (se in seL) {
         expect_s4_class(se, "RangedSummarizedExperiment")
         expect_s4_class(rowRanges(se), "GPos")
@@ -195,6 +201,8 @@ test_that("readModBam works", {
                          sample1 = c(14801L, 11214L, 9227L, 12227L),
                          sample2 = c(9656L, 11234L, 9579L, 9967L, 8915L, 9898L)
                      ))
+    expect_identical(lapply(se1$read_info, "[[", "variant_label"),
+                     lapply(structure(se1$n_reads, names = colnames(se1)), function(n) rep(NA_character_, n)))
     expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequence.context))),
                  c(A = 8108L, C = 128L, G = 393L, T = 62L), ignore_attr = TRUE)
 

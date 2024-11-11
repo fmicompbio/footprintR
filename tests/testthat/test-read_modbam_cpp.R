@@ -46,8 +46,7 @@ test_that("get_unmodified_base works", {
 ## Checks, read_modbam_cpp
 ## -------------------------------------------------------------------------- ##
 test_that("read_modbam_cpp works", {
-    ## example data
-    ## -------------------------------------------------------------------------
+    ## example data ------------------------------------------------------------
     modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                               package = "footprintR")
     extractfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
@@ -58,14 +57,16 @@ test_that("read_modbam_cpp works", {
     bam7 <- system.file("extdata", "6mA_mod-issue.bam", package = "footprintR")
     bam8 <- system.file("extdata", "6mA_too-many-mods.bam", package = "footprintR")
 
-    ## invalid arguments
-    ## -------------------------------------------------------------------------
+    ## invalid arguments -------------------------------------------------------
     # ... non-existing bam file
     expect_error(read_modbam_cpp(inname_str = "error", regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 0,
                                  tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
                                  n_threads = 2,
-                                 verbose = FALSE))
+                                 verbose = FALSE),
+                 "Could not open input file")
 
     # ... no bam index
     tmpbam <- tempfile(fileext = ".bam")
@@ -73,8 +74,11 @@ test_that("read_modbam_cpp works", {
     expect_error(read_modbam_cpp(inname_str = tmpbam, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 0,
                                  tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
                                  n_threads = 2,
-                                 verbose = FALSE))
+                                 verbose = FALSE),
+                 "Failed to load the index")
     unlink(tmpbam)
 
     # ... corrupted bam file
@@ -91,41 +95,58 @@ test_that("read_modbam_cpp works", {
     expect_error(read_modbam_cpp(inname_str = tmpbam, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 0,
                                  tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
                                  n_threads = 1,
-                                 verbose = FALSE))
+                                 verbose = FALSE),
+                 "Error while reading from")
     unlink(c(tmpbam, tmpbai))
 
     # ... requesting a region that is not contained in the bam header
     expect_error(read_modbam_cpp(inname_str = bam4, regions = "chr2",
                                  modbase = "a", n_alns_to_sample = 0,
-                                 tnames_for_sampling = "chr1"))
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0)),
+                 "Failed to get bam iterator")
 
     # ... MM/ML tags referring to position beyond read length
     expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 0,
                                  tnames_for_sampling = "chr1",
-                                 verbose = FALSE))
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "Failed to parse the base mods")
 
     # ... too many modifications on a single base
     expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 0,
                                  tnames_for_sampling = "chr1",
-                                 verbose = FALSE))
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "More modifications than footprintR")
 
     # ... too many reads to sample
     expect_error(read_modbam_cpp(inname_str = modbamfile, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 11,
                                  tnames_for_sampling = "chr1",
-                                 verbose = FALSE))
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "Cannot sample 11 alignments from a total of 10")
 
     # ... sampling reads from a chromosome without alignments
     expect_error(read_modbam_cpp(inname_str = modbamfile, regions = "chr1",
                                  modbase = "a", n_alns_to_sample = 1,
                                  tnames_for_sampling = "chr2",
-                                 verbose = FALSE))
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "Cannot sample 1 alignments from a total of 0")
 
-    ## expected results
-    ## -------------------------------------------------------------------------
+    ## expected results --------------------------------------------------------
     # ... run read_modbam_cpp
     df <- read.delim(extractfile)
     expect_message(expect_message(expect_message(expect_message(
@@ -134,15 +155,17 @@ test_that("read_modbam_cpp works", {
                                 modbase = "a",
                                 n_alns_to_sample = 0,
                                 tnames_for_sampling = "chr1",
+                                variantRefNames = character(0),
+                                variantRefPositions = integer(0),
                                 n_threads = 2,
                                 verbose = TRUE)
     ))))
-    res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", 0, "", 1, FALSE)
-    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", 0, "", 1, FALSE)
-    res4 <- read_modbam_cpp(bam4, "chr1", "a", 0, "", 1, FALSE)
-    res5 <- read_modbam_cpp(bam5, "chr1", "a", 0, "", 1, FALSE)
-    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", "a", 0, "", 1, FALSE)
-    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), "a", 0, "", 1, FALSE)
+    res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", 0, "", character(0), integer(0), 1, FALSE)
+    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", 0, "", character(0), integer(0), 1, FALSE)
+    res4 <- read_modbam_cpp(bam4, "chr1", "a", 0, "", character(0), integer(0), 1, FALSE)
+    res5 <- read_modbam_cpp(bam5, "chr1", "a", 0, "", character(0), integer(0), 1, FALSE)
+    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", "a", 0, "", character(0), integer(0), 1, FALSE)
+    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), "a", 0, "", character(0), integer(0), 1, FALSE)
     aln6a <- Rsamtools::scanBam(file = modbamfile,
                                 param = Rsamtools::ScanBamParam(
                                     what = "qname",
@@ -155,16 +178,16 @@ test_that("read_modbam_cpp works", {
                                 ))
     set.seed(1L)
     expect_warning(
-        res7a <- read_modbam_cpp(modbamfile, "chr1", "a", 3, c("chr1", "error"), 1, FALSE),
+        res7a <- read_modbam_cpp(modbamfile, "chr1", "a", 3, c("chr1", "error"), character(0), integer(0), 1, FALSE),
         "Ignoring unknown target name"
     )
     set.seed(1L)
-    res7b <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", FALSE)
+    res7b <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", character(0), integer(0), 1, FALSE)
     expect_message(expect_message(
         expect_message(
             expect_message(
                 expect_message(
-                    res7c <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", 1, TRUE),
+                    res7c <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", character(0), integer(0), 1, TRUE),
                     "opening input file"
                 ), "sampling"
             ), "reading alignments overlapping"
@@ -224,7 +247,7 @@ test_that("read_modbam_cpp works", {
     expect_s3_class(res7b[["read_df"]], "data.frame")
     expect_s3_class(res7c[["read_df"]], "data.frame")
 
-    expected_df_colnames <- c("read_id", "qscore", "read_length", "aligned_length")
+    expected_df_colnames <- c("read_id", "qscore", "read_length", "aligned_length", "variant_label")
     expect_named(res1$read_df, expected_df_colnames)
     expect_named(res2$read_df, expected_df_colnames)
     expect_named(res3$read_df, expected_df_colnames)
@@ -245,6 +268,7 @@ test_that("read_modbam_cpp works", {
                  c(14.1428003311157, 16.0126991271973, 20.3082008361816))
     expect_identical(res1$read_df$read_length, c(20058L, 11305L, 12277L))
     expect_identical(res1$read_df$aligned_length, c(14801L, 11214L, 12227L))
+    expect_identical(res1$read_df$variant_label, rep(NA_character_, 3L))
     expect_identical(res1$read_id,
                      rep(res1$read_df$read_id, c(4363L, 3340L,  3597L)))
     expect_true(all(nchar(res1$call_code) == 1L))
@@ -286,6 +310,7 @@ test_that("read_modbam_cpp works", {
                      c(20058L, 11305L, 9246L, 12277L, 10041L, 9044L, 9010L, 14736L, 7725L, 7013L))
     expect_identical(res2$read_df$aligned_length,
                      c(14801L, 11214L, 9227L, 12227L, 9968L, 8895L, 8891L, 8174L, 7637L, 6895L))
+    expect_identical(res2$read_df$variant_label, rep(NA_character_, 10L))
     expect_identical(res2$read_id,
                      rep(res2$read_df$read_id,
                          c(4363L, 3340L, 2925L, 3597L, 3078L,
@@ -333,7 +358,8 @@ test_that("read_modbam_cpp works", {
         read_df = data.frame(read_id = c("artificial-read-1", "artificial-read-2"),
                              qscore = c(13.4761904761905, 13.24),
                              read_length = c(21L, 25L),
-                             aligned_length = c(19L, 23L))))
+                             aligned_length = c(19L, 23L),
+                             variant_label = rep(NA_character_, 2L))))
 
     # ... content of res5
     expect_identical(res5, list(
@@ -342,7 +368,8 @@ test_that("read_modbam_cpp works", {
         ref_mod_strand = character(0), call_code = character(0),
         canonical_base = character(0), mod_prob = numeric(0),
         read_df = data.frame(read_id = character(0), qscore = numeric(0),
-                             read_length = integer(0), aligned_length = integer(0))))
+                             read_length = integer(0), aligned_length = integer(0),
+                             variant_label = character(0))))
 
     # ... content of res6a and res6b (res6a should be a subset of res6b)
     # ... ... check ground truth
