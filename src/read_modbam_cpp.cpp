@@ -314,6 +314,10 @@ int process_bam_record(bam1_t *bamdata,        // bam record
     // process alignment
     alncnt++;
 
+    // check for interrupt every 100 alignments
+    if (alncnt % 100 == 0)
+        Rcpp::checkUserInterrupt();
+
     // ... extract *forward* read sequence to char*
     data = bam_get_seq(bamdata);
     if (qseq_len < this_read_len) {
