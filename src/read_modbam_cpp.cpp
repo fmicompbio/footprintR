@@ -195,7 +195,7 @@ std::string construct_read_label(const bam1_t *aln,
             aln, ref_positions_overlapping);
         for (size_t i = 0; i < read_positions.size(); i++) {
             if (read_positions[i] != -1) {
-                label[from + i] = seq_nt16_str[bam_seqi(seqdata, i)];
+                label[from + i] = seq_nt16_str[bam_seqi(seqdata, read_positions[i])];
             }
         }
         Rprintf("label = %s\n\n", label.c_str());

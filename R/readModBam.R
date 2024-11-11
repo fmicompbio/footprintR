@@ -157,7 +157,8 @@ readModBam <- function(bamfiles,
                                                   ranges = regions,
                                                   ignore.strand = TRUE))
         variantRefNames <- as.character(seqnames(variantPositions))
-        variantRefPositions <- pos(variantPositions)
+        # make coordinates zero-based
+        variantRefPositions <- pos(variantPositions) - 1L
     } else {
         variantRefNames <- character(0L)
         variantRefPositions <- integer(0L)
