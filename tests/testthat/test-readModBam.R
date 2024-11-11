@@ -292,3 +292,61 @@ test_that("readModBam works", {
     expect_identical(se6a, se6b)
     expect_identical(dim(assay(se6a)$sample1), c(6852L, 6L))
 })
+
+test_that("readModBam correctly labels reads", {
+    # example data
+    modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+
+    # extract alignments
+    alns <- Rsamtools::scanBam(
+        file = modbamfile,
+        param = ScanBamParam(which = GRanges("chr1", IRanges(1, 1e8)),
+                             what = c("qname", "rname", "strand", "pos",
+                                      "qwidth", "cigar", "seq")))[[1]]
+
+    # extract first 2 and last 3 positions of each alignment
+    rnames <- rep(as.character(alns$rname), each = 5L)
+    # ... this was calculated using: GenomicAlignments::cigarWidthAlongReferenceSpace(alns$cigar)
+    alnwidth <- c(14973L, 11303L, 9254L, 12288L, 10047L, 9066L, 9052L, 8346L,
+                  7678L, 6985L)
+    rpos <- unlist(lapply(seq_along(alns$qname), function(i) {
+        alns$pos[i] + c(0:1, alnwidth[i] - 3:1)
+    }))
+    # ... add three positions that don't overlap any read (one before, two after)
+    rnames <- c("chr1", rnames, "chr2", "chr1")
+    rpos <- c(6925829L, rpos, 6941630L, 6941639L)
+    # ... convert to GPos
+    varpos <- GPos(seqnames = rnames, pos = rpos,
+                   names = c("miss1", rep(alns$qname, each = 5), "miss2", "miss3"))
+
+    # calculate expected labels
+    softmaskStart <- suppressWarnings(
+        ifelse(grepl("^[0-9]+S", alns$cigar),
+               as.integer(sub("^([0-9]+)S.+$", "\\1", alns$cigar)),
+               0L))
+    softmaskEnd <- suppressWarnings(
+        ifelse(grepl("[0-9]+S$", alns$cigar),
+               as.integer(sub("^.+?([0-9]+)S$", "\\1", alns$cigar)),
+               0L))
+    readLabelParts <- paste0(subseq(x = alns$seq, start = softmaskStart + 1L, width = 2L),
+                             subseq(x = alns$seq, end = width(alns$seq) - softmaskEnd, width = 3L))
+
+    # run readModBam
+    se <- readModBam(bamfiles = modbamfile, modbase = "a", regions = varpos,
+                     variantPositions = varpos)
+    varposToSortedIdx <- match(varpos, metadata(se)$variantPositions)
+
+    # compare to expected labels
+    extractLabelParts <- unlist(lapply(seq_along(alns$qname), function(i) {
+        rid <- alns$qname[i]
+        idx <- varposToSortedIdx[mcols(varpos)$names == rid]
+        paste(
+            strsplit(se$read_info$s1$variant_label[match(paste0("s1-", rid),
+                                                         rownames(se$read_info$s1))],
+                     "")[[1]][idx],
+            collapse = "")
+    }))
+    expect_identical(sort(varpos), metadata(se)$variantPositions)
+    expect_identical(extractLabelParts, readLabelParts)
+    expect_true(all(grepl("^-.*--$", se$read_info$s1$variant_label))) # missed positions
+})
