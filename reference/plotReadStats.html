@@ -52,7 +52,7 @@ calculated by <code><a href="calcReadStats.html">addReadStats</a></code>.</p>
 <span>  readInfoCol <span class="op">=</span> <span class="st">"read_info"</span>,</span>
 <span>  qcCol <span class="op">=</span> <span class="st">"QC"</span>,</span>
 <span>  minQscore <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  minEntropy <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  maxEntropy <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  maxFracLowConf <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  minReadLength <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minAlignedLength <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -81,7 +81,7 @@ column exists.</p></dd>
 <code>calcReadStats</code>). Can be <code>NULL</code> if no such column exists.</p></dd>
 
 
-<dt id="arg-minqscore-minentropy-maxfraclowconf-minreadlength-minalignedlength-minalignedfraction">minQscore, minEntropy, maxFracLowConf, minReadLength, minAlignedLength, minAlignedFraction<a class="anchor" aria-label="anchor" href="#arg-minqscore-minentropy-maxfraclowconf-minreadlength-minalignedlength-minalignedfraction"></a></dt>
+<dt id="arg-minqscore-maxentropy-maxfraclowconf-minreadlength-minalignedlength-minalignedfraction">minQscore, maxEntropy, maxFracLowConf, minReadLength, minAlignedLength, minAlignedFraction<a class="anchor" aria-label="anchor" href="#arg-minqscore-maxentropy-maxfraclowconf-minreadlength-minalignedlength-minalignedfraction"></a></dt>
 <dd><p>Numeric scalars representing possible threshold values used in
 <code><a href="filterReads.html">filterReads</a></code>, for illustration in the plot panels.</p></dd>
 

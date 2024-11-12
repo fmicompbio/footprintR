@@ -50,7 +50,7 @@
 <span>  readInfoCol <span class="op">=</span> <span class="st">"read_info"</span>,</span>
 <span>  qcCol <span class="op">=</span> <span class="st">"QC"</span>,</span>
 <span>  minQscore <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  minEntropy <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  maxEntropy <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  maxFracLowConf <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  minReadLength <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minAlignedLength <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -92,9 +92,9 @@ read-level Qscore. Reads with Qscore below this value will be filtered
 out.</p></dd>
 
 
-<dt id="arg-minentropy">minEntropy<a class="anchor" aria-label="anchor" href="#arg-minentropy"></a></dt>
-<dd><p>A numeric scalar representing the smallest acceptable
-read-level entropy. Reads with entropy below this value will be filtered
+<dt id="arg-maxentropy">maxEntropy<a class="anchor" aria-label="anchor" href="#arg-maxentropy"></a></dt>
+<dd><p>A numeric scalar representing the largest acceptable
+read-level entropy. Reads with entropy above this value will be filtered
 out.</p></dd>
 
 
