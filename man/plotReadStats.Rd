@@ -9,7 +9,7 @@ plotReadStats(
   readInfoCol = "read_info",
   qcCol = "QC",
   minQscore = 0,
-  minEntropy = 0,
+  maxEntropy = Inf,
   maxFracLowConf = 1,
   minReadLength = 0,
   minAlignedLength = 0,
@@ -28,7 +28,7 @@ column exists.}
 \code{colData} that contains quality metrics (calculated by
 \code{calcReadStats}). Can be \code{NULL} if no such column exists.}
 
-\item{minQscore, minEntropy, maxFracLowConf, minReadLength, minAlignedLength, minAlignedFraction}{Numeric scalars representing possible threshold values used in
+\item{minQscore, maxEntropy, maxFracLowConf, minReadLength, minAlignedLength, minAlignedFraction}{Numeric scalars representing possible threshold values used in
 \code{\link{filterReads}}, for illustration in the plot panels.}
 }
 \value{
