@@ -23,6 +23,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// labelDists
+Rcpp::NumericMatrix labelDists(std::vector<std::string> labels, int minOverlap);
+RcppExport SEXP _footprintR_labelDists(SEXP labelsSEXP, SEXP minOverlapSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type labels(labelsSEXP);
+    Rcpp::traits::input_parameter< int >::type minOverlap(minOverlapSEXP);
+    rcpp_result_gen = Rcpp::wrap(labelDists(labels, minOverlap));
+    return rcpp_result_gen;
+END_RCPP
+}
 // complement
 char complement(char n);
 RcppExport SEXP _footprintR_complement(SEXP nSEXP) {
@@ -80,6 +92,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
+    {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
