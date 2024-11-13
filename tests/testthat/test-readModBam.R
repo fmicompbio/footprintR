@@ -349,4 +349,32 @@ test_that("readModBam correctly labels reads", {
     expect_identical(sort(varpos), metadata(se)$variantPositions)
     expect_identical(extractLabelParts, readLabelParts)
     expect_true(all(grepl("^-.*--$", se$read_info$s1$variant_label))) # missed positions
+
+    # positions that are known to be variables across reads
+    varpos2 <- GPos(seqnames = "chr1", pos = c(6937731, 6937788, 6937843, 6937857,
+                                               6937873, 6937931, 6937932, 6938070,
+                                               6938109))
+
+    se2 <- readModBam(bamfiles = modbamfile, modbase = "a", regions = varpos2,
+                      variantPositions = varpos2)
+    bases <- c("A", "C", "G", "T")
+    expCnt <- matrix(
+        as.integer(c(0, 8, 0, 2,
+                     0, 8, 0, 2,
+                     8, 0, 2, 0,
+                     8, 0, 2, 0,
+                     2, 0, 7, 0,
+                     0, 2, 7, 0,
+                     2, 0, 7, 0,
+                     2, 0, 7, 0,
+                     0, 2, 7, 0)),
+        ncol = 4, byrow = TRUE, dimnames = list(NULL, bases))
+    obsCnt <- do.call(rbind, lapply(seq.int(9), function(i) {
+        f <- factor(
+            unlist(lapply(se2$read_info$s1$variant_label, substr, i, i)),
+            levels = bases
+        )
+        unclass(table(f))
+    }))
+    expect_identical(obsCnt, expCnt)
 })
