@@ -54,22 +54,12 @@
 #'   phasogram, \code{\link{calcAndCountDist}} for low-level distance counting.
 #'
 #' @examples
-#' modbamfiles <- system.file("extdata",
-#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
-#'                            package = "footprintR")
+#' modbamfiles <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
 #' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
 #'
-#' # get distances for each sample
+#' # get distances
 #' moddist <- calcModbaseSpacing(se)
-#'
-#' # analyze NRL for sample 's1'
-#' print(estimateNRL(moddist$s1)[1:2])
-#' plotModbaseSpacing(moddist$s1)
-#' plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
-#'
-#' # combine samples
-#' moddistComb <- Reduce("+", moddist)
-#' print(estimateNRL(moddistComb)[1:2])
+#' str(moddist)
 #'
 #' @importFrom SummarizedExperiment assays assayNames assay start
 #'
@@ -163,7 +153,22 @@ calcModbaseSpacing <- function(se,
 #'   annotated distance frequencies between modified bases.
 #'
 #' @examples
-#'   # see the help for calcModbaseSpacing() for a full example
+#' # read base modifications
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#'
+#' # get distances for each sample
+#' moddist <- calcModbaseSpacing(se)
+#'
+#' # analyze NRL for each sample
+#' print(estimateNRL(moddist$s1)[1:2])
+#' print(estimateNRL(moddist$s2)[1:2])
+#'
+#' # combine samples
+#' moddistComb <- Reduce("+", moddist)
+#' print(estimateNRL(moddistComb)[1:2])
 #'
 #' @importFrom stats loess lm confint residuals predict coefficients
 #' @importFrom IRanges IRanges Views viewApply
@@ -255,7 +260,17 @@ estimateNRL <- function(x,
 #'   estimate nucleosome repeat length.
 #'
 #' @examples
-#'   # see the help for calcModbaseSpacing() for a full example
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#'
+#' # get distances for each sample
+#' moddist <- calcModbaseSpacing(se)
+#'
+#' # analyze and plot NRL for sample 's1'
+#' plotModbaseSpacing(moddist$s1)
+#' plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
 #'
 #' @importFrom stats residuals summary.lm
 #' @importFrom IRanges IRanges start end

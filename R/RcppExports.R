@@ -23,6 +23,11 @@
 #'     (repeated calls to \code{calcAndCountDist} will increment existing
 #'     counts).
 #'
+#' @examples
+#' cnt <- c(0, 0, 0)
+#' calcAndCountDist(c(1, 4, 8), c(2, 3, 4, 5, 8, 9, 10), cnt)
+#' cnt
+#'
 #' @return \code{numeric} vector \code{cnt}, where \code{cnt[d]} correspond to
 #'   the number of observed distances \code{d}.
 #'

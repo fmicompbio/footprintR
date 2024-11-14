@@ -53,7 +53,17 @@ create three plots (using \code{par(mfrow=c(1,3))}):
 }
 }
 \examples{
-  # see the help for calcModbaseSpacing() for a full example
+modbamfiles <- system.file("extdata",
+                           c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                           package = "footprintR")
+se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+
+# get distances for each sample
+moddist <- calcModbaseSpacing(se)
+
+# analyze and plot NRL for sample 's1'
+plotModbaseSpacing(moddist$s1)
+plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
 
 }
 \seealso{
