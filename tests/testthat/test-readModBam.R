@@ -357,18 +357,18 @@ test_that("readModBam correctly labels reads", {
 
     se2 <- readModBam(bamfiles = modbamfile, modbase = "a", regions = varpos2,
                       variantPositions = varpos2)
-    bases <- c("A", "C", "G", "T")
+    bases <- c("A", "C", "G", "T", "-")
     expCnt <- matrix(
-        as.integer(c(0, 8, 0, 2,
-                     0, 8, 0, 2,
-                     8, 0, 2, 0,
-                     8, 0, 2, 0,
-                     2, 0, 7, 0,
-                     0, 2, 7, 0,
-                     2, 0, 7, 0,
-                     2, 0, 7, 0,
-                     0, 2, 7, 0)),
-        ncol = 4, byrow = TRUE, dimnames = list(NULL, bases))
+        as.integer(c(0, 8, 0, 2, 0,
+                     0, 8, 0, 2, 0,
+                     8, 0, 2, 0, 0,
+                     8, 0, 2, 0, 0,
+                     2, 0, 7, 0, 1,
+                     0, 2, 7, 0, 1,
+                     2, 0, 7, 0, 1,
+                     2, 0, 7, 0, 1,
+                     0, 2, 7, 0, 1)),
+        ncol = length(bases), byrow = TRUE, dimnames = list(NULL, bases))
     obsCnt <- do.call(rbind, lapply(seq.int(9), function(i) {
         f <- factor(
             unlist(lapply(se2$read_info$s1$variant_label, substr, i, i)),
