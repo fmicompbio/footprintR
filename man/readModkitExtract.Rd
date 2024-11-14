@@ -70,9 +70,7 @@ single SummarizedExperiment object with rows representing positions and
 columns representing samples. The SummarizedExperiment object
 contains one assay (\code{mod_prob}) with modification probabilities for
 each position in each read. Unobserved read/position combinations are
-represented by \code{NA}, while all values that are 'implicitly' called by
-modkit (with a modification probability less than 5\%) are represented with
-a value of 0.02.
+represented by \code{NA}.
 }
 \examples{
 extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",

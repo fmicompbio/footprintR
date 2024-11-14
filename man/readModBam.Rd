@@ -88,7 +88,8 @@ with each column (sample) corresponding to a position-by-read
 \description{
 Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
 section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
-object with information on modified bases.
+object with information on modified bases. Implicitly called bases will get
+a modification probability of zero.
 }
 \examples{
 modbamfile <- system.file("extdata", "6mA_1_10reads.bam",

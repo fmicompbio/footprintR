@@ -2,7 +2,8 @@
 #'
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
 #' section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
-#' object with information on modified bases.
+#' object with information on modified bases. Implicitly called bases will get
+#' a modification probability of zero.
 #'
 #' @param bamfiles Character vector with one or several paths of \code{modBAM}
 #'     files, containing information about base modifications in \code{MM} and
@@ -185,12 +186,11 @@ readModBam <- function(bamfiles,
         # convert 0-based ref_position to 1-based
         resL$ref_position <- resL$ref_position + 1L
 
-        # convert inferred `mod_prob` to our minimal value as in
-        # readModkitExtract(). Inferred means that the modification was omitted
-        # from the BAM file, e.g. DORADO omits base modification probabilities
-        # less than 0.05, and read_modbam_cpp returns a mod_prob of -1 for
-        # these.
-        resL$mod_prob[resL$mod_prob == -1] <- 0.02
+        # convert inferred `mod_prob` to zero. Inferred means that the
+        # modification was omitted from the BAM file, e.g. DORADO omits base
+        # modification probabilities less than 0.05, and read_modbam_cpp returns
+        # a mod_prob of -1 for these.
+        resL$mod_prob[resL$mod_prob == -1] <- 0
         resL
     }, mc.cores = ncpu)
 
