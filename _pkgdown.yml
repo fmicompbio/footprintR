@@ -36,7 +36,6 @@ reference:
   - calcReadStats
   - extractSeqContext
   - getAnchorRegions
-  - modkitExtract
 - title: Nucleosome repeat length (NRL) analysis
   desc: "Functions for calculating and visualizing distance distributions between modified bases and estimate NRL."
   contents:
