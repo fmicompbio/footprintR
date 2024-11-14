@@ -6,9 +6,9 @@ test_that(".filterPositionsByCoverage works", {
     se <- addReadsSummary(se, keep.reads = TRUE)
 
     ## Calculate coverage
-    cov_total <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) > 0), na.rm = TRUE)
+    cov_total <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) >= 0), na.rm = TRUE)
     cov_bysample <- as.matrix(endoapply(assay(se, "mod_prob"), function(x) {
-        rowSums(x > 0, na.rm = TRUE)
+        rowSums(x >= 0, na.rm = TRUE)
     }))
     expect_equal(rowSums(cov_bysample), cov_total, ignore_attr = TRUE)
 
@@ -244,7 +244,7 @@ test_that("filterPositions works", {
     expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("TAG")))
     expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
                                        pos(rowRanges(sefilt))))))
-    
+
     ## Filter out reads that are NA in all positions
     sefilt <- filterPositions(se, c("sequence.context"),
                               sequence.context = "ATG")

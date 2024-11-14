@@ -107,9 +107,9 @@ filtering parameters are stored in the attribute of the output.
 values are:
 \describe{
 \item{MeanModProb}{: Mean modification probability across the read.}
-\item{FracMod}{: Fraction of confidently modified bases, defined as the
-ratio of modifiable bases with modification probability >= 0.5 over
-all modifiable bases.}
+\item{FracMod}{: Fraction of confidently called bases (either modified
+or unmodified), that are modified. By default, all bases are
+considered confidently called.}
 \item{MeanConf}{:  Mean call confidence across the read.}
 \item{MeanConfUnm}{: Mean call confidence confined to unmodified bases
 (modifiable bases with modification probability < 0.5).}

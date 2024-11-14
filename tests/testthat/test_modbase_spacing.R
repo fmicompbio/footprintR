@@ -33,7 +33,7 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     p1 <- plotModbaseSpacing(x = pg1comb, hide = FALSE, usePeaks = 2:4)
     p2 <- plotModbaseSpacing(x = pg1comb, detailedPlots = TRUE, usePeaks = 2:4)
     expect_s3_class(p1, "ggplot")
-    expect_identical(dim(p1$data), c(2720L, 3L))
+    expect_identical(dim(p1$data), c(2722L, 3L))
     expect_s3_class(p2, "ggplot")
     expect_identical(dim(p2$data), c(3L, 2L))
     tf <- tempfile(fileext = ".pdf")
@@ -56,7 +56,7 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
 
     nrl <- estimateNRL(pg1comb, usePeaks = 1:5)
     expect_type(nrl, "list")
-    expect_equal(nrl$nrl, 183.9)
+    expect_equal(nrl$nrl, 184.3)
     expect_length(nrl$nrl.CI95, 2L)
 
     expect_equal(calcAndCountDist(c(1,2,4),c(1,3,5),numeric(4)), c(2,1,1,1))

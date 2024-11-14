@@ -67,9 +67,9 @@
 #' values are:
 #' \describe{
 #'     \item{MeanModProb}{: Mean modification probability across the read.}
-#'     \item{FracMod}{: Fraction of confidently modified bases, defined as the
-#'         ratio of modifiable bases with modification probability >= 0.5 over
-#'         all modifiable bases.}
+#'     \item{FracMod}{: Fraction of confidently called bases (either modified
+#'         or unmodified), that are modified. By default, all bases are
+#'         considered confidently called.}
 #'     \item{MeanConf}{:  Mean call confidence across the read.}
 #'     \item{MeanConfUnm}{: Mean call confidence confined to unmodified bases
 #'         (modifiable bases with modification probability < 0.5).}
@@ -146,7 +146,7 @@ calcReadStats <- function(se,
     statFunctions <- list(
         MeanModProb = mean,
         FracMod = function(x, c = 0.5) {
-            sum(x >= (0.5 + (c - 0.5))) / sum(abs(0.5 - x) > (c - 0.5))
+            sum(x >= (0.5 + (c - 0.5))) / sum(abs(0.5 - x) >= (c - 0.5))
         },
         MeanConf = function(x) {
             mean(pmax(x, 1 - x))
@@ -155,7 +155,7 @@ calcReadStats <- function(se,
             mean((1 - x)[x < 0.5])
         },
         MeanConfMod = function(x) {
-            mean((x)[x >= 0.5])
+            mean(x[x >= 0.5])
         },
         FracLowConf = function(x, c = LowConf) {
             sum(abs(0.5 - x) < (c - 0.5)) / length(x)
@@ -170,7 +170,7 @@ calcReadStats <- function(se,
             }
         },
         Lag1DModProb = function(x) {
-            xC <- as.numeric(x > 0.5)
+            xC <- as.numeric(x >= 0.5)
             mean(abs(diff(xC, lag = 1)))
         },
         ACModProb = function(x, lag.max = max(LagRange),
@@ -253,11 +253,7 @@ calcReadStats <- function(se,
             MeanModProb <- rowSums(mat) / Nobs
 
             # Include in calculations only reads with sufficient Number of observations:
-            if (min.Nobs.pread > 0) {
-                use.reads <- colnames(mat)[NobsReads > min.Nobs.pread]
-            } else {
-                use.reads <- colnames(mat)
-            }
+            use.reads <- colnames(mat)[NobsReads >= min.Nobs.pread]
 
             if (!is.null(stats)) {
                 param_names <- stats

@@ -693,8 +693,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
-                     regcnt, regcnt > 1 ? "s" : "");
+            snprintf(buffer, buffer_len,
+                     "reading alignments overlapping {%u} target{?s}",
+                     regcnt);
             cli_alert_info(buffer);
         }
         // read overlapping alignments using iterator
@@ -757,8 +758,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
-                     regcnt, regcnt > 1 ? "s" : "");
+            snprintf(buffer, buffer_len,
+                     "reading alignments overlapping {%u} target{?s}",
+                     regcnt);
             cli_alert_info(buffer);
         }
         // read overlapping alignments using iterator

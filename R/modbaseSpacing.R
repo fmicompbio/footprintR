@@ -195,8 +195,8 @@ estimateNRL <- function(x,
     }
 
     pos <- seq_along(x)
-    xs <- predict(loess(x ~ pos, subset = pos > mind, span = span1), pos)
-    fit <- loess(xs ~ pos, subset = pos > mind, span = span2)
+    xs <- predict(loess(x ~ pos, subset = pos >= mind, span = span1), pos)
+    fit <- loess(xs ~ pos, subset = pos >= mind, span = span2)
     rx <- residuals(fit)
     irpos <- as(rx >= 0, "IRanges")
     xposmax <- viewApply(X = Views(rx, irpos),
@@ -309,7 +309,7 @@ plotModbaseSpacing <- function(x,
     pd <- data.frame(pos = seq_along(x),
                      type = factor(rep(types, each = length(x)), levels = types),
                      cnt = c(x, nrl$xs,
-                             c(rep(NA, nrl$mind), nrl$loessfit$fitted))) |>
+                             c(rep(NA, nrl$mind - 1L), nrl$loessfit$fitted))) |>
         filter(!is.na(.data[["cnt"]]))
     ylim <- range(pd$cnt, na.rm = TRUE)
 
@@ -339,7 +339,7 @@ plotModbaseSpacing <- function(x,
         # residual distances plot
         rx <- residuals(nrl$loessfit)
         pd2 <- data.frame(pos = seq_along(x),
-                          resid = c(rep(NA, nrl$mind), rx)) |>
+                          resid = c(rep(NA, nrl$mind - 1L), rx)) |>
             filter(!is.na(.data[["resid"]]))
         irpos <- as(pd2$resid >= 0, "IRanges")
 

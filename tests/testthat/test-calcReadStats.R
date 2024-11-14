@@ -28,16 +28,16 @@ test_that("calcReadStats works", {
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1, na.rm = TRUE) /
-                     colSums(assay(se)$s1 > 0, na.rm = TRUE),
+                     colSums(assay(se)$s1 >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 colSums(assay(se)$s1 > 0.5, na.rm = TRUE) /
-                     colSums(assay(se)$s1 > 0, na.rm = TRUE),
+                 colSums(assay(se)$s1 >= 0.5, na.rm = TRUE) /
+                     colSums(assay(se)$s1 >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_type(S4Vectors::metadata(qc), "list")
 
     ## Default coverage requirement
-    Nobs <- rowSums(SummarizedExperiment::assay(se)[["s1"]] > 0, na.rm = TRUE)
+    Nobs <- rowSums(SummarizedExperiment::assay(se)[["s1"]] >= 0, na.rm = TRUE)
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
@@ -61,11 +61,11 @@ test_that("calcReadStats works", {
                         colnames(qc)))
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1[idx, ], na.rm = TRUE) /
-                     colSums(assay(se)$s1[idx, ] > 0, na.rm = TRUE),
+                     colSums(assay(se)$s1[idx, ] >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_equal(qc$FracMod,
-                 colSums(assay(se)$s1[idx, ] > 0.5, na.rm = TRUE) /
-                     colSums(assay(se)$s1[idx, ] > 0, na.rm = TRUE),
+                 colSums(assay(se)$s1[idx, ] >= 0.5, na.rm = TRUE) /
+                     colSums(assay(se)$s1[idx, ] >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
 
     ## Using `regions` and large LagRange
@@ -77,7 +77,7 @@ test_that("calcReadStats works", {
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 12L))
-    expect_equal(sum(rs1$s1$MeanModProb), 1.52775200714286)
+    expect_equal(sum(rs1$s1$MeanModProb), 1.400375383766)
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
 
@@ -102,7 +102,7 @@ test_that("calcReadStats works", {
     expect_identical(rs1$s1, rs2$s1)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 1L))
-    expect_equal(sum(rs1$s1$MeanModProb), 0.65811757757861633067)
+    expect_equal(sum(rs1$s1$MeanModProb), 0.4934760681446542)
 })
 
 test_that("addReadStats works", {

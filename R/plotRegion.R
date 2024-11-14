@@ -182,15 +182,7 @@ plotRegion <- function(se,
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
-    if (!is.null(sequence.context)) {
-        if (is.null(rowData(se)$sequence.context)) {
-            stop("No sequence context found in `rowData(se)$sequence.context`")
-        }
-        nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
-            vcountPattern(pat, rowData(se)$sequence.context, fixed = FALSE)
-        }), rep(0, nrow(se)))
-        se <- se[nmatch > 0]
-    }
+    se <- .keepPositionsBySequenceContext(se = se, sequence.context = sequence.context)
 
     ## create plots
     pL <- list()
