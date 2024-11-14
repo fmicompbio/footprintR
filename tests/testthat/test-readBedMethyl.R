@@ -27,6 +27,7 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, modbase = 'm', sequence.context.width = 1, sequence.reference = "error"))
     expect_error(readBedMethyl(fname1, modbase = 'm', ncpu = "error"))
     expect_error(readBedMethyl(fname1, modbase = 'm', verbose = "error"))
+    expect_error(readBedMethyl(c(a = fname1, a = fname2), modbase = c(a = 'm', a = 'a')))
 
     # expected results
     se0 <- readBedMethyl(fnames = fname1, modbase = 'a')
@@ -61,7 +62,7 @@ test_that("readBedMethyl works", {
     expect_identical(colnames(colData(se1)), c("sample", "modbase"))
     expect_identical(colnames(colData(se2)), c("sample", "modbase"))
     expect_identical(colnames(colData(se12)), c("sample", "modbase"))
-    expect_identical(colnames(colData(se11)), c("sample", "modbase", "ids", "nfiles"))
+    expect_identical(colnames(colData(se11)), c("sample", "modbase"))
     expect_identical(dim(se0), c(0L, 1L))
     expect_identical(dim(se1), c(10000L, 1L))
     expect_identical(dim(se2), c(10000L, 1L))
@@ -89,8 +90,8 @@ test_that("readBedMethyl works", {
                      assay(se12, "Nmod")[i2to12, 2, drop = FALSE])
     expect_identical(assay(se2, "Nvalid"),
                      assay(se12, "Nvalid")[i2to12, 2, drop = FALSE])
-    expect_identical(sum(assay(se12, "Nmod")), sum(assay(se11, "Nmod")))
-    expect_identical(sum(assay(se12, "Nvalid")), sum(assay(se11, "Nvalid")))
+    expect_identical(rowSums(assay(se12, "Nmod")), rowSums(assay(se11, "Nmod")))
+    expect_identical(rowSums(assay(se12, "Nvalid")), rowSums(assay(se11, "Nvalid")))
     expect_true("sequence.context" %in% colnames(rowData(se2)))
     expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
                  c(844L, 7535L, 801L, 820L))

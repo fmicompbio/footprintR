@@ -57,7 +57,6 @@
 #' @importFrom GenomicRanges GPos match sort resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom S4Vectors mcols mcols<- DataFrame
-#' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
@@ -98,6 +97,9 @@ readBedMethyl <- function(fnames,
         stop("invalid `modbase` values: ",
              paste(unique(modbase[i]), collapse = ", "))
     }
+    if (any(lengths(lapply(split(modbase, names(modbase)), unique)) != 1L)) {
+        stop("at least one sample was defined to have more than one modbase")
+    }
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
@@ -114,7 +116,7 @@ readBedMethyl <- function(fnames,
     }
 
     # get sample names
-    nms <- names(fnames)
+    nms <- unique(names(fnames))
 
     # load data
     .message("reading input files")
@@ -160,12 +162,13 @@ readBedMethyl <- function(fnames,
     }
 
     # create assays
-    nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(dfL),
+    nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(nms),
                            dimnames = list(NULL, nms))
     for (i in seq_along(dfL)) {
         i_row <- match(gposL[[i]], gpos)
-        nmod[i_row, i] <- dfL[[i]]$N_mod
-        nval[i_row, i] <- dfL[[i]]$N_valid
+        i_col <- match(names(dfL)[i], nms)
+        nmod[i_row, i_col] <- nmod[i_row, i_col] + dfL[[i]]$N_mod
+        nval[i_row, i_col] <- nval[i_row, i_col] + dfL[[i]]$N_valid
     }
 
     # create summarized experiment
@@ -173,24 +176,12 @@ readBedMethyl <- function(fnames,
         assays = list(Nmod = nmod, Nvalid = nval),
         rowRanges = gpos,
         colData = DataFrame(
-            row.names = names(fnames),
-            sample = names(fnames),
-            modbase = modbase[names(fnames)]
+            row.names = nms,
+            sample = nms,
+            modbase = modbase[nms]
         ),
         metadata = list(readLevelData = list(assayNames = character(0),
                                              colDataColumns = character(0))))
-
-    # collapse to unique names
-    if (any(duplicated(nms))) {
-        se <- aggregateAcrossCells(
-            x = se,
-            ids = nms,
-            statistics = "sum",
-            suffix = FALSE,
-            store_number = "nfiles",
-            use.assay.type = assayNames(se)
-        )
-    }
 
     # return
     return(se)

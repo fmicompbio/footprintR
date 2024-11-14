@@ -28,7 +28,6 @@ Imports:
     Biostrings,
     BSgenome,
     data.table,
-    scuttle,
     parallel,
     dplyr,
     tidyr,
