@@ -10,7 +10,7 @@ filterReads(
   readInfoCol = "read_info",
   qcCol = "QC",
   minQscore = 0,
-  minEntropy = 0,
+  maxEntropy = Inf,
   maxFracLowConf = 1,
   minReadLength = 0,
   minAlignedLength = 0,
@@ -38,8 +38,8 @@ column exists.}
 read-level Qscore. Reads with Qscore below this value will be filtered
 out.}
 
-\item{minEntropy}{A numeric scalar representing the smallest acceptable
-read-level entropy. Reads with entropy below this value will be filtered
+\item{maxEntropy}{A numeric scalar representing the largest acceptable
+read-level entropy. Reads with entropy above this value will be filtered
 out.}
 
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable

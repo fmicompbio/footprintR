@@ -14,8 +14,8 @@
 #' @param minQscore A numeric scalar representing the smallest acceptable
 #'     read-level Qscore. Reads with Qscore below this value will be filtered
 #'     out.
-#' @param minEntropy A numeric scalar representing the smallest acceptable
-#'     read-level entropy. Reads with entropy below this value will be filtered
+#' @param maxEntropy A numeric scalar representing the largest acceptable
+#'     read-level entropy. Reads with entropy above this value will be filtered
 #'     out.
 #' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 #'     fraction of low-confidence modified base calls in a read. Reads with
@@ -58,7 +58,7 @@
 #'
 filterReads <- function(se, assay.type.read = "mod_prob",
                         readInfoCol = "read_info", qcCol = "QC",
-                        minQscore = 0, minEntropy = 0,
+                        minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
                         prune = TRUE) {
@@ -72,7 +72,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
     .assertScalar(x = minQscore, type = "numeric")
-    .assertScalar(x = minEntropy, type = "numeric")
+    .assertScalar(x = maxEntropy, type = "numeric")
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minReadLength, type = "numeric")
     .assertScalar(x = minAlignedLength, type = "numeric")
@@ -119,7 +119,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
 
         ## KS entropy
         if (!is.null(qc) && "SEntrModProb" %in% colnames(qc)) {
-            readsToRemove[[nm]][which(qc$SEntrModProb < minEntropy),
+            readsToRemove[[nm]][which(qc$SEntrModProb > maxEntropy),
                                 "Entropy"] <- TRUE
         }
 

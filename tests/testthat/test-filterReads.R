@@ -30,10 +30,10 @@ test_that("filterReads works", {
                  "'minQscore' must be of class 'numeric'")
     expect_error(filterReads(se = se, qcCol = "qcc", minQscore = c(1, 2)),
                  "'minQscore' must have length 1")
-    expect_error(filterReads(se = se, qcCol = "qcc", minEntropy = "1"),
-                 "'minEntropy' must be of class 'numeric'")
-    expect_error(filterReads(se = se, qcCol = "qcc", minEntropy = c(1, 2)),
-                 "'minEntropy' must have length 1")
+    expect_error(filterReads(se = se, qcCol = "qcc", maxEntropy = "1"),
+                 "'maxEntropy' must be of class 'numeric'")
+    expect_error(filterReads(se = se, qcCol = "qcc", maxEntropy = c(1, 2)),
+                 "'maxEntropy' must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", maxFracLowConf = "1"),
                  "'maxFracLowConf' must be of class 'numeric'")
     expect_error(filterReads(se = se, qcCol = "qcc", maxFracLowConf = c(0.5, 0.7)),
@@ -75,38 +75,40 @@ test_that("filterReads works", {
 
     ## Some filtering
     out1 <- filterReads(se, qcCol = "qcc", readInfoCol = "read_info",
-                        minQscore = 13, minEntropy = 0.2,
+                        minQscore = 13, maxEntropy = 0.2,
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")
     expect_equal(dim(out1)[2], dim(se)[2])
-    expect_equal(dim(out1), c(7372L, 2L))
-    expect_equal(nrow(out1$qcc$s1), 5L)
-    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(4, 5, 6, 7, 10)])
-    expect_equal(nrow(out1$qcc$s2), 2L)
-    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(4, 6)])
+    expect_equal(dim(out1), c(6583L, 2L))
+    expect_equal(nrow(out1$qcc$s1), 3L)
+    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3, 9)])
+    expect_equal(nrow(out1$qcc$s2), 4L)
+    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7, 10)])
     expect_s4_class(metadata(out1)$filteredOutReads$s1, "SparseMatrix")
     expect_s4_class(metadata(out1)$filteredOutReads$s2, "SparseMatrix")
-    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(5, 7))
-    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(8, 7))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(7, 7))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(6, 7))
     expect_equal(colnames(metadata(out1)$filteredOutReads$s1),
                  c("Qscore", "Entropy", "FracLowConf", "ReadLength",
                    "AlignedLength", "AlignedFraction", "AllNA"))
 
     ## Only QC filtering
     out1 <- filterReads(se, qcCol = "qcc", readInfoCol = NULL,
-                        minQscore = 13, minEntropy = 0.2, maxFracLowConf = 0.1,
+                        minQscore = 13, maxEntropy = 0.2, maxFracLowConf = 0.1,
                         minReadLength = 8000, minAlignedLength = 5000,
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")
-    expect_equal(dim(out1), c(8549L, 2L))
-    expect_equal(nrow(out1$qcc$s1), 6L)
-    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[-c(2, 3, 8, 9)])
-    expect_equal(nrow(out1$qcc$s2), 3L)
-    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(1, 4, 6)])
+    ## calculate using length(which(rowSums(is_nonna(assay(se, "mod_prob")[["s1"]][, c(2, 3, 9)])) > 0 | rowSums(is_nonna(assay(se, "mod_prob")[["s2"]][, c(3, 5, 7, 10)])) > 0))
+    expect_equal(dim(out1), c(6583L, 2L))
+    ## calculate using se$qcc$s1$SEntrModProb < 0.2 & se$qcc$s1$FracLowConf < 0.1
+    expect_equal(nrow(out1$qcc$s1), 3L)
+    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3, 9)])
+    expect_equal(nrow(out1$qcc$s2), 4L)
+    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7, 10)])
 
     ## Only read info filtering
     out1 <- filterReads(se, qcCol = NULL, readInfoCol = "read_info",
-                        minQscore = 13, minEntropy = 0.2,
+                        minQscore = 13, maxEntropy = 0.2,
                         minReadLength = 8000, minAlignedLength = 5000,
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")

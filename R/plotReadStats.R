@@ -12,7 +12,7 @@
 #' @param qcCol A character scalar providing the name of the column in
 #'     \code{colData} that contains quality metrics (calculated by
 #'     \code{calcReadStats}). Can be \code{NULL} if no such column exists.
-#' @param minQscore,minEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction
+#' @param minQscore,maxEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction
 #'     Numeric scalars representing possible threshold values used in
 #'     \code{\link{filterReads}}, for illustration in the plot panels.
 #'
@@ -38,7 +38,7 @@
 #'
 #' @export
 plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
-                          minQscore = 0, minEntropy = 0,
+                          minQscore = 0, maxEntropy = Inf,
                           maxFracLowConf = 1, minReadLength = 0,
                           minAlignedLength = 0, minAlignedFraction = 0) {
     # check arguments
@@ -48,7 +48,7 @@ plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
     .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
     .assertScalar(x = minQscore, type = "numeric")
-    .assertScalar(x = minEntropy, type = "numeric")
+    .assertScalar(x = maxEntropy, type = "numeric")
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minReadLength, type = "numeric")
     .assertScalar(x = minAlignedLength, type = "numeric")
@@ -79,7 +79,7 @@ plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
     map2thresh <- c(qscore = minQscore, read_length = minReadLength,
                     aligned_length = minAlignedLength,
                     aligned_fraction = minAlignedFraction,
-                    MeanConf = maxFracLowConf, SEntrModProb = minEntropy)
+                    MeanConf = maxFracLowConf, SEntrModProb = maxEntropy)
     threshnms <- intersect(names(map2thresh), colnames(df))
     df2 <- data.frame(key = threshnms, value = map2thresh[threshnms])
 
