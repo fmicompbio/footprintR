@@ -29,9 +29,8 @@
 // [[Rcpp::export]]
 Rcpp::NumericMatrix labelDists(std::vector<std::string> labels,
                                int minOverlap = 2) {
-    unsigned int n = labels.size(), len = labels[0].size();
-    unsigned int i = 0, j = 0;
-    int k = 0, kfrom = 0, kto = 0;
+    int n = (int)labels.size(), len = (int)labels[0].size();
+    int i = 0, j = 0, k = 0, kfrom = 0, kto = 0;
     double ndiff = 0.0;
     Rcpp::NumericMatrix dist(n, n);
 
