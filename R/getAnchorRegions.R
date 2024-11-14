@@ -64,7 +64,7 @@
 #' @author Charlotte Soneson
 #'
 #' @importFrom GenomicRanges GPos match strand
-#' @importFrom SparseArray NaArray cbind colSums
+#' @importFrom SparseArray NaArray cbind colSums is_nonna
 #' @importFrom S4Vectors split endoapply make_zero_col_DFrame DataFrame
 #' @importFrom IRanges DataFrameList
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData assay
@@ -171,7 +171,7 @@ getAnchorRegions <- function(se,
                 # cbind matrices from different regions
                 cbmat <- do.call(cbind, mats)
                 # only keep read-region pairs with at least one non-NA value
-                keep_reads <- which(colSums(cbmat, na.rm = TRUE) > 0)
+                keep_reads <- which(colSums(is_nonna(cbmat)) > 0)
                 cbmat[, keep_reads, drop = FALSE]
             })
         } else {

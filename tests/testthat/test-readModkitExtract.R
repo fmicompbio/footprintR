@@ -97,7 +97,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = NULL),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2471.8587)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2297.13868)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 18531) ## number of rows in the original file
     expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(rme)$sequence.context))),
                  c(A = 82L, C = 6159L, G = 107L, T = 84L), ignore_attr = TRUE)
@@ -127,7 +127,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = c(`m` = 0.6, `-` = 0.5)),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2418.5403)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2243.82032)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 18434) ## number of rows in the original file
 
     # ... single file, automatic filtering
@@ -155,7 +155,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031)),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 1824.64774)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 1649.92774)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 15325) ## number of rows in the original file
 
     # ... multiple files, no filtering
@@ -191,7 +191,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = NULL, s2_5mC = NULL, s1_6mA = NULL),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 9054.297)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8236.457)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 71750) ## total number of rows in the original files
 
     # ... multiple files, manual filtering
@@ -230,7 +230,7 @@ test_that("readModkitExtract works", {
                       s2_5mC = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                       s1_6mA = c(`m` = 0.6, `a` = 0.4, `-` = 0.3)),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8899.0412)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8081.2012)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 71467) ## total number of rows in the original files
 
     # ... multiple files, automatic filtering
@@ -268,6 +268,6 @@ test_that("readModkitExtract works", {
                       s1_6mA = c(`a` = -Inf, `-` = 0.8964844),
                       s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906)),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 6672.8205)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 5854.98049)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 61228) ## total number of rows in the original files
 })

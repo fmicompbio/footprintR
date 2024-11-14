@@ -79,15 +79,15 @@ test_that("filterReads works", {
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")
     expect_equal(dim(out1)[2], dim(se)[2])
-    expect_equal(dim(out1), c(6583L, 2L))
-    expect_equal(nrow(out1$qcc$s1), 3L)
-    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3, 9)])
-    expect_equal(nrow(out1$qcc$s2), 4L)
-    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7, 10)])
+    expect_equal(dim(out1), c(6534L, 2L))
+    expect_equal(nrow(out1$qcc$s1), 2L)
+    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3)])
+    expect_equal(nrow(out1$qcc$s2), 3L)
+    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7)])
     expect_s4_class(metadata(out1)$filteredOutReads$s1, "SparseMatrix")
     expect_s4_class(metadata(out1)$filteredOutReads$s2, "SparseMatrix")
-    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(7, 7))
-    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(6, 7))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(8, 7))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(7, 7))
     expect_equal(colnames(metadata(out1)$filteredOutReads$s1),
                  c("Qscore", "Entropy", "FracLowConf", "ReadLength",
                    "AlignedLength", "AlignedFraction", "AllNA"))
@@ -99,12 +99,12 @@ test_that("filterReads works", {
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")
     ## calculate using length(which(rowSums(is_nonna(assay(se, "mod_prob")[["s1"]][, c(2, 3, 9)])) > 0 | rowSums(is_nonna(assay(se, "mod_prob")[["s2"]][, c(3, 5, 7, 10)])) > 0))
-    expect_equal(dim(out1), c(6583L, 2L))
+    expect_equal(dim(out1), c(6534L, 2L))
     ## calculate using se$qcc$s1$SEntrModProb < 0.2 & se$qcc$s1$FracLowConf < 0.1
-    expect_equal(nrow(out1$qcc$s1), 3L)
-    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3, 9)])
-    expect_equal(nrow(out1$qcc$s2), 4L)
-    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7, 10)])
+    expect_equal(nrow(out1$qcc$s1), 2L)
+    expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[c(2, 3)])
+    expect_equal(nrow(out1$qcc$s2), 3L)
+    expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7)])
 
     ## Only read info filtering
     out1 <- filterReads(se, qcCol = NULL, readInfoCol = "read_info",
