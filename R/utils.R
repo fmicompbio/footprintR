@@ -264,22 +264,32 @@
 #' package.
 #'
 #' @param message The message to be written to the console. It will be
-#'     forwarded to \code{\link[cli]{cli_inform}} and thus supports
+#'     forwarded to \code{\link[cli]{cli_progress_step}} and thus supports
 #'     inline markup (see \code{\link[cli]{inline-markup}}).
-#' @param ... Additional arguments passed to \code{\link[rlang]{inform}}.
+#' @param noTime Logical scalar. If \code{FALSE} (the default), the message is
+#'     generated using \code{\link[cli]{cli_progress_step}}, which will first
+#'     show it with an "info" icon and then again with a "check" icon and timing
+#'     information when the next message is generated or the function terminates.
+#'     If \code{TRUE}, the message is generated using
+#'     \code{\link[cli]{cli_alert_info}}, which means it will be show only once
+#'     with an "info" icon.
+#' @param ... Additional arguments passed to \code{\link[cli]{cli_progress_step}}
+#'     (ignored if \code{noTime = TRUE}).
 #'
-#' @importFrom cli cli_inform
-#' @importFrom rlang caller_env
+#' @importFrom cli cli_progress_step cli_alert_info
 #'
 #' @noRd
 #' @keywords internal
-.message <- function(message, ...) {
+.message <- function(message, noTime = FALSE, ...) {
     # Try to get 'verbose' from the calling environment
-    env <- caller_env(n = 1)
+    env <- parent.frame()
     verbose <- tryCatch(get("verbose", envir = env),
                         error = function(e) FALSE)
     if (verbose) {
-        cli_inform(message = message, ..., call = env,
-                   .envir = env, .frame = env)
+        if (noTime) {
+            cli_alert_info(text = message, .envir = env)
+        } else {
+            cli_progress_step(msg = message, .envir = env, ...)
+        }
     }
 }

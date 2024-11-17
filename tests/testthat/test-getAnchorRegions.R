@@ -431,18 +431,18 @@ test_that("getAnchorRegions works", {
 
     # ... region where neither sample has any overlapping reads
     # ... ... with pruning
-    expect_message(
-        expect_message(
-            expect_message(
-                expect_message(
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            expect_message(expect_message(expect_message(
+                expect_message(expect_message(expect_message(
                     ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                                             regionMidpoints = c("chr1:692915:+"),
                                             regionWidth = 9, prune = TRUE,
                                             ignore.strand = FALSE, verbose = TRUE),
-                    "Creating list of GPos objects for the regions"),
-                "Subsetting assays to selected regions"),
-            "Assembling SummarizedExperiment object"),
-        "Dropping 2 samples without reads")
+                    "Creating list of GPos objects for the regions"), "Creating list of GPos objects for the regions")),
+                "Subsetting assays to selected regions"), "Subsetting assays to selected regions")),
+            "Assembling SummarizedExperiment object"), "Assembling SummarizedExperiment object")),
+        "Dropping 2 samples without reads"), "Dropping 2 samples without reads"))
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
@@ -462,22 +462,22 @@ test_that("getAnchorRegions works", {
     expect_length(ar1$region_Nvalid, 0)
 
     # ... ... with pruning, ignore.strand=TRUE
-    expect_message(
-        expect_message(
-            expect_message(
-                expect_message(
-                    expect_message(
-                        expect_message(
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            expect_message(expect_message(expect_message(
+                expect_message(expect_message(expect_message(
+                    expect_message(expect_message(expect_message(
+                        expect_message(expect_message(expect_message(
                             ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
                                                     regionMidpoints = c("chr1:692915:+"),
                                                     regionWidth = 9, prune = TRUE,
                                                     ignore.strand = TRUE, verbose = TRUE),
-                            "Checking for positions represented by multiple rows"),
-                        "172 rows removed to ensure that each genomic position"),
-                    "Creating list of GPos objects for the regions"),
-                "Subsetting assays to selected regions"),
-            "Assembling SummarizedExperiment object"),
-        "Dropping 2 samples without reads")
+                            "172 rows removed to ensure that each genomic position"), "172 rows removed to ensure that each genomic position")),
+                        "Checking for positions represented by multiple rows"), "Checking for positions represented by multiple rows")),
+                    "Creating list of GPos objects for the regions"), "Creating list of GPos objects for the regions")),
+                "Subsetting assays to selected regions"), "Subsetting assays to selected regions")),
+            "Assembling SummarizedExperiment object"), "Assembling SummarizedExperiment object")),
+        "Dropping 2 samples without reads"), "Dropping 2 samples without reads"))
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))

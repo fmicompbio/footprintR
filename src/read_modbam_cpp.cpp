@@ -531,7 +531,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'
 //' @author Michael Stadler
 //'
-//' @importFrom cli cli_alert_info cli_alert_success
+//' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 //'
 //' @noRd
 //' @keywords internal
@@ -551,8 +551,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     // variable declarations
     // ... R functions
     Rcpp::Environment cli = Rcpp::Environment::namespace_env("cli");
+    Rcpp::Function cli_progress_step = cli["cli_progress_step"];
+    Rcpp::Function cli_progress_done = cli["cli_progress_done"];
     Rcpp::Function cli_alert_info = cli["cli_alert_info"];
-    Rcpp::Function cli_alert_success = cli["cli_alert_success"];
 
     // ... general variables
     int c = 0, i = 0, success = 0;
@@ -606,7 +607,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     // open input file
     if (verbose) {
         snprintf(buffer, buffer_len, "opening input file {.file %s} using {%d} thread{?s}", inname, n_threads);
-        cli_alert_info(buffer);
+        cli_progress_step(buffer);
     }
     if (!(infile = sam_open(inname, "r"))) {
         had_error = true;
@@ -696,7 +697,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             snprintf(buffer, buffer_len,
                      "reading alignments overlapping {%u} target{?s}",
                      regcnt);
-            cli_alert_info(buffer);
+            cli_progress_step(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -761,7 +762,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             snprintf(buffer, buffer_len,
                      "reading alignments overlapping {%u} target{?s}",
                      regcnt);
-            cli_alert_info(buffer);
+            cli_progress_step(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -809,12 +810,13 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     }
 
     if (verbose) {
+        cli_progress_done();
         snprintf(buffer, buffer_len,
                  "removed %d unaligned (e.g. soft-masked) of %d called bases",
                  n_unaligned, n_total);
         cli_alert_info(buffer);
         snprintf(buffer, buffer_len, "read %u alignments", alncnt);
-        cli_alert_success(buffer);
+        cli_alert_info(buffer);
     }
 
     end:

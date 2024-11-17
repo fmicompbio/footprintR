@@ -205,18 +205,19 @@ test_that(".pruneAmbiguousStrandPositions works", {
                                              verbose = FALSE)
     expect_equal(nrow(sefilt), length(unique(paste0(seqnames(rowRanges(se)),
                                                     pos(rowRanges(se))))))
-    expect_message({
+    expect_message(expect_message(expect_message({
         sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "mod_prob",
                                                  verbose = TRUE)},
-        "172 rows removed to ensure"
+        "172 rows removed to ensure"), "172 rows removed to ensure")
     )
     expect_equal(nrow(sefilt), length(unique(paste0(seqnames(rowRanges(se)),
                                                     pos(rowRanges(se))))))
     expect_identical(se[rownames(sefilt), ], sefilt)
-    expect_message({
+    expect_message(expect_message(expect_message({
         sefilt <- .pruneAmbiguousStrandPositions(sefilt, assay.type = "mod_prob",
                                                  verbose = TRUE)},
-        "No genomic positions represented by multiple rows found"
+        "No genomic positions represented by multiple rows found"),
+        "No genomic positions represented by multiple rows found")
     )
 })
 
@@ -261,3 +262,4 @@ test_that("filterPositions works", {
     expect_equal(colSums(is_nonna(assay(sefilt, "mod_prob")$s2)), c(1, 1, 1, 2, 3),
                  ignore_attr = TRUE)
 })
+

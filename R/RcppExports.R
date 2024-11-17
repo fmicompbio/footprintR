@@ -121,7 +121,7 @@ get_unmodified_base <- function(b) {
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom cli cli_alert_info cli_alert_success
+#' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 #'
 #' @noRd
 #' @keywords internal

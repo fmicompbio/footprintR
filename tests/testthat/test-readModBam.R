@@ -66,11 +66,21 @@ test_that("readModBam works", {
     expect_message(expect_message(expect_message(expect_message(
         expect_message(expect_message(expect_message(expect_message(
             expect_message(expect_message(expect_message(expect_message(
-                se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
-                                  modbase = "a", nAlnsToSample = 0,
-                                  sequence.context.width = 1, sequence.reference = ref,
-                                  seqnamesToSampleFrom = "chr1", verbose = TRUE)
-    ))))))))))))
+                expect_message(expect_message(expect_message(expect_message(
+                    expect_message(expect_message(expect_message(expect_message(
+                        expect_message(expect_message(expect_message(expect_message(
+                            expect_message(expect_message(
+                                se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                                                  modbase = "a", nAlnsToSample = 0,
+                                                  sequence.context.width = 1, sequence.reference = ref,
+                                                  seqnamesToSampleFrom = "chr1", verbose = TRUE)
+                            ))
+                        ))))
+                    ))))
+                ))))
+            ))))
+        ))))
+    ))))
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
@@ -107,26 +117,28 @@ test_that("readModBam works", {
         which = GRanges(reg5[1:2])
     ))
     set.seed(55L)
-    expect_message(expect_message(expect_message(
+    expect_warning(
         expect_message(expect_message(expect_message(
-            expect_message(expect_message(
-                expect_warning(
-                    se6a  <- readModBam(bamfiles = modbamfiles[1],
-                                        regions = NULL,
-                                        modbase = "a",
-                                        nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                                        variantPositions = GPos("chr1", pos = 63000000),
-                                        ncpuDecompression = 2,
-                                        verbose = TRUE),
-                    "Ignoring `variantPositions`"),
-                "extracting base modifications"),
-                "opening input file"),
-            "sampling alignments with probability 0.5"),
-            "reading alignments overlapping"),
-            "removed 2006 unaligned"),
-        "read 6 alignments"),
-        "finding unique genomic"),
-        "collapsed 16095 positions to 6852")
+            expect_message(expect_message(expect_message(
+                expect_message(expect_message(
+                    expect_message(expect_message(expect_message(
+                        expect_message(expect_message(
+                            expect_message(expect_message(expect_message(expect_message(
+                                se6a  <- readModBam(bamfiles = modbamfiles[1],
+                                                    regions = NULL,
+                                                    modbase = "a",
+                                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                                    variantPositions = GPos("chr1", pos = 63000000),
+                                                    ncpuDecompression = 2,
+                                                    verbose = TRUE),
+                                "extracting base modifications"))),
+                            "opening input file"))),
+                        "reading alignments overlapping"))),
+                    "removed 2006 unaligned"),
+                    "read 6 alignments"),
+                "finding unique genomic"))),
+            "collapsed 16095 positions to 6852"))),
+        "Ignoring `variantPositions`")
     set.seed(55L)
     se6b  <- readModBam(bamfiles = modbamfiles[1],
                         regions = NULL,

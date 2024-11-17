@@ -24,12 +24,14 @@ test_that("addReadsSummary works", {
     expect_error(addReadsSummary(se = se, verbose = "error"))
 
     # expected results
-    expect_message(expect_message(
-        s1 <- addReadsSummary(se = se,
-                              statistics = c("Nmod", "Nvalid", "FracMod",
-                                             "Pmod", "AvgConf"),
-                              keep.reads = FALSE, verbose = TRUE)
-    ))
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            s1 <- addReadsSummary(se = se,
+                                  statistics = c("Nmod", "Nvalid", "FracMod",
+                                                 "Pmod", "AvgConf"),
+                                  keep.reads = FALSE, verbose = TRUE),
+        "Summarizing reads"), "Summarizing reads")),
+    "Adding 5 summarized assays"), "Adding 5 summarized assays"))
     s2 <- addReadsSummary(se = se, statistics = "FracMod")
     s3 <- addReadsSummary(se = s2, statistics = "FracMod",
                           replace.existing = TRUE)
