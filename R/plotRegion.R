@@ -239,7 +239,7 @@ plotRegion <- function(se,
     p <- wrap_plots(pL, ncol = 1)
     if (!is.null(sequence.context)) {
         p <- p + labs(caption = paste0("Sequence contexts: ",
-                               paste(sequence.context, collapse = ", ")))
+                                       paste(sequence.context, collapse = ", ")))
     }
 
     # return
