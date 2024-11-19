@@ -147,7 +147,7 @@ plotRegion <- function(se,
     }
     .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
     .assertVector(x = tracks.reads, type = "list", allowNULL = TRUE)
-    if (!is.null(tracks.reads)) {
+    if (length(tracks.reads) > 0) {
         .assertVector(x = names(tracks.reads), type = "character",
                       allowNULL = FALSE, validValues = assayNames(se))
     }
@@ -157,7 +157,7 @@ plotRegion <- function(se,
         stop("Unknown plot type in tracks.reads: ", paste(err, collapse = ", "))
     }
     .assertVector(x = tracks.summary, type = "list", allowNULL = TRUE)
-    if (!is.null(tracks.summary)) {
+    if (length(tracks.summary) > 0) {
         .assertVector(x = names(tracks.summary), type = "character",
                       allowNULL = FALSE, validValues = c("FracMod", assayNames(se)))
     }
