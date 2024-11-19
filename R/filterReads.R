@@ -36,13 +36,19 @@
 #'     and from assays that do not store read-level data). If \code{FALSE},
 #'     such samples are retained (in the assays with read-level data as a
 #'     zero-column \code{SparseMatrix}).
+#' @param onlyStats A logical scalar. If \code{FALSE} (the default), the 
+#'     \code{SummarizedExperiment} object will be filtered according to the 
+#'     provided thresholds. If \code{TRUE}, the filter statistics are calculated
+#'     and returned, but the object is not subset.  
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #' @export
 #'
-#' @returns A filtered \code{SummarizedExperiment} object. The metadata of this
+#' @returns If \code{onlyStats} is \code{FALSE}, a filtered 
+#' \code{SummarizedExperiment} object. The metadata of this
 #' object contains a slot named \code{filteredOutReads}, which tabulate all
 #' reads that are filtered out, together with the reason(s) for exclusion.
+#' If \code{onlyStats} is \code{TRUE}, only this table is returned. 
 #'
 #' @examples
 #' library(SummarizedExperiment)
@@ -51,7 +57,20 @@
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
 #'            modbase = "a", verbose = TRUE)
 #' se <- addReadStats(se, name = "QC")
+#' 
+#' ## Filter se
 #' sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
+#' 
+#' ## Only calculate filter stats
+#' filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000, 
+#'                          onlyStats = TRUE)
+#' filtstats
+#' 
+#' ## Visualize filter stats in UpSet plot, e.g. with ComplexUpset
+#' if (require(ComplexUpset)) {
+#'     ComplexUpset::upset(as.data.frame(filtstats$s1), 
+#'                         intersect = colnames(filtstats$s1))
+#' }
 #'
 #' @importFrom SparseArray SVT_SparseArray rowSums colSums
 #' @importFrom SummarizedExperiment colData
@@ -61,7 +80,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
                         minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
-                        prune = TRUE) {
+                        prune = TRUE, onlyStats = FALSE) {
     ## Input checks
     .assertVector(x = se, type = "SummarizedExperiment")
     .checkSEValidity(se)
@@ -78,6 +97,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     .assertScalar(x = minAlignedLength, type = "numeric")
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = prune, type = "logical")
+    .assertScalar(x = onlyStats, type = "logical")
 
     ## Initialize sparse logical array for each sample, which will be TRUE
     ## for reads that are filtered out with respect to the different criteria
@@ -159,12 +179,15 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     readsToRemove <- lapply(readsToRemove, function(rr) {
         rr[rowSums(rr, na.rm = TRUE) > 0, ]
     })
-    sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
-                         prune = prune, invert = TRUE)
-    metadata(sesub)$filteredOutReads <- readsToRemove
-
-    ## Remove any positions with all NA values
-    sesub <- .removeAllNAPositions(sesub, assay.type = assay.type.read)
-
-    sesub
+    if (onlyStats) {
+        return(readsToRemove)
+    } else {
+        sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
+                             prune = prune, invert = TRUE)
+        metadata(sesub)$filteredOutReads <- readsToRemove
+        
+        ## Remove any positions with all NA values
+        sesub <- .removeAllNAPositions(sesub, assay.type = assay.type.read)
+        return(sesub)
+    }
 }

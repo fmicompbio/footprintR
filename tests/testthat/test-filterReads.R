@@ -56,6 +56,10 @@ test_that("filterReads works", {
                  "'prune' must be of class 'logical'")
     expect_error(filterReads(se = se, qcCol = "qcc", prune = c(TRUE, FALSE)),
                  "'prune' must have length 1")
+    expect_error(filterReads(se = se, qcCol = "qcc", onlyStats = "1"),
+                 "'onlyStats' must be of class 'logical'")
+    expect_error(filterReads(se = se, qcCol = "qcc", onlyStats = c(TRUE, FALSE)),
+                 "'onlyStats' must have length 1")
 
     ## Default arguments - no filtering
     out1 <- filterReads(se, qcCol = "qcc")
@@ -117,5 +121,15 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[2:7])
     expect_equal(nrow(out1$qcc$s2), 5L)
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[3:7])
+    
+    ## Return filter stats only (compare to previous output)
+    stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "read_info",
+                          minQscore = 13, maxEntropy = 0.2,
+                          minReadLength = 8000, minAlignedLength = 5000,
+                          minAlignedFraction = 0.8, onlyStats = TRUE)
+    expect_s4_class(stats1$s1, "SparseArray")
+    expect_equal(dim(stats1$s1), c(4L, 7L))
+    expect_equal(dim(stats1$s2), c(5L, 7L))
+    expect_equal(stats1, metadata(out1)$filteredOutReads)
 })
 
