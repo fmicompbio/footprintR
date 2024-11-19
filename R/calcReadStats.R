@@ -1,3 +1,10 @@
+# global vector with default read stats (that will be calculated if 
+# stats = NULL in calcReadStats)
+# exclude "SEntrModProb"
+defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm", 
+                      "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb", 
+                      "Lag1DModProb", "ACModProb", "PACModProb")
+
 #' Calculate or add summary statistics for read-level base modification data
 #'
 #' @description
@@ -15,8 +22,8 @@
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param stats Character vector specifying which statistics to calculate.
-#'     When set to \code{NULL} all available statistics are calculated. See
-#'     details for available read statistics.
+#'     When set to \code{NULL} all available statistics except the sample 
+#'     entropy are calculated. See details for available read statistics.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object limiting the
 #'     positions included in the calculations to the ones overlapping the
 #'     corresponding genomic regions. Alternatively, regions can be
@@ -258,7 +265,7 @@ calcReadStats <- function(se,
             if (!is.null(stats)) {
                 param_names <- stats
             } else {
-                param_names <- names(statFunctions)
+                param_names <- defaultReadStats
             }
 
             # Iterate over param_names and add columns to stats_res

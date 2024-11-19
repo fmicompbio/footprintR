@@ -30,8 +30,8 @@ containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
 \item{stats}{Character vector specifying which statistics to calculate.
-When set to \code{NULL} all available statistics are calculated. See
-details for available read statistics.}
+When set to \code{NULL} all available statistics except the sample
+entropy are calculated. See details for available read statistics.}
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object limiting the
 positions included in the calculations to the ones overlapping the
