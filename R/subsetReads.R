@@ -77,11 +77,14 @@ subsetReads <- function(se,
                                  names = unlist(rlAssayColnames,
                                                 use.names = FALSE))
         if (any(i <- !reads %in% names(read2sample))) {
-            stop("'reads' contains unknown identifiers: ",
-                 paste(reads[i], collapse = ", "))
+            warning("'reads' contains unknown identifiers: ",
+                    paste(reads[i], collapse = ", "), 
+                    ". These will be ignored.")
+            reads <- reads[!i]
         }
         reads <- split(reads, read2sample[reads])[
             intersect(sampleNms, unique(read2sample))]
+        names(reads) <- intersect(sampleNms, unique(read2sample))
     }
 
     if (is.list(reads)) {
@@ -96,13 +99,17 @@ subsetReads <- function(se,
                 valid_nms <- rlAssayColnames[[snm]]
                 if (is.character(reads[[snm]])) {
                     if (any(i <- !reads[[snm]] %in% valid_nms)) {
-                        stop("'reads' for sample '", snm, "' contains unknown read ",
-                             "names: ", paste(reads[[snm]][i], collapse = ", "))
+                        warning("'reads' for sample '", snm, "' contains unknown read ",
+                                "names: ", paste(reads[[snm]][i], collapse = ", "), 
+                                ". These will be ignored.")
+                        reads[[snm]] <- reads[[snm]][!i]
                     }
                 } else if (is.numeric(reads[[snm]])) {
                     if (any(i <- reads[[snm]] < 1 | reads[[snm]] > length(valid_nms))) {
-                        stop("'reads' for sample '", snm, "' contains out-of-range ",
-                             "indices: ", paste(reads[[snm]][i], collapse = ", "))
+                        warning("'reads' for sample '", snm, "' contains out-of-range ",
+                                "indices: ", paste(reads[[snm]][i], collapse = ", "), 
+                                ". These will be ignored.")
+                        reads[[snm]] <- reads[[snm]][!i]
                     }
                     reads[[snm]] <- rlAssayColnames[[snm]][reads[[snm]]]
                 } else if (is.logical(reads[[snm]])) {

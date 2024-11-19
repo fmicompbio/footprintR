@@ -27,18 +27,10 @@ test_that("subsetReads works", {
     # expected errors
     expect_error(subsetReads(se = "error", reads = read_ids),
                  "must be of class 'SummarizedExperiment'")
-    expect_error(subsetReads(se = se, reads = c(read_ids, "error")),
-                 "'reads' contains unknown identifiers")
     expect_error(subsetReads(se = se, reads = read_ids, prune = "error"),
                  "'prune' must be of class 'logical'")
     expect_error(subsetReads(se = se, reads = list(error = 1)),
                  "'reads' of type list must have names in")
-    expect_error(subsetReads(se = se, reads = list(s1 = "error")),
-                 "'reads' for sample 's1' contains unknown read names")
-    expect_error(subsetReads(se, list(s2 = c(NA, "s2-034b625e-6230-4f8d-a713-3a32cd96c298"))),
-                 "'reads' for sample 's2' contains unknown read names")
-    expect_error(subsetReads(se = se, reads = list(s1 = 99)),
-                 "'reads' for sample 's1' contains out-of-range indices")
     expect_error(subsetReads(se = se, reads = list(s1 = FALSE)),
                  "logical 'reads' for sample 's1' must be of length 3")
     expect_error(subsetReads(se = se, reads = TRUE),
@@ -83,9 +75,44 @@ test_that("subsetReads works", {
     seSub <- subsetReads(se, list(s1 = "s1-233e48a7-f379-4dcf-9270-958231125563",
                                   s2 = "s2-034b625e-6230-4f8d-a713-3a32cd96c298"))
     expect_identical(seSub2, seSub)
-
+    
+    # ... add non-existing read names
+    expect_warning(expect_warning(
+        seSub3 <- subsetReads(se, list(s1 = c("s1-233e48a7-f379-4dcf-9270-958231125563", 
+                                              "error"),
+                                       s2 = c("missing", 
+                                              "s2-034b625e-6230-4f8d-a713-3a32cd96c298"))),
+        "These will be ignored"), "These will be ignored")
+    expect_identical(seSub3, seSub)
+    expect_warning(
+        seSub3 <- subsetReads(se, c("s1-233e48a7-f379-4dcf-9270-958231125563",
+                                    "s2-034b625e-6230-4f8d-a713-3a32cd96c298", 
+                                    "error", NA)),
+        "These will be ignored")
+    expect_identical(seSub3, seSub)
+    expect_warning(expect_warning(
+        seSub3 <- subsetReads(se, list(s1 = c(1, 4), s2 = c(-1, 1))),
+        "These will be ignored"), "These will be ignored")
+    expect_identical(seSub3, seSub)
+    
+    # ... only non-existing read names
+    expect_warning(seSub4 <- subsetReads(se, c("missing", "error")), 
+                   "These will be ignored")
+    expect_equal(dim(seSub4), c(7967L, 0L))
+    
+    expect_warning(expect_warning(
+        seSub4 <- subsetReads(se, list(s1 = "error", s2 = "missing")),
+        "These will be ignored"), "These will be ignored")
+    expect_equal(dim(seSub4), c(7967L, 0L))
+    
     # ... invert
     seSub <- subsetReads(se, list(s1 = 2, s2 = 2))
     seSub2 <- subsetReads(se, list(s1 = c(1, 3), s2 = 1), invert = TRUE)
     expect_identical(seSub, seSub2)
+    # ... ... with non-existing read names
+    expect_warning(expect_warning(
+        seSub3 <- subsetReads(se, list(s1 = c(-1, 1, 3, 4), s2 = c(1, 3)), 
+                              invert = TRUE),
+        "These will be ignored"), "These will be ignored")
+    expect_identical(seSub, seSub3)
 })
