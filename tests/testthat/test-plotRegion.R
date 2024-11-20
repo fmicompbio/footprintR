@@ -27,34 +27,42 @@ test_that("plotRegion works", {
     expect_error(plotRegion(se = se0))
     expect_error(plotRegion(se = se, region = -1))
     expect_error(plotRegion(se = se, region = "error"))
-    expect_error(plotRegion(se = seR, tracks.reads = "error"))
-    expect_error(plotRegion(se = seR, tracks.reads = list(mod_prob = "error")))
-    expect_error(plotRegion(se = se, tracks.summary = "error"))
-    expect_error(plotRegion(se = se, tracks.summary = list(FracMod = "error")))
+    expect_error(plotRegion(se = seR, tracks = "error"))
+    expect_error(plotRegion(se = seR, tracks = list(list(trackData = "mod_prob",
+                                                         trackType = "error"))))
     expect_error(plotRegion(se = se, modbaseSpace = "error"))
     expect_error(plotRegion(se = se, sequence.context = 1))
-    expect_error(plotRegion(se = seR, sequence.context = "C"))
+    expect_error(plotRegion(se = seR2, sequence.context = "C"),
+                 "No sequence context found")
 
     # expected results
     p1 <- plotRegion(se = se, region = "chr1:6948000-6952000")
-    p2 <- plotRegion(se = se, tracks.summary = list(Nvalid = "Point"))
-    p3 <- plotRegion(se = se, tracks.summary = list(FracMod = "Smooth"))
+    p2 <- plotRegion(se = se, tracks = list(list(trackData = "Nvalid",
+                                                 trackType = "Point")))
+    p3 <- plotRegion(se = se, tracks = list(list(trackData = "FracMod",
+                                                 trackType = "Smooth")))
     p4 <- plotRegion(se = se, sequence.context = c("GCH"), modbaseSpace = TRUE)
     p5 <- plotRegion(se = se, sequence.context = c("GCA","GCC","GCT"), modbaseSpace = TRUE)
     p6 <- plotRegion(se = seR,
-                     tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
-                     tracks.summary = NULL)
+                     tracks = list(list(trackData = "mod_prob",
+                                        trackType = "Lollipop"),
+                                   list(trackData = "mod_prob",
+                                        trackType = "Heatmap")))
     p7 <- plotRegion(se = seR, modbaseSpace = TRUE,
-                     tracks.reads = list(mod_prob = c("Heatmap")),
-                     tracks.summary = NULL)
-    p7b <- plotRegion(se = seR, modbaseSpace = TRUE,
-                      tracks.reads = list(mod_prob = "Heatmap"),
-                      tracks.summary = list())
+                     tracks = list(list(trackData = "mod_prob",
+                                        trackType = "Heatmap")))
     expect_warning(
         p8 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
                          modbaseSpace = TRUE,
-                         tracks.summary = list(FracMod = "Smooth"),
-                         tracks.reads = list(mod_prob = c("Lollipop", "Heatmap", "HeatmapFilled")))
+                         tracks = list(list(trackData = "FracMod",
+                                            trackType = "Smooth"),
+                                       list(trackData = "mod_prob",
+                                            trackType = "Lollipop"), 
+                                       list(trackData = "mod_prob", 
+                                            trackType = "Heatmap"), 
+                                       list(trackData = "mod_prob", 
+                                            trackType = "Heatmap",
+                                            interpolate = TRUE)))
     )
     
     expect_s3_class(p1, "ggplot")
@@ -64,7 +72,6 @@ test_that("plotRegion works", {
     expect_s3_class(p5, "ggplot")
     expect_s3_class(p6, "ggplot")
     expect_s3_class(p7, "ggplot")
-    expect_s3_class(p7b, "ggplot")
     expect_s3_class(p8, "ggplot")
     expect_identical(nrow(p1$data), 4006L)
     expect_identical(nrow(p2$data), 24040L)
@@ -74,7 +81,6 @@ test_that("plotRegion works", {
     expect_identical(p4$data, p5$data)
     expect_identical(nrow(p6$data), 29104L)
     expect_identical(nrow(p7$data), 29104L)
-    expect_identical(p7, p7b)
     expect_identical(nrow(p8$data), 500L)
 
     # make sure the plotting works

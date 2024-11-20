@@ -7,8 +7,7 @@
 plotRegion(
   se,
   region = NULL,
-  tracks.reads = NULL,
-  tracks.summary = list(FracMod = "Point"),
+  tracks = list(list(trackData = "FracMod", trackType = "Point")),
   modbaseSpace = FALSE,
   sequence.context = NULL
 )
@@ -25,36 +24,23 @@ Alternatively, the region can be specified as a character scalar (e.g.
 \code{NULL} (the default), all the data on the first sequence in
 \code{se} will be visualized.}
 
-\item{tracks.reads}{A named list where the names correspond to assay names
-of read-level assays in \code{se} and the values are character vectors
-with the plot types to make for each assay. Currently supported plot
-types are:
+\item{tracks}{A list of named lists, representing the tracks to generate.
+Each element of the outer list defines one track, and has to contain
+at least list entries named 'trackData' (the name of a suitable assay
+in \code{se}) and 'trackType' (the type of plot), plus any additional
+arguments to the respective plot function. Currently supported plot
+types are
 \describe{
+\item{\code{"Point"}}{: A point plot displaying values in the assay.}
+\item{\code{"Smooth"}}{: A smoothed line plot displaying values in the
+assay.}
+\item{\code{"PointSmooth"}}{: A point and smoothed line plot displaying
+values in the assay.}
 \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 color representing the values in the assay).}
 \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 representing the values in the assay).}
-\item{\code{"HeatmapFilled"}}{: Heatmap plot (tiles with the color
-representing the values in the assay), with gaps between
-observations filled in by linear interpolation.}
-}
-If \code{NULL}, do not plot any read-level tracks.}
-
-\item{tracks.summary}{A named list where the names correspond to assay names
-of summarized data in \code{se} and the values are character vectors with
-plot types to make for each assay. Currently supported plot types are:
-\describe{
-\item{\code{Point}}{: A point plot displaying values in the assay.}
-\item{\code{Smooth}}{: A smoothed line plot displaying values in the
-assay.}
-\item{\code{PointSmooth}}{: A point and smoothed line plot displaying
-values in the assay.}
-}
-If \code{NULL}, do not plot any summary data tracks.
-A special case is the track name \code{"FracMod"}: If \code{se} does not
-contain an assay of that name, but \code{"Nmod"} and \code{"Nvalid"}
-assays are available, \code{"FracMod"} will be calculated from
-\code{assay(se, "Nmod") / assay(se, "Nvalid")}.}
+}}
 
 \item{modbaseSpace}{A logical scalar. If \code{TRUE}, the x-axis will be
 shown in the space of modified bases and contain only the positions at
@@ -74,7 +60,7 @@ the \code{sequence.context} and \code{sequence.reference} arguments of
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object with tracks selected by
-\code{tracks.reads} and \code{tracks.summary}.
+\code{tracks}.
 }
 \description{
 This function will visualize read-level or collapsed single-molecule
@@ -95,7 +81,7 @@ plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
 plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
 
 plotRegion(seA, region = "chr1:6940000-6955000",
-           tracks.summary = list(Nvalid = "Smooth"))
+           tracks = list(list(trackData = "Nvalid", trackType = "Smooth")))
 
 # read-level data (6mA)
 extractfiles <- system.file("extdata",
@@ -106,20 +92,19 @@ seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
 
 # Lollipop plot
 plotRegion(seB, region = "chr1:6935800-6935900",
-           tracks.summary = NULL,
-           tracks.reads = list(mod_prob = "Lollipop"))
+           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
 # Heatmap plots (observed only or filled)
 plotRegion(seB, region = "chr1:6935800-6935900",
-           tracks.summary = NULL,
-           tracks.reads = list(mod_prob = "Heatmap"))
+           tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
 plotRegion(seB, region = "chr1:6935800-6935900",
-           tracks.summary = NULL,
-           tracks.reads = list(mod_prob = "HeatmapFilled"))
+           tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                              interpolate = TRUE)))
 
 # multiple plots
 plotRegion(seB, region = "chr1:6935400-6935450",
-           tracks.summary = NULL,
-           tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
+           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+                              size = 4),
+                         list(trackData = "mod_prob", trackType = "Heatmap")),
            modbaseSpace = TRUE)
 
 }

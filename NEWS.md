@@ -1,3 +1,8 @@
+# footprintR 0.1.4
+
+* Refactored `plotRegion()` to use a single `tracks` argument instead of `tracks.summary` and `tracks.reads`.
+* Allow `filterReads()` to return the filter statistics table without subsetting the `SummarizedExperiment` object.
+
 # footprintR 0.1.3
 
 * Added option to decompress bam records in `readModBam()` in parallel on multiple threads.

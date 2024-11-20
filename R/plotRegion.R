@@ -1,11 +1,9 @@
 # global data.frame of plot types and characteristics
 plotRegionPlotTypes <- data.frame(
     name = c("Point", "Smooth", "PointSmooth",
-             "Lollipop", "Heatmap", "HeatmapFilled"),
+             "Lollipop", "Heatmap"),
     type = c("summary", "summary", "summary",
-             "reads", "reads", "reads"),
-    interpolates = c(FALSE, FALSE, FALSE,
-                     FALSE, FALSE, TRUE)
+             "reads", "reads")
 )
 
 
@@ -25,35 +23,23 @@ plotRegionPlotTypes <- data.frame(
 #'     "chr1:1200-1300") that can be coerced into a \code{GRanges} object. If
 #'     \code{NULL} (the default), all the data on the first sequence in
 #'     \code{se} will be visualized.
-#' @param tracks.reads A named list where the names correspond to assay names
-#'     of read-level assays in \code{se} and the values are character vectors
-#'     with the plot types to make for each assay. Currently supported plot
-#'     types are:
+#' @param tracks A list of named lists, representing the tracks to generate. 
+#'     Each element of the outer list defines one track, and has to contain 
+#'     at least list entries named 'trackData' (the name of a suitable assay 
+#'     in \code{se}) and 'trackType' (the type of plot), plus any additional 
+#'     arguments to the respective plot function. Currently supported plot 
+#'     types are
 #'     \describe{
+#'         \item{\code{"Point"}}{: A point plot displaying values in the assay.}
+#'         \item{\code{"Smooth"}}{: A smoothed line plot displaying values in the
+#'             assay.}
+#'         \item{\code{"PointSmooth"}}{: A point and smoothed line plot displaying
+#'             values in the assay.}
 #'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
-#'         \item{\code{"HeatmapFilled"}}{: Heatmap plot (tiles with the color
-#'             representing the values in the assay), with gaps between
-#'             observations filled in by linear interpolation.}
 #'     }
-#'     If \code{NULL}, do not plot any read-level tracks.
-#' @param tracks.summary A named list where the names correspond to assay names
-#'     of summarized data in \code{se} and the values are character vectors with
-#'     plot types to make for each assay. Currently supported plot types are:
-#'     \describe{
-#'         \item{\code{Point}}{: A point plot displaying values in the assay.}
-#'         \item{\code{Smooth}}{: A smoothed line plot displaying values in the
-#'             assay.}
-#'         \item{\code{PointSmooth}}{: A point and smoothed line plot displaying
-#'             values in the assay.}
-#'     }
-#'     If \code{NULL}, do not plot any summary data tracks.
-#'     A special case is the track name \code{"FracMod"}: If \code{se} does not
-#'     contain an assay of that name, but \code{"Nmod"} and \code{"Nvalid"}
-#'     assays are available, \code{"FracMod"} will be calculated from
-#'     \code{assay(se, "Nmod") / assay(se, "Nvalid")}.
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
 #'     shown in the space of modified bases and contain only the positions at
 #'     which there are modified bases in the data without any gaps between them.
@@ -70,7 +56,7 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{addSeqContext}}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
-#'     \code{tracks.reads} and \code{tracks.summary}.
+#'     \code{tracks}.
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #'
@@ -88,7 +74,7 @@ plotRegionPlotTypes <- data.frame(
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000",
-#'            tracks.summary = list(Nvalid = "Smooth"))
+#'            tracks = list(list(trackData = "Nvalid", trackType = "Smooth")))
 #'
 #' # read-level data (6mA)
 #' extractfiles <- system.file("extdata",
@@ -99,20 +85,19 @@ plotRegionPlotTypes <- data.frame(
 #'
 #' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
-#'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = "Lollipop"))
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
 #' # Heatmap plots (observed only or filled)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
-#'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = "Heatmap"))
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
 #' plotRegion(seB, region = "chr1:6935800-6935900",
-#'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = "HeatmapFilled"))
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+#'                               interpolate = TRUE)))
 #'
 #' # multiple plots
 #' plotRegion(seB, region = "chr1:6935400-6935450",
-#'            tracks.summary = NULL,
-#'            tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+#'                               size = 4),
+#'                          list(trackData = "mod_prob", trackType = "Heatmap")),
 #'            modbaseSpace = TRUE)
 #'
 #' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and
@@ -129,12 +114,12 @@ plotRegionPlotTypes <- data.frame(
 #' @import ggplot2
 #' @importFrom patchwork wrap_plots
 #' @importFrom rlang .data
+#' @importFrom cli cli_abort cli_warn
 #'
 #' @export
 plotRegion <- function(se,
                        region = NULL,
-                       tracks.reads = NULL,
-                       tracks.summary = list(FracMod = "Point"),
+                       tracks = list(list(trackData = "FracMod", trackType = "Point")),
                        modbaseSpace = FALSE,
                        sequence.context = NULL) {
     # digest arguments
@@ -146,88 +131,87 @@ plotRegion <- function(se,
                           ranges = IRanges(start = 1, end = .Machine$integer.max))
     }
     .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
-    .assertVector(x = tracks.reads, type = "list", allowNULL = TRUE)
-    if (length(tracks.reads) > 0) {
-        .assertVector(x = names(tracks.reads), type = "character",
-                      allowNULL = FALSE, validValues = assayNames(se))
-    }
-    if (length(err <- setdiff(
-        unlist(tracks.reads),
-        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "reads"]))) {
-        stop("Unknown plot type in tracks.reads: ", paste(err, collapse = ", "))
-    }
-    .assertVector(x = tracks.summary, type = "list", allowNULL = TRUE)
-    if (length(tracks.summary) > 0) {
-        .assertVector(x = names(tracks.summary), type = "character",
-                      allowNULL = FALSE, validValues = c("FracMod", assayNames(se)))
-    }
-    if (length(err <- setdiff(
-        unlist(tracks.summary),
-        plotRegionPlotTypes$name[plotRegionPlotTypes$type == "summary"]))) {
-        stop("Unknown plot type in tracks.summary: ", paste(err, collapse = ", "))
-    }
     .assertScalar(x = modbaseSpace, type = "logical")
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
-
-    # don't allow both modbaseSpace and interpolate
-    if (modbaseSpace && any(unlist(c(tracks.reads, tracks.summary)) %in%
-                            plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates])) {
-        warning("Plotting in `modbaseSpace` is not allowed if using\n",
-                "  plot types that interpolate the data (",
-                paste(plotRegionPlotTypes$name[plotRegionPlotTypes$interpolates],
-                      collapse = ", "), ")\n",
-                "  Setting modbaseSpace=FALSE")
-        modbaseSpace <- FALSE
+    .assertVector(x = tracks, type = "list", rngLen = c(1, Inf))
+    for (i in seq_along(tracks)) {
+        if (!is.list(tracks[[i]]) || length(tracks[[i]]) < 2) {
+            cli_abort("tracks[[{i}]] has to be a list of length >=2.")
+        }
+        if (is.null(names(tracks[[i]])) || any(names(tracks[[i]]) == "") || 
+            any(!c("trackData", "trackType") %in% names(tracks[[i]]))) {
+            cli_abort(paste("tracks[[{i}]] must be a named list, and contain at",
+                            "least entries named 'trackData' and 'trackType'"))
+        }
+        if (!tracks[[i]]$trackType %in% plotRegionPlotTypes$name) {
+            cli_abort(paste("tracks[[{i}]]$trackType must be one of: ",
+                            paste(plotRegionPlotTypes$name, collapse = ",")))
+        }
+        if (is.character(tracks[[i]]$trackData) && 
+            length(tracks[[i]]$trackData) == 1 && 
+            tracks[[i]]$trackData == "FracMod" && 
+            !"FracMod" %in% assayNames(se)) {
+            if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
+                assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
+            } else {
+                cli_abort(paste("Cannot plot 'FracMod' - need either an assay",
+                                "called 'FracMod' or both 'Nmod' and 'Nvalid'",
+                                "assays"))
+            }
+        }
+        type_i <- plotRegionPlotTypes$type[match(tracks[[i]]$trackType,
+                                                 plotRegionPlotTypes$name)]
+        if (type_i %in% c("reads", "summary") && 
+            !(is.character(tracks[[i]]$trackData) && 
+              length(tracks[[i]]$trackData) == 1 &&
+              tracks[[i]]$trackData %in% assayNames(se))) {
+            cli_abort(paste("tracks[[{i}]]$trackData must be a character scalar",
+                            "corresponding to a name of an assay in se"))
+        }
+        if (type_i == "reads" && 
+            !tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
+            cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
+                            "read-level assay in se"))
+        }
+        if (type_i == "summary" && 
+            tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
+            cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
+                            "summary assay in se"))
+        }
+        
+        if (modbaseSpace && 
+            "interpolate" %in% names(tracks[[i]]) &&
+            is.logical(tracks[[i]]$interpolate) && 
+            length(tracks[[i]]$interpolate) == 1 &&
+            tracks[[i]]$interpolate) {
+            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if", 
+                           "interpolate = TRUE (seen in tracks[[{i}]]).",
+                           "Setting modbaseSpace=FALSE"))
+            modbaseSpace <- FALSE
+        }
     }
+    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(se = se, sequence.context = sequence.context)
 
     ## create plots
-    pL <- list()
-    ## ... summary tracks
-    for (aname in names(tracks.summary)) {
-        if (aname == "FracMod" && !"FracMod" %in% assayNames(se)) {
-            if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
-                assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
-            } else {
-                stop("Cannot plot 'FracMod' - need either an assay called ",
-                     "'FracMod' or both 'Nmod' and 'Nvalid' assays")
-            }
-        }
-        for (ptype in tracks.summary[[aname]]) {
-            pname <- paste0(aname, "_", ptype)
-            pL[[pname]] <- switch(
-                ptype,
-                Point = .plotSummaryPointSmooth(x = se, aname = aname,
-                                                doSmooth = FALSE,
-                                                modbaseSpace = modbaseSpace),
-                Smooth = .plotSummaryPointSmooth(x = se, aname = aname,
-                                                 doPoint = FALSE,
-                                                 modbaseSpace = modbaseSpace),
-                PointSmooth = .plotSummaryPointSmooth(x = se, aname = aname,
-                                                      modbaseSpace = modbaseSpace,
-                                                      arglistPoint = list(alpha = 0.2))
-            )
-        }
-    }
-    ## ... read-level tracks
-    for (aname in names(tracks.reads)) {
-        for (ptype in tracks.reads[[aname]]) {
-            pname <- paste0(aname, "_", ptype)
-            pL[[pname]] <- switch(
-                ptype,
-                Lollipop = .plotReadsLollipop(x = se, aname = aname,
-                                              modbaseSpace = modbaseSpace),
-                Heatmap = .plotReadsHeatmap(x = se, aname = aname,
-                                            modbaseSpace = modbaseSpace,
-                                            interpolate = FALSE),
-                HeatmapFilled = .plotReadsHeatmap(x = se, aname = aname,
-                                                  modbaseSpace = modbaseSpace,
-                                                  interpolate = TRUE)
-            )
-        }
+    pL <- vector("list", length = length(tracks))
+    for (i in seq_along(tracks)) {
+        tr <- tracks[[i]]
+        args <- c(
+            list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace), 
+            tr[!names(tr) %in% c("trackData", "trackType", "x", "aname", 
+                                 "modbaseSpace", "doSmooth", "doPoint")]
+        )
+        pL[[i]] <- switch(
+            tr$trackType,
+            Point = do.call(.plotSummaryPointSmooth, c(args, list(doSmooth = FALSE))),
+            Smooth = do.call(.plotSummaryPointSmooth, c(args, list(doPoint = FALSE))),
+            PointSmooth = do.call(.plotSummaryPointSmooth, args),
+            Lollipop = do.call(.plotReadsLollipop, args),
+            Heatmap = do.call(.plotReadsHeatmap, args)
+        )
     }
 
     ## assemble composite plot
