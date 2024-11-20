@@ -9,7 +9,7 @@ test_that("calcReadStats works", {
     expect_error(calcReadStats(se, assay.type = "error"), "must be one of: mod_prob")
 
     ## No coverage requirement
-    rs <- calcReadStats(se, min.Nobs.ppos = 1)
+    rs <- calcReadStats(se, min.Nobs.ppos = 1, stats = c(defaultReadStats, "SEntrModProb"))
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -41,7 +41,8 @@ test_that("calcReadStats works", {
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
-    rs <- calcReadStats(se, verbose = TRUE, min.Nobs.ppos = thr)
+    rs <- calcReadStats(se, verbose = TRUE, min.Nobs.ppos = thr,
+                        stats = c(defaultReadStats, "SEntrModProb"))
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -71,9 +72,10 @@ test_that("calcReadStats works", {
     ## Using `regions` and large LagRange
     rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
         "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
-        min.Nobs.ppos = 5)
+        min.Nobs.ppos = 5, stats = c(defaultReadStats, "SEntrModProb"))
     rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
-                         LagRange = c(200, 256), min.Nobs.ppos = 5)
+                         LagRange = c(200, 256), min.Nobs.ppos = 5, 
+                         stats = c(defaultReadStats, "SEntrModProb"))
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 12L))
@@ -111,8 +113,9 @@ test_that("addReadStats works", {
                                         "modkit_extract_rc_6mA_2.tsv.gz"),
                            package = "footprintR")
     se <- readModkitExtract(exfiles, modbase = "a")
-    se2 <- addReadStats(se, name = "qc2")
-    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2")
+    se2 <- addReadStats(se, name = "qc2", stats = c(defaultReadStats, "SEntrModProb"))
+    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2", 
+                        stats = c(defaultReadStats, "SEntrModProb"))
 
     # expected errors
     expect_error(addReadStats(se, name = -1), "must be of class 'character'")

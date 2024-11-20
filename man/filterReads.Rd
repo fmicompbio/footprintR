@@ -15,7 +15,8 @@ filterReads(
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
-  prune = TRUE
+  prune = TRUE,
+  onlyStats = FALSE
 )
 }
 \arguments{
@@ -65,11 +66,18 @@ from the returned \code{SummarizedExperiment} (also from \code{colData}
 and from assays that do not store read-level data). If \code{FALSE},
 such samples are retained (in the assays with read-level data as a
 zero-column \code{SparseMatrix}).}
+
+\item{onlyStats}{A logical scalar. If \code{FALSE} (the default), the
+\code{SummarizedExperiment} object will be filtered according to the
+provided thresholds. If \code{TRUE}, the filter statistics are calculated
+and returned, but the object is not subset.}
 }
 \value{
-A filtered \code{SummarizedExperiment} object. The metadata of this
+If \code{onlyStats} is \code{FALSE}, a filtered
+\code{SummarizedExperiment} object. The metadata of this
 object contains a slot named \code{filteredOutReads}, which tabulate all
 reads that are filtered out, together with the reason(s) for exclusion.
+If \code{onlyStats} is \code{TRUE}, only this table is returned.
 }
 \description{
 Filter reads
@@ -81,7 +89,20 @@ modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
            modbase = "a", verbose = TRUE)
 se <- addReadStats(se, name = "QC")
+
+## Filter se
 sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
+
+## Only calculate filter stats
+filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000, 
+                         onlyStats = TRUE)
+filtstats
+
+## Visualize filter stats in UpSet plot, e.g. with ComplexUpset
+if (require(ComplexUpset)) {
+    ComplexUpset::upset(as.data.frame(filtstats$s1), 
+                        intersect = colnames(filtstats$s1))
+}
 
 }
 \author{
