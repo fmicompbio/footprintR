@@ -1,3 +1,9 @@
+# footprintR 0.2.0
+
+* Harmonization of function and argument names (using camelCase)
+* Use `BiocParallel::BPPARAM` in functions that support parallel execution
+* Rename `addReadsSummary()` to `flattenReadLevelAssay()`
+
 # footprintR 0.1.4
 
 * Refactored `plotRegion()` to use a single `tracks` argument instead of `tracks.summary` and `tracks.reads`.
