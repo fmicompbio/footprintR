@@ -13,10 +13,10 @@ test_that("validity checks work", {
                              modbase = c(s1_6mA = "a", s1_5mC = "m", s2_5mC = "m"),
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     rme <- addReadStats(rme)
-    rme_withreads <- addReadsSummary(rme)
-    rme_withoutreads <- addReadsSummary(rme, keep.reads = FALSE)
+    rme_withreads <- flattenReadLevelAssay(rme)
+    rme_withoutreads <- flattenReadLevelAssay(rme, keepReads = FALSE)
 
     ## Test .getReadLevelAssayNames
     expect_equal(.getReadLevelAssayNames(rme_withreads), "mod_prob")
@@ -26,42 +26,42 @@ test_that("validity checks work", {
     expect_no_error(.checkSEValidity(rme_withreads))
     expect_no_error(.checkSEValidity(rme_withoutreads))
 
-    expect_message(
-        expect_message(
-            expect_message(
-                expect_message(
-                    expect_message(
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            expect_message(expect_message(expect_message(
+                expect_message(expect_message(expect_message(
+                    expect_message(expect_message(expect_message(
                         .checkSEValidity(rme_withreads, verbose = TRUE),
-                        "Checking assay names"),
-                    "Checking row names"),
-                "Checking consistency of sample names"),
-            "Read-level assay found"),
-        "Read-level column data found, checking consistency")
-    expect_message(
-        expect_message(
-            expect_message(
+                        "Checking assay names"), "Checking assay names")),
+                    "Checking row names"), "Checking row names")),
+                "Checking consistency of sample names"), "Checking consistency of sample names")),
+            "Read-level assay found"), "Read-level assay found")),
+        "Read-level column data found, checking consistency"), "Read-level column data found, checking consistency"))
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            expect_message(expect_message(expect_message(
                 .checkSEValidity(rme_withoutreads, verbose = TRUE),
-                "Checking assay names"),
-            "Checking row names"),
-        "Checking consistency of sample names")
+                "Checking assay names"), "Checking assay names")),
+            "Checking row names"), "Checking row names")),
+        "Checking consistency of sample names"), "Checking consistency of sample names"))
 
     rme1 <- rme_withreads
     SummarizedExperiment::assay(rme1, "test") <- SummarizedExperiment::assay(rme1, "mod_prob")
     metadata(rme1)$readLevelData$assayNames <- c(metadata(rme1)$readLevelData$assayNames,
                                                  "test")
-    expect_message(
-        expect_message(
-            expect_message(
-                expect_message(
-                    expect_message(
-                        expect_message(
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            expect_message(expect_message(expect_message(
+                expect_message(expect_message(expect_message(
+                    expect_message(expect_message(expect_message(
+                        expect_message(expect_message(expect_message(
                             .checkSEValidity(rme1, verbose = TRUE),
-                            "Checking assay names"),
-                        "Checking row names"),
-                    "Checking consistency of sample names"),
-                "Read-level assay found"),
-            "Comparing mod_prob and test"),
-        "Read-level column data found, checking consistency")
+                            "Checking assay names"), "Checking assay names")),
+                        "Checking row names"), "Checking row names")),
+                    "Checking consistency of sample names"), "Checking consistency of sample names")),
+                "Read-level assay found"), "Read-level assay found")),
+            "Comparing mod_prob and test"), "Comparing mod_prob and test")),
+        "Read-level column data found, checking consistency"), "Read-level column data found, checking consistency"))
 
     rme1 <- rme_withreads
     assayNames(rme1) <- c("", "", "", "")

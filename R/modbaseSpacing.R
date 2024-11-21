@@ -14,11 +14,11 @@
 #'     with read-level footprinting data, for example returned by
 #'     \code{\link{readModBam}}. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A character scalar specifying the assay of
+#' @param assayName A character scalar specifying the assay of
 #'     \code{se} containing the read-level modification probabilities.
-#' @param min_mod_prob Numeric scalar giving the minimal modification
+#' @param minModProb Numeric scalar giving the minimal modification
 #'     probability for a modified base.
-#' @param pool_reads Logical scalar indicating if reads within a sample should
+#' @param poolReads Logical scalar indicating if reads within a sample should
 #'     be pooled. If \code{TRUE} (the default), distances from reads within a
 #'     sample are combined and returned as a vector. If \code{FALSE}, distances
 #'     obtained from each read in a sample are returned separately as columns
@@ -27,10 +27,10 @@
 #'     modified bases on the same read to count.
 #'
 #' @return A named list of length \code{ncol(se)} (one element for each sample).
-#'     If \code{pool_reads=TRUE}, the elements are \code{integer} vectors of
+#'     If \code{poolReads=TRUE}, the elements are \code{integer} vectors of
 #'     length \code{dmax}, with the value at position \code{d} giving the
 #'     observed number of within-read modified base pairs at distance \code{d}.
-#'     If \code{pool_reads=FALSE}, each list element is a matrix with
+#'     If \code{poolReads=FALSE}, each list element is a matrix with
 #'     \code{dmax} rows and individual reads in columns, with the value at
 #'     row \code{d} and column \code{r} giving the observed number of modified
 #'     base pairs at distance \code{d} for read \code{r}.
@@ -54,53 +54,43 @@
 #'   phasogram, \code{\link{calcAndCountDist}} for low-level distance counting.
 #'
 #' @examples
-#' modbamfiles <- system.file("extdata",
-#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
-#'                            package = "footprintR")
+#' modbamfiles <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
 #' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
 #'
-#' # get distances for each sample
+#' # get distances
 #' moddist <- calcModbaseSpacing(se)
-#'
-#' # analyze NRL for sample 's1'
-#' print(estimateNRL(moddist$s1)[1:2])
-#' plotModbaseSpacing(moddist$s1)
-#' plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
-#'
-#' # combine samples
-#' moddistComb <- Reduce("+", moddist)
-#' print(estimateNRL(moddistComb)[1:2])
+#' str(moddist)
 #'
 #' @importFrom SummarizedExperiment assays assayNames assay start
 #'
 #' @export
 calcModbaseSpacing <- function(se,
-                               assay.type = "mod_prob",
-                               min_mod_prob = 0.5,
-                               pool_reads = TRUE,
+                               assayName = "mod_prob",
+                               minModProb = 0.5,
+                               poolReads = TRUE,
                                dmax = 1000L) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
-    .assertScalar(x = min_mod_prob, type = "numeric", rngExcl = c(0, 1))
-    .assertScalar(x = pool_reads, type = "logical")
+    .assertScalar(x = minModProb, type = "numeric", rngExcl = c(0, 1))
+    .assertScalar(x = poolReads, type = "logical")
     .assertScalar(x = dmax, type = "numeric", rngExcl = c(0, Inf))
 
     # assay and positions from 'se'
-    modprobL <- assay(se, assay.type)
+    modprobL <- assay(se, assayName)
     s <- start(se)
 
     # for each sample
     cntL <- lapply(modprobL, function(modprob) {
-        if (pool_reads) {
+        if (poolReads) {
             cnt <- numeric(dmax)
             names(cnt) <- as.character(seq.int(dmax))
 
             # for each read i
             for (i in seq.int(ncol(modprob))) {
                 # extract positions of modified bases
-                pos <- s[which(modprob[, i] >= min_mod_prob)]
+                pos <- s[which(modprob[, i] >= minModProb)]
                 # add distances in (1..dmax) to 'cnt'
                 calcAndCountDist(query = pos, reference = pos, cnt = cnt)
             }
@@ -108,7 +98,7 @@ calcModbaseSpacing <- function(se,
             # for each read i
             cnt <- do.call(cbind, lapply(seq.int(ncol(modprob)), function(i) {
                 # extract positions of modified bases
-                pos <- s[which(modprob[, i] >= min_mod_prob)]
+                pos <- s[which(modprob[, i] >= minModProb)]
                 # add distances in (1..dmax) to 'cnt'
                 cntR <- numeric(dmax)
                 calcAndCountDist(query = pos, reference = pos, cnt = cntR)
@@ -135,7 +125,7 @@ calcModbaseSpacing <- function(se,
 #'
 #' @param x \code{numeric} vector giving the counts of distances
 #'   (typically the calculated with \code{\link{calcModbaseSpacing}}.
-#' @param mind \code{integer(1)} specifying the minimal distance to be used for
+#' @param minDist \code{integer(1)} specifying the minimal distance to be used for
 #'   NRL estimation. The default value (140) ignores any distance too short to
 #'   span at least a single nucleosome.
 #' @param usePeaks \code{integer} vector selecting the modes (peaks) in the
@@ -152,7 +142,7 @@ calcModbaseSpacing <- function(se,
 #'     \item{xs}{smoothed (de-trended) phasogram}
 #'     \item{loessfit}{the de-noising fit to the de-trended phasogram}
 #'     \item{lmfit}{the linear fit to the phasogram peaks}
-#'     \item{mind}{minimal distance included in the fit}
+#'     \item{minDist}{minimal distance included in the fit}
 #'     \item{span1}{smoothing parameter for de-trending loess fit}
 #'     \item{span2}{smoothing parameter for de-noising loess fit}
 #'     \item{usePeaks}{the peaks used in the fit}
@@ -163,7 +153,22 @@ calcModbaseSpacing <- function(se,
 #'   annotated distance frequencies between modified bases.
 #'
 #' @examples
-#'   # see the help for calcModbaseSpacing() for a full example
+#' # read base modifications
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#'
+#' # get distances for each sample
+#' moddist <- calcModbaseSpacing(se)
+#'
+#' # analyze NRL for each sample
+#' print(estimateNRL(moddist$s1)[1:2])
+#' print(estimateNRL(moddist$s2)[1:2])
+#'
+#' # combine samples
+#' moddistComb <- Reduce("+", moddist)
+#' print(estimateNRL(moddistComb)[1:2])
 #'
 #' @importFrom stats loess lm confint residuals predict coefficients
 #' @importFrom IRanges IRanges Views viewApply
@@ -171,13 +176,13 @@ calcModbaseSpacing <- function(se,
 #'
 #' @export
 estimateNRL <- function(x,
-                        mind = 140L,
+                        minDist = 140L,
                         usePeaks = seq_len(5),
                         span1 = 100 / length(x),
                         span2 = 1500 / length(x)) {
     # digest arguments
     .assertVector(x = x, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = mind, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = minDist, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = usePeaks, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = span1, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = span2, type = "numeric", rngExcl = c(span1, Inf))
@@ -185,17 +190,17 @@ estimateNRL <- function(x,
     if (all(x == 0)) {
         warning("NRL not estimated (no non-zero distances)")
         return(list(nrl = NA, nrl.CI95 = NA, xs = NA, loessfit = NA, lmfit = NA,
-                    peaks = NA, mind = mind, span1 = span1, span2 = span2,
+                    peaks = NA, minDist = minDist, span1 = span1, span2 = span2,
                     usePeaks = usePeaks))
     }
 
     pos <- seq_along(x)
-    xs <- predict(loess(x ~ pos, subset = pos > mind, span = span1), pos)
-    fit <- loess(xs ~ pos, subset = pos > mind, span = span2)
+    xs <- predict(loess(x ~ pos, subset = pos >= minDist, span = span1), pos)
+    fit <- loess(xs ~ pos, subset = pos >= minDist, span = span2)
     rx <- residuals(fit)
     irpos <- as(rx >= 0, "IRanges")
     xposmax <- viewApply(X = Views(rx, irpos),
-                         FUN = function(y) which.max(as.vector(y))) + mind + start(irpos) - 1
+                         FUN = function(y) which.max(as.vector(y))) + minDist + start(irpos) - 1
     if (any(!usePeaks %in% seq_along(xposmax))) {
         warning("less peaks detected than selected by `usePeaks`")
         usePeaks <- intersect(usePeaks, seq_along(xposmax))
@@ -209,7 +214,7 @@ estimateNRL <- function(x,
     res <- list(nrl = unname(coefficients(lmfit)[2]),
                 nrl.CI95 = cilmfit,
                 xs = xs, loessfit = fit, lmfit = lmfit,
-                peaks = xposmax, mind = mind,
+                peaks = xposmax, minDist = minDist,
                 span1 = span1, span2 = span2,
                 usePeaks = usePeaks)
     return(res)
@@ -227,7 +232,7 @@ estimateNRL <- function(x,
 #'     modified bases on the same read (typically calculated by
 #'     \code{\link{calcModbaseSpacing}}.
 #' @param hide If \code{TRUE} (the default), hide distance counts not used in
-#'       the NRL estimate (\code{mind} parameter from
+#'       the NRL estimate (\code{minDist} parameter from
 #'       \code{\link{estimateNRL}}).
 #' @param xlim \code{numeric(2)} with the x-axis (distance) limits in the first
 #'     two plots (see Details). if \code{NULL} (the default), the full range
@@ -255,7 +260,17 @@ estimateNRL <- function(x,
 #'   estimate nucleosome repeat length.
 #'
 #' @examples
-#'   # see the help for calcModbaseSpacing() for a full example
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#'
+#' # get distances for each sample
+#' moddist <- calcModbaseSpacing(se)
+#'
+#' # analyze and plot NRL for sample 's1'
+#' plotModbaseSpacing(moddist$s1)
+#' plotModbaseSpacing(moddist$s1, detailedPlots = TRUE)
 #'
 #' @importFrom stats residuals summary.lm
 #' @importFrom IRanges IRanges start end
@@ -286,15 +301,15 @@ plotModbaseSpacing <- function(x,
     if (is.null(xlim))
         xlim <- c(0, length(x))
     if (hide) {
-        x[seq.int(nrl$mind - 1)] <- NA
-        xlim[1] <- nrl$mind
+        x[seq.int(nrl$minDist - 1)] <- NA
+        xlim[1] <- nrl$minDist
     }
     types <- c("raw",
                paste0("smoothed (", signif(c(nrl$span1, nrl$span2), 4), ")"))
     pd <- data.frame(pos = seq_along(x),
                      type = factor(rep(types, each = length(x)), levels = types),
                      cnt = c(x, nrl$xs,
-                             c(rep(NA, nrl$mind), nrl$loessfit$fitted))) |>
+                             c(rep(NA, nrl$minDist - 1L), nrl$loessfit$fitted))) |>
         filter(!is.na(.data[["cnt"]]))
     ylim <- range(pd$cnt, na.rm = TRUE)
 
@@ -324,13 +339,13 @@ plotModbaseSpacing <- function(x,
         # residual distances plot
         rx <- residuals(nrl$loessfit)
         pd2 <- data.frame(pos = seq_along(x),
-                          resid = c(rep(NA, nrl$mind), rx)) |>
+                          resid = c(rep(NA, nrl$minDist - 1L), rx)) |>
             filter(!is.na(.data[["resid"]]))
         irpos <- as(pd2$resid >= 0, "IRanges")
 
         p2 <- ggplot(pd2, aes(.data[["pos"]], .data[["resid"]])) +
-            geom_rect(data = data.frame(xmin = nrl$mind + start(irpos),
-                                        xmax = nrl$mind + end(irpos),
+            geom_rect(data = data.frame(xmin = nrl$minDist + start(irpos),
+                                        xmax = nrl$minDist + end(irpos),
                                         ymin = -Inf,
                                         ymax = Inf),
                       inherit.aes = FALSE,
@@ -341,7 +356,7 @@ plotModbaseSpacing <- function(x,
             geom_line() +
             geom_point(data = data.frame(
                 pos = nrl$peaks[nrl$usePeaks],
-                resid = c(rep(NA, nrl$mind), rx)[nrl$peaks[nrl$usePeaks]]),
+                resid = c(rep(NA, nrl$minDist), rx)[nrl$peaks[nrl$usePeaks]]),
                        size = 2.5) +
             geom_hline(yintercept = 0, linetype = "dashed") +
             labs(x = "Distance between modified bases (bp)",

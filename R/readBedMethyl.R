@@ -25,22 +25,25 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
-#' @param sequence.context.width,sequence.reference Define the sequence
+#' @param sequenceContextWidth,sequenceReference Define the sequence
 #'     context to be extracted around modified bases. By default (
-#'     \code{sequence.context.width = 0}), no sequence context will be
-#'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+#'     \code{sequenceContextWidth = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 #'     See \code{\link{addSeqContext}} for details.
-#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
-#'     to use for some of the steps in \code{readBedMethyl()}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{readBedMethyl()}. The default value (\code{\link[BiocParallel]{bpparam}})
+#'     will select an appropriate value for the current environment, or the
+#'     default parallel backend registered using \code{\link[BiocParallel]{register}}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with genomic positions in rows and samples (the unique names of
-#'     \code{fnames}) in the columns. If \code{sequence.context.width != 0},
-#'     \code{rowData(x)$sequence.context} will be a \code{\link[Biostrings]{DNAStringSet}}
+#'     \code{fnames}) in the columns. If \code{sequenceContextWidth != 0},
+#'     \code{rowData(x)$sequenceContext} will be a \code{\link[Biostrings]{DNAStringSet}}
 #'     object with the extracted sequences.
 #'
-#' @author Michael Stadler
+#' @author Michael Stadler, Charlotte Soneson
 #'
 #' @examples
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
@@ -57,20 +60,19 @@
 #' @importFrom GenomicRanges GPos match sort resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom S4Vectors mcols mcols<- DataFrame
-#' @importFrom scuttle aggregateAcrossCells
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
-#' @importFrom parallel mclapply detectCores
+#' @importFrom BiocParallel bplapply bpparam bpnworkers
 #'
 #' @export
 readBedMethyl <- function(fnames,
                           modbase,
                           nrows = Inf,
                           seqinfo = NULL,
-                          sequence.context.width = 0,
-                          sequence.reference = NULL,
-                          ncpu = 1L,
+                          sequenceContextWidth = 0,
+                          sequenceReference = NULL,
+                          BPPARAM = bpparam(),
                           verbose = FALSE) {
     # digest arguments
     .assertVector(x = fnames, type = "character")
@@ -98,6 +100,9 @@ readBedMethyl <- function(fnames,
         stop("invalid `modbase` values: ",
              paste(unique(modbase[i]), collapse = ", "))
     }
+    if (any(lengths(lapply(split(modbase, names(modbase)), unique)) != 1L)) {
+        stop("at least one sample was defined to have more than one modbase")
+    }
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
@@ -106,22 +111,22 @@ readBedMethyl <- function(fnames,
                  " numeric vector with genomic sequence lengths.")
         }
     }
-    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, detectCores()))
+    .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
     }
 
     # get sample names
-    nms <- names(fnames)
+    nms <- unique(names(fnames))
 
     # load data
     .message("reading input files")
     dfL <- lapply(fnames, function(fname) {
         .message("    {.file fname}")
         fread(file = fname, sep = "\t", nrows = nrows, header = FALSE,
-              nThread = ncpu, data.table = FALSE, verbose = FALSE,
+              nThread = bpnworkers(BPPARAM), data.table = FALSE, verbose = FALSE,
               col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
               select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
     })
@@ -129,17 +134,17 @@ readBedMethyl <- function(fnames,
     # filter by `modbase`
     if (!is.null(modbase)) {
         .message("filtering modifications (retaining {modbase})")
-        dfL <- mclapply(dfL, function(df) {
-            df[df$modbase %in% modbase, ]
-        }, mc.cores = ncpu)
+        dfL <- bplapply(dfL, function(df, mymodbase = modbase) {
+            df[df$modbase %in% mymodbase, ]
+        }, BPPARAM = BPPARAM)
     }
 
     # create GPos objects for each input
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
-    gposL <- mclapply(dfL, function(df) {
-        GPos(seqnames = df$chr, pos = df$start + 1L,
-             strand = df$strand, seqinfo = seqinfo)
-    }, mc.cores = ncpu)
+    gposL <- bplapply(dfL, function(df, myseqinfo = seqinfo) {
+        GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
+                            strand = df$strand, seqinfo = myseqinfo)
+    }, BPPARAM = BPPARAM)
 
     # create combined GPos
     if (length(dfL) > 1) {
@@ -151,21 +156,22 @@ readBedMethyl <- function(fnames,
     }
 
     # add sequence context
-    if (sequence.context.width > 0) {
+    if (sequenceContextWidth > 0) {
         .message("extracting sequence contexts")
-        mcols(gpos)$sequence.context <- extractSeqContext(
+        mcols(gpos)$sequenceContext <- extractSeqContext(
             x = as(gpos, "GRanges"),
-            sequence.context.width = sequence.context.width,
-            sequence.reference = sequence.reference)
+            sequenceContextWidth = sequenceContextWidth,
+            sequenceReference = sequenceReference)
     }
 
     # create assays
-    nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(dfL),
+    nmod <- nval <- matrix(data = 0, nrow = length(gpos), ncol = length(nms),
                            dimnames = list(NULL, nms))
     for (i in seq_along(dfL)) {
         i_row <- match(gposL[[i]], gpos)
-        nmod[i_row, i] <- dfL[[i]]$N_mod
-        nval[i_row, i] <- dfL[[i]]$N_valid
+        i_col <- match(names(dfL)[i], nms)
+        nmod[i_row, i_col] <- nmod[i_row, i_col] + dfL[[i]]$N_mod
+        nval[i_row, i_col] <- nval[i_row, i_col] + dfL[[i]]$N_valid
     }
 
     # create summarized experiment
@@ -173,24 +179,12 @@ readBedMethyl <- function(fnames,
         assays = list(Nmod = nmod, Nvalid = nval),
         rowRanges = gpos,
         colData = DataFrame(
-            row.names = names(fnames),
-            sample = names(fnames),
-            modbase = modbase[names(fnames)]
+            row.names = nms,
+            sample = nms,
+            modbase = modbase[nms]
         ),
         metadata = list(readLevelData = list(assayNames = character(0),
                                              colDataColumns = character(0))))
-
-    # collapse to unique names
-    if (any(duplicated(nms))) {
-        se <- aggregateAcrossCells(
-            x = se,
-            ids = nms,
-            statistics = "sum",
-            suffix = FALSE,
-            store_number = "nfiles",
-            use.assay.type = assayNames(se)
-        )
-    }
 
     # return
     return(se)

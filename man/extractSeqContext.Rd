@@ -4,7 +4,7 @@
 \alias{extractSeqContext}
 \title{Extract the sequence context around positions of interest.}
 \usage{
-extractSeqContext(x, sequence.context.width, sequence.reference)
+extractSeqContext(x, sequenceContextWidth, sequenceReference)
 }
 \arguments{
 \item{x}{A \code{\link[GenomicRanges]{GRanges}} object defining the regions
@@ -12,19 +12,19 @@ of interest. Alternatively, a \code{\link[SummarizedExperiment]{RangedSummarized
 object from which regions can be extracted using
 \code{\link[SummarizedExperiment]{rowRanges}}. The extracted sequences
 will correspond to the regions defined as
-\code{resize(x, width = sequence.context.width, fix = "center"}.}
+\code{resize(x, width = sequenceContextWidth, fix = "center"}.}
 
-\item{sequence.context.width}{A numeric scalar giving the width of the
+\item{sequenceContextWidth}{A numeric scalar giving the width of the
 sequence context to be extracted from the reference
-(\code{sequence.reference} argument). This must be an odd number
+(\code{sequenceReference} argument). This must be an odd number
 so that the sequence can be centered on the modified base.
-If \code{sequence.context.width = 0} (the default), no
+If \code{sequenceContextWidth = 0} (the default), no
 sequence context will be extracted.}
 
-\item{sequence.reference}{A \code{\link[BSgenome]{BSgenome}} object, or a
+\item{sequenceReference}{A \code{\link[BSgenome]{BSgenome}} object, or a
 character scalar giving the path to a fasta formatted file with reference
 sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-The sequence context (see \code{sequence.context.width} argument) will be
+The sequence context (see \code{sequenceContextWidth} argument) will be
 extracted from these sequences.}
 }
 \value{
@@ -35,9 +35,9 @@ start or beyond the end of a  reference sequence, it will be padded with
 'N' bases.
 }
 \description{
-This function will extract a sequence context of \code{sequence.context.width}
+This function will extract a sequence context of \code{sequenceContextWidth}
 bases around the center of the regions defined in \code{x} from
-\code{sequence.reference}.
+\code{sequenceReference}.
 }
 \examples{
 # file with sequence in fasta format of length 6957060

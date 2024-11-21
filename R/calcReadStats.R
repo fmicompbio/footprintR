@@ -1,3 +1,10 @@
+# global vector with default read stats (that will be calculated if
+# stats = NULL in calcReadStats)
+# exclude "SEntrModProb"
+defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
+                      "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
+                      "Lag1DModProb", "ACModProb", "PACModProb")
+
 #' Calculate or add summary statistics for read-level base modification data
 #'
 #' @description
@@ -9,36 +16,36 @@
 #' statistics that are calculated.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-#'     object with assay \code{assay.type} typically returned by
+#'     object with assay \code{assayName} typically returned by
 #'     \code{\link{readModkitExtract}} or \code{\link{readModBam}}.
-#' @param assay.type A character scalar specifying the assay of \code{se}
+#' @param assayName A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param stats Character vector specifying which statistics to calculate.
-#'     When set to \code{NULL} all available statistics are calculated. See
-#'     details for available read statistics.
+#'     When set to \code{NULL} all available statistics except the sample
+#'     entropy are calculated. See details for available read statistics.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object limiting the
 #'     positions included in the calculations to the ones overlapping the
 #'     corresponding genomic regions. Alternatively, regions can be
 #'     specified as a character vector (e.g. "chr1:1200-1300") that can be
 #'     coerced into a \code{GRanges} object.
-#' @param sequence.context A character vector with sequence context(s)
+#' @param sequenceContext A character vector with sequence context(s)
 #'     to include in the calculations. Only positions that match one of the
 #'     provided sequence contexts will be included. Sequence contexts can be
 #'     provided using IUPAC redundancy codes. The sequence contexts of modified
-#'     bases are obtained from \code{rowData(se)$sequence.context} and thus
+#'     bases are obtained from \code{rowData(se)$sequenceContext} and thus
 #'     requires that \code{se} contains the appropriate information, for example
-#'     by setting the \code{sequence.context} and \code{sequence.reference}
+#'     by setting the \code{sequenceContextWidth} and \code{sequenceReference}
 #'     arguments of \code{\link{readModkitExtract}} when it was generated,
 #'     or by adding it using \code{\link{addSeqContext}}.
-#' @param min.Nobs.ppos A numeric scalar value >=1 indicating the minimum
+#' @param minNobsPpos A numeric scalar value >=1 indicating the minimum
 #'     coverage on individual positions for them to be included in the
 #'     calculations. In high coverage data this is an effective filter for
 #'     removing spurious modbases, typically the result of erroneous
 #'     basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
 #'     Q3 and IQR are the third quartile and interquartile range of the coverage
 #'     distribution estimated from the data in \code{se}.
-#' @param min.Nobs.pread A numeric scalar with the minimum number of observed
+#' @param minNobsPread A numeric scalar with the minimum number of observed
 #'     modifiable bases per read for it to be included in the calculations.
 #'     \code{NA} values are returned for the reads that do not pass this
 #'     threshold.
@@ -52,24 +59,30 @@
 #'     \code{\link[SummarizedExperiment]{colData}} of the output.
 #' @param ... For \code{addReadStats} only: Additional arguments passed on to
 #'     \code{calcReadStats}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for calculating
+#'     read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
+#'     will select an appropriate value for the current environment, or the
+#'     default parallel backend registered using
+#'     \code{\link[BiocParallel]{register}}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
 #' \code{calcReadStats} calculates a collection of location/scatter statistics
 #' and information theoretic/signal-processing metrics for the modification
 #' probability, confidence or modification call value vectors across individual
-#' reads (data in assay \code{assay.type}). Only bases matching the criteria
-#' given by\code{regions}, \code{sequence.context}, \code{min.Nobs.ppos} and
-#' \code{min.Nobs.pread} are included in the calculations. The values of these
+#' reads (data in assay \code{assayName}). Only bases matching the criteria
+#' given by\code{regions}, \code{sequenceContext}, \code{minNobsPpos} and
+#' \code{minNobsPread} are included in the calculations. The values of these
 #' filtering parameters are stored in the attribute of the output.
 #'
 #' \code{stats} selects the summaries to be calculated. Currently available
 #' values are:
 #' \describe{
 #'     \item{MeanModProb}{: Mean modification probability across the read.}
-#'     \item{FracMod}{: Fraction of confidently modified bases, defined as the
-#'         ratio of modifiable bases with modification probability >= 0.5 over
-#'         all modifiable bases.}
+#'     \item{FracMod}{: Fraction of confidently called bases (either modified
+#'         or unmodified), that are modified. By default, all bases are
+#'         considered confidently called.}
 #'     \item{MeanConf}{:  Mean call confidence across the read.}
 #'     \item{MeanConfUnm}{: Mean call confidence confined to unmodified bases
 #'         (modifiable bases with modification probability < 0.5).}
@@ -130,23 +143,25 @@
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics colnames
+#' @importFrom BiocParallel bplapply bpparam
 #'
 #' @export
 calcReadStats <- function(se,
-                          assay.type = "mod_prob",
+                          assayName = "mod_prob",
                           stats = NULL,
                           regions = NULL,
-                          sequence.context = NULL,
-                          min.Nobs.ppos = 0,
-                          min.Nobs.pread = 0,
+                          sequenceContext = NULL,
+                          minNobsPpos = 0,
+                          minNobsPread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
+                          BPPARAM = bpparam(),
                           verbose = FALSE) {
     # define functions to calculate summary statistics
     statFunctions <- list(
         MeanModProb = mean,
         FracMod = function(x, c = 0.5) {
-            sum(x >= (0.5 + (c - 0.5))) / sum(abs(0.5 - x) > (c - 0.5))
+            sum(x >= (0.5 + (c - 0.5))) / sum(abs(0.5 - x) >= (c - 0.5))
         },
         MeanConf = function(x) {
             mean(pmax(x, 1 - x))
@@ -155,7 +170,7 @@ calcReadStats <- function(se,
             mean((1 - x)[x < 0.5])
         },
         MeanConfMod = function(x) {
-            mean((x)[x >= 0.5])
+            mean(x[x >= 0.5])
         },
         FracLowConf = function(x, c = LowConf) {
             sum(abs(0.5 - x) < (c - 0.5)) / length(x)
@@ -170,7 +185,7 @@ calcReadStats <- function(se,
             }
         },
         Lag1DModProb = function(x) {
-            xC <- as.numeric(x > 0.5)
+            xC <- as.numeric(x >= 0.5)
             mean(abs(diff(xC, lag = 1)))
         },
         ACModProb = function(x, lag.max = max(LagRange),
@@ -195,7 +210,7 @@ calcReadStats <- function(se,
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertVector(x = stats, type = "character", allowNULL = TRUE,
                   validValues = names(statFunctions))
@@ -203,12 +218,13 @@ calcReadStats <- function(se,
         regions <- as(regions, "GRanges")
     }
     .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
-    .assertScalar(x = min.Nobs.ppos, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
+    .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
+    .assertScalar(x = minNobsPpos, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = minNobsPread, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
     LagRangeValues <- seq(LagRange[1], LagRange[2])
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
 
     # Subset se by region
@@ -216,17 +232,17 @@ calcReadStats <- function(se,
         se <- subsetByOverlaps(x = se, ranges = regions)
     }
 
-    # Subset by sequence.context
-    se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
+    # Subset by sequenceContext
+    se <- .keepPositionsBySequenceContext(se, sequenceContext = sequenceContext)
 
     # Calculate statistics for each sample
     out <- SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
-                se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos,
-                min.nbr.samples = NULL)
+                se[, nm], assayName = assayName, minCov = minNobsPpos,
+                minNbrSamples = NULL)
 
-            mat <- assay(sesub, assay.type)[[nm]]
+            mat <- assay(sesub, assayName)[[nm]]
 
             # Non-NA indices:
             NNAind <- nnawhich(mat, arr.ind = TRUE)
@@ -253,47 +269,47 @@ calcReadStats <- function(se,
             MeanModProb <- rowSums(mat) / Nobs
 
             # Include in calculations only reads with sufficient Number of observations:
-            if (min.Nobs.pread > 0) {
-                use.reads <- colnames(mat)[NobsReads > min.Nobs.pread]
-            } else {
-                use.reads <- colnames(mat)
-            }
+            use.reads <- colnames(mat)[NobsReads >= minNobsPread]
 
             if (!is.null(stats)) {
                 param_names <- stats
             } else {
-                param_names <- names(statFunctions)
+                param_names <- defaultReadStats
             }
 
             # Iterate over param_names and add columns to stats_res
-            stats_res <- make_zero_col_DFrame(nrow = ncol(mat))
-            row.names(stats_res) <- colnames(mat)
-            for (param in param_names) {
+            do.call(cbind, bplapply(param_names, function(param, mymat = mat,
+                                                          myuse.reads = use.reads,
+                                                          mystatFunctions = statFunctions,
+                                                          myNNAvals_byCol = NNAvals_byCol,
+                                                          myLagRangeValues = LagRangeValues) {
+                stats_res <- make_zero_col_DFrame(nrow = ncol(mymat))
+                row.names(stats_res) <- colnames(mymat)
                 if (param %in% c("ACModProb", "PACModProb")) {
                     stats_res[[param]] <- lapply(
-                        structure(colnames(mat), names = colnames(mat)), function(r) {
-                            if (r %in% use.reads) {
-                                statFunctions[[param]](NNAvals_byCol[[r]])
+                        structure(colnames(mymat), names = colnames(mymat)), function(r) {
+                            if (r %in% myuse.reads) {
+                                mystatFunctions[[param]](myNNAvals_byCol[[r]])
                             } else {
-                                rep(NA, length(LagRangeValues))
+                                rep(NA, length(myLagRangeValues))
                             }
                         })
                 } else {
-                    stats_res[[param]] <- rep(NA, ncol(mat))
-                    stats_res[use.reads, param] <- vapply(use.reads, function(r) {
-                        statFunctions[[param]](NNAvals_byCol[[r]])
+                    stats_res[[param]] <- rep(NA, ncol(mymat))
+                    stats_res[myuse.reads, param] <- vapply(myuse.reads, function(r) {
+                        statFunctions[[param]](myNNAvals_byCol[[r]])
                     }, numeric(1))
                 }
-            }
-            stats_res
+                stats_res
+            }, BPPARAM = BPPARAM))
         })
     )
 
     # add filtering parameters to `out`
     metadata(out) <- list(regions = regions,
-                          sequence.context = sequence.context,
-                          min.Nobs.ppos = min.Nobs.ppos,
-                          min.Nobs.pread = min.Nobs.pread,
+                          sequenceContext = sequenceContext,
+                          minNobsPpos = minNobsPpos,
+                          minNobsPread = minNobsPread,
                           Lags = LagRangeValues)
 
     return(out)

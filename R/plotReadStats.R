@@ -37,7 +37,7 @@
 #' @importFrom SummarizedExperiment colData
 #'
 #' @export
-plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
+plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
                           minQscore = 0, maxEntropy = Inf,
                           maxFracLowConf = 1, minReadLength = 0,
                           minAlignedLength = 0, minAlignedFraction = 0) {
@@ -58,7 +58,9 @@ plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
     dfL <- list()
     # ... from readInfoCol
     if (!is.null(readInfoCol)) {
-        dfL[[length(dfL) + 1]] <- as.data.frame(se[[readInfoCol]])
+        tmp <- as.data.frame(se[[readInfoCol]])
+        tmp <- tmp[, !grepl("variant_label", colnames(tmp))]
+        dfL[[length(dfL) + 1]] <- tmp
     }
     # ... from qcCol
     if (!is.null(qcCol)) {

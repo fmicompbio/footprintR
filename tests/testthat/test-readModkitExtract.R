@@ -56,11 +56,8 @@ test_that("readModkitExtract works", {
                                    seqinfo = c(chr2 = 1000)),
                  "'seqnames' contains sequence names with no entries")
     expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
-                                   ncpu = "error"),
-                 "'ncpu' must be of class 'numeric'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
-                                   ncpu = c(1, 2)),
-                 "'ncpu' must have length 1")
+                                   BPPARAM = "error"),
+                 "'BPPARAM' must be of class 'BiocParallelParam'")
     expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
                                    verbose = "error"),
                  "'verbose' must be of class 'logical'")
@@ -74,8 +71,9 @@ test_that("readModkitExtract works", {
         expect_message(
             rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
                                      filter = NULL, nrows = Inf, seqinfo = NULL,
-                                     sequence.context.width = 1, sequence.reference = ref,
-                                     ncpu = 1L, verbose = TRUE)
+                                     sequenceContextWidth = 1, sequenceReference = ref,
+                                     BPPARAM = BiocParallel::SerialParam(),
+                                     verbose = TRUE)
     ))
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6432, 1)) ## number of unique positions
@@ -97,16 +95,16 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = NULL),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2471.8587)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2297.13868)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 18531) ## number of rows in the original file
-    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(rme)$sequence.context))),
+    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(rme)$sequenceContext))),
                  c(A = 82L, C = 6159L, G = 107L, T = 84L), ignore_attr = TRUE)
 
     # ... single file, manual filtering
     rme <- readModkitExtract(fnames = fnames[["s1_5mC"]], modbase = "m",
                              filter = c(`m` = 0.6, `-` = 0.5),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::MulticoreParam(2L), verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6415, 1)) ## number of unique positions
     expect_equal(colnames(rme), "s1")
@@ -127,14 +125,15 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = c(`m` = 0.6, `-` = 0.5)),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2418.5403)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2243.82032)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 18434) ## number of rows in the original file
 
     # ... single file, automatic filtering
     rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
                              filter = "modkit",
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(5893, 1)) ## number of unique positions
     expect_equal(colnames(rme), "s1_5mC")
@@ -155,7 +154,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031)),
                  ignore_attr = TRUE)
-    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 1824.64774)
+    expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 1649.92774)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 15325) ## number of rows in the original file
 
     # ... multiple files, no filtering
@@ -163,7 +162,8 @@ test_that("readModkitExtract works", {
                                                "s1_6mA")],
                              modbase = c("m", "m", "a"),
                              filter = NULL, nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
@@ -191,7 +191,7 @@ test_that("readModkitExtract works", {
     expect_equal(S4Vectors::metadata(rme)$filter_threshold,
                  list(s1_5mC = NULL, s2_5mC = NULL, s1_6mA = NULL),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 9054.297)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8236.457)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 71750) ## total number of rows in the original files
 
     # ... multiple files, manual filtering
@@ -200,7 +200,8 @@ test_that("readModkitExtract works", {
                              modbase = c(s1_6mA = "a", s1_5mC = "m", s2_5mC = "m"),
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18615, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
@@ -230,7 +231,7 @@ test_that("readModkitExtract works", {
                       s2_5mC = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                       s1_6mA = c(`m` = 0.6, `a` = 0.4, `-` = 0.3)),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8899.0412)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8081.2012)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 71467) ## total number of rows in the original files
 
     # ... multiple files, automatic filtering
@@ -238,7 +239,8 @@ test_that("readModkitExtract works", {
                              modbase = c("m", "a", "m"),
                              filter = "modkit",
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(17459, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s1_6mA", "s2_5mC"))
@@ -268,6 +270,6 @@ test_that("readModkitExtract works", {
                       s1_6mA = c(`a` = -Inf, `-` = 0.8964844),
                       s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906)),
                  ignore_attr = TRUE)
-    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 6672.8205)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 5854.98049)
     expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 61228) ## total number of rows in the original files
 })

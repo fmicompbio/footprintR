@@ -10,9 +10,9 @@ readModkitExtract(
   filter = NULL,
   nrows = Inf,
   seqinfo = NULL,
-  sequence.context.width = 0,
-  sequence.reference = NULL,
-  ncpu = 1L,
+  sequenceContextWidth = 0,
+  sequenceReference = NULL,
+  BPPARAM = bpparam(),
   verbose = FALSE
 )
 }
@@ -46,14 +46,18 @@ containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
 
-\item{sequence.context.width, sequence.reference}{Define the sequence
+\item{sequenceContextWidth, sequenceReference}{Define the sequence
 context to be extracted around modified bases. By default (
-\code{sequence.context.width = 0}), no sequence context will be
-extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+\code{sequenceContextWidth = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 See \code{\link{addSeqContext}} for details.}
 
-\item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
-to use for some of the steps in \code{readModkitExtract()}.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for some of the steps
+in \code{readModkitExtract()}. The default value
+(\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
+for the current environment, or the default parallel backend registered
+using \code{\link[BiocParallel]{register}}.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
@@ -70,9 +74,7 @@ single SummarizedExperiment object with rows representing positions and
 columns representing samples. The SummarizedExperiment object
 contains one assay (\code{mod_prob}) with modification probabilities for
 each position in each read. Unobserved read/position combinations are
-represented by \code{NA}, while all values that are 'implicitly' called by
-modkit (with a modification probability less than 5\%) are represented with
-a value of 0.02.
+represented by \code{NA}.
 }
 \examples{
 extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
@@ -89,5 +91,5 @@ readModkitExtract(extrfile, modbase = "m", filter = "modkit")
 \code{\link[data.table]{fread}} for the function used to read the input files
 }
 \author{
-Charlotte Soneson
+Charlotte Soneson, Michael Stadler
 }

@@ -14,45 +14,57 @@ test_that("plotRegion works", {
     fname2 <- system.file("extdata", "modkit_pileup_2.bed.gz", package = "footprintR")
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readBedMethyl(fnames = c(fname1, fname2), modbase = "m",
-                        sequence.context.width = 3,
-                        sequence.reference = ref)
+                        sequenceContextWidth = 3,
+                        sequenceReference = ref)
     se0 <- se
     assayNames(se0) <- c("assay1", "assay2")
     fname3 <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     seR <- readModkitExtract(fnames = fname3, modbase = 'a')
-    seR2 <- addReadsSummary(se = seR)
+    seR2 <- flattenReadLevelAssay(se = seR)
 
     # invalid arguments
     expect_error(plotRegion(se = "error"))
     expect_error(plotRegion(se = se0))
     expect_error(plotRegion(se = se, region = -1))
     expect_error(plotRegion(se = se, region = "error"))
-    expect_error(plotRegion(se = seR, tracks.reads = "error"))
-    expect_error(plotRegion(se = seR, tracks.reads = list(mod_prob = "error")))
-    expect_error(plotRegion(se = se, tracks.summary = "error"))
-    expect_error(plotRegion(se = se, tracks.summary = list(FracMod = "error")))
+    expect_error(plotRegion(se = seR, tracks = "error"))
+    expect_error(plotRegion(se = seR, tracks = list(list(trackData = "mod_prob",
+                                                         trackType = "error"))))
     expect_error(plotRegion(se = se, modbaseSpace = "error"))
-    expect_error(plotRegion(se = se, sequence.context = 1))
-    expect_error(plotRegion(se = seR, sequence.context = "C"))
+    expect_error(plotRegion(se = se, sequenceContext = 1))
+    expect_error(plotRegion(se = seR2, sequenceContext = "C"),
+                 "No sequence context found")
 
     # expected results
     p1 <- plotRegion(se = se, region = "chr1:6948000-6952000")
-    p2 <- plotRegion(se = se, tracks.summary = list(Nvalid = "Point"))
-    p3 <- plotRegion(se = se, tracks.summary = list(FracMod = "Smooth"))
-    p4 <- plotRegion(se = se, sequence.context = c("GCH"), modbaseSpace = TRUE)
-    p5 <- plotRegion(se = se, sequence.context = c("GCA","GCC","GCT"), modbaseSpace = TRUE)
+    p2 <- plotRegion(se = se, tracks = list(list(trackData = "Nvalid",
+                                                 trackType = "Point")))
+    p3 <- plotRegion(se = se, tracks = list(list(trackData = "FracMod",
+                                                 trackType = "Smooth")))
+    p4 <- plotRegion(se = se, sequenceContext = c("GCH"), modbaseSpace = TRUE)
+    p5 <- plotRegion(se = se, sequenceContext = c("GCA","GCC","GCT"), modbaseSpace = TRUE)
     p6 <- plotRegion(se = seR,
-                     tracks.reads = list(mod_prob = c("Lollipop", "Heatmap")),
-                     tracks.summary = NULL)
+                     tracks = list(list(trackData = "mod_prob",
+                                        trackType = "Lollipop"),
+                                   list(trackData = "mod_prob",
+                                        trackType = "Heatmap")))
     p7 <- plotRegion(se = seR, modbaseSpace = TRUE,
-                     tracks.reads = list(mod_prob = c("Heatmap")),
-                     tracks.summary = NULL)
+                     tracks = list(list(trackData = "mod_prob",
+                                        trackType = "Heatmap")))
     expect_warning(
         p8 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
                          modbaseSpace = TRUE,
-                         tracks.summary = list(FracMod = "Smooth"),
-                         tracks.reads = list(mod_prob = c("Lollipop", "Heatmap", "HeatmapFilled")))
+                         tracks = list(list(trackData = "FracMod",
+                                            trackType = "Smooth"),
+                                       list(trackData = "mod_prob",
+                                            trackType = "Lollipop"), 
+                                       list(trackData = "mod_prob", 
+                                            trackType = "Heatmap"), 
+                                       list(trackData = "mod_prob", 
+                                            trackType = "Heatmap",
+                                            interpolate = TRUE)))
     )
+    
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
     expect_s3_class(p3, "ggplot")

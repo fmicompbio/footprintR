@@ -1,6 +1,6 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.1.3
+Version: 0.2.0
 Authors@R: c(
     person("Michael", "Stadler", email = "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
@@ -28,8 +28,7 @@ Imports:
     Biostrings,
     BSgenome,
     data.table,
-    scuttle,
-    parallel,
+    BiocParallel,
     dplyr,
     tidyr,
     rlang,
@@ -48,7 +47,7 @@ Suggests:
     R.utils,
     withr,
     BiocManager,
-    BiocParallel,
+    ComplexUpset,
     Rsamtools,
     sessioninfo
 LinkingTo: 

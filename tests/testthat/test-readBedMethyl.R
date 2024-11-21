@@ -22,30 +22,32 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = "error"))
     expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = c(100)))
     expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = c(chr2 = 1000)))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequence.context.width = -1))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequence.context.width = 1, sequence.reference = NULL))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequence.context.width = 1, sequence.reference = "error"))
-    expect_error(readBedMethyl(fname1, modbase = 'm', ncpu = "error"))
+    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = -1))
+    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = NULL))
+    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = "error"))
+    expect_error(readBedMethyl(fname1, modbase = 'm', BPPARAM = "error"))
     expect_error(readBedMethyl(fname1, modbase = 'm', verbose = "error"))
+    expect_error(readBedMethyl(c(a = fname1, a = fname2), modbase = c(a = 'm', a = 'a')))
 
     # expected results
     se0 <- readBedMethyl(fnames = fname1, modbase = 'a')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 1,
-                                 sequence.reference = ref, verbose = TRUE)
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm',
+                                 BPPARAM = BiocParallel::SerialParam(),
+                                 sequenceReference = ref, verbose = TRUE)
         )
     )
     suppressMessages(
         expect_message(
             se2 <- readBedMethyl(fnames = c(s2 = fname2), modbase = 'm',
-                                 sequence.context.width = 1,
-                                 sequence.reference = ref, verbose = TRUE)
+                                 sequenceContextWidth = 1,
+                                 sequenceReference = ref, verbose = TRUE)
         )
     )
 
     se12 <- readBedMethyl(fnames = c(fname1, fname2), modbase = 'm',
-                          sequence.context.width = 1, sequence.reference = ref)
+                          sequenceContextWidth = 1, sequenceReference = ref)
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2),
@@ -61,7 +63,7 @@ test_that("readBedMethyl works", {
     expect_identical(colnames(colData(se1)), c("sample", "modbase"))
     expect_identical(colnames(colData(se2)), c("sample", "modbase"))
     expect_identical(colnames(colData(se12)), c("sample", "modbase"))
-    expect_identical(colnames(colData(se11)), c("sample", "modbase", "ids", "nfiles"))
+    expect_identical(colnames(colData(se11)), c("sample", "modbase"))
     expect_identical(dim(se0), c(0L, 1L))
     expect_identical(dim(se1), c(10000L, 1L))
     expect_identical(dim(se2), c(10000L, 1L))
@@ -89,9 +91,9 @@ test_that("readBedMethyl works", {
                      assay(se12, "Nmod")[i2to12, 2, drop = FALSE])
     expect_identical(assay(se2, "Nvalid"),
                      assay(se12, "Nvalid")[i2to12, 2, drop = FALSE])
-    expect_identical(sum(assay(se12, "Nmod")), sum(assay(se11, "Nmod")))
-    expect_identical(sum(assay(se12, "Nvalid")), sum(assay(se11, "Nvalid")))
-    expect_true("sequence.context" %in% colnames(rowData(se2)))
-    expect_equal(as.integer(table(as.character(rowData(se2)$sequence.context))),
+    expect_identical(rowSums(assay(se12, "Nmod")), rowSums(assay(se11, "Nmod")))
+    expect_identical(rowSums(assay(se12, "Nvalid")), rowSums(assay(se11, "Nvalid")))
+    expect_true("sequenceContext" %in% colnames(rowData(se2)))
+    expect_equal(as.integer(table(as.character(rowData(se2)$sequenceContext))),
                  c(844L, 7535L, 801L, 820L))
 })

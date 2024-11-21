@@ -23,6 +23,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// labelDists
+Rcpp::NumericMatrix labelDists(std::vector<std::string> labels, int minOverlap);
+RcppExport SEXP _footprintR_labelDists(SEXP labelsSEXP, SEXP minOverlapSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type labels(labelsSEXP);
+    Rcpp::traits::input_parameter< int >::type minOverlap(minOverlapSEXP);
+    rcpp_result_gen = Rcpp::wrap(labelDists(labels, minOverlap));
+    return rcpp_result_gen;
+END_RCPP
+}
 // complement
 char complement(char n);
 RcppExport SEXP _footprintR_complement(SEXP nSEXP) {
@@ -46,8 +58,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // read_modbam_cpp
-Rcpp::List read_modbam_cpp(std::string inname_str, std::vector<std::string> regions, char modbase, int n_alns_to_sample, std::vector<std::string> tnames_for_sampling, int n_threads, bool verbose);
-RcppExport SEXP _footprintR_read_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP n_alns_to_sampleSEXP, SEXP tnames_for_samplingSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
+Rcpp::List read_modbam_cpp(std::string inname_str, std::vector<std::string> regions, char modbase, int n_alns_to_sample, std::vector<std::string> tnames_for_sampling, std::vector<std::string> variantRefNames, std::vector<int> variantRefPositions, int n_threads, bool verbose);
+RcppExport SEXP _footprintR_read_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP n_alns_to_sampleSEXP, SEXP tnames_for_samplingSEXP, SEXP variantRefNamesSEXP, SEXP variantRefPositionsSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,9 +68,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
     Rcpp::traits::input_parameter< int >::type n_alns_to_sample(n_alns_to_sampleSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type tnames_for_sampling(tnames_for_samplingSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type variantRefNames(variantRefNamesSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type variantRefPositions(variantRefPositionsSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(read_modbam_cpp(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads, verbose));
+    rcpp_result_gen = Rcpp::wrap(read_modbam_cpp(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -78,9 +92,10 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
+    {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
-    {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 7},
+    {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
     {NULL, NULL, 0}
 };

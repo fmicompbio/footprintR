@@ -12,18 +12,18 @@
 // convert 0-based read position to 0-based reference sequence position
 // (a position of -1 means unaligned)
 std::vector<int> read_to_reference_pos(const bam1_t *aln,
-                                       const std::vector<int> &read_pos) {
+                                       const std::vector<int> &read_positions) {
     // variables
-    size_t read_pos_index = 0; // index to elements of read_pos
+    size_t read_positions_index = 0; // index to elements of read_positions
     const uint32_t *cigar = bam_get_cigar(aln);  // cigar array
     int ref_pos = aln->core.pos;  // reference position (0-based)
-    int read_seq_index = 0;  // current index in the read sequence
+    int read_pos = 0;  // read position (0-based)
 
     // return value: 0-based reference positions, initialized to -1
-    std::vector<int> ref_positions(read_pos.size(), -1);
+    std::vector<int> ref_positions(read_positions.size(), -1);
 
     // iterate over the CIGAR operations i
-    for (unsigned int i = 0; i < aln->core.n_cigar && read_pos_index < read_pos.size(); i++) {
+    for (unsigned int i = 0; i < aln->core.n_cigar && read_positions_index < read_positions.size(); i++) {
         int op = bam_cigar_op(cigar[i]);  // operation type
         int op_len = bam_cigar_oplen(cigar[i]);  // operation length
 
@@ -31,26 +31,26 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
         case BAM_CMATCH:  // match or mismatch (M)
         case BAM_CEQUAL:  // match (=)
         case BAM_CDIFF:   // mismatch (X)
-            while (read_pos_index < read_pos.size() &&
-                   read_seq_index + op_len > read_pos[read_pos_index]) {
-                ref_positions[read_pos_index] = ref_pos + (read_pos[read_pos_index] - read_seq_index);
-                read_pos_index++;
+            while (read_positions_index < read_positions.size() &&
+                   read_pos + op_len > read_positions[read_positions_index]) {
+                ref_positions[read_positions_index] = ref_pos + (read_positions[read_positions_index] - read_pos);
+                read_positions_index++;
             }
             ref_pos += op_len;
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CINS:  // insertion (I)
-            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+            if (read_pos + op_len > read_positions[read_positions_index]) {
                 // the current read position is within an insertion -->
                 //     no corresponding reference position
-                while (read_pos_index < read_pos.size() &&
-                       read_seq_index + op_len > read_pos[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;
-                    read_pos_index++;
+                while (read_positions_index < read_positions.size() &&
+                       read_pos + op_len > read_positions[read_positions_index]) {
+                    ref_positions[read_positions_index] = -1;
+                    read_positions_index++;
                 }
             }
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CDEL:       // deletion (D)
@@ -59,16 +59,16 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
             break;
 
         case BAM_CSOFT_CLIP:  // soft clipping (S)
-            if (read_seq_index + op_len > read_pos[read_pos_index]) {
+            if (read_pos + op_len > read_positions[read_positions_index]) {
                 // the current read position is within a soft-clipped region -->
                 //     no corresponding reference position
-                while (read_pos_index < read_pos.size() &&
-                       read_seq_index + op_len > read_pos[read_pos_index]) {
-                    ref_positions[read_pos_index] = -1;
-                    read_pos_index++;
+                while (read_positions_index < read_positions.size() &&
+                       read_pos + op_len > read_positions[read_positions_index]) {
+                    ref_positions[read_positions_index] = -1;
+                    read_positions_index++;
                 }
             }
-            read_seq_index += op_len;
+            read_pos += op_len;
             break;
 
         case BAM_CHARD_CLIP:  // hard clipping (H)
@@ -83,6 +83,117 @@ std::vector<int> read_to_reference_pos(const bam1_t *aln,
     }
 
     return ref_positions;
+}
+
+// convert 0-based reference position to 0-based read sequence position
+// (a position of -1 means uncovered)
+// Note: assumes that ref_pos is sorted ascendingly and on the same target as aln
+std::vector<int> reference_to_read_pos(const bam1_t *aln,
+                                       const std::vector<int> &ref_positions) {
+    // variables
+    size_t ref_positions_index = 0; // index to elements of ref_positions
+    const uint32_t *cigar = bam_get_cigar(aln);  // cigar array
+    int ref_pos = aln->core.pos;  // reference position (0-based)
+    int read_pos = 0;  // read position (0-based)
+
+    // return value: 0-based reference positions, initialized to -1
+    std::vector<int> read_positions(ref_positions.size(), -1);
+
+    // iterate over the CIGAR operations i
+    for (unsigned int i = 0; i < aln->core.n_cigar && ref_positions_index < ref_positions.size(); i++) {
+        int op = bam_cigar_op(cigar[i]);  // operation type
+        int op_len = bam_cigar_oplen(cigar[i]);  // operation length
+
+        switch (op) {
+        case BAM_CMATCH:  // match or mismatch (M)
+        case BAM_CEQUAL:  // match (=)
+        case BAM_CDIFF:   // mismatch (X)
+            while (ref_positions_index < ref_positions.size() &&
+                   ref_pos + op_len > ref_positions[ref_positions_index]) {
+                read_positions[ref_positions_index] = read_pos + (ref_positions[ref_positions_index] - ref_pos);
+                ref_positions_index++;
+            }
+            ref_pos += op_len;
+            read_pos += op_len;
+            break;
+
+        case BAM_CINS:  // insertion (I)
+        case BAM_CSOFT_CLIP:  // soft clipping (S)
+            // no reference position is aligned to read bases in an insertion
+            //     or soft clipped end -> only advance read_pos
+            read_pos += op_len;
+            break;
+
+        case BAM_CDEL:       // deletion (D)
+        case BAM_CREF_SKIP:  // reference skip (N)
+            if (ref_pos + op_len > ref_positions[ref_positions_index]) {
+                // the current reference position is within a deletion -->
+                //     no corresponding read position
+                while (ref_positions_index < ref_positions.size() &&
+                       ref_pos + op_len > ref_positions[ref_positions_index]) {
+                    read_positions[ref_positions_index] = -1;
+                    ref_positions_index++;
+                }
+            }
+            ref_pos += op_len;
+            break;
+
+        case BAM_CHARD_CLIP:  // hard clipping (H)
+        case BAM_CPAD:        // padding (P)
+            // these do not consume any positions in the read or reference
+            break; // # nocov start
+
+        default:
+            Rcpp::warning("Unknown CIGAR operation: %d", op);
+        return read_positions; // # nocov end
+        }
+    }
+
+    return read_positions;
+}
+
+
+// construct a read label based on variant positions
+std::string construct_read_label(const bam1_t *aln,
+                                 const std::vector<std::string> &ref_names,
+                                 const std::vector<int> &ref_positions,
+                                 const sam_hdr_t *hdr) {
+    // initialize label
+    std::string label(ref_names.size(), '-');
+
+    // subset ref_positions to the ones overlapping aln
+    std::string tname(sam_hdr_tid2name(hdr, aln->core.tid));
+    int aln_start = aln->core.pos;
+    int aln_end = bam_endpos(aln);
+    size_t from = 0, to = 0;
+
+    while (from < ref_names.size() &&
+           (ref_names[from] != tname || ref_positions[from] < aln_start ||
+           ref_positions[from] > aln_end)) {
+        from++;
+    }
+
+    if (from < ref_names.size()) {
+        to = from;
+        while ((to < ref_names.size()) &&
+               (ref_names[to] == tname && ref_positions[to] < aln_end)) {
+            to++;
+        }
+
+        // subset ref_positions and convert to read_positions
+        uint8_t *seqdata = bam_get_seq(aln);
+        std::vector<int> ref_positions_overlapping(ref_positions.begin() + from,
+                                                   ref_positions.begin() + to);
+        std::vector<int> read_positions = reference_to_read_pos(
+            aln, ref_positions_overlapping);
+        for (size_t i = 0; i < read_positions.size(); i++) {
+            if (read_positions[i] != -1) {
+                label[from + i] = seq_nt16_str[bam_seqi(seqdata, read_positions[i])];
+            }
+        }
+    }
+
+    return label;
 }
 
 // create the complement of a base
@@ -172,6 +283,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        sam_hdr_t *in_samhdr,   // sam file header
                        int &n_unaligned,       // number of unaligned modified bases
                        int &n_total,           // total number of modified bases
+                       std::vector<std::string> &variantRefNames, // seqnames of SNV sites
+                       std::vector<int> &variantRefPositions,     // coordinates of SNV sites
                        // vectors for return values (per modification)
                        std::vector<std::string> &read_id,
                        std::vector<char> &call_code,
@@ -186,7 +299,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<std::string> &df_read_id,
                        std::vector<double> &df_qscore,
                        std::vector<int> &df_read_length,
-                       std::vector<int> &df_aligned_length) {
+                       std::vector<int> &df_aligned_length,
+                       Rcpp::CharacterVector &df_variant_label) {
     // allocate variable only used inside process_bam_record()
     uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
     unsigned int sum_qual = 0;
@@ -202,6 +316,10 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 
     // process alignment
     alncnt++;
+
+    // check for interrupt every 100 alignments
+    if (alncnt % 100 == 0) // # nocov start
+        Rcpp::checkUserInterrupt(); // # nocov end
 
     // ... extract *forward* read sequence to char*
     data = bam_get_seq(bamdata);
@@ -348,6 +466,15 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         df_qscore.push_back(qs_value);
         df_read_length.push_back(this_read_len);
         df_aligned_length.push_back(calculate_aligned_bases(bamdata));
+
+        // ... ... variant_label
+        if (variantRefNames.size() > 0) {
+            df_variant_label.push_back(
+                construct_read_label(bamdata, variantRefNames,
+                                     variantRefPositions, in_samhdr));
+        } else {
+            df_variant_label.push_back(NA_STRING);
+        }
     }
 
     return 0;
@@ -404,7 +531,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'
 //' @author Michael Stadler
 //'
-//' @importFrom cli cli_alert_info cli_alert_success
+//' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 //'
 //' @noRd
 //' @keywords internal
@@ -414,6 +541,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                            char modbase,
                            int n_alns_to_sample,
                            std::vector<std::string> tnames_for_sampling,
+                           std::vector<std::string> variantRefNames,
+                           std::vector<int> variantRefPositions,
                            int n_threads = 2,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
@@ -422,8 +551,9 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     // variable declarations
     // ... R functions
     Rcpp::Environment cli = Rcpp::Environment::namespace_env("cli");
+    Rcpp::Function cli_progress_step = cli["cli_progress_step"];
+    Rcpp::Function cli_progress_done = cli["cli_progress_done"];
     Rcpp::Function cli_alert_info = cli["cli_alert_info"];
-    Rcpp::Function cli_alert_success = cli["cli_alert_success"];
 
     // ... general variables
     int c = 0, i = 0, success = 0;
@@ -458,6 +588,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<double> df_qscore;
     std::vector<int> df_read_length;
     std::vector<int> df_aligned_length;
+    Rcpp::CharacterVector df_variant_label;
 
     const char* inname = inname_str.c_str();
 
@@ -476,7 +607,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     // open input file
     if (verbose) {
         snprintf(buffer, buffer_len, "opening input file {.file %s} using {%d} thread{?s}", inname, n_threads);
-        cli_alert_info(buffer);
+        cli_progress_step(buffer);
     }
     if (!(infile = sam_open(inname, "r"))) {
         had_error = true;
@@ -563,9 +694,10 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
-                     regcnt, regcnt > 1 ? "s" : "");
-            cli_alert_info(buffer);
+            snprintf(buffer, buffer_len,
+                     "reading alignments overlapping {%u} target{?s}",
+                     regcnt);
+            cli_progress_step(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -584,6 +716,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                              in_samhdr,        // sam file header
                                              n_unaligned,      // number of unaligned modified bases
                                              n_total,          // total number of modified bases
+                                             variantRefNames,  // seqnames of SNV sites
+                                             variantRefPositions, // coordinates of SNV sites
                                              // vectors for return values (per modification)
                                              read_id,
                                              call_code,
@@ -598,7 +732,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                              df_read_id,
                                              df_qscore,
                                              df_read_length,
-                                             df_aligned_length);
+                                             df_aligned_length,
+                                             df_variant_label);
                 if (success != 0) { // # nocov start
                     goto end;
                 } // # nocov end
@@ -624,9 +759,10 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
 
         // iterate over regions
         if (verbose) {
-            snprintf(buffer, buffer_len, "reading alignments overlapping %u target%s",
-                     regcnt, regcnt > 1 ? "s" : "");
-            cli_alert_info(buffer);
+            snprintf(buffer, buffer_len,
+                     "reading alignments overlapping {%u} target{?s}",
+                     regcnt);
+            cli_progress_step(buffer);
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
@@ -642,6 +778,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                          in_samhdr,        // sam file header
                                          n_unaligned,      // number of unaligned modified bases
                                          n_total,          // total number of modified bases
+                                         variantRefNames,  // seqnames of SNV sites
+                                         variantRefPositions, // coordinates of SNV sites
                                          // vectors for return values (per modification)
                                          read_id,
                                          call_code,
@@ -656,7 +794,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                                          df_read_id,
                                          df_qscore,
                                          df_read_length,
-                                         df_aligned_length);
+                                         df_aligned_length,
+                                         df_variant_label);
             if (success != 0) {
                 goto end;
             }
@@ -671,12 +810,13 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     }
 
     if (verbose) {
+        cli_progress_done();
         snprintf(buffer, buffer_len,
                  "removed %d unaligned (e.g. soft-masked) of %d called bases",
                  n_unaligned, n_total);
         cli_alert_info(buffer);
         snprintf(buffer, buffer_len, "read %u alignments", alncnt);
-        cli_alert_success(buffer);
+        cli_alert_info(buffer);
     }
 
     end:
@@ -718,7 +858,8 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 Rcpp::_["read_id"] = df_read_id,
                 Rcpp::_["qscore"] = df_qscore,
                 Rcpp::_["read_length"] = df_read_length,
-                Rcpp::_["aligned_length"] = df_aligned_length
+                Rcpp::_["aligned_length"] = df_aligned_length,
+                Rcpp::_["variant_label"] = df_variant_label
             );
 
             // create return list

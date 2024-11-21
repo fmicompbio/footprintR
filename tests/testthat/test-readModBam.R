@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
     library(footprintR)
     library(GenomicRanges)
     library(Rsamtools)
+    library(Biostrings)
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -24,6 +25,8 @@ test_that("readModBam works", {
     # invalid arguments
     expect_error(readModBam("error", "chr1:6940000-6955000", "a", 0),
                  "not all `bamfiles` exist")
+    expect_error(readModBam(modbamfiles, NULL, "a", 0),
+                 "`regions` must contain at least one genomic range if not in sampling mode")
     expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
                             "chr1:6940000-6955000", "a", 0),
                  "are not unique")
@@ -48,10 +51,8 @@ test_that("readModBam works", {
         "Cannot sample 10 alignments from a total of 0")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, "chr1", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpu = -1),
-                 "'ncpu' must be within \\[1,Inf\\]")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpuDecompression = "error"),
-                 "'ncpuDecompression' must be of class 'numeric'")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", BPPARAM = -1),
+                 "'BPPARAM' must be of class 'BiocParallelParam'")
 
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a")
@@ -60,18 +61,19 @@ test_that("readModBam works", {
     reg3 <- rep("chr1:6940000-6955000", 3)
     reg4 <- "chr1:6940000-6955000"
     reg5 <- c("chr1:6941000-6941001", "chr1:6928000-6928001")
-    expect_message(expect_message(expect_message(expect_message(
-        expect_message(expect_message(expect_message(expect_message(
-            expect_message(expect_message(expect_message(expect_message(
-                se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
-                                  modbase = "a", nAlnsToSample = 0,
-                                  sequence.context.width = 1, sequence.reference = ref,
-                                  seqnamesToSampleFrom = "chr1", verbose = TRUE)
-    ))))))))))))
+    suppressMessages({
+        expect_message(
+            se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                              modbase = "a", nAlnsToSample = 0,
+                              sequenceContextWidth = 1, sequenceReference = ref,
+                              seqnamesToSampleFrom = "chr1", verbose = TRUE)
+        )
+    })
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                      BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
                       verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
@@ -103,43 +105,38 @@ test_that("readModBam works", {
         what = "qname",
         which = GRanges(reg5[1:2])
     ))
-    set.seed(55L)
-    expect_message(expect_message(expect_message(
-        expect_message(expect_message(expect_message(
-            expect_message(expect_message(
+    expect_warning(
+        suppressMessages({
+            expect_message(
                 se6a  <- readModBam(bamfiles = modbamfiles[1],
                                     regions = NULL,
                                     modbase = "a",
                                     nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                                    ncpuDecompression = 2,
-                                    verbose = TRUE),
-                "extracting base modifications"),
-                "opening input file"),
-            "sampling alignments with probability 0.5"),
-            "reading alignments overlapping"),
-            "removed 2006 unaligned"),
-        "read 6 alignments"),
-        "finding unique genomic"),
-        "collapsed 16095 positions to 6852")
-    set.seed(55L)
+                                    variantPositions = GPos("chr1", pos = 63000000),
+                                    BPPARAM = BiocParallel::MulticoreParam(2L, RNGseed = 55L),
+                                    verbose = TRUE)
+            )
+        })
+    )
     se6b  <- readModBam(bamfiles = modbamfiles[1],
                         regions = NULL,
                         modbase = "a",
                         nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                        BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                         verbose = FALSE)
 
     seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b)
 
     # ... structure
-    expected_coldata_names <- c("sample", "modbase", "n_reads", "read_info")
-    expected_read_info_names <- c("qscore", "read_length",
-                                  "aligned_length", "aligned_fraction")
+    expected_coldata_names <- c("sample", "modbase", "n_reads", "readInfo")
+    expected_read_info_names <- c("qscore", "read_length", "aligned_length",
+                                  "variant_label", "aligned_fraction")
     for (se in seL) {
         expect_s4_class(se, "RangedSummarizedExperiment")
         expect_s4_class(rowRanges(se), "GPos")
         expect_identical(colnames(colData(se)), expected_coldata_names)
-        expect_s4_class(colData(se)$read_info, "SimpleList")
-        res_se <- lapply(colData(se)$read_info, function(df) {
+        expect_s4_class(colData(se)$readInfo, "SimpleList")
+        res_se <- lapply(colData(se)$readInfo, function(df) {
             expect_s4_class(df, "DataFrame")
             expect_named(df, expected_read_info_names)
         })
@@ -176,26 +173,28 @@ test_that("readModBam works", {
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
     expect_identical(colnames(se1), names(modbamfiles))
-    expect_identical(lapply(se1$read_info, rownames),
+    expect_identical(lapply(se1$readInfo, rownames),
                      lapply(assay(se1, "mod_prob"), colnames))
-    expect_equal(lapply(se1$read_info, "[[", "qscore"),
+    expect_equal(lapply(se1$readInfo, "[[", "qscore"),
                  list(
                      sample1 = c(14.1428003311157, 16.0126991271973,
                                  21.1338005065918, 20.3082008361816),
                      sample2 = c(12.9041996002197, 9.67461013793945,
                                  15.0149002075195, 15.1365995407104,
                                  17.7175006866455, 13.6647996902466)))
-    expect_identical(lapply(se1$read_info, "[[", "read_length"),
+    expect_identical(lapply(se1$readInfo, "[[", "read_length"),
                      list(
                          sample1 = c(20058L, 11305L, 9246L, 12277L),
                          sample2 = c(13108L, 11834L, 9674L, 10047L, 8973L, 10057L)
                      ))
-    expect_identical(lapply(se1$read_info, "[[", "aligned_length"),
+    expect_identical(lapply(se1$readInfo, "[[", "aligned_length"),
                      list(
                          sample1 = c(14801L, 11214L, 9227L, 12227L),
                          sample2 = c(9656L, 11234L, 9579L, 9967L, 8915L, 9898L)
                      ))
-    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequence.context))),
+    expect_identical(lapply(se1$readInfo, "[[", "variant_label"),
+                     lapply(structure(se1$n_reads, names = colnames(se1)), function(n) rep(NA_character_, n)))
+    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequenceContext))),
                  c(A = 8108L, C = 128L, G = 393L, T = 62L), ignore_attr = TRUE)
 
     # ... content se2
@@ -206,8 +205,8 @@ test_that("readModBam works", {
     expect_identical(sub("^s", "sample", colnames(se2)), colnames(se3))
     expect_identical(colnames(se2), sub("sample", "s", colnames(se3)))
     for (nm in expected_read_info_names) {
-        expect_equal(lapply(se2$read_info, "[[", nm),
-                     lapply(se3$read_info, "[[", nm),
+        expect_equal(lapply(se2$readInfo, "[[", nm),
+                     lapply(se3$readInfo, "[[", nm),
                      ignore_attr = TRUE)
     }
 
@@ -226,18 +225,18 @@ test_that("readModBam works", {
     expect_equal(as.vector(modprob3[shared_rows, shared_cols])[nonzero],
                  as.vector(modprob0[shared_rows, shared_cols])[nonzero],
                  tolerance = 1e-6)
-    expect_identical(lapply(se3$read_info, rownames),
+    expect_identical(lapply(se3$readInfo, rownames),
                      lapply(assay(se3, "mod_prob"), colnames))
-    expect_equal(lapply(se3$read_info, "[[", "qscore"),
+    expect_equal(lapply(se3$readInfo, "[[", "qscore"),
                  list(
                      sample1 = c(14.1428003311157, 16.0126991271973, 20.3082008361816),
                      sample2 = c(9.67461013793945, 13.6647996902466)))
-    expect_identical(lapply(se3$read_info, "[[", "read_length"),
+    expect_identical(lapply(se3$readInfo, "[[", "read_length"),
                      list(
                          sample1 = c(20058L, 11305L, 12277L),
                          sample2 = c(11834L, 10057L)
                      ))
-    expect_identical(lapply(se3$read_info, "[[", "aligned_length"),
+    expect_identical(lapply(se3$readInfo, "[[", "aligned_length"),
                      list(
                          sample1 = c(14801L, 11214L, 12227L),
                          sample2 = c(11234L, 9898L)
@@ -247,18 +246,18 @@ test_that("readModBam works", {
     expect_identical(unname(se4$n_reads), c(3L, 0L))
     expect_identical(dim(se4), c(4772L, 2L))
     expect_identical(dim(as.matrix(assay(se4, "mod_prob"))), c(4772L, 3L))
-    expect_identical(unlist(lapply(se4$read_info, rownames), use.names = FALSE),
+    expect_identical(unlist(lapply(se4$readInfo, rownames), use.names = FALSE),
                      unlist(lapply(assay(se4, "mod_prob"), colnames), use.names = FALSE))
-    expect_equal(lapply(se4$read_info, "[[", "qscore"),
+    expect_equal(lapply(se4$readInfo, "[[", "qscore"),
                  list(
                      sample1 = c(14.1428003311157, 16.0126991271973, 20.3082008361816),
                      sample2 = numeric(0)))
-    expect_identical(lapply(se4$read_info, "[[", "read_length"),
+    expect_identical(lapply(se4$readInfo, "[[", "read_length"),
                      list(
                          sample1 = c(20058L, 11305L, 12277L),
                          sample2 = integer(0)
                      ))
-    expect_identical(lapply(se4$read_info, "[[", "aligned_length"),
+    expect_identical(lapply(se4$readInfo, "[[", "aligned_length"),
                      list(
                          sample1 = c(14801L, 11214L, 12227L),
                          sample2 = integer(0)
@@ -282,5 +281,91 @@ test_that("readModBam works", {
 
     # ... content of se6a and se6b
     expect_identical(se6a, se6b)
-    expect_identical(dim(assay(se6a)$sample1), c(6852L, 6L))
+    expect_identical(dim(assay(se6a)$sample1), c(5996L, 5L))
+})
+
+test_that("readModBam correctly labels reads", {
+    # example data
+    modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+
+    # extract alignments
+    alns <- Rsamtools::scanBam(
+        file = modbamfile,
+        param = ScanBamParam(which = GRanges("chr1", IRanges(1, 1e8)),
+                             what = c("qname", "rname", "strand", "pos",
+                                      "qwidth", "cigar", "seq")))[[1]]
+
+    # extract first 2 and last 3 positions of each alignment
+    rnames <- rep(as.character(alns$rname), each = 5L)
+    # ... this was calculated using: GenomicAlignments::cigarWidthAlongReferenceSpace(alns$cigar)
+    alnwidth <- c(14973L, 11303L, 9254L, 12288L, 10047L, 9066L, 9052L, 8346L,
+                  7678L, 6985L)
+    rpos <- unlist(lapply(seq_along(alns$qname), function(i) {
+        alns$pos[i] + c(0:1, alnwidth[i] - 3:1)
+    }))
+    # ... add three positions that don't overlap any read (one before, two after)
+    rnames <- c("chr1", rnames, "chr2", "chr1")
+    rpos <- c(6925829L, rpos, 6941630L, 6941639L)
+    # ... convert to GPos
+    varpos <- GPos(seqnames = rnames, pos = rpos,
+                   names = c("miss1", rep(alns$qname, each = 5), "miss2", "miss3"))
+
+    # calculate expected labels
+    softmaskStart <- suppressWarnings(
+        ifelse(grepl("^[0-9]+S", alns$cigar),
+               as.integer(sub("^([0-9]+)S.+$", "\\1", alns$cigar)),
+               0L))
+    softmaskEnd <- suppressWarnings(
+        ifelse(grepl("[0-9]+S$", alns$cigar),
+               as.integer(sub("^.+?([0-9]+)S$", "\\1", alns$cigar)),
+               0L))
+    readLabelParts <- paste0(subseq(x = alns$seq, start = softmaskStart + 1L, width = 2L),
+                             subseq(x = alns$seq, end = width(alns$seq) - softmaskEnd, width = 3L))
+
+    # run readModBam
+    se <- readModBam(bamfiles = modbamfile, modbase = "a", regions = varpos,
+                     variantPositions = varpos)
+    varposToSortedIdx <- match(varpos, metadata(se)$variantPositions)
+
+    # compare to expected labels
+    extractLabelParts <- unlist(lapply(seq_along(alns$qname), function(i) {
+        rid <- alns$qname[i]
+        idx <- varposToSortedIdx[mcols(varpos)$names == rid]
+        paste(
+            strsplit(se$readInfo$s1$variant_label[match(paste0("s1-", rid),
+                                                         rownames(se$readInfo$s1))],
+                     "")[[1]][idx],
+            collapse = "")
+    }))
+    expect_identical(sort(varpos), metadata(se)$variantPositions)
+    expect_identical(extractLabelParts, readLabelParts)
+    expect_true(all(grepl("^-.*--$", se$readInfo$s1$variant_label))) # missed positions
+
+    # positions that are known to be variables across reads
+    varpos2 <- GPos(seqnames = "chr1", pos = c(6937731, 6937788, 6937843, 6937857,
+                                               6937873, 6937931, 6937932, 6938070,
+                                               6938109))
+
+    se2 <- readModBam(bamfiles = modbamfile, modbase = "a", regions = varpos2,
+                      variantPositions = varpos2)
+    bases <- c("A", "C", "G", "T", "-")
+    expCnt <- matrix(
+        as.integer(c(0, 8, 0, 2, 0,
+                     0, 8, 0, 2, 0,
+                     8, 0, 2, 0, 0,
+                     8, 0, 2, 0, 0,
+                     2, 0, 7, 0, 1,
+                     0, 2, 7, 0, 1,
+                     2, 0, 7, 0, 1,
+                     2, 0, 7, 0, 1,
+                     0, 2, 7, 0, 1)),
+        ncol = length(bases), byrow = TRUE, dimnames = list(NULL, bases))
+    obsCnt <- do.call(rbind, lapply(seq.int(9), function(i) {
+        f <- factor(
+            unlist(lapply(se2$readInfo$s1$variant_label, substr, i, i)),
+            levels = bases
+        )
+        unclass(table(f))
+    }))
+    expect_identical(obsCnt, expCnt)
 })

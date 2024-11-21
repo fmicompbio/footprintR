@@ -32,6 +32,12 @@ and \code{maxd} corresponds to the \code{length(cnt)}. The function is
 called by \code{\link{calcModbaseSpacing}}, which provides a higher level,
 more convenient interface.
 }
+\examples{
+cnt <- c(0, 0, 0)
+calcAndCountDist(c(1, 4, 8), c(2, 3, 4, 5, 8, 9, 10), cnt)
+cnt
+
+}
 \author{
 Michael Stadler
 }

@@ -7,14 +7,15 @@
 \usage{
 calcReadStats(
   se,
-  assay.type = "mod_prob",
+  assayName = "mod_prob",
   stats = NULL,
   regions = NULL,
-  sequence.context = NULL,
-  min.Nobs.ppos = 0,
-  min.Nobs.pread = 0,
+  sequenceContext = NULL,
+  minNobsPpos = 0,
+  minNobsPread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
+  BPPARAM = bpparam(),
   verbose = FALSE
 )
 
@@ -22,16 +23,16 @@ addReadStats(se, ..., name = "QC")
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-object with assay \code{assay.type} typically returned by
+object with assay \code{assayName} typically returned by
 \code{\link{readModkitExtract}} or \code{\link{readModBam}}.}
 
-\item{assay.type}{A character scalar specifying the assay of \code{se}
+\item{assayName}{A character scalar specifying the assay of \code{se}
 containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
 \item{stats}{Character vector specifying which statistics to calculate.
-When set to \code{NULL} all available statistics are calculated. See
-details for available read statistics.}
+When set to \code{NULL} all available statistics except the sample
+entropy are calculated. See details for available read statistics.}
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object limiting the
 positions included in the calculations to the ones overlapping the
@@ -39,17 +40,17 @@ corresponding genomic regions. Alternatively, regions can be
 specified as a character vector (e.g. "chr1:1200-1300") that can be
 coerced into a \code{GRanges} object.}
 
-\item{sequence.context}{A character vector with sequence context(s)
+\item{sequenceContext}{A character vector with sequence context(s)
 to include in the calculations. Only positions that match one of the
 provided sequence contexts will be included. Sequence contexts can be
 provided using IUPAC redundancy codes. The sequence contexts of modified
-bases are obtained from \code{rowData(se)$sequence.context} and thus
+bases are obtained from \code{rowData(se)$sequenceContext} and thus
 requires that \code{se} contains the appropriate information, for example
-by setting the \code{sequence.context} and \code{sequence.reference}
+by setting the \code{sequenceContextWidth} and \code{sequenceReference}
 arguments of \code{\link{readModkitExtract}} when it was generated,
 or by adding it using \code{\link{addSeqContext}}.}
 
-\item{min.Nobs.ppos}{A numeric scalar value >=1 indicating the minimum
+\item{minNobsPpos}{A numeric scalar value >=1 indicating the minimum
 coverage on individual positions for them to be included in the
 calculations. In high coverage data this is an effective filter for
 removing spurious modbases, typically the result of erroneous
@@ -57,7 +58,7 @@ basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
 Q3 and IQR are the third quartile and interquartile range of the coverage
 distribution estimated from the data in \code{se}.}
 
-\item{min.Nobs.pread}{A numeric scalar with the minimum number of observed
+\item{minNobsPread}{A numeric scalar with the minimum number of observed
 modifiable bases per read for it to be included in the calculations.
 \code{NA} values are returned for the reads that do not pass this
 threshold.}
@@ -68,6 +69,13 @@ calls are considered "low confidence".}
 \item{LagRange}{A numeric vector of two values (minimum and maxium) defining
 the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).}
+
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for calculating
+read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
+will select an appropriate value for the current environment, or the
+default parallel backend registered using
+\code{\link[BiocParallel]{register}}.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 
@@ -98,18 +106,18 @@ statistics that are calculated.
 \code{calcReadStats} calculates a collection of location/scatter statistics
 and information theoretic/signal-processing metrics for the modification
 probability, confidence or modification call value vectors across individual
-reads (data in assay \code{assay.type}). Only bases matching the criteria
-given by\code{regions}, \code{sequence.context}, \code{min.Nobs.ppos} and
-\code{min.Nobs.pread} are included in the calculations. The values of these
+reads (data in assay \code{assayName}). Only bases matching the criteria
+given by\code{regions}, \code{sequenceContext}, \code{minNobsPpos} and
+\code{minNobsPread} are included in the calculations. The values of these
 filtering parameters are stored in the attribute of the output.
 
 \code{stats} selects the summaries to be calculated. Currently available
 values are:
 \describe{
 \item{MeanModProb}{: Mean modification probability across the read.}
-\item{FracMod}{: Fraction of confidently modified bases, defined as the
-ratio of modifiable bases with modification probability >= 0.5 over
-all modifiable bases.}
+\item{FracMod}{: Fraction of confidently called bases (either modified
+or unmodified), that are modified. By default, all bases are
+considered confidently called.}
 \item{MeanConf}{:  Mean call confidence across the read.}
 \item{MeanConfUnm}{: Mean call confidence confined to unmodified bases
 (modifiable bases with modification probability < 0.5).}

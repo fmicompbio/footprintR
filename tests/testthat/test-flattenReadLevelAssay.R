@@ -5,9 +5,9 @@ suppressPackageStartupMessages({
 })
 
 ## -------------------------------------------------------------------------- ##
-## Checks, addReadsSummary
+## Checks, flattenReadLevelAssay
 ## -------------------------------------------------------------------------- ##
-test_that("addReadsSummary works", {
+test_that("flattenReadLevelAssay works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     se <- readModkitExtract(exfile, modbase = "a")
@@ -15,28 +15,30 @@ test_that("addReadsSummary works", {
     colData(se0) <- NULL
 
     # invalid arguments
-    expect_error(addReadsSummary(se = "error"))
-    expect_error(addReadsSummary(se = se, assay.type = "error"))
-    expect_error(addReadsSummary(se = se, statistics = "error"))
-    expect_error(addReadsSummary(se = se, keep.reads = "error"))
-    expect_error(addReadsSummary(se = se, replace.existing = "error"))
-    expect_error(addReadsSummary(se = se, replace.existing = c(TRUE, FALSE)))
-    expect_error(addReadsSummary(se = se, verbose = "error"))
+    expect_error(flattenReadLevelAssay(se = "error"))
+    expect_error(flattenReadLevelAssay(se = se, assayName = "error"))
+    expect_error(flattenReadLevelAssay(se = se, statistics = "error"))
+    expect_error(flattenReadLevelAssay(se = se, keepReads = "error"))
+    expect_error(flattenReadLevelAssay(se = se, replaceExisting = "error"))
+    expect_error(flattenReadLevelAssay(se = se, replaceExisting = c(TRUE, FALSE)))
+    expect_error(flattenReadLevelAssay(se = se, verbose = "error"))
 
     # expected results
-    expect_message(expect_message(
-        s1 <- addReadsSummary(se = se,
-                              statistics = c("Nmod", "Nvalid", "FracMod",
-                                             "Pmod", "AvgConf"),
-                              keep.reads = FALSE, verbose = TRUE)
-    ))
-    s2 <- addReadsSummary(se = se, statistics = "FracMod")
-    s3 <- addReadsSummary(se = s2, statistics = "FracMod",
-                          replace.existing = TRUE)
+    expect_message(expect_message(expect_message(
+        expect_message(expect_message(expect_message(
+            s1 <- flattenReadLevelAssay(se = se,
+                                        statistics = c("Nmod", "Nvalid", "FracMod",
+                                                       "Pmod", "AvgConf"),
+                                        keepReads = FALSE, verbose = TRUE),
+            "Summarizing reads"), "Summarizing reads")),
+        "Adding 5 summarized assays"), "Adding 5 summarized assays"))
+    s2 <- flattenReadLevelAssay(se = se, statistics = "FracMod")
+    s3 <- flattenReadLevelAssay(se = s2, statistics = "FracMod",
+                                replaceExisting = TRUE)
     expect_identical(s2, s3)
     expect_warning(
-        s3 <- addReadsSummary(se = s2, statistics = "FracMod",
-                              replace.existing = FALSE))
+        s3 <- flattenReadLevelAssay(se = s2, statistics = "FracMod",
+                                    replaceExisting = FALSE))
     expect_identical(s2, s3)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")

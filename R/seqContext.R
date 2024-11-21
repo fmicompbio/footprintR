@@ -1,26 +1,26 @@
 #' Extract the sequence context around positions of interest.
 #'
 #' @description
-#' This function will extract a sequence context of \code{sequence.context.width}
+#' This function will extract a sequence context of \code{sequenceContextWidth}
 #' bases around the center of the regions defined in \code{x} from
-#' \code{sequence.reference}.
+#' \code{sequenceReference}.
 #'
 #' @param x A \code{\link[GenomicRanges]{GRanges}} object defining the regions
 #'     of interest. Alternatively, a \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     object from which regions can be extracted using
 #'     \code{\link[SummarizedExperiment]{rowRanges}}. The extracted sequences
 #'     will correspond to the regions defined as
-#'     \code{resize(x, width = sequence.context.width, fix = "center"}.
-#' @param sequence.context.width A numeric scalar giving the width of the
+#'     \code{resize(x, width = sequenceContextWidth, fix = "center"}.
+#' @param sequenceContextWidth A numeric scalar giving the width of the
 #'     sequence context to be extracted from the reference
-#'     (\code{sequence.reference} argument). This must be an odd number
+#'     (\code{sequenceReference} argument). This must be an odd number
 #'     so that the sequence can be centered on the modified base.
-#'     If \code{sequence.context.width = 0} (the default), no
+#'     If \code{sequenceContextWidth = 0} (the default), no
 #'     sequence context will be extracted.
-#' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
+#' @param sequenceReference A \code{\link[BSgenome]{BSgenome}} object, or a
 #'     character scalar giving the path to a fasta formatted file with reference
 #'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-#'     The sequence context (see \code{sequence.context.width} argument) will be
+#'     The sequence context (see \code{sequenceContextWidth} argument) will be
 #'     extracted from these sequences.
 #'
 #' @return A \code{\link[Biostrings]{DNAStringSet}} object of the same length
@@ -54,35 +54,35 @@
 #'
 #' @export
 extractSeqContext <- function(x,
-                       sequence.context.width,
-                       sequence.reference) {
+                              sequenceContextWidth,
+                              sequenceReference) {
     # digest arguments
     if (is(x, "RangedSummarizedExperiment")) {
         x <- as(rowRanges(x), "GRanges")
     }
     .assertVector(x = x, type = "GRanges")
-    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(1, 1000))
-    if (sequence.context.width %% 2 == 0) {
-        sequence.context.width <- sequence.context.width + 1
-        warning("`sequence.context.width` was increased to ", sequence.context.width,
+    .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(1, 1000))
+    if (sequenceContextWidth %% 2 == 0) {
+        sequenceContextWidth <- sequenceContextWidth + 1
+        warning("`sequenceContextWidth` was increased to ", sequenceContextWidth,
                 " (must be an odd number)")
     }
-    if (!is(sequence.reference, "BSgenome") &&
-        !is(sequence.reference, "DNAStringSet") &&
-        !(is.character(sequence.reference) && file.exists(sequence.reference))) {
-        stop("`sequence.reference` must be either a BSgenome object, ",
+    if (!is(sequenceReference, "BSgenome") &&
+        !is(sequenceReference, "DNAStringSet") &&
+        !(is.character(sequenceReference) && file.exists(sequenceReference))) {
+        stop("`sequenceReference` must be either a BSgenome object, ",
              "a DNAStringSet object, or a path to a fasta file.")
     }
 
     # resize x
-    xcontext <- resize(x, width = sequence.context.width, fix = "center")
+    xcontext <- resize(x, width = sequenceContextWidth, fix = "center")
 
     # obtain reference sequences
-    if (is.character(sequence.reference)) {
-        ref <- readDNAStringSet(sequence.reference)
+    if (is.character(sequenceReference)) {
+        ref <- readDNAStringSet(sequenceReference)
         names(ref) <- sub(" .*$", "", names(ref))
     } else {
-        ref <- sequence.reference
+        ref <- sequenceReference
     }
     # seqlengths(xcontext) <- seqlengths(ref)
 
@@ -118,28 +118,28 @@ extractSeqContext <- function(x,
 #' interest (the \code{\link[SummarizedExperiment]{rowRanges}} of
 #' a \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}) and
 #' add them the the \code{\link[SummarizedExperiment]{SummarizedExperiment}}'s
-#' row data (\code{rowData(se)$sequence.context}). The extracted sequences
+#' row data (\code{rowData(se)$sequenceContext}). The extracted sequences
 #' will correspond to the regions defined as
-#' \code{resize(rowRanges(x), width = sequence.context.width, fix = "center"}.
+#' \code{resize(rowRanges(x), width = sequenceContextWidth, fix = "center"}.
 #' Sequence contexts are extracted using \code{\link{extractSeqContext}}.
 #'
 #' @param x A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}.
-#' @param sequence.context.width A numeric scalar giving the width of the
+#' @param sequenceContextWidth A numeric scalar giving the width of the
 #'     sequence context to be extracted from the reference
-#'     (\code{sequence.reference} argument). This must be an odd number
+#'     (\code{sequenceReference} argument). This must be an odd number
 #'     so that the sequence can be centered on the modified base.
-#'     If \code{sequence.context.width = 0} (the default), no
+#'     If \code{sequenceContextWidth = 0} (the default), no
 #'     sequence context will be extracted.
-#' @param sequence.reference A \code{\link[BSgenome]{BSgenome}} object, or a
+#' @param sequenceReference A \code{\link[BSgenome]{BSgenome}} object, or a
 #'     character scalar giving the path to a fasta formatted file with reference
 #'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-#'     The sequence context (see \code{sequence.context.width} argument) will be
+#'     The sequence context (see \code{sequenceContextWidth} argument) will be
 #'     extracted from these sequences.
 #'
 #' @return A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     object with sequence contexts added as a
 #'     \code{\link[Biostrings]{DNAStringSet}} object to
-#'     \code{rowData(x)$sequence.context}.
+#'     \code{rowData(x)$sequenceContext}.
 #'
 #' @author Michael Stadler
 #'
@@ -169,13 +169,13 @@ extractSeqContext <- function(x,
 #'
 #' @export
 addSeqContext <- function(x,
-                          sequence.context.width,
-                          sequence.reference) {
+                          sequenceContextWidth,
+                          sequenceReference) {
     .assertVector(x = x, type = "RangedSummarizedExperiment")
-    rowData(x)$sequence.context <- extractSeqContext(
+    rowData(x)$sequenceContext <- extractSeqContext(
         x = as(rowRanges(x), "GRanges"),
-        sequence.context.width = sequence.context.width,
-        sequence.reference = sequence.reference
+        sequenceContextWidth = sequenceContextWidth,
+        sequenceReference = sequenceReference
     )
     return(x)
 }

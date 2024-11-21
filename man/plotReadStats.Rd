@@ -6,7 +6,7 @@
 \usage{
 plotReadStats(
   se,
-  readInfoCol = "read_info",
+  readInfoCol = "readInfo",
   qcCol = "QC",
   minQscore = 0,
   maxEntropy = Inf,

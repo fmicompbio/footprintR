@@ -23,12 +23,44 @@
 #'     (repeated calls to \code{calcAndCountDist} will increment existing
 #'     counts).
 #'
+#' @examples
+#' cnt <- c(0, 0, 0)
+#' calcAndCountDist(c(1, 4, 8), c(2, 3, 4, 5, 8, 9, 10), cnt)
+#' cnt
+#'
 #' @return \code{numeric} vector \code{cnt}, where \code{cnt[d]} correspond to
 #'   the number of observed distances \code{d}.
 #'
 #' @export
 calcAndCountDist <- function(query, reference, cnt) {
     .Call(`_footprintR_calcAndCountDist`, query, reference, cnt)
+}
+
+#' @title Calculate pairwise distances between read labels
+#'
+#' @description
+#' \code{labelDists} returns all pairwise distances among a set of strings
+#'    (read labels) of identical length, consisting of A, C, G, T and -
+#'    letters. The distance is in [0, 1] and corresponds to the fraction of
+#'    differences in the overlap range, defined as the range excluding the
+#'    maximal number of leading and trailing - letters in any of the two
+#'    compared labels.
+#'
+#' @param labels  Character vector of equally sized strings.
+#' @param minOverlap An integer scalar giving the minimal number of overlapping
+#'     letters. If a pair of labels overlap by less than this number of letters,
+#'     their distance is set to the maximal distance (1.0).
+#'
+#' @return A numeric, symmetric matrix with pairwise distances between the
+#'     elements of \code{labels}.
+#'
+#' @examples
+#' labelDists(c("--AACACT-", "---ACCCT-", "---ACAC--"))
+#'
+#' @noRd
+#' @keywords internal
+labelDists <- function(labels, minOverlap = 2L) {
+    .Call(`_footprintR_labelDists`, labels, minOverlap)
 }
 
 complement <- function(n) {
@@ -89,12 +121,12 @@ get_unmodified_base <- function(b) {
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom cli cli_alert_info cli_alert_success
+#' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 #'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, n_threads, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads, verbose)
 }
 
 #' @title Sample Entropy of Time series signal

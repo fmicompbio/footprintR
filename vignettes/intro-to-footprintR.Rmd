@@ -91,8 +91,8 @@ possible modifications see the section about base modifications in the
 names(bedmethylfiles) <- c("sample1", "sample2")
 se <- readBedMethyl(bedmethylfiles,
                     modbase = "m",
-                    sequence.context = 3,
-                    sequence.reference = reffile)
+                    sequenceContextWidth = 3,
+                    sequenceReference = reffile)
 se
 ```
 These `bedMethyl` files contain summarized data and are read into a
@@ -137,8 +137,9 @@ and adding a smooth line:
 ```{r plot-region-GCH, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in GCH contexts, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
-           tracks.summary = list(FracMod = "PointSmooth"),
-           sequence.context = "GCH")
+           tracks = list(list(trackData = "FracMod",
+                              trackType = "PointSmooth")),
+           sequenceContext = "GCH")
 ```
 
 Or the endogenous DNA methylation (sequence context HCG):
@@ -146,8 +147,9 @@ Or the endogenous DNA methylation (sequence context HCG):
 ```{r plot-region-HCG, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in HCG contexts, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
-           tracks.summary = list(FracMod = "PointSmooth"),
-           sequence.context = "HCG")
+           tracks = list(list(trackData = "FracMod",
+                              trackType = "PointSmooth")),
+           sequenceContext = "HCG")
 ```
 
 Or just plotting the coverage (`Nvalid`) as a smooth line:
@@ -155,7 +157,8 @@ Or just plotting the coverage (`Nvalid`) as a smooth line:
 ```{r plot-region-Nvalid, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A smoothed line plot showing the read coverage (Nvalid) per position, coloured by sample."}
 plotRegion(se,
            region = "chr1:6939000-6946000",
-           tracks.summary = list(Nvalid = "Smooth"))
+           tracks = list(list(trackData = "Nvalid",
+                              trackType = "Smooth")))
 ```
 
 ## Session info

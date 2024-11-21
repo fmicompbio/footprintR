@@ -4,75 +4,75 @@ test_that("getAnchorRegions works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se)
+    se <- flattenReadLevelAssay(se)
 
     # check that the function fails with the wrong input
     expect_error(getAnchorRegions(se = "error"), "'se' must be of class")
-    expect_error(getAnchorRegions(se = se, assay.type = 1),
-                 "'assay.type' must be of class 'character'")
-    expect_error(getAnchorRegions(se = se, assay.type = "missing"),
-                 "'assay.type' must be one of")
-    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+    expect_error(getAnchorRegions(se = se, assayName = 1),
+                 "'assayName' must be of class 'character'")
+    expect_error(getAnchorRegions(se = se, assayName = "missing"),
+                 "'assayName' must be one of")
+    expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = 1),
                  "'regionMidpoints' must be of class 'GPos'")
-    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+    expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6920000-6940000"),
                  "all the ranges in the object to coerce to UnstitchedGPos")
-    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+    expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = "9"),
                  "'regionWidth' must be of class 'numeric'")
-    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+    expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = c(5, 8)),
                  "'regionWidth' must have length 1")
-    expect_error(getAnchorRegions(se = se, assay.type = c("mod_prob", "Nvalid"),
+    expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 8),
                  "regionWidth must be an odd integer")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = "TRUE"),
                  "'prune' must be of class 'logical'")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = c(TRUE, FALSE)),
                  "'prune' must have length 1")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = "FALSE"),
                  "'ignore.strand' must be of class 'logical'")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = c(TRUE, FALSE)),
                  "'ignore.strand' must have length 1")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE,
                                   reverseMinusStrandRegions = "TRUE"),
                  "'reverseMinusStrandRegions' must be of class 'logical'")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE,
                                   reverseMinusStrandRegions = c(TRUE, FALSE)),
                  "'reverseMinusStrandRegions' must have length 1")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE, verbose = "TRUE"),
                  "'verbose' must be of class 'logical'")
-    expect_error(getAnchorRegions(se = se, assay.type = "mod_prob",
+    expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE, verbose = c(TRUE, FALSE)),
                  "'verbose' must have length 1")
     se1 <- se
     assayNames(se1) <- paste0(assayNames(se1), "suffix")
-    expect_error(getAnchorRegions(se = se1, assay.type = "mod_probsuffix",
+    expect_error(getAnchorRegions(se = se1, assayName = "mod_probsuffix",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE),
@@ -82,16 +82,16 @@ test_that("getAnchorRegions works", {
     # check that getAnchorRegions works with correct input
     # ... ignore.strand = TRUE
     # ... ... no pruning necessary, prune=TRUE/FALSE should give the same output
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                             regionWidth = 5, prune = FALSE,
                             ignore.strand = TRUE)
-    ar2 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar2 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                             regionWidth = 5, prune = TRUE,
                             ignore.strand = TRUE)
     expect_warning({
-        ar3 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+        ar3 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                                 regionMidpoints = c("chr1:6929389:*", "chr1:6935630:-"),
                                 regionWidth = 5, prune = TRUE,
                                 ignore.strand = FALSE)
@@ -169,7 +169,7 @@ test_that("getAnchorRegions works", {
                  c("chr1:6929387-6929391:-", "chr1:6935628-6935632:-"))
 
     # ... ignore.strand = FALSE
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                             regionWidth = 5, prune = FALSE,
                             ignore.strand = FALSE)
@@ -238,7 +238,7 @@ test_that("getAnchorRegions works", {
 
     # ... ignore.strand = TRUE, in a region where the same position is covered
     #     by reads on both strands
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929338:-", "chr1:6938997:+"),
                             regionWidth = 5, prune = FALSE,
                             ignore.strand = TRUE)
@@ -309,11 +309,11 @@ test_that("getAnchorRegions works", {
                  c("chr1:6929336-6929340:-", "chr1:6938995-6938999:+"))
 
     # ... reverseMinusStrandRegions = TRUE vs FALSE
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929338:-", "chr1:6938997:+"),
                             regionWidth = 5, prune = FALSE,
                             ignore.strand = TRUE, reverseMinusStrandRegions = FALSE)
-    ar2 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar2 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929338:-", "chr1:6938997:+"),
                             regionWidth = 5, prune = FALSE,
                             ignore.strand = TRUE, reverseMinusStrandRegions = TRUE)
@@ -334,7 +334,7 @@ test_that("getAnchorRegions works", {
 
     # ... different region, where only s1 has overlapping reads
     # ... ... without pruning
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929015:+"),
                             regionWidth = 9, prune = FALSE,
                             ignore.strand = FALSE)
@@ -389,7 +389,7 @@ test_that("getAnchorRegions works", {
     expect_equal(ar1$region_Nvalid$s2$region, "chr1:6929011-6929019:+")
 
     # ... ... with pruning
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:6929015:+"),
                             regionWidth = 9, prune = TRUE,
                             ignore.strand = FALSE)
@@ -431,18 +431,14 @@ test_that("getAnchorRegions works", {
 
     # ... region where neither sample has any overlapping reads
     # ... ... with pruning
-    expect_message(
+    suppressMessages(
         expect_message(
-            expect_message(
-                expect_message(
-                    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
-                                            regionMidpoints = c("chr1:692915:+"),
-                                            regionWidth = 9, prune = TRUE,
-                                            ignore.strand = FALSE, verbose = TRUE),
-                    "Creating list of GPos objects for the regions"),
-                "Subsetting assays to selected regions"),
-            "Assembling SummarizedExperiment object"),
-        "Dropping 2 samples without reads")
+            ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
+                                    regionMidpoints = c("chr1:692915:+"),
+                                    regionWidth = 9, prune = TRUE,
+                                    ignore.strand = FALSE, verbose = TRUE)
+        )
+    )
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
@@ -462,22 +458,14 @@ test_that("getAnchorRegions works", {
     expect_length(ar1$region_Nvalid, 0)
 
     # ... ... with pruning, ignore.strand=TRUE
-    expect_message(
+    suppressMessages(
         expect_message(
-            expect_message(
-                expect_message(
-                    expect_message(
-                        expect_message(
-                            ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
-                                                    regionMidpoints = c("chr1:692915:+"),
-                                                    regionWidth = 9, prune = TRUE,
-                                                    ignore.strand = TRUE, verbose = TRUE),
-                            "Checking for positions represented by multiple rows"),
-                        "172 rows removed to ensure that each genomic position"),
-                    "Creating list of GPos objects for the regions"),
-                "Subsetting assays to selected regions"),
-            "Assembling SummarizedExperiment object"),
-        "Dropping 2 samples without reads")
+            ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
+                                    regionMidpoints = c("chr1:692915:+"),
+                                    regionWidth = 9, prune = TRUE,
+                                    ignore.strand = TRUE, verbose = TRUE)
+        )
+    )
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
@@ -497,7 +485,7 @@ test_that("getAnchorRegions works", {
     expect_length(ar1$region_Nvalid, 0)
 
     # ... ... without pruning
-    ar1 <- getAnchorRegions(se, assay.type = c("mod_prob", "Nvalid"),
+    ar1 <- getAnchorRegions(se, assayName = c("mod_prob", "Nvalid"),
                             regionMidpoints = c("chr1:692915:+"),
                             regionWidth = 9, prune = FALSE,
                             ignore.strand = FALSE)
