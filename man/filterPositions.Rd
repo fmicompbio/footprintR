@@ -29,7 +29,7 @@ be present in \code{rowData(se)} (see \code{addSeqContext}).}
 
 \item{assay.type.cov}{A character scalar indicating the assay to use to
 define the coverage. If this is a read-level assay, coverage is first
-calculated using \code{addReadsSummary(..., statistics = "Nvalid")}.}
+calculated using \code{flattenReadLevelAssay(..., statistics = "Nvalid")}.}
 
 \item{min.cov}{A numeric scalar indicating the lowest acceptable
 coverage in order to keep a position.}
@@ -65,7 +65,7 @@ reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                  modbase = "a", verbose = FALSE)
-se <- addReadsSummary(se)
+se <- flattenReadLevelAssay(se)
 se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
                           min.cov = 5, sequence.context = "TAG")

@@ -23,7 +23,7 @@ reference:
   contents:
   - addReadStats
   - addSeqContext
-  - addReadsSummary
+  - flattenReadLevelAssay
   - filterPositions
   - filterReads
   - subsetReads

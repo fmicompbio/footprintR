@@ -13,9 +13,9 @@
     # If assay.type is a read-level assay, first calculate the number of
     # non-NA values in each row
     if (assay.type %in% .getReadLevelAssayNames(se)) {
-        mat <- assay(addReadsSummary(se, assay.type = assay.type,
-                                     statistics = "Nvalid", keep.reads = FALSE,
-                                     verbose = FALSE),
+        mat <- assay(flattenReadLevelAssay(se, assay.type = assay.type,
+                                           statistics = "Nvalid", keep.reads = FALSE,
+                                           verbose = FALSE),
                      "Nvalid")
     } else {
         mat <- assay(se, assay.type)
@@ -148,7 +148,7 @@
 #'     be present in \code{rowData(se)} (see \code{addSeqContext}).
 #' @param assay.type.cov A character scalar indicating the assay to use to
 #'     define the coverage. If this is a read-level assay, coverage is first
-#'     calculated using \code{addReadsSummary(..., statistics = "Nvalid")}.
+#'     calculated using \code{flattenReadLevelAssay(..., statistics = "Nvalid")}.
 #' @param min.cov A numeric scalar indicating the lowest acceptable
 #'     coverage in order to keep a position.
 #' @param min.nbr.samples A numeric scalar, or \code{NULL}. If \code{NULL}
@@ -176,7 +176,7 @@
 #'
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
 #'                  modbase = "a", verbose = FALSE)
-#' se <- addReadsSummary(se)
+#' se <- flattenReadLevelAssay(se)
 #' se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 #' sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
 #'                           min.cov = 5, sequence.context = "TAG")

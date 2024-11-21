@@ -15,7 +15,7 @@ test_that("subsetReads works", {
                             package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles,
                      regions = "chr1:6940000-6955000", modbase = "a")
-    se2 <- addReadsSummary(se, keep.reads = FALSE)
+    se2 <- flattenReadLevelAssay(se, keep.reads = FALSE)
     se3 <- se
     assays(se3) <- SimpleList(mod_prob = assay(se, "mod_prob"),
                               mod_prob2 = assay(se, "mod_prob"))

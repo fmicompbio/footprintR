@@ -3,7 +3,7 @@ test_that("filterReads works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6990000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se, keep.reads = TRUE)
+    se <- flattenReadLevelAssay(se, keep.reads = TRUE)
     se <- addReadStats(se, name = "qcc", stats = c(defaultReadStats, "SEntrModProb"))
 
     expect_error(filterReads(se = "error"),

@@ -39,7 +39,7 @@
 #' se <- readModkitExtract(exfile, modbase = "a")
 #' se
 #'
-#' se_summary <- addReadsSummary(se)
+#' se_summary <- flattenReadLevelAssay(se)
 #' se_summary
 #'
 #' @seealso \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the
@@ -51,12 +51,12 @@
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums
 #'
 #' @export
-addReadsSummary <- function(se,
-                            assay.type = "mod_prob",
-                            statistics = c("Nmod", "Nvalid", "FracMod"),
-                            keep.reads = TRUE,
-                            replace.existing = TRUE,
-                            verbose = FALSE) {
+flattenReadLevelAssay <- function(se,
+                                  assay.type = "mod_prob",
+                                  statistics = c("Nmod", "Nvalid", "FracMod"),
+                                  keep.reads = TRUE,
+                                  replace.existing = TRUE,
+                                  verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = assay.type, type = "character",

@@ -15,8 +15,8 @@ test_that("validity checks work", {
                              nrows = Inf, seqinfo = NULL,
                              ncpu = 1L, verbose = FALSE)
     rme <- addReadStats(rme)
-    rme_withreads <- addReadsSummary(rme)
-    rme_withoutreads <- addReadsSummary(rme, keep.reads = FALSE)
+    rme_withreads <- flattenReadLevelAssay(rme)
+    rme_withoutreads <- flattenReadLevelAssay(rme, keep.reads = FALSE)
 
     ## Test .getReadLevelAssayNames
     expect_equal(.getReadLevelAssayNames(rme_withreads), "mod_prob")

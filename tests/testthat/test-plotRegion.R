@@ -20,7 +20,7 @@ test_that("plotRegion works", {
     assayNames(se0) <- c("assay1", "assay2")
     fname3 <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
     seR <- readModkitExtract(fnames = fname3, modbase = 'a')
-    seR2 <- addReadsSummary(se = seR)
+    seR2 <- flattenReadLevelAssay(se = seR)
 
     # invalid arguments
     expect_error(plotRegion(se = "error"))

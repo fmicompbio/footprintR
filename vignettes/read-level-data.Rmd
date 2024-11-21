@@ -150,7 +150,7 @@ Note that for sample2, in which no read overlaps the selected position,
 `mean(..., na.rm = TRUE)` returns `NaN`.
 
 In most cases it is preferrable to use the convenience functions in
-`footprintR`, such as `addReadsSummary()` (see next section), to calculate
+`footprintR`, such as `flattenReadLevelAssay()` (see next section), to calculate
 summaries over reads instead of the `lapply(...)` used above for illustration.
 
 ## Summarize read-level data
@@ -159,9 +159,8 @@ Summarized data can be obtained from the read-level data by calculating
 a per-position summary over the reads in each sample:
 
 ```{r summarise-read-level}
-se_summary <- addReadsSummary(se,
-                              statistics = c("Nmod", "Nvalid", "FracMod",
-                                             "Pmod", "AvgConf"))
+se_summary <- flattenReadLevelAssay(
+    se, statistics = c("Nmod", "Nvalid", "FracMod", "Pmod", "AvgConf"))
 ```
 
 As discussed above, this will correctly exclude non-observed values
@@ -174,7 +173,7 @@ assay(se_summary, "Pmod")["chr1:6928850:-", ]
 ```
 
 The summary statistics to calculate are selected using the `statistics` argument.
-By default, `addReadsSummary()` will count the number of modified (`Nmod`)
+By default, `flattenReadLevelAssay()` will count the number of modified (`Nmod`)
 and total (`Nvalid`) reads at each position and sample, and calculate the
 fraction of modified bases from the two (`FracMod`).
 

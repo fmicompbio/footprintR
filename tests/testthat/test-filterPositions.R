@@ -3,7 +3,7 @@ test_that(".filterPositionsByCoverage works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se, keep.reads = TRUE)
+    se <- flattenReadLevelAssay(se, keep.reads = TRUE)
 
     ## Calculate coverage
     cov_total <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) >= 0), na.rm = TRUE)
@@ -139,7 +139,7 @@ test_that(".removeAllNAPositions works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se)
+    se <- flattenReadLevelAssay(se)
     # Subset reads to make sure there are positions with all NAs
     se <- subsetReads(se, reads = list(s1 = c(1, 2), s2 = c(1, 3)))
 
@@ -176,7 +176,7 @@ test_that(".pruneAmbiguousStrandPositions works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se)
+    se <- flattenReadLevelAssay(se)
 
     expect_error(.pruneAmbiguousStrandPositions(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
@@ -227,7 +227,7 @@ test_that("filterPositions works", {
     reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- addReadsSummary(se)
+    se <- flattenReadLevelAssay(se)
     se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
 
     expect_error(filterPositions(se = "missing"),
