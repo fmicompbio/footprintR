@@ -7,7 +7,7 @@ test_that("plotReadStats works", {
     setmp <- se
     names(setmp$QC) <- "wrong_name"
     expect_error(plotReadStats(setmp),
-                 "names of se\\$read_info and  se\\$QC are not identical")
+                 "names of se\\$readInfo and  se\\$QC are not identical")
     rm(setmp)
 
     gg <- plotReadStats(se)

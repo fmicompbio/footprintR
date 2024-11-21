@@ -75,16 +75,16 @@ The sample names in the `sample` column are obtained from the input files
 assigned (using `"s1"`, `"s2"` and so on, assuming that each file corresponds
 to a separate sample).
 
-Read-level information is contained in a list under `read_info`, with one
+Read-level information is contained in a list under `readInfo`, with one
 element per sample:
 ```{r coldata-read-info}
-se$read_info
+se$readInfo
 ```
 
 Each sample typically contains several reads (see `se$n_reads`),
-which correspond to the rows of `se$read_info`, for example for `"sample1"`:
+which correspond to the rows of `se$readInfo`, for example for `"sample1"`:
 ```{r coldata-read-info-sample1}
-se$read_info$sample1
+se$readInfo$sample1
 ```
 ## Explore assay data
 

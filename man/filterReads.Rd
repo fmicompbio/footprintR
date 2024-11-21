@@ -7,7 +7,7 @@
 filterReads(
   se,
   assayName = "mod_prob",
-  readInfoCol = "read_info",
+  readInfoCol = "readInfo",
   qcCol = "QC",
   minQscore = 0,
   maxEntropy = Inf,

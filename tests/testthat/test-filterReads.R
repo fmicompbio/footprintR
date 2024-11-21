@@ -16,13 +16,13 @@ test_that("filterReads works", {
                  "'assayName' must be one of")
     expect_error(filterReads(se = se, readInfoCol = 1),
                  "'readInfoCol' must be of class 'character'")
-    expect_error(filterReads(se = se, readInfoCol = c("qcc", "read_info")),
+    expect_error(filterReads(se = se, readInfoCol = c("qcc", "readInfo")),
                  "'readInfoCol' must have length 1")
     expect_error(filterReads(se = se, readInfoCol = "missing"),
                  "'readInfoCol' must be one of")
     expect_error(filterReads(se = se, qcCol = 1),
                  "'qcCol' must be of class 'character'")
-    expect_error(filterReads(se = se, qcCol = c("qcc", "read_info")),
+    expect_error(filterReads(se = se, qcCol = c("qcc", "readInfo")),
                  "'qcCol' must have length 1")
     expect_error(filterReads(se = se, qcCol = "missing"),
                  "'qcCol' must be one of")
@@ -78,7 +78,7 @@ test_that("filterReads works", {
     expect_identical(setmp, out1)
 
     ## Some filtering
-    out1 <- filterReads(se, qcCol = "qcc", readInfoCol = "read_info",
+    out1 <- filterReads(se, qcCol = "qcc", readInfoCol = "readInfo",
                         minQscore = 13, maxEntropy = 0.2,
                         minAlignedFraction = 0.8)
     expect_s4_class(out1, "SummarizedExperiment")
@@ -111,7 +111,7 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7)])
 
     ## Only read info filtering
-    out1 <- filterReads(se, qcCol = NULL, readInfoCol = "read_info",
+    out1 <- filterReads(se, qcCol = NULL, readInfoCol = "readInfo",
                         minQscore = 13, maxEntropy = 0.2,
                         minReadLength = 8000, minAlignedLength = 5000,
                         minAlignedFraction = 0.8)
@@ -123,7 +123,7 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[3:7])
     
     ## Return filter stats only (compare to previous output)
-    stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "read_info",
+    stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "readInfo",
                           minQscore = 13, maxEntropy = 0.2,
                           minReadLength = 8000, minAlignedLength = 5000,
                           minAlignedFraction = 0.8, onlyStats = TRUE)

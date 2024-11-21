@@ -37,7 +37,7 @@
 #' @importFrom SummarizedExperiment colData
 #'
 #' @export
-plotReadStats <- function(se, readInfoCol = "read_info", qcCol = "QC",
+plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
                           minQscore = 0, maxEntropy = Inf,
                           maxFracLowConf = 1, minReadLength = 0,
                           minAlignedLength = 0, minAlignedFraction = 0) {

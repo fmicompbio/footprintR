@@ -76,7 +76,7 @@
 #' @importFrom SummarizedExperiment colData
 #'
 filterReads <- function(se, assayName = "mod_prob",
-                        readInfoCol = "read_info", qcCol = "QC",
+                        readInfoCol = "readInfo", qcCol = "QC",
                         minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,

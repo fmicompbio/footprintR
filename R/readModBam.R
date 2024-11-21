@@ -281,10 +281,10 @@ readModBam <- function(bamfiles,
             sample = names(bamfiles),
             modbase = modbase[names(bamfiles)],
             n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
-            read_info = readdfL
+            readInfo = readdfL
         ),
         metadata = list(readLevelData = list(assayNames = "mod_prob",
-                                             colDataColumns = "read_info"),
+                                             colDataColumns = "readInfo"),
                         variantPositions = variantPositions)
     )
     if (nrow(se) > 0) {
