@@ -167,7 +167,7 @@ readModBam <- function(bamfiles,
     }
 
     # extract modification probabilities from `bamfiles`
-    .message("extracting base modifications from modBAM files", noTime = TRUE)
+    .message("extracting base modifications from modBAM files", noTimer = TRUE)
     regions_str <- as.character(regions, ignore.strand = TRUE)
     resLL <- mclapply(structure(names(bamfiles), names = names(bamfiles)),
                                 function(nm) {
