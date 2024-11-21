@@ -74,7 +74,7 @@ test_that("readModkitExtract works", {
         expect_message(
             rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
                                      filter = NULL, nrows = Inf, seqinfo = NULL,
-                                     sequence.context.width = 1, sequence.reference = ref,
+                                     sequenceContextWidth = 1, sequenceReference = ref,
                                      ncpu = 1L, verbose = TRUE)
     ))
     expect_s4_class(rme, "RangedSummarizedExperiment")
@@ -99,7 +99,7 @@ test_that("readModkitExtract works", {
                  ignore_attr = TRUE)
     expect_equal(sum(SummarizedExperiment::assay(rme)[[1]], na.rm = TRUE), 2297.13868)
     expect_equal(SparseArray::nnacount(SummarizedExperiment::assay(rme)[[1]]), 18531) ## number of rows in the original file
-    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(rme)$sequence.context))),
+    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(rme)$sequenceContext))),
                  c(A = 82L, C = 6159L, G = 107L, T = 84L), ignore_attr = TRUE)
 
     # ... single file, manual filtering

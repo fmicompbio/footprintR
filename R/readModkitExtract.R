@@ -32,10 +32,10 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
-#' @param sequence.context.width,sequence.reference Define the sequence
+#' @param sequenceContextWidth,sequenceReference Define the sequence
 #'     context to be extracted around modified bases. By default (
-#'     \code{sequence.context.width = 0}), no sequence context will be
-#'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+#'     \code{sequenceContextWidth = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 #'     See \code{\link{addSeqContext}} for details.
 #' @param ncpu A numeric scalar giving the number of parallel CPU threads to
 #'     to use for some of the steps in \code{readModkitExtract()}.
@@ -76,8 +76,8 @@ readModkitExtract <- function(fnames,
                               filter = NULL,
                               nrows = Inf,
                               seqinfo = NULL,
-                              sequence.context.width = 0,
-                              sequence.reference = NULL,
+                              sequenceContextWidth = 0,
+                              sequenceReference = NULL,
                               ncpu = 1L,
                               verbose = FALSE) {
 
@@ -132,7 +132,7 @@ readModkitExtract <- function(fnames,
                  " numeric vector with genomic sequence lengths.")
         }
     }
-    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
+    .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
     .assertScalar(x = ncpu, type = "numeric")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
@@ -201,12 +201,12 @@ readModkitExtract <- function(fnames,
     .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
     # add sequence context
-    if (sequence.context.width > 0) {
+    if (sequenceContextWidth > 0) {
         .message("extracting sequence contexts")
-        mcols(gpos)$sequence.context <- extractSeqContext(
+        mcols(gpos)$sequenceContext <- extractSeqContext(
             x = as(gpos, "GRanges"),
-            sequence.context.width = sequence.context.width,
-            sequence.reference = sequence.reference)
+            sequenceContextWidth = sequenceContextWidth,
+            sequenceReference = sequenceReference)
     }
 
     # extract read names

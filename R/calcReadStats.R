@@ -1,8 +1,8 @@
-# global vector with default read stats (that will be calculated if 
+# global vector with default read stats (that will be calculated if
 # stats = NULL in calcReadStats)
 # exclude "SEntrModProb"
-defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm", 
-                      "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb", 
+defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
+                      "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "Lag1DModProb", "ACModProb", "PACModProb")
 
 #' Calculate or add summary statistics for read-level base modification data
@@ -22,20 +22,20 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param stats Character vector specifying which statistics to calculate.
-#'     When set to \code{NULL} all available statistics except the sample 
+#'     When set to \code{NULL} all available statistics except the sample
 #'     entropy are calculated. See details for available read statistics.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object limiting the
 #'     positions included in the calculations to the ones overlapping the
 #'     corresponding genomic regions. Alternatively, regions can be
 #'     specified as a character vector (e.g. "chr1:1200-1300") that can be
 #'     coerced into a \code{GRanges} object.
-#' @param sequence.context A character vector with sequence context(s)
+#' @param sequenceContext A character vector with sequence context(s)
 #'     to include in the calculations. Only positions that match one of the
 #'     provided sequence contexts will be included. Sequence contexts can be
 #'     provided using IUPAC redundancy codes. The sequence contexts of modified
-#'     bases are obtained from \code{rowData(se)$sequence.context} and thus
+#'     bases are obtained from \code{rowData(se)$sequenceContext} and thus
 #'     requires that \code{se} contains the appropriate information, for example
-#'     by setting the \code{sequence.context} and \code{sequence.reference}
+#'     by setting the \code{sequenceContextWidth} and \code{sequenceReference}
 #'     arguments of \code{\link{readModkitExtract}} when it was generated,
 #'     or by adding it using \code{\link{addSeqContext}}.
 #' @param min.Nobs.ppos A numeric scalar value >=1 indicating the minimum
@@ -66,7 +66,7 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #' and information theoretic/signal-processing metrics for the modification
 #' probability, confidence or modification call value vectors across individual
 #' reads (data in assay \code{assay.type}). Only bases matching the criteria
-#' given by\code{regions}, \code{sequence.context}, \code{min.Nobs.ppos} and
+#' given by\code{regions}, \code{sequenceContext}, \code{min.Nobs.ppos} and
 #' \code{min.Nobs.pread} are included in the calculations. The values of these
 #' filtering parameters are stored in the attribute of the output.
 #'
@@ -143,7 +143,7 @@ calcReadStats <- function(se,
                           assay.type = "mod_prob",
                           stats = NULL,
                           regions = NULL,
-                          sequence.context = NULL,
+                          sequenceContext = NULL,
                           min.Nobs.ppos = 0,
                           min.Nobs.pread = 0,
                           LowConf = 0.7,
@@ -210,7 +210,7 @@ calcReadStats <- function(se,
         regions <- as(regions, "GRanges")
     }
     .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+    .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = min.Nobs.ppos, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
@@ -223,8 +223,8 @@ calcReadStats <- function(se,
         se <- subsetByOverlaps(x = se, ranges = regions)
     }
 
-    # Subset by sequence.context
-    se <- .keepPositionsBySequenceContext(se, sequence.context = sequence.context)
+    # Subset by sequenceContext
+    se <- .keepPositionsBySequenceContext(se, sequenceContext = sequenceContext)
 
     # Calculate statistics for each sample
     out <- SimpleList(lapply(
@@ -294,7 +294,7 @@ calcReadStats <- function(se,
 
     # add filtering parameters to `out`
     metadata(out) <- list(regions = regions,
-                          sequence.context = sequence.context,
+                          sequenceContext = sequenceContext,
                           min.Nobs.ppos = min.Nobs.ppos,
                           min.Nobs.pread = min.Nobs.pread,
                           Lags = LagRangeValues)

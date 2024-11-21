@@ -9,7 +9,7 @@ plotRegion(
   region = NULL,
   tracks = list(list(trackData = "FracMod", trackType = "Point")),
   modbaseSpace = FALSE,
-  sequence.context = NULL
+  sequenceContext = NULL
 )
 }
 \arguments{
@@ -48,13 +48,13 @@ which there are modified bases in the data without any gaps between them.
 If \code{FALSE}, the x-axis will show the genomic coordinate on which
 the modified bases are typically irregularly spaced.}
 
-\item{sequence.context}{A character vector with sequence context(s)
+\item{sequenceContext}{A character vector with sequence context(s)
 to plot. Only positions that match one of the provided sequence
 contexts will be included in the plot. Sequence contexts can be provided
 using IUPAC redundancy codes. The sequence contexts of modified bases are
-obtained from \code{rowData(se)$sequence.context} and thus requires that
+obtained from \code{rowData(se)$sequenceContext} and thus requires that
 \code{se} contains the appropriate information, for example by setting
-the \code{sequence.context} and \code{sequence.reference} arguments of
+the \code{sequenceContext} and \code{sequenceReference} arguments of
 \code{\link{readBedMethyl}} when it was generated, or by adding it using
 \code{\link{addSeqContext}}.}
 }
@@ -75,10 +75,10 @@ bmfiles <- system.file("extdata",
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
 seA <- readBedMethyl(bmfiles, modbase = "m",
-                     sequence.context = 3, sequence.reference = reffile)
+                     sequenceContextWidth = 3, sequenceReference = reffile)
 
-plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
-plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
+plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "GCH")
+plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "HCG")
 
 plotRegion(seA, region = "chr1:6940000-6955000",
            tracks = list(list(trackData = "Nvalid", trackType = "Smooth")))

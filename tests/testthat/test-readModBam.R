@@ -72,7 +72,7 @@ test_that("readModBam works", {
                             expect_message(expect_message(
                                 se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
                                                   modbase = "a", nAlnsToSample = 0,
-                                                  sequence.context.width = 1, sequence.reference = ref,
+                                                  sequenceContextWidth = 1, sequenceReference = ref,
                                                   seqnamesToSampleFrom = "chr1", verbose = TRUE)
                             ))
                         ))))
@@ -215,7 +215,7 @@ test_that("readModBam works", {
                      ))
     expect_identical(lapply(se1$read_info, "[[", "variant_label"),
                      lapply(structure(se1$n_reads, names = colnames(se1)), function(n) rep(NA_character_, n)))
-    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequence.context))),
+    expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequenceContext))),
                  c(A = 8108L, C = 128L, G = 393L, T = 62L), ignore_attr = TRUE)
 
     # ... content se2

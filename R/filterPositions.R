@@ -36,18 +36,18 @@
 #' @importFrom SummarizedExperiment rowData
 #' @importFrom Biostrings vcountPattern
 #'
-.keepPositionsBySequenceContext <- function(se, sequence.context = NULL) {
+.keepPositionsBySequenceContext <- function(se, sequenceContext = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+    .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
 
-    if (!is.null(sequence.context)) {
-        if (is.null(rowData(se)$sequence.context)) {
-            stop("No sequence context found in `rowData(se)$sequence.context`")
+    if (!is.null(sequenceContext)) {
+        if (is.null(rowData(se)$sequenceContext)) {
+            stop("No sequence context found in `rowData(se)$sequenceContext`")
         }
-        .assertVector(x = rowData(se)$sequence.context,
+        .assertVector(x = rowData(se)$sequenceContext,
                       type = "DNAStringSet")
-        nmatch <- Reduce("+", lapply(sequence.context, function(pat) {
-            vcountPattern(pat, rowData(se)$sequence.context, fixed = "subject")
+        nmatch <- Reduce("+", lapply(sequenceContext, function(pat) {
+            vcountPattern(pat, rowData(se)$sequenceContext, fixed = "subject")
         }), init = rep(0, nrow(se)))
         se <- se[nmatch > 0, ]
     }
@@ -140,11 +140,11 @@
 #'
 #' @param se A \code{SummarizedExperiment} object.
 #' @param filters A character vector. All values must be one of
-#'     \code{"sequence.context"}, \code{"coverage"}, \code{"repeated.positions"}
+#'     \code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"}
 #'     and \code{"all.na"}. Filters are applied in the order specified by
 #'     this vector.
-#' @param sequence.context A character vector with sequence contexts to
-#'     retain. To apply this filter, the \code{"sequence.context"} column must
+#' @param sequenceContext A character vector with sequence contexts to
+#'     retain. To apply this filter, the \code{"sequenceContext"} column must
 #'     be present in \code{rowData(se)} (see \code{addSeqContext}).
 #' @param assay.type.cov A character scalar indicating the assay to use to
 #'     define the coverage. If this is a read-level assay, coverage is first
@@ -177,16 +177,16 @@
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
 #'                  modbase = "a", verbose = FALSE)
 #' se <- flattenReadLevelAssay(se)
-#' se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
-#' sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
-#'                           min.cov = 5, sequence.context = "TAG")
+#' se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
+#' sefilt <- filterPositions(se, c("sequenceContext", "coverage", "all.na"),
+#'                           min.cov = 5, sequenceContext = "TAG")
 #'
 #' @importFrom SparseArray colSums is_nonna
 #' @importFrom SummarizedExperiment assay
 filterPositions <- function(se,
-                            filters = c("sequence.context", "coverage",
+                            filters = c("sequenceContext", "coverage",
                                         "all.na"),
-                            sequence.context = NULL,
+                            sequenceContext = NULL,
                             assay.type.cov = "Nvalid",
                             min.cov = 1,
                             min.nbr.samples = NULL,
@@ -194,13 +194,13 @@ filterPositions <- function(se,
                             assay.type.na = "mod_prob") {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertVector(x = filters, type = "character",
-                  validValues = c("sequence.context", "coverage",
+                  validValues = c("sequenceContext", "coverage",
                                   "repeated.positions", "all.na"))
 
     for (f in filters) {
-        if (f == "sequence.context") {
+        if (f == "sequenceContext") {
             se <- .keepPositionsBySequenceContext(
-                se, sequence.context = sequence.context
+                se, sequenceContext = sequenceContext
             )
         } else if (f == "coverage") {
             se <- .filterPositionsByCoverage(

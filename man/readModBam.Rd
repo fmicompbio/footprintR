@@ -11,8 +11,8 @@ readModBam(
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
   seqinfo = NULL,
-  sequence.context.width = 0,
-  sequence.reference = NULL,
+  sequenceContextWidth = 0,
+  sequenceReference = NULL,
   variantPositions = NULL,
   ncpu = 1L,
   ncpuDecompression = 2L,
@@ -56,10 +56,10 @@ containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
 
-\item{sequence.context.width, sequence.reference}{Define the sequence
+\item{sequenceContextWidth, sequenceReference}{Define the sequence
 context to be extracted around modified bases. By default (
-\code{sequence.context.width = 0}), no sequence context will be
-extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+\code{sequenceContextWidth = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 See \code{\link{addSeqContext}} for details.}
 
 \item{variantPositions}{An optional \code{GPos} object with seqnames and

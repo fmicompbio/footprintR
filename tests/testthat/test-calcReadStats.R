@@ -15,7 +15,7 @@ test_that("calcReadStats works", {
     expect_named(rs, "s1")
     expect_length(S4Vectors::metadata(rs), 5L)
     expect_named(S4Vectors::metadata(rs),
-                 c("regions", "sequence.context", "min.Nobs.ppos",
+                 c("regions", "sequenceContext", "min.Nobs.ppos",
                    "min.Nobs.pread", "Lags"))
     expect_equal(S4Vectors::metadata(rs)$min.Nobs.ppos, 1L)
     qc <- rs[["s1"]]
@@ -49,7 +49,7 @@ test_that("calcReadStats works", {
     expect_type(S4Vectors::metadata(rs), "list")
     expect_length(S4Vectors::metadata(rs), 5L)
     expect_named(S4Vectors::metadata(rs),
-                 c("regions", "sequence.context", "min.Nobs.ppos",
+                 c("regions", "sequenceContext", "min.Nobs.ppos",
                    "min.Nobs.pread", "Lags"))
     expect_equal(S4Vectors::metadata(rs)$min.Nobs.ppos, thr)
     qc <- rs[["s1"]]
@@ -83,23 +83,23 @@ test_that("calcReadStats works", {
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
 
-    ## Using `sequence.context`, `min.Nobs.pread` and `stats`
+    ## Using `sequenceContext`, `min.Nobs.pread` and `stats`
     expect_error(calcReadStats(se, regions = "chr1:6935000-6935100",
-                               sequence.context = c("TAA", "AAA")),
+                               sequenceContext = c("TAA", "AAA")),
                  "No sequence context found")
-    se1 <- addSeqContext(se, sequence.context.width = 3,
-                         sequence.reference = reffile)
-    expect_identical(colnames(rowData(se1)), "sequence.context")
+    se1 <- addSeqContext(se, sequenceContextWidth = 3,
+                         sequenceReference = reffile)
+    expect_identical(colnames(rowData(se1)), "sequenceContext")
     rs1 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
-                         sequence.context = c("TAA", "AAA"), min.Nobs.ppos = 5,
+                         sequenceContext = c("TAA", "AAA"), min.Nobs.ppos = 5,
                          min.Nobs.pread = 1, stats = "MeanModProb")
     rs2 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
-                         sequence.context = "WAA", min.Nobs.ppos = 5,
+                         sequenceContext = "WAA", min.Nobs.ppos = 5,
                          min.Nobs.pread = 1, stats = "MeanModProb")
     expect_named(rs1, "s1")
     expect_named(rs2, "s1")
-    # ignore metadata()$sequence.context (expected to differ, explicit vs. IUPAC code)
-    meta_names <- setdiff(names(metadata(rs1)), "sequence.context")
+    # ignore metadata()$sequenceContext (expected to differ, explicit vs. IUPAC code)
+    meta_names <- setdiff(names(metadata(rs1)), "sequenceContext")
     expect_identical(metadata(rs1)[meta_names], metadata(rs2)[meta_names])
     expect_identical(rs1$s1, rs2$s1)
     expect_s4_class(rs1$s1, "DFrame")

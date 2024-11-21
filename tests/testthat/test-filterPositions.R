@@ -80,55 +80,55 @@ test_that(".keepPositionsBySequenceContext works", {
     expect_error(.keepPositionsBySequenceContext(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
     expect_error(.keepPositionsBySequenceContext(se = se,
-                                                 sequence.context = "ACT"),
-                 "No sequence context found in `rowData(se)$sequence.context`",
+                                                 sequenceContext = "ACT"),
+                 "No sequence context found in `rowData(se)$sequenceContext`",
                  fixed = TRUE)
     expect_identical(se, .keepPositionsBySequenceContext(se = se))
 
     gnm <- Biostrings::readDNAStringSet(system.file("extdata", "reference.fa.gz",
                                                     package = "footprintR"))
-    se <- addSeqContext(se, sequence.context.width = 3,
-                        sequence.reference = gnm)
+    se <- addSeqContext(se, sequenceContextWidth = 3,
+                        sequenceReference = gnm)
 
     setmp <- se
-    rowData(setmp)$sequence.context <- as.character(rowData(setmp)$sequence.context)
+    rowData(setmp)$sequenceContext <- as.character(rowData(setmp)$sequenceContext)
     expect_error(.keepPositionsBySequenceContext(se = setmp,
-                                                 sequence.context = "ACT"),
+                                                 sequenceContext = "ACT"),
                  "must be of class 'DNAStringSet'")
 
-    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "TAG")
-    w <- which(as.character(rowData(se)$sequence.context) == "TAG")
+    se1 <- .keepPositionsBySequenceContext(se = se, sequenceContext = "TAG")
+    w <- which(as.character(rowData(se)$sequenceContext) == "TAG")
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(se)[w])
     ## Applying the same filter again doesn't do anything
-    se2 <- .keepPositionsBySequenceContext(se = se1, sequence.context = "TAG")
+    se2 <- .keepPositionsBySequenceContext(se = se1, sequenceContext = "TAG")
     expect_identical(se1, se2)
 
     ## Try with IUPAC
-    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "WAG")
-    w <- which(as.character(rowData(se)$sequence.context) %in% c("TAG", "AAG"))
+    se1 <- .keepPositionsBySequenceContext(se = se, sequenceContext = "WAG")
+    w <- which(as.character(rowData(se)$sequenceContext) %in% c("TAG", "AAG"))
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(se)[w])
 
-    se1 <- .keepPositionsBySequenceContext(se = se, sequence.context = "NNN")
+    se1 <- .keepPositionsBySequenceContext(se = se, sequenceContext = "NNN")
     expect_identical(rowData(se), rowData(se1))
 
     ## Manually insert Ns - make sure that these are not retained
     secopy <- se
-    rowData(secopy)$sequence.context[1:5] <- rep("NNN", 5)
-    se1 <- .keepPositionsBySequenceContext(se = secopy, sequence.context = "WAG")
-    w <- which(as.character(rowData(secopy)$sequence.context) %in% c("TAG", "AAG"))
+    rowData(secopy)$sequenceContext[1:5] <- rep("NNN", 5)
+    se1 <- .keepPositionsBySequenceContext(se = secopy, sequenceContext = "WAG")
+    w <- which(as.character(rowData(secopy)$sequenceContext) %in% c("TAG", "AAG"))
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(secopy)[w])
 
     ## Padding
-    sec5 <- addSeqContext(se, sequence.context.width = 5,
-                          sequence.reference = gnm)
-    sec3 <- addSeqContext(se, sequence.context.width = 3,
-                          sequence.reference = gnm)
-    se1 <- .keepPositionsBySequenceContext(se = sec5, sequence.context = "NTAGN")
-    se2 <- .keepPositionsBySequenceContext(se = sec3, sequence.context = "TAG")
-    se3 <- .keepPositionsBySequenceContext(se = sec5, sequence.context = "TAG")
+    sec5 <- addSeqContext(se, sequenceContextWidth = 5,
+                          sequenceReference = gnm)
+    sec3 <- addSeqContext(se, sequenceContextWidth = 3,
+                          sequenceReference = gnm)
+    se1 <- .keepPositionsBySequenceContext(se = sec5, sequenceContext = "NTAGN")
+    se2 <- .keepPositionsBySequenceContext(se = sec3, sequenceContext = "TAG")
+    se3 <- .keepPositionsBySequenceContext(se = sec5, sequenceContext = "TAG")
     expect_equal(nrow(se1), nrow(se2))
     expect_equal(rownames(se1), rownames(se2))
     expect_false(nrow(se1) == nrow(se3))
@@ -228,7 +228,7 @@ test_that("filterPositions works", {
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
     se <- flattenReadLevelAssay(se)
-    se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
+    se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
 
     expect_error(filterPositions(se = "missing"),
                  "'se' must be of class 'SummarizedExperiment'")
@@ -237,20 +237,20 @@ test_that("filterPositions works", {
     expect_error(filterPositions(se = se, filters = "error"),
                  "must be one of")
 
-    sefilt <- filterPositions(se, c("sequence.context", "coverage",
+    sefilt <- filterPositions(se, c("sequenceContext", "coverage",
                                     "repeated.positions", "all.na"),
-                              min.cov = 5, sequence.context = "TAG")
+                              min.cov = 5, sequenceContext = "TAG")
     expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
     expect_equal(nrow(sefilt), 251L)
-    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("TAG")))
+    expect_true(all(as.character(rowData(sefilt)$sequenceContext) %in% c("TAG")))
     expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
                                        pos(rowRanges(sefilt))))))
 
     ## Filter out reads that are NA in all positions
-    sefilt <- filterPositions(se, c("sequence.context"),
-                              sequence.context = "ATG")
+    sefilt <- filterPositions(se, c("sequenceContext"),
+                              sequenceContext = "ATG")
     expect_equal(nrow(sefilt), 8L)
-    expect_true(all(as.character(rowData(sefilt)$sequence.context) %in% c("ATG")))
+    expect_true(all(as.character(rowData(sefilt)$sequenceContext) %in% c("ATG")))
     expect_equal(ncol(assay(sefilt, "mod_prob")$s1), 7L)
     expect_equal(colnames(assay(sefilt, "mod_prob")$s1),
                  colnames(assay(se, "mod_prob")$s1)[c(1, 3, 5, 6, 7, 8, 9)])

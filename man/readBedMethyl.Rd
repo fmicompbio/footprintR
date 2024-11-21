@@ -9,8 +9,8 @@ readBedMethyl(
   modbase,
   nrows = Inf,
   seqinfo = NULL,
-  sequence.context.width = 0,
-  sequence.reference = NULL,
+  sequenceContextWidth = 0,
+  sequenceReference = NULL,
   ncpu = 1L,
   verbose = FALSE
 )
@@ -41,10 +41,10 @@ containing information about the set of genomic sequences (chromosomes).
 Alternatively, a named numeric vector with genomic sequence names and
 lengths. Useful to set the sorting order of sequence names.}
 
-\item{sequence.context.width, sequence.reference}{Define the sequence
+\item{sequenceContextWidth, sequenceReference}{Define the sequence
 context to be extracted around modified bases. By default (
-\code{sequence.context.width = 0}), no sequence context will be
-extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+\code{sequenceContextWidth = 0}), no sequence context will be
+extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 See \code{\link{addSeqContext}} for details.}
 
 \item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
@@ -55,8 +55,8 @@ to use for some of the steps in \code{readBedMethyl()}.}
 \value{
 A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 with genomic positions in rows and samples (the unique names of
-\code{fnames}) in the columns. If \code{sequence.context.width != 0},
-\code{rowData(x)$sequence.context} will be a \code{\link[Biostrings]{DNAStringSet}}
+\code{fnames}) in the columns. If \code{sequenceContextWidth != 0},
+\code{rowData(x)$sequenceContext} will be a \code{\link[Biostrings]{DNAStringSet}}
 object with the extracted sequences.
 }
 \description{

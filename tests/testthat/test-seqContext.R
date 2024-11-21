@@ -36,19 +36,19 @@ test_that("extractSeqContext works", {
 
     # invalid arguments
     expect_error(extractSeqContext(x = "error"))
-    expect_error(extractSeqContext(x = regions, sequence.context.width = -1))
-    expect_error(extractSeqContext(x = regions, sequence.context.width = "error"))
-    expect_error(extractSeqContext(x = regions, sequence.context.width = 7))
-    expect_error(extractSeqContext(x = regions, sequence.context.width = 7, sequence.reference = "error"))
+    expect_error(extractSeqContext(x = regions, sequenceContextWidth = -1))
+    expect_error(extractSeqContext(x = regions, sequenceContextWidth = "error"))
+    expect_error(extractSeqContext(x = regions, sequenceContextWidth = 7))
+    expect_error(extractSeqContext(x = regions, sequenceContextWidth = 7, sequenceReference = "error"))
 
     # expected results
-    expect_warning(s1 <- extractSeqContext(x = regions, sequence.context.width = 6, sequence.reference = ref))
-    s2 <- extractSeqContext(x = regions, sequence.context.width = 7, sequence.reference = gnm)
-    s3 <- extractSeqContext(x = regions, sequence.context.width = 7, sequence.reference = BSgenome.Mmusculus.footprintR.reference)
-    s4 <- extractSeqContext(x = unname(regions), sequence.context.width = 7, sequence.reference = gnm)
-    s5 <- extractSeqContext(x = regions2, sequence.context.width = 7, sequence.reference = gnm)
-    s6 <- extractSeqContext(x = resize(regions2, width = 1L, fix = "center"), sequence.context.width = 7, sequence.reference = gnm)
-    s7 <- extractSeqContext(x = se, sequence.context.width = 7, sequence.reference = gnm)
+    expect_warning(s1 <- extractSeqContext(x = regions, sequenceContextWidth = 6, sequenceReference = ref))
+    s2 <- extractSeqContext(x = regions, sequenceContextWidth = 7, sequenceReference = gnm)
+    s3 <- extractSeqContext(x = regions, sequenceContextWidth = 7, sequenceReference = BSgenome.Mmusculus.footprintR.reference)
+    s4 <- extractSeqContext(x = unname(regions), sequenceContextWidth = 7, sequenceReference = gnm)
+    s5 <- extractSeqContext(x = regions2, sequenceContextWidth = 7, sequenceReference = gnm)
+    s6 <- extractSeqContext(x = resize(regions2, width = 1L, fix = "center"), sequenceContextWidth = 7, sequenceReference = gnm)
+    s7 <- extractSeqContext(x = se, sequenceContextWidth = 7, sequenceReference = gnm)
     expect_s4_class(s1, "DNAStringSet")
     expect_s4_class(s2, "DNAStringSet")
     expect_s4_class(s3, "DNAStringSet")
@@ -82,14 +82,14 @@ test_that("addSeqContext works", {
 
     # invalid arguments
     expect_error(addSeqContext(x = "error"))
-    expect_error(addSeqContext(x = regions, sequence.context.width = -1))
-    expect_error(addSeqContext(x = regions, sequence.context.width = 7, sequence.reference = "error"))
+    expect_error(addSeqContext(x = regions, sequenceContextWidth = -1))
+    expect_error(addSeqContext(x = regions, sequenceContextWidth = 7, sequenceReference = "error"))
 
     # expected results
-    expect_warning(se1 <- addSeqContext(x = se, sequence.context.width = 6, sequence.reference = ref))
+    expect_warning(se1 <- addSeqContext(x = se, sequenceContextWidth = 6, sequenceReference = ref))
     expect_s4_class(se1, "RangedSummarizedExperiment")
     expect_identical(dim(se), dim(se1))
-    expect_true("sequence.context" %in% colnames(rowData(se1)))
-    expect_identical(as.character(rowData(se1)$sequence.context),
+    expect_true("sequenceContext" %in% colnames(rowData(se1)))
+    expect_identical(as.character(rowData(se1)$sequenceContext),
                      c(x = "AAAGGGG", y = "AGGGGAN", z = "GGGANNN"))
 })

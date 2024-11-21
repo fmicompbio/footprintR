@@ -23,11 +23,11 @@ plotRegionPlotTypes <- data.frame(
 #'     "chr1:1200-1300") that can be coerced into a \code{GRanges} object. If
 #'     \code{NULL} (the default), all the data on the first sequence in
 #'     \code{se} will be visualized.
-#' @param tracks A list of named lists, representing the tracks to generate. 
-#'     Each element of the outer list defines one track, and has to contain 
-#'     at least list entries named 'trackData' (the name of a suitable assay 
-#'     in \code{se}) and 'trackType' (the type of plot), plus any additional 
-#'     arguments to the respective plot function. Currently supported plot 
+#' @param tracks A list of named lists, representing the tracks to generate.
+#'     Each element of the outer list defines one track, and has to contain
+#'     at least list entries named 'trackData' (the name of a suitable assay
+#'     in \code{se}) and 'trackType' (the type of plot), plus any additional
+#'     arguments to the respective plot function. Currently supported plot
 #'     types are
 #'     \describe{
 #'         \item{\code{"Point"}}{: A point plot displaying values in the assay.}
@@ -45,13 +45,13 @@ plotRegionPlotTypes <- data.frame(
 #'     which there are modified bases in the data without any gaps between them.
 #'     If \code{FALSE}, the x-axis will show the genomic coordinate on which
 #'     the modified bases are typically irregularly spaced.
-#' @param sequence.context A character vector with sequence context(s)
+#' @param sequenceContext A character vector with sequence context(s)
 #'     to plot. Only positions that match one of the provided sequence
 #'     contexts will be included in the plot. Sequence contexts can be provided
 #'     using IUPAC redundancy codes. The sequence contexts of modified bases are
-#'     obtained from \code{rowData(se)$sequence.context} and thus requires that
+#'     obtained from \code{rowData(se)$sequenceContext} and thus requires that
 #'     \code{se} contains the appropriate information, for example by setting
-#'     the \code{sequence.context} and \code{sequence.reference} arguments of
+#'     the \code{sequenceContext} and \code{sequenceReference} arguments of
 #'     \code{\link{readBedMethyl}} when it was generated, or by adding it using
 #'     \code{\link{addSeqContext}}.
 #'
@@ -68,10 +68,10 @@ plotRegionPlotTypes <- data.frame(
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequence.context = 3, sequence.reference = reffile)
+#'                      sequenceContextWidth = 3, sequenceReference = reffile)
 #'
-#' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "GCH")
-#' plotRegion(seA, region = "chr1:6940000-6955000", sequence.context = "HCG")
+#' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "GCH")
+#' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "HCG")
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000",
 #'            tracks = list(list(trackData = "Nvalid", trackType = "Smooth")))
@@ -121,7 +121,7 @@ plotRegion <- function(se,
                        region = NULL,
                        tracks = list(list(trackData = "FracMod", trackType = "Point")),
                        modbaseSpace = FALSE,
-                       sequence.context = NULL) {
+                       sequenceContext = NULL) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (is.character(region) && length(region) == 1L) {
@@ -137,7 +137,7 @@ plotRegion <- function(se,
         if (!is.list(tracks[[i]]) || length(tracks[[i]]) < 2) {
             cli_abort("tracks[[{i}]] has to be a list of length >=2.")
         }
-        if (is.null(names(tracks[[i]])) || any(names(tracks[[i]]) == "") || 
+        if (is.null(names(tracks[[i]])) || any(names(tracks[[i]]) == "") ||
             any(!c("trackData", "trackType") %in% names(tracks[[i]]))) {
             cli_abort(paste("tracks[[{i}]] must be a named list, and contain at",
                             "least entries named 'trackData' and 'trackType'"))
@@ -146,9 +146,9 @@ plotRegion <- function(se,
             cli_abort(paste("tracks[[{i}]]$trackType must be one of: ",
                             paste(plotRegionPlotTypes$name, collapse = ",")))
         }
-        if (is.character(tracks[[i]]$trackData) && 
-            length(tracks[[i]]$trackData) == 1 && 
-            tracks[[i]]$trackData == "FracMod" && 
+        if (is.character(tracks[[i]]$trackData) &&
+            length(tracks[[i]]$trackData) == 1 &&
+            tracks[[i]]$trackData == "FracMod" &&
             !"FracMod" %in% assayNames(se)) {
             if (all(c("Nmod", "Nvalid") %in% assayNames(se))) {
                 assay(se, "FracMod") <- assay(se, "Nmod") / assay(se, "Nvalid")
@@ -160,48 +160,48 @@ plotRegion <- function(se,
         }
         type_i <- plotRegionPlotTypes$type[match(tracks[[i]]$trackType,
                                                  plotRegionPlotTypes$name)]
-        if (type_i %in% c("reads", "summary") && 
-            !(is.character(tracks[[i]]$trackData) && 
+        if (type_i %in% c("reads", "summary") &&
+            !(is.character(tracks[[i]]$trackData) &&
               length(tracks[[i]]$trackData) == 1 &&
               tracks[[i]]$trackData %in% assayNames(se))) {
             cli_abort(paste("tracks[[{i}]]$trackData must be a character scalar",
                             "corresponding to a name of an assay in se"))
         }
-        if (type_i == "reads" && 
+        if (type_i == "reads" &&
             !tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "read-level assay in se"))
         }
-        if (type_i == "summary" && 
+        if (type_i == "summary" &&
             tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
-        
-        if (modbaseSpace && 
+
+        if (modbaseSpace &&
             "interpolate" %in% names(tracks[[i]]) &&
-            is.logical(tracks[[i]]$interpolate) && 
+            is.logical(tracks[[i]]$interpolate) &&
             length(tracks[[i]]$interpolate) == 1 &&
             tracks[[i]]$interpolate) {
-            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if", 
+            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
                            "interpolate = TRUE (seen in tracks[[{i}]]).",
                            "Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
     }
-    .assertVector(x = sequence.context, type = "character", allowNULL = TRUE)
+    .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
-    se <- .keepPositionsBySequenceContext(se = se, sequence.context = sequence.context)
+    se <- .keepPositionsBySequenceContext(se = se, sequenceContext = sequenceContext)
 
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
         tr <- tracks[[i]]
         args <- c(
-            list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace), 
-            tr[!names(tr) %in% c("trackData", "trackType", "x", "aname", 
+            list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace),
+            tr[!names(tr) %in% c("trackData", "trackType", "x", "aname",
                                  "modbaseSpace", "doSmooth", "doPoint")]
         )
         pL[[i]] <- switch(
@@ -221,9 +221,9 @@ plotRegion <- function(se,
         }
     }
     p <- wrap_plots(pL, ncol = 1)
-    if (!is.null(sequence.context)) {
+    if (!is.null(sequenceContext)) {
         p <- p + labs(caption = paste0("Sequence contexts: ",
-                                       paste(sequence.context, collapse = ", ")))
+                                       paste(sequenceContext, collapse = ", ")))
     }
 
     # return

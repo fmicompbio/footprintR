@@ -91,8 +91,8 @@ possible modifications see the section about base modifications in the
 names(bedmethylfiles) <- c("sample1", "sample2")
 se <- readBedMethyl(bedmethylfiles,
                     modbase = "m",
-                    sequence.context = 3,
-                    sequence.reference = reffile)
+                    sequenceContextWidth = 3,
+                    sequenceReference = reffile)
 se
 ```
 These `bedMethyl` files contain summarized data and are read into a
@@ -139,7 +139,7 @@ plotRegion(se,
            region = "chr1:6939000-6946000",
            tracks = list(list(trackData = "FracMod",
                               trackType = "PointSmooth")),
-           sequence.context = "GCH")
+           sequenceContext = "GCH")
 ```
 
 Or the endogenous DNA methylation (sequence context HCG):
@@ -149,7 +149,7 @@ plotRegion(se,
            region = "chr1:6939000-6946000",
            tracks = list(list(trackData = "FracMod",
                               trackType = "PointSmooth")),
-           sequence.context = "HCG")
+           sequenceContext = "HCG")
 ```
 
 Or just plotting the coverage (`Nvalid`) as a smooth line:

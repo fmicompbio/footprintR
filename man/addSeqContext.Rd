@@ -4,38 +4,38 @@
 \alias{addSeqContext}
 \title{Add sequence context around positions of interest to a SummarizedExperiment.}
 \usage{
-addSeqContext(x, sequence.context.width, sequence.reference)
+addSeqContext(x, sequenceContextWidth, sequenceReference)
 }
 \arguments{
 \item{x}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}.}
 
-\item{sequence.context.width}{A numeric scalar giving the width of the
+\item{sequenceContextWidth}{A numeric scalar giving the width of the
 sequence context to be extracted from the reference
-(\code{sequence.reference} argument). This must be an odd number
+(\code{sequenceReference} argument). This must be an odd number
 so that the sequence can be centered on the modified base.
-If \code{sequence.context.width = 0} (the default), no
+If \code{sequenceContextWidth = 0} (the default), no
 sequence context will be extracted.}
 
-\item{sequence.reference}{A \code{\link[BSgenome]{BSgenome}} object, or a
+\item{sequenceReference}{A \code{\link[BSgenome]{BSgenome}} object, or a
 character scalar giving the path to a fasta formatted file with reference
 sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-The sequence context (see \code{sequence.context.width} argument) will be
+The sequence context (see \code{sequenceContextWidth} argument) will be
 extracted from these sequences.}
 }
 \value{
 A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 object with sequence contexts added as a
 \code{\link[Biostrings]{DNAStringSet}} object to
-\code{rowData(x)$sequence.context}.
+\code{rowData(x)$sequenceContext}.
 }
 \description{
 Convenience function to extract sequence context around positions of
 interest (the \code{\link[SummarizedExperiment]{rowRanges}} of
 a \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}) and
 add them the the \code{\link[SummarizedExperiment]{SummarizedExperiment}}'s
-row data (\code{rowData(se)$sequence.context}). The extracted sequences
+row data (\code{rowData(se)$sequenceContext}). The extracted sequences
 will correspond to the regions defined as
-\code{resize(rowRanges(x), width = sequence.context.width, fix = "center"}.
+\code{resize(rowRanges(x), width = sequenceContextWidth, fix = "center"}.
 Sequence contexts are extracted using \code{\link{extractSeqContext}}.
 }
 \examples{

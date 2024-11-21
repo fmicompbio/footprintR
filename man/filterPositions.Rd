@@ -6,8 +6,8 @@
 \usage{
 filterPositions(
   se,
-  filters = c("sequence.context", "coverage", "all.na"),
-  sequence.context = NULL,
+  filters = c("sequenceContext", "coverage", "all.na"),
+  sequenceContext = NULL,
   assay.type.cov = "Nvalid",
   min.cov = 1,
   min.nbr.samples = NULL,
@@ -19,12 +19,12 @@ filterPositions(
 \item{se}{A \code{SummarizedExperiment} object.}
 
 \item{filters}{A character vector. All values must be one of
-\code{"sequence.context"}, \code{"coverage"}, \code{"repeated.positions"}
+\code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"}
 and \code{"all.na"}. Filters are applied in the order specified by
 this vector.}
 
-\item{sequence.context}{A character vector with sequence contexts to
-retain. To apply this filter, the \code{"sequence.context"} column must
+\item{sequenceContext}{A character vector with sequence contexts to
+retain. To apply this filter, the \code{"sequenceContext"} column must
 be present in \code{rowData(se)} (see \code{addSeqContext}).}
 
 \item{assay.type.cov}{A character scalar indicating the assay to use to
@@ -66,9 +66,9 @@ reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                  modbase = "a", verbose = FALSE)
 se <- flattenReadLevelAssay(se)
-se <- addSeqContext(se, sequence.context.width = 3, sequence.reference = reffile)
-sefilt <- filterPositions(se, c("sequence.context", "coverage", "all.na"),
-                          min.cov = 5, sequence.context = "TAG")
+se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
+sefilt <- filterPositions(se, c("sequenceContext", "coverage", "all.na"),
+                          min.cov = 5, sequenceContext = "TAG")
 
 }
 \author{

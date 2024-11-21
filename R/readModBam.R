@@ -35,10 +35,10 @@
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
 #'     lengths. Useful to set the sorting order of sequence names.
-#' @param sequence.context.width,sequence.reference Define the sequence
+#' @param sequenceContextWidth,sequenceReference Define the sequence
 #'     context to be extracted around modified bases. By default (
-#'     \code{sequence.context.width = 0}), no sequence context will be
-#'     extracted, otherwise it will be returned in \code{rowData(x)$sequence.context}.
+#'     \code{sequenceContextWidth = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 #'     See \code{\link{addSeqContext}} for details.
 #' @param variantPositions An optional \code{GPos} object with seqnames and
 #'     coordinates of single nucleotide variant positions, to be used to
@@ -86,8 +86,8 @@ readModBam <- function(bamfiles,
                        nAlnsToSample = 0,
                        seqnamesToSampleFrom = "chr19",
                        seqinfo = NULL,
-                       sequence.context.width = 0,
-                       sequence.reference = NULL,
+                       sequenceContextWidth = 0,
+                       sequenceReference = NULL,
                        variantPositions = NULL,
                        ncpu = 1L,
                        ncpuDecompression = 2L,
@@ -147,7 +147,7 @@ readModBam <- function(bamfiles,
                  " numeric vector with genomic sequence lengths.")
         }
     }
-    .assertScalar(x = sequence.context.width, type = "numeric", rngIncl = c(0, 1000))
+    .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
     .assertVector(x = variantPositions, type = "GPos", allowNULL = TRUE)
     .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = ncpuDecompression, type = "numeric", rngIncl = c(1, Inf))
@@ -206,12 +206,12 @@ readModBam <- function(bamfiles,
     .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
     # add sequence context
-    if (sequence.context.width > 0) {
+    if (sequenceContextWidth > 0) {
         .message("extracting sequence contexts")
-        mcols(gpos)$sequence.context <- extractSeqContext(
+        mcols(gpos)$sequenceContext <- extractSeqContext(
             x = as(gpos, "GRanges"),
-            sequence.context.width = sequence.context.width,
-            sequence.reference = sequence.reference)
+            sequenceContextWidth = sequenceContextWidth,
+            sequenceReference = sequenceReference)
     }
 
     # extract unique read names

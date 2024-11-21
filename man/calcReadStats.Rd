@@ -10,7 +10,7 @@ calcReadStats(
   assay.type = "mod_prob",
   stats = NULL,
   regions = NULL,
-  sequence.context = NULL,
+  sequenceContext = NULL,
   min.Nobs.ppos = 0,
   min.Nobs.pread = 0,
   LowConf = 0.7,
@@ -39,13 +39,13 @@ corresponding genomic regions. Alternatively, regions can be
 specified as a character vector (e.g. "chr1:1200-1300") that can be
 coerced into a \code{GRanges} object.}
 
-\item{sequence.context}{A character vector with sequence context(s)
+\item{sequenceContext}{A character vector with sequence context(s)
 to include in the calculations. Only positions that match one of the
 provided sequence contexts will be included. Sequence contexts can be
 provided using IUPAC redundancy codes. The sequence contexts of modified
-bases are obtained from \code{rowData(se)$sequence.context} and thus
+bases are obtained from \code{rowData(se)$sequenceContext} and thus
 requires that \code{se} contains the appropriate information, for example
-by setting the \code{sequence.context} and \code{sequence.reference}
+by setting the \code{sequenceContextWidth} and \code{sequenceReference}
 arguments of \code{\link{readModkitExtract}} when it was generated,
 or by adding it using \code{\link{addSeqContext}}.}
 
@@ -99,7 +99,7 @@ statistics that are calculated.
 and information theoretic/signal-processing metrics for the modification
 probability, confidence or modification call value vectors across individual
 reads (data in assay \code{assay.type}). Only bases matching the criteria
-given by\code{regions}, \code{sequence.context}, \code{min.Nobs.ppos} and
+given by\code{regions}, \code{sequenceContext}, \code{min.Nobs.ppos} and
 \code{min.Nobs.pread} are included in the calculations. The values of these
 filtering parameters are stored in the attribute of the output.
 
