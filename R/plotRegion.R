@@ -245,6 +245,8 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param size A numeric scalar giving the size of the points (\code{size}
 #'     argument of \code{\link[ggplot2]{geom_point}}).
+#' @param stroke A numeric scalar giving the stroke (line width) of the point
+#'     outlines (\code{stroke} argument of \code{\link[ggplot2]{geom_point}}).
 #' @param drawRead A logical scalar. If \code{TRUE}, draw a horizontal line
 #'     segment for each read from its start to its end.
 #' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
@@ -266,6 +268,7 @@ plotRegion <- function(se,
 .plotReadsLollipop <- function(x,
                                aname,
                                size = 3.0,
+                               stroke = 0.5,
                                drawRead = TRUE,
                                orderReads = TRUE,
                                modbaseSpace = FALSE) {
@@ -293,7 +296,8 @@ plotRegion <- function(se,
     }
 
     # add lollipops
-    p <- p + geom_point(shape = 21, size = size, colour = "black")
+    p <- p + geom_point(shape = 21, size = size,
+                        stroke = stroke, colour = "black")
 
     # return plot
     return(p)
