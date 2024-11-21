@@ -15,6 +15,7 @@ calcReadStats(
   minNobsPread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
+  BPPARAM = bpparam(),
   verbose = FALSE
 )
 
@@ -68,6 +69,13 @@ calls are considered "low confidence".}
 \item{LagRange}{A numeric vector of two values (minimum and maxium) defining
 the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).}
+
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for calculating
+read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
+will select an appropriate value for the current environment, or the
+default parallel backend registered using
+\code{\link[BiocParallel]{register}}.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 

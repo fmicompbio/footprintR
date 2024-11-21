@@ -59,6 +59,12 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #'     \code{\link[SummarizedExperiment]{colData}} of the output.
 #' @param ... For \code{addReadStats} only: Additional arguments passed on to
 #'     \code{calcReadStats}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for calculating
+#'     read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
+#'     will select an appropriate value for the current environment, or the
+#'     default parallel backend registered using
+#'     \code{\link[BiocParallel]{register}}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
@@ -137,6 +143,7 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics colnames
+#' @importFrom BiocParallel bplapply bpparam
 #'
 #' @export
 calcReadStats <- function(se,
@@ -148,6 +155,7 @@ calcReadStats <- function(se,
                           minNobsPread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
+                          BPPARAM = bpparam(),
                           verbose = FALSE) {
     # define functions to calculate summary statistics
     statFunctions <- list(
@@ -216,6 +224,7 @@ calcReadStats <- function(se,
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
     LagRangeValues <- seq(LagRange[1], LagRange[2])
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
 
     # Subset se by region
@@ -269,26 +278,30 @@ calcReadStats <- function(se,
             }
 
             # Iterate over param_names and add columns to stats_res
-            stats_res <- make_zero_col_DFrame(nrow = ncol(mat))
-            row.names(stats_res) <- colnames(mat)
-            for (param in param_names) {
+            do.call(cbind, bplapply(param_names, function(param, mymat = mat,
+                                                          myuse.reads = use.reads,
+                                                          mystatFunctions = statFunctions,
+                                                          myNNAvals_byCol = NNAvals_byCol,
+                                                          myLagRangeValues = LagRangeValues) {
+                stats_res <- make_zero_col_DFrame(nrow = ncol(mymat))
+                row.names(stats_res) <- colnames(mymat)
                 if (param %in% c("ACModProb", "PACModProb")) {
                     stats_res[[param]] <- lapply(
-                        structure(colnames(mat), names = colnames(mat)), function(r) {
-                            if (r %in% use.reads) {
-                                statFunctions[[param]](NNAvals_byCol[[r]])
+                        structure(colnames(mymat), names = colnames(mymat)), function(r) {
+                            if (r %in% myuse.reads) {
+                                mystatFunctions[[param]](myNNAvals_byCol[[r]])
                             } else {
-                                rep(NA, length(LagRangeValues))
+                                rep(NA, length(myLagRangeValues))
                             }
                         })
                 } else {
-                    stats_res[[param]] <- rep(NA, ncol(mat))
-                    stats_res[use.reads, param] <- vapply(use.reads, function(r) {
-                        statFunctions[[param]](NNAvals_byCol[[r]])
+                    stats_res[[param]] <- rep(NA, ncol(mymat))
+                    stats_res[myuse.reads, param] <- vapply(myuse.reads, function(r) {
+                        statFunctions[[param]](myNNAvals_byCol[[r]])
                     }, numeric(1))
                 }
-            }
-            stats_res
+                stats_res
+            }, BPPARAM = BPPARAM))
         })
     )
 
