@@ -6,9 +6,9 @@
 \usage{
 calcModbaseSpacing(
   se,
-  assay.type = "mod_prob",
-  min_mod_prob = 0.5,
-  pool_reads = TRUE,
+  assayName = "mod_prob",
+  minModProb = 0.5,
+  poolReads = TRUE,
   dmax = 1000L
 )
 }
@@ -18,13 +18,13 @@ with read-level footprinting data, for example returned by
 \code{\link{readModBam}}. Rows should correspond to positions
 and columns to samples.}
 
-\item{assay.type}{A character scalar specifying the assay of
+\item{assayName}{A character scalar specifying the assay of
 \code{se} containing the read-level modification probabilities.}
 
-\item{min_mod_prob}{Numeric scalar giving the minimal modification
+\item{minModProb}{Numeric scalar giving the minimal modification
 probability for a modified base.}
 
-\item{pool_reads}{Logical scalar indicating if reads within a sample should
+\item{poolReads}{Logical scalar indicating if reads within a sample should
 be pooled. If \code{TRUE} (the default), distances from reads within a
 sample are combined and returned as a vector. If \code{FALSE}, distances
 obtained from each read in a sample are returned separately as columns
@@ -35,10 +35,10 @@ modified bases on the same read to count.}
 }
 \value{
 A named list of length \code{ncol(se)} (one element for each sample).
-If \code{pool_reads=TRUE}, the elements are \code{integer} vectors of
+If \code{poolReads=TRUE}, the elements are \code{integer} vectors of
 length \code{dmax}, with the value at position \code{d} giving the
 observed number of within-read modified base pairs at distance \code{d}.
-If \code{pool_reads=FALSE}, each list element is a matrix with
+If \code{poolReads=FALSE}, each list element is a matrix with
 \code{dmax} rows and individual reads in columns, with the value at
 row \code{d} and column \code{r} giving the observed number of modified
 base pairs at distance \code{d} for read \code{r}.

@@ -3,17 +3,17 @@ test_that("filterReads works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6990000",
                      modbase = "a", verbose = FALSE)
-    se <- flattenReadLevelAssay(se, keep.reads = TRUE)
+    se <- flattenReadLevelAssay(se, keepReads = TRUE)
     se <- addReadStats(se, name = "qcc", stats = c(defaultReadStats, "SEntrModProb"))
 
     expect_error(filterReads(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
-    expect_error(filterReads(se = se, assay.type.read = 1),
-                 "'assay.type.read' must be of class 'character'")
-    expect_error(filterReads(se = se, assay.type.read = "error"),
-                 "'assay.type.read' must be one of")
-    expect_error(filterReads(se = se, assay.type.read = "Nvalid"),
-                 "'assay.type.read' must be one of")
+    expect_error(filterReads(se = se, assayName = 1),
+                 "'assayName' must be of class 'character'")
+    expect_error(filterReads(se = se, assayName = "error"),
+                 "'assayName' must be one of")
+    expect_error(filterReads(se = se, assayName = "Nvalid"),
+                 "'assayName' must be one of")
     expect_error(filterReads(se = se, readInfoCol = 1),
                  "'readInfoCol' must be of class 'character'")
     expect_error(filterReads(se = se, readInfoCol = c("qcc", "read_info")),

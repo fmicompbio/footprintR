@@ -3,7 +3,7 @@ test_that(".filterPositionsByCoverage works", {
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                      modbase = "a", verbose = FALSE)
-    se <- flattenReadLevelAssay(se, keep.reads = TRUE)
+    se <- flattenReadLevelAssay(se, keepReads = TRUE)
 
     ## Calculate coverage
     cov_total <- rowSums(as.matrix(as.matrix(assay(se, "mod_prob")) >= 0), na.rm = TRUE)
@@ -14,59 +14,59 @@ test_that(".filterPositionsByCoverage works", {
 
     expect_error(.filterPositionsByCoverage(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = "missing"),
+    expect_error(.filterPositionsByCoverage(se = se, assayName = "missing"),
                  "must be one of")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = c("Nvalid", "Nmod")),
-                 "'assay.type' must have length 1")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = 1),
-                 "'assay.type' must be of class 'character'")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
-                                            min.cov = "1"),
-                 "'min.cov' must be of class 'numeric'")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
-                                            min.cov = c(1, 2)),
-                 "'min.cov' must have length 1")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
-                                            min.cov = 1, min.nbr.samples = "1"),
-                 "'min.nbr.samples' must be of class 'numeric'")
-    expect_error(.filterPositionsByCoverage(se = se, assay.type = "Nvalid",
-                                            min.cov = 1, min.nbr.samples = c(1, 2)),
-                 "'min.nbr.samples' must have length 1")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = c("Nvalid", "Nmod")),
+                 "'assayName' must have length 1")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = 1),
+                 "'assayName' must be of class 'character'")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
+                                            minCov = "1"),
+                 "'minCov' must be of class 'numeric'")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
+                                            minCov = c(1, 2)),
+                 "'minCov' must have length 1")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
+                                            minCov = 1, minNbrSamples = "1"),
+                 "'minNbrSamples' must be of class 'numeric'")
+    expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
+                                            minCov = 1, minNbrSamples = c(1, 2)),
+                 "'minNbrSamples' must have length 1")
 
-    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 10,
-                                      min.nbr.samples = NULL)
-    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 10,
-                                      min.nbr.samples = NULL)
+    se1 <- .filterPositionsByCoverage(se, assayName = "Nvalid", minCov = 10,
+                                      minNbrSamples = NULL)
+    se2 <- .filterPositionsByCoverage(se, assayName = "mod_prob", minCov = 10,
+                                      minNbrSamples = NULL)
     expect_identical(se1, se2)
     w <- which(cov_total >= 10)
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), names(w))
     expect_equal(nrow(se1), 1783L)
 
-    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
-                                      min.nbr.samples = 1)
-    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
-                                      min.nbr.samples = 1)
+    se1 <- .filterPositionsByCoverage(se, assayName = "Nvalid", minCov = 5,
+                                      minNbrSamples = 1)
+    se2 <- .filterPositionsByCoverage(se, assayName = "mod_prob", minCov = 5,
+                                      minNbrSamples = 1)
     expect_identical(se1, se2)
     w <- which(cov_bysample[, 1] >= 5 | cov_bysample[, 2] >= 5)
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(se)[w])
     expect_equal(nrow(se1), 4212L)
 
-    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
-                                      min.nbr.samples = 2)
-    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
-                                      min.nbr.samples = 2)
+    se1 <- .filterPositionsByCoverage(se, assayName = "Nvalid", minCov = 5,
+                                      minNbrSamples = 2)
+    se2 <- .filterPositionsByCoverage(se, assayName = "mod_prob", minCov = 5,
+                                      minNbrSamples = 2)
     expect_identical(se1, se2)
     w <- which(cov_bysample[, 1] >= 5 & cov_bysample[, 2] >= 5)
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), rownames(se)[w])
     expect_equal(nrow(se1), 1606L)
 
-    se1 <- .filterPositionsByCoverage(se, assay.type = "Nvalid", min.cov = 5,
-                                      min.nbr.samples = 3)
-    se2 <- .filterPositionsByCoverage(se, assay.type = "mod_prob", min.cov = 5,
-                                      min.nbr.samples = 3)
+    se1 <- .filterPositionsByCoverage(se, assayName = "Nvalid", minCov = 5,
+                                      minNbrSamples = 3)
+    se2 <- .filterPositionsByCoverage(se, assayName = "mod_prob", minCov = 5,
+                                      minNbrSamples = 3)
     expect_identical(se1, se2)
     expect_equal(nrow(se1), 0L)
 })
@@ -146,19 +146,19 @@ test_that(".removeAllNAPositions works", {
     expect_error(.removeAllNAPositions(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
     expect_error(.removeAllNAPositions(se = se,
-                                       assay.type = 1),
-                 "'assay.type' must be of class 'character'")
+                                       assayName = 1),
+                 "'assayName' must be of class 'character'")
     expect_error(.removeAllNAPositions(se = se,
-                                       assay.type = c("mod_prob", "mod_prob")),
-                 "'assay.type' must have length 1")
+                                       assayName = c("mod_prob", "mod_prob")),
+                 "'assayName' must have length 1")
     expect_error(.removeAllNAPositions(se = se,
-                                       assay.type = "missing"),
-                 "'assay.type' must be one of")
+                                       assayName = "missing"),
+                 "'assayName' must be one of")
     expect_error(.removeAllNAPositions(se = se,
-                                       assay.type = "Nvalid"),
-                 "'assay.type' must be one of")
+                                       assayName = "Nvalid"),
+                 "'assayName' must be one of")
 
-    se1 <- .removeAllNAPositions(se, assay.type = "mod_prob")
+    se1 <- .removeAllNAPositions(se, assayName = "mod_prob")
     namat <- as.matrix(assay(se1, "mod_prob"))
     expect_s4_class(namat, "NaArray")
     expect_equal(ncol(namat), 4L)
@@ -166,7 +166,7 @@ test_that(".removeAllNAPositions works", {
     expect_equal(nrow(se1), length(w))
     expect_equal(rownames(se1), names(w))
     ## Applying the same filter again doesn't do anything
-    se2 <- .removeAllNAPositions(se1, assay.type = "mod_prob")
+    se2 <- .removeAllNAPositions(se1, assayName = "mod_prob")
     expect_identical(se1, se2)
 })
 
@@ -181,32 +181,32 @@ test_that(".pruneAmbiguousStrandPositions works", {
     expect_error(.pruneAmbiguousStrandPositions(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
-                                                assay.type = 1),
-                 "'assay.type' must be of class 'character'")
+                                                assayName = 1),
+                 "'assayName' must be of class 'character'")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
-                                                assay.type = "missing"),
-                 "'assay.type' must be one of")
+                                                assayName = "missing"),
+                 "'assayName' must be one of")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
-                                                assay.type = c("Nvalid", "Nmod")),
-                 "'assay.type' must have length 1")
+                                                assayName = c("Nvalid", "Nmod")),
+                 "'assayName' must have length 1")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
-                                                assay.type = "Nvalid",
+                                                assayName = "Nvalid",
                                                 verbose = "TRUE"),
                  "'verbose' must be of class 'logical'")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
-                                                assay.type = "Nvalid",
+                                                assayName = "Nvalid",
                                                 verbose = c(TRUE, FALSE)),
                  "'verbose' must have length 1")
 
     expect_equal(nrow(se), 9127L)
     expect_equal(length(unique(paste0(seqnames(rowRanges(se)),
                                       pos(rowRanges(se))))), 8955L)
-    sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "Nvalid",
+    sefilt <- .pruneAmbiguousStrandPositions(se, assayName = "Nvalid",
                                              verbose = FALSE)
     expect_equal(nrow(sefilt), length(unique(paste0(seqnames(rowRanges(se)),
                                                     pos(rowRanges(se))))))
     expect_message(expect_message(expect_message({
-        sefilt <- .pruneAmbiguousStrandPositions(se, assay.type = "mod_prob",
+        sefilt <- .pruneAmbiguousStrandPositions(se, assayName = "mod_prob",
                                                  verbose = TRUE)},
         "172 rows removed to ensure"), "172 rows removed to ensure")
     )
@@ -214,7 +214,7 @@ test_that(".pruneAmbiguousStrandPositions works", {
                                                     pos(rowRanges(se))))))
     expect_identical(se[rownames(sefilt), ], sefilt)
     expect_message(expect_message(expect_message({
-        sefilt <- .pruneAmbiguousStrandPositions(sefilt, assay.type = "mod_prob",
+        sefilt <- .pruneAmbiguousStrandPositions(sefilt, assayName = "mod_prob",
                                                  verbose = TRUE)},
         "No genomic positions represented by multiple rows found"),
         "No genomic positions represented by multiple rows found")
@@ -239,7 +239,7 @@ test_that("filterPositions works", {
 
     sefilt <- filterPositions(se, c("sequenceContext", "coverage",
                                     "repeated.positions", "all.na"),
-                              min.cov = 5, sequenceContext = "TAG")
+                              minCov = 5, sequenceContext = "TAG")
     expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
     expect_equal(nrow(sefilt), 251L)
     expect_true(all(as.character(rowData(sefilt)$sequenceContext) %in% c("TAG")))

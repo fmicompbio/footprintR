@@ -54,8 +54,8 @@
 #'
 #' @export
 extractSeqContext <- function(x,
-                       sequenceContextWidth,
-                       sequenceReference) {
+                              sequenceContextWidth,
+                              sequenceReference) {
     # digest arguments
     if (is(x, "RangedSummarizedExperiment")) {
         x <- as(rowRanges(x), "GRanges")

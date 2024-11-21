@@ -16,9 +16,9 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #' statistics that are calculated.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
-#'     object with assay \code{assay.type} typically returned by
+#'     object with assay \code{assayName} typically returned by
 #'     \code{\link{readModkitExtract}} or \code{\link{readModBam}}.
-#' @param assay.type A character scalar specifying the assay of \code{se}
+#' @param assayName A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param stats Character vector specifying which statistics to calculate.
@@ -38,14 +38,14 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #'     by setting the \code{sequenceContextWidth} and \code{sequenceReference}
 #'     arguments of \code{\link{readModkitExtract}} when it was generated,
 #'     or by adding it using \code{\link{addSeqContext}}.
-#' @param min.Nobs.ppos A numeric scalar value >=1 indicating the minimum
+#' @param minNobsPpos A numeric scalar value >=1 indicating the minimum
 #'     coverage on individual positions for them to be included in the
 #'     calculations. In high coverage data this is an effective filter for
 #'     removing spurious modbases, typically the result of erroneous
 #'     basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
 #'     Q3 and IQR are the third quartile and interquartile range of the coverage
 #'     distribution estimated from the data in \code{se}.
-#' @param min.Nobs.pread A numeric scalar with the minimum number of observed
+#' @param minNobsPread A numeric scalar with the minimum number of observed
 #'     modifiable bases per read for it to be included in the calculations.
 #'     \code{NA} values are returned for the reads that do not pass this
 #'     threshold.
@@ -65,9 +65,9 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #' \code{calcReadStats} calculates a collection of location/scatter statistics
 #' and information theoretic/signal-processing metrics for the modification
 #' probability, confidence or modification call value vectors across individual
-#' reads (data in assay \code{assay.type}). Only bases matching the criteria
-#' given by\code{regions}, \code{sequenceContext}, \code{min.Nobs.ppos} and
-#' \code{min.Nobs.pread} are included in the calculations. The values of these
+#' reads (data in assay \code{assayName}). Only bases matching the criteria
+#' given by\code{regions}, \code{sequenceContext}, \code{minNobsPpos} and
+#' \code{minNobsPread} are included in the calculations. The values of these
 #' filtering parameters are stored in the attribute of the output.
 #'
 #' \code{stats} selects the summaries to be calculated. Currently available
@@ -140,12 +140,12 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #'
 #' @export
 calcReadStats <- function(se,
-                          assay.type = "mod_prob",
+                          assayName = "mod_prob",
                           stats = NULL,
                           regions = NULL,
                           sequenceContext = NULL,
-                          min.Nobs.ppos = 0,
-                          min.Nobs.pread = 0,
+                          minNobsPpos = 0,
+                          minNobsPread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
                           verbose = FALSE) {
@@ -202,7 +202,7 @@ calcReadStats <- function(se,
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertVector(x = stats, type = "character", allowNULL = TRUE,
                   validValues = names(statFunctions))
@@ -211,8 +211,8 @@ calcReadStats <- function(se,
     }
     .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
-    .assertScalar(x = min.Nobs.ppos, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = min.Nobs.pread, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = minNobsPpos, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = minNobsPread, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = LagRange, type = "vector", rngIncl = c(1, 256), len = 2)
     LagRangeValues <- seq(LagRange[1], LagRange[2])
@@ -230,10 +230,10 @@ calcReadStats <- function(se,
     out <- SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
-                se[, nm], assay.type = assay.type, min.cov = min.Nobs.ppos,
-                min.nbr.samples = NULL)
+                se[, nm], assayName = assayName, minCov = minNobsPpos,
+                minNbrSamples = NULL)
 
-            mat <- assay(sesub, assay.type)[[nm]]
+            mat <- assay(sesub, assayName)[[nm]]
 
             # Non-NA indices:
             NNAind <- nnawhich(mat, arr.ind = TRUE)
@@ -260,7 +260,7 @@ calcReadStats <- function(se,
             MeanModProb <- rowSums(mat) / Nobs
 
             # Include in calculations only reads with sufficient Number of observations:
-            use.reads <- colnames(mat)[NobsReads >= min.Nobs.pread]
+            use.reads <- colnames(mat)[NobsReads >= minNobsPread]
 
             if (!is.null(stats)) {
                 param_names <- stats
@@ -295,8 +295,8 @@ calcReadStats <- function(se,
     # add filtering parameters to `out`
     metadata(out) <- list(regions = regions,
                           sequenceContext = sequenceContext,
-                          min.Nobs.ppos = min.Nobs.ppos,
-                          min.Nobs.pread = min.Nobs.pread,
+                          minNobsPpos = minNobsPpos,
+                          minNobsPread = minNobsPread,
                           Lags = LagRangeValues)
 
     return(out)

@@ -1,7 +1,7 @@
 #' Filter reads
 #'
 #' @param se A \code{SummarizedExperiment} object.
-#' @param assay.type.read A character scalar providing the name of a read-level
+#' @param assayName A character scalar providing the name of a read-level
 #'     assay in \code{se}. This assay will be used to extract read names, as
 #'     well as to filter out any read that is not overlapping any of the
 #'     positions in the object.
@@ -75,7 +75,7 @@
 #' @importFrom SparseArray SVT_SparseArray rowSums colSums
 #' @importFrom SummarizedExperiment colData
 #'
-filterReads <- function(se, assay.type.read = "mod_prob",
+filterReads <- function(se, assayName = "mod_prob",
                         readInfoCol = "read_info", qcCol = "QC",
                         minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
@@ -84,7 +84,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
     ## Input checks
     .assertVector(x = se, type = "SummarizedExperiment")
     .checkSEValidity(se)
-    .assertScalar(x = assay.type.read, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
@@ -108,9 +108,9 @@ filterReads <- function(se, assay.type.read = "mod_prob",
         structure(colnames(se), names = colnames(se)),
         function(nm) {
             SVT_SparseArray(
-                dim = c(ncol(assay(se, assay.type.read)[[nm]]),
+                dim = c(ncol(assay(se, assayName)[[nm]]),
                         length(filterNames)),
-                dimnames = list(colnames(assay(se, assay.type.read)[[nm]]),
+                dimnames = list(colnames(assay(se, assayName)[[nm]]),
                                 filterNames),
                 type = "logical"
         )}
@@ -169,8 +169,8 @@ filterReads <- function(se, assay.type.read = "mod_prob",
 
         ## NA in all positions
         readsToRemove[[nm]][colnames(
-            assay(se, assay.type.read)[[nm]][, colSums(
-                assay(se, assay.type.read)[[nm]],
+            assay(se, assayName)[[nm]][, colSums(
+                assay(se, assayName)[[nm]],
                 na.rm = TRUE) == 0]),
             "AllNA"] <- TRUE
     }
@@ -187,7 +187,7 @@ filterReads <- function(se, assay.type.read = "mod_prob",
         metadata(sesub)$filteredOutReads <- readsToRemove
         
         ## Remove any positions with all NA values
-        sesub <- .removeAllNAPositions(sesub, assay.type = assay.type.read)
+        sesub <- .removeAllNAPositions(sesub, assayName = assayName)
         return(sesub)
     }
 }

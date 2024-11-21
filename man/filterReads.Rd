@@ -6,7 +6,7 @@
 \usage{
 filterReads(
   se,
-  assay.type.read = "mod_prob",
+  assayName = "mod_prob",
   readInfoCol = "read_info",
   qcCol = "QC",
   minQscore = 0,
@@ -22,7 +22,7 @@ filterReads(
 \arguments{
 \item{se}{A \code{SummarizedExperiment} object.}
 
-\item{assay.type.read}{A character scalar providing the name of a read-level
+\item{assayName}{A character scalar providing the name of a read-level
 assay in \code{se}. This assay will be used to extract read names, as
 well as to filter out any read that is not overlapping any of the
 positions in the object.}

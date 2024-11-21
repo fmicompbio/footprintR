@@ -16,11 +16,11 @@ test_that("flattenReadLevelAssay works", {
 
     # invalid arguments
     expect_error(flattenReadLevelAssay(se = "error"))
-    expect_error(flattenReadLevelAssay(se = se, assay.type = "error"))
+    expect_error(flattenReadLevelAssay(se = se, assayName = "error"))
     expect_error(flattenReadLevelAssay(se = se, statistics = "error"))
-    expect_error(flattenReadLevelAssay(se = se, keep.reads = "error"))
-    expect_error(flattenReadLevelAssay(se = se, replace.existing = "error"))
-    expect_error(flattenReadLevelAssay(se = se, replace.existing = c(TRUE, FALSE)))
+    expect_error(flattenReadLevelAssay(se = se, keepReads = "error"))
+    expect_error(flattenReadLevelAssay(se = se, replaceExisting = "error"))
+    expect_error(flattenReadLevelAssay(se = se, replaceExisting = c(TRUE, FALSE)))
     expect_error(flattenReadLevelAssay(se = se, verbose = "error"))
 
     # expected results
@@ -29,16 +29,16 @@ test_that("flattenReadLevelAssay works", {
             s1 <- flattenReadLevelAssay(se = se,
                                         statistics = c("Nmod", "Nvalid", "FracMod",
                                                        "Pmod", "AvgConf"),
-                                        keep.reads = FALSE, verbose = TRUE),
+                                        keepReads = FALSE, verbose = TRUE),
             "Summarizing reads"), "Summarizing reads")),
         "Adding 5 summarized assays"), "Adding 5 summarized assays"))
     s2 <- flattenReadLevelAssay(se = se, statistics = "FracMod")
     s3 <- flattenReadLevelAssay(se = s2, statistics = "FracMod",
-                                replace.existing = TRUE)
+                                replaceExisting = TRUE)
     expect_identical(s2, s3)
     expect_warning(
         s3 <- flattenReadLevelAssay(se = s2, statistics = "FracMod",
-                                    replace.existing = FALSE))
+                                    replaceExisting = FALSE))
     expect_identical(s2, s3)
     expect_s4_class(s1, "RangedSummarizedExperiment")
     expect_s4_class(s2, "RangedSummarizedExperiment")

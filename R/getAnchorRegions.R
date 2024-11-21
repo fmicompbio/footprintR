@@ -5,7 +5,7 @@
 #' genomic midpoint coordinate and the width.
 #'
 #' @param se A \code{SummarizedExperiment} object.
-#' @param assay.type Character vector, the assay(s) from which to extract values.
+#' @param assayName Character vector, the assay(s) from which to extract values.
 #' @param regionMidpoints Either a \code{GPos} object or a character vector
 #'     that can be coerced into a \code{GPos} object, representing the midpoints
 #'     of the desired anchor regions.
@@ -13,7 +13,7 @@
 #'     Must be an odd value.
 #' @param prune Logical scalar. If \code{TRUE} (the default), samples for
 #'     which there are no reads overlapping any of the anchor regions in any
-#'     of the read-level assays in \code{assay.type}
+#'     of the read-level assays in \code{assayName}
 #'     will be completely removed from the returned \code{SummarizedExperiment}
 #'     (also from \code{colData}). If \code{FALSE},
 #'     such samples are retained (in assays with read-level data as a
@@ -38,7 +38,7 @@
 #' @return A \code{SummarizedExperiment} with rows representing relative
 #' positions within an anchor region (the midpoint of the region corresponds
 #' to a relative position of 0) and columns representing samples. Each
-#' column of the assay is an \code{NaArray} (if \code{assay.type} is a
+#' column of the assay is an \code{NaArray} (if \code{assayName} is a
 #' read-level assay) or a dense matrix (otherwise), with columns representing
 #' read-anchor region (or sample-anchor region) combinations. The \code{region}
 #' column of the \code{colData} records which anchor region a given column
@@ -51,7 +51,7 @@
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
 #'                  modbase = "a", verbose = FALSE)
 #' se <- flattenReadLevelAssay(se)
-#' ar <- getAnchorRegions(se, assay.type = c("mod_prob", "FracMod", "Nvalid"),
+#' ar <- getAnchorRegions(se, assayName = c("mod_prob", "FracMod", "Nvalid"),
 #'                        regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
 #'                        regionWidth = 9)
 #'
@@ -74,7 +74,7 @@
 #'
 #' @export
 getAnchorRegions <- function(se,
-                             assay.type = "mod_prob",
+                             assayName = "mod_prob",
                              regionMidpoints,
                              regionWidth,
                              prune = TRUE,
@@ -84,9 +84,9 @@ getAnchorRegions <- function(se,
 
     # Check arguments
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertVector(x = assay.type, type = "character",
+    .assertVector(x = assayName, type = "character",
                   validValues = assayNames(se))
-    names(assay.type) <- assay.type
+    names(assayName) <- assayName
     .checkSEValidity(se, verbose = FALSE)
     if (is.character(regionMidpoints)) {
         # This checks already that each region has width 1
@@ -119,7 +119,7 @@ getAnchorRegions <- function(se,
                  "(Nvalid, Nmod, mod_prob) are available.")
         }
         se <- .pruneAmbiguousStrandPositions(
-            se, assay.type = intersect(covAssays, assayNames(se))[1],
+            se, assayName = intersect(covAssays, assayNames(se))[1],
             verbose = verbose)
     }
 
@@ -138,7 +138,7 @@ getAnchorRegions <- function(se,
 
     # Create new assays
     .message("Subsetting assays to selected regions")
-    assayL <- lapply(assay.type, function(atp) {
+    assayL <- lapply(assayName, function(atp) {
         if (atp %in% .getReadLevelAssayNames(se)) {
             # read-level assays (DataFrames with NaArrays)
             endoapply(assay(se, atp), function(mat) {

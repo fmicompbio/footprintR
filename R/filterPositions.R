@@ -2,30 +2,30 @@
 #' @noRd
 #' @importFrom SummarizedExperiment assay assayNames
 #'
-.filterPositionsByCoverage <- function(se, assay.type = "Nvalid", min.cov = 1,
-                                       min.nbr.samples = NULL) {
+.filterPositionsByCoverage <- function(se, assayName = "Nvalid", minCov = 1,
+                                       minNbrSamples = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
-    .assertScalar(x = min.cov, type = "numeric")
-    .assertScalar(x = min.nbr.samples, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minCov, type = "numeric")
+    .assertScalar(x = minNbrSamples, type = "numeric", allowNULL = TRUE)
 
-    # If assay.type is a read-level assay, first calculate the number of
+    # If assayName is a read-level assay, first calculate the number of
     # non-NA values in each row
-    if (assay.type %in% .getReadLevelAssayNames(se)) {
-        mat <- assay(flattenReadLevelAssay(se, assay.type = assay.type,
-                                           statistics = "Nvalid", keep.reads = FALSE,
+    if (assayName %in% .getReadLevelAssayNames(se)) {
+        mat <- assay(flattenReadLevelAssay(se, assayName = assayName,
+                                           statistics = "Nvalid", keepReads = FALSE,
                                            verbose = FALSE),
                      "Nvalid")
     } else {
-        mat <- assay(se, assay.type)
+        mat <- assay(se, assayName)
     }
 
-    if (is.null(min.nbr.samples)) {
+    if (is.null(minNbrSamples)) {
         ## use the total coverage (sum across all samples)
-        keep <- which(rowSums(mat) >= min.cov)
+        keep <- which(rowSums(mat) >= minCov)
     } else {
-        keep <- which(rowSums(mat >= min.cov) >= min.nbr.samples)
+        keep <- which(rowSums(mat >= minCov) >= minNbrSamples)
     }
 
     se[keep, ]
@@ -59,13 +59,13 @@
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums is_nonna
 #'
-.removeAllNAPositions <- function(se, assay.type = "mod_prob") {
+.removeAllNAPositions <- function(se, assayName = "mod_prob") {
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
 
     # Get requested assay and convert to a single NaMatrix
-    mat <- as.matrix(assay(se, assay.type))
+    mat <- as.matrix(assay(se, assayName))
 
     # Find positions to keep and subset se
     keep <- which(rowSums(is_nonna(mat)) > 0)
@@ -78,11 +78,11 @@
 #' @importFrom BiocGenerics pos
 #' @importFrom GenomeInfoDb seqnames
 #'
-.pruneAmbiguousStrandPositions <- function(se, assay.type = "Nvalid",
+.pruneAmbiguousStrandPositions <- function(se, assayName = "Nvalid",
                                            verbose = FALSE) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertVector(x = rowRanges(se), type = "GPos")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
     .assertVector(x = rownames(se), type = "character")
     .assertScalar(x = verbose, type = "logical")
@@ -95,9 +95,9 @@
 
     # For all groups of >1 row, find the one with lowest total count and
     # record the row name for later removal
-    tmpmat <- as.matrix(assay(se, assay.type)[
+    tmpmat <- as.matrix(assay(se, assayName)[
         unlist(pGroup, use.names = FALSE), ])
-    if (assay.type %in% .getReadLevelAssayNames(se)) {
+    if (assayName %in% .getReadLevelAssayNames(se)) {
         rs <- rowSums(tmpmat >= 0, na.rm = TRUE)
     } else {
         rs <- rowSums(tmpmat, na.rm = TRUE)
@@ -146,21 +146,21 @@
 #' @param sequenceContext A character vector with sequence contexts to
 #'     retain. To apply this filter, the \code{"sequenceContext"} column must
 #'     be present in \code{rowData(se)} (see \code{addSeqContext}).
-#' @param assay.type.cov A character scalar indicating the assay to use to
+#' @param assayNameCov A character scalar indicating the assay to use to
 #'     define the coverage. If this is a read-level assay, coverage is first
 #'     calculated using \code{flattenReadLevelAssay(..., statistics = "Nvalid")}.
-#' @param min.cov A numeric scalar indicating the lowest acceptable
+#' @param minCov A numeric scalar indicating the lowest acceptable
 #'     coverage in order to keep a position.
-#' @param min.nbr.samples A numeric scalar, or \code{NULL}. If \code{NULL}
-#'     (default), the row sum of \code{assay.type.cov} (i.e., the total
+#' @param minNbrSamples A numeric scalar, or \code{NULL}. If \code{NULL}
+#'     (default), the row sum of \code{assayNameCov} (i.e., the total
 #'     coverage across all samples) is used for the coverage filtering. If
-#'     not \code{NULL}, a position is required to have at least \code{min.cov}
-#'     coverage in at least \code{min.nbr.samples} to be retained.
-#' @param assay.type.ambig A character scalar indicating the assay to use to
+#'     not \code{NULL}, a position is required to have at least \code{minCov}
+#'     coverage in at least \code{minNbrSamples} to be retained.
+#' @param assayNameAmbig A character scalar indicating the assay to use to
 #'     decide which row to retain if multiple rows represent the same
 #'     genomic position (on different strands). The row with the largest row
 #'     sum in this assay is retained.
-#' @param assay.type.na A character scalar indicating the assay to use as the
+#' @param assayNameNA A character scalar indicating the assay to use as the
 #'     basis for filtering out positions with NA values across all reads.
 #'     This should be a read level assay.
 #'
@@ -179,7 +179,7 @@
 #' se <- flattenReadLevelAssay(se)
 #' se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
 #' sefilt <- filterPositions(se, c("sequenceContext", "coverage", "all.na"),
-#'                           min.cov = 5, sequenceContext = "TAG")
+#'                           minCov = 5, sequenceContext = "TAG")
 #'
 #' @importFrom SparseArray colSums is_nonna
 #' @importFrom SummarizedExperiment assay
@@ -187,11 +187,11 @@ filterPositions <- function(se,
                             filters = c("sequenceContext", "coverage",
                                         "all.na"),
                             sequenceContext = NULL,
-                            assay.type.cov = "Nvalid",
-                            min.cov = 1,
-                            min.nbr.samples = NULL,
-                            assay.type.ambig = "Nvalid",
-                            assay.type.na = "mod_prob") {
+                            assayNameCov = "Nvalid",
+                            minCov = 1,
+                            minNbrSamples = NULL,
+                            assayNameAmbig = "Nvalid",
+                            assayNameNA = "mod_prob") {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertVector(x = filters, type = "character",
                   validValues = c("sequenceContext", "coverage",
@@ -204,22 +204,22 @@ filterPositions <- function(se,
             )
         } else if (f == "coverage") {
             se <- .filterPositionsByCoverage(
-                se, assay.type = assay.type.cov, min.cov = min.cov,
-                min.nbr.samples = min.nbr.samples
+                se, assayName = assayNameCov, minCov = minCov,
+                minNbrSamples = minNbrSamples
             )
         } else if (f == "repeated.positions") {
             se <- .pruneAmbiguousStrandPositions(
-                se, assay.type = assay.type.ambig
+                se, assayName = assayNameAmbig
             )
         } else if (f == "all.na") {
             se <- .removeAllNAPositions(
-                se, assay.type = assay.type.na
+                se, assayName = assayNameNA
             )
         }
     }
 
     ## Remove reads that are NA in all retained positions
-    readsToKeep <- lapply(assay(se, assay.type.na),
+    readsToKeep <- lapply(assay(se, assayNameNA),
                           function(x) {
                               which(colSums(is_nonna(x)) > 0)
                           })

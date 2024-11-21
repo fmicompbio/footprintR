@@ -10,7 +10,7 @@
 #' @param se \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level footprinting data. Rows should correspond to positions
 #'     and columns to samples.
-#' @param assay.type A character scalar specifying the assay of \code{se}
+#' @param assayName A character scalar specifying the assay of \code{se}
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param statistics Character vector specifying the type of statistics to be
@@ -19,10 +19,10 @@
 #'     reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
 #'     probability), "AvgConf" (average confidence of (non-)modification
 #'     probabilities).
-#' @param keep.reads A logical scalar. If \code{TRUE} (the default), the
-#'     read-level data from \code{assay.type} will be retained in an assay of
+#' @param keepReads A logical scalar. If \code{TRUE} (the default), the
+#'     read-level data from \code{assayName} will be retained in an assay of
 #'     the same name.
-#' @param replace.existing A logical scalar. If \code{TRUE} (the default),
+#' @param replaceExisting A logical scalar. If \code{TRUE} (the default),
 #'     any existing assays with the same name as the ones requested will be
 #'     overwritten. Otherwise, existing assays will be retained and the
 #'     corresponding summary statistic(s) will not be recalculated.
@@ -52,29 +52,29 @@
 #'
 #' @export
 flattenReadLevelAssay <- function(se,
-                                  assay.type = "mod_prob",
+                                  assayName = "mod_prob",
                                   statistics = c("Nmod", "Nvalid", "FracMod"),
-                                  keep.reads = TRUE,
-                                  replace.existing = TRUE,
+                                  keepReads = TRUE,
+                                  replaceExisting = TRUE,
                                   verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = assay.type, type = "character",
+    .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))
-    .assertScalar(x = keep.reads, type = "logical")
-    .assertScalar(x = replace.existing, type = "logical")
+    .assertScalar(x = keepReads, type = "logical")
+    .assertScalar(x = replaceExisting, type = "logical")
     .assertScalar(x = verbose, type = "logical")
 
-    # if replace.existing is FALSE, exclude all assays that already exist in se
-    if (!replace.existing) {
+    # if replaceExisting is FALSE, exclude all assays that already exist in se
+    if (!replaceExisting) {
         existing_assays <- intersect(statistics, assayNames(se))
         if (length(existing_assays) > 0) {
             existing_assays <- paste(existing_assays, ", ")
             warning("Assay(s) ", existing_assays,
-                    " already exist and replace.existing is FALSE - will not ",
+                    " already exist and replaceExisting is FALSE - will not ",
                     "recalculate these assays.")
             statistics <- setdiff(statistics, assayNames(se))
         }
@@ -100,7 +100,7 @@ flattenReadLevelAssay <- function(se,
     #   have to be converted back to sparse objects  (no "/" method for
     #   SparseArray objects, as the result wouldn't be sparse)
     .message("Summarizing reads")
-    dfReads <- assay(se, assay.type)
+    dfReads <- assay(se, assayName)
     assL <- lapply(structure(statistics_use, names = statistics_use),
                    function(statistic) {
         switch(statistic,
@@ -141,7 +141,7 @@ flattenReadLevelAssay <- function(se,
     assays(se) <- tmpList
 
     # keep read-level data
-    if (!keep.reads) {
+    if (!keepReads) {
         rlAssays <- .getReadLevelAssayNames(se)
         suppressWarnings(
             # currently, assigning to assays triggers a deprecation warning

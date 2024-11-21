@@ -6,7 +6,7 @@
 \usage{
 estimateNRL(
   x,
-  mind = 140L,
+  minDist = 140L,
   usePeaks = seq_len(5),
   span1 = 100/length(x),
   span2 = 1500/length(x)
@@ -16,7 +16,7 @@ estimateNRL(
 \item{x}{\code{numeric} vector giving the counts of distances
 (typically the calculated with \code{\link{calcModbaseSpacing}}.}
 
-\item{mind}{\code{integer(1)} specifying the minimal distance to be used for
+\item{minDist}{\code{integer(1)} specifying the minimal distance to be used for
 NRL estimation. The default value (140) ignores any distance too short to
 span at least a single nucleosome.}
 
@@ -37,7 +37,7 @@ A \code{list} with elements:
 \item{xs}{smoothed (de-trended) phasogram}
 \item{loessfit}{the de-noising fit to the de-trended phasogram}
 \item{lmfit}{the linear fit to the phasogram peaks}
-\item{mind}{minimal distance included in the fit}
+\item{minDist}{minimal distance included in the fit}
 \item{span1}{smoothing parameter for de-trending loess fit}
 \item{span2}{smoothing parameter for de-noising loess fit}
 \item{usePeaks}{the peaks used in the fit}

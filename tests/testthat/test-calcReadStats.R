@@ -6,18 +6,18 @@ test_that("calcReadStats works", {
     se <- readModkitExtract(exfile, modbase = "a")
 
     ## Expected errors
-    expect_error(calcReadStats(se, assay.type = "error"), "must be one of: mod_prob")
+    expect_error(calcReadStats(se, assayName = "error"), "must be one of: mod_prob")
 
     ## No coverage requirement
-    rs <- calcReadStats(se, min.Nobs.ppos = 1, stats = c(defaultReadStats, "SEntrModProb"))
+    rs <- calcReadStats(se, minNobsPpos = 1, stats = c(defaultReadStats, "SEntrModProb"))
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
     expect_length(S4Vectors::metadata(rs), 5L)
     expect_named(S4Vectors::metadata(rs),
-                 c("regions", "sequenceContext", "min.Nobs.ppos",
-                   "min.Nobs.pread", "Lags"))
-    expect_equal(S4Vectors::metadata(rs)$min.Nobs.ppos, 1L)
+                 c("regions", "sequenceContext", "minNobsPpos",
+                   "minNobsPread", "Lags"))
+    expect_equal(S4Vectors::metadata(rs)$minNobsPpos, 1L)
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
@@ -41,7 +41,7 @@ test_that("calcReadStats works", {
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
-    rs <- calcReadStats(se, verbose = TRUE, min.Nobs.ppos = thr,
+    rs <- calcReadStats(se, verbose = TRUE, minNobsPpos = thr,
                         stats = c(defaultReadStats, "SEntrModProb"))
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
@@ -49,9 +49,9 @@ test_that("calcReadStats works", {
     expect_type(S4Vectors::metadata(rs), "list")
     expect_length(S4Vectors::metadata(rs), 5L)
     expect_named(S4Vectors::metadata(rs),
-                 c("regions", "sequenceContext", "min.Nobs.ppos",
-                   "min.Nobs.pread", "Lags"))
-    expect_equal(S4Vectors::metadata(rs)$min.Nobs.ppos, thr)
+                 c("regions", "sequenceContext", "minNobsPpos",
+                   "minNobsPread", "Lags"))
+    expect_equal(S4Vectors::metadata(rs)$minNobsPpos, thr)
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
@@ -72,9 +72,9 @@ test_that("calcReadStats works", {
     ## Using `regions` and large LagRange
     rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
         "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
-        min.Nobs.ppos = 5, stats = c(defaultReadStats, "SEntrModProb"))
+        minNobsPpos = 5, stats = c(defaultReadStats, "SEntrModProb"))
     rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
-                         LagRange = c(200, 256), min.Nobs.ppos = 5,
+                         LagRange = c(200, 256), minNobsPpos = 5,
                          stats = c(defaultReadStats, "SEntrModProb"))
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
@@ -83,7 +83,7 @@ test_that("calcReadStats works", {
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
 
-    ## Using `sequenceContext`, `min.Nobs.pread` and `stats`
+    ## Using `sequenceContext`, `minNobsPread` and `stats`
     expect_error(calcReadStats(se, regions = "chr1:6935000-6935100",
                                sequenceContext = c("TAA", "AAA")),
                  "No sequence context found")
@@ -91,11 +91,11 @@ test_that("calcReadStats works", {
                          sequenceReference = reffile)
     expect_identical(colnames(rowData(se1)), "sequenceContext")
     rs1 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
-                         sequenceContext = c("TAA", "AAA"), min.Nobs.ppos = 5,
-                         min.Nobs.pread = 1, stats = "MeanModProb")
+                         sequenceContext = c("TAA", "AAA"), minNobsPpos = 5,
+                         minNobsPread = 1, stats = "MeanModProb")
     rs2 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
-                         sequenceContext = "WAA", min.Nobs.ppos = 5,
-                         min.Nobs.pread = 1, stats = "MeanModProb")
+                         sequenceContext = "WAA", minNobsPpos = 5,
+                         minNobsPread = 1, stats = "MeanModProb")
     expect_named(rs1, "s1")
     expect_named(rs2, "s1")
     # ignore metadata()$sequenceContext (expected to differ, explicit vs. IUPAC code)
@@ -114,7 +114,7 @@ test_that("addReadStats works", {
                            package = "footprintR")
     se <- readModkitExtract(exfiles, modbase = "a")
     se2 <- addReadStats(se, name = "qc2", stats = c(defaultReadStats, "SEntrModProb"))
-    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2",
+    se3 <- addReadStats(se, minNobsPread = 2600, name = "qc2",
                         stats = c(defaultReadStats, "SEntrModProb"))
 
     # expected errors
@@ -137,8 +137,8 @@ test_that("addReadStats works", {
                       "FracLowConf", "IQRModProb", "sdModProb", "SEntrModProb", "Lag1DModProb",
                       "ACModProb", "PACModProb") %in%
                         colnames(qc)))
-    expect_identical(metadata(se2$qc2)$min.Nobs.pread, 0)
-    expect_identical(metadata(se3$qc2)$min.Nobs.pread, 2600)
+    expect_identical(metadata(se2$qc2)$minNobsPread, 0)
+    expect_identical(metadata(se3$qc2)$minNobsPread, 2600)
     na_rows <- lapply(endoapply(assay(se), function(x) colSums(is_nonna(x))),
                       function(y) which(y < 2600))
     expect_equal(na_rows, list(c(7,8,9,10), c(5,7,8,9,10)), ignore_attr = TRUE)

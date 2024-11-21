@@ -6,10 +6,10 @@
 \usage{
 flattenReadLevelAssay(
   se,
-  assay.type = "mod_prob",
+  assayName = "mod_prob",
   statistics = c("Nmod", "Nvalid", "FracMod"),
-  keep.reads = TRUE,
-  replace.existing = TRUE,
+  keepReads = TRUE,
+  replaceExisting = TRUE,
   verbose = FALSE
 )
 }
@@ -18,7 +18,7 @@ flattenReadLevelAssay(
 with read-level footprinting data. Rows should correspond to positions
 and columns to samples.}
 
-\item{assay.type}{A character scalar specifying the assay of \code{se}
+\item{assayName}{A character scalar specifying the assay of \code{se}
 containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
@@ -29,11 +29,11 @@ reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
 probability), "AvgConf" (average confidence of (non-)modification
 probabilities).}
 
-\item{keep.reads}{A logical scalar. If \code{TRUE} (the default), the
-read-level data from \code{assay.type} will be retained in an assay of
+\item{keepReads}{A logical scalar. If \code{TRUE} (the default), the
+read-level data from \code{assayName} will be retained in an assay of
 the same name.}
 
-\item{replace.existing}{A logical scalar. If \code{TRUE} (the default),
+\item{replaceExisting}{A logical scalar. If \code{TRUE} (the default),
 any existing assays with the same name as the ones requested will be
 overwritten. Otherwise, existing assays will be retained and the
 corresponding summary statistic(s) will not be recalculated.}

@@ -185,7 +185,7 @@ assay(se_summary, "FracMod")["chr1:6928850:-", ]
 
 In the above example, we in addition also calculate the average modification
 probability (`Pmod`) and the average confidence of the modification calls
-per position (`AvgConf`). As we have not changed the default `keep.reads = TRUE`,
+per position (`AvgConf`). As we have not changed the default `keepReads = TRUE`,
 we in addition also keep the read-level assay from the input object
 (`mod_prob`) in the returned object. Because of the grouping of reads by sample
 in `mod_prob`, the dimensions of read-level or summary-level objects remain

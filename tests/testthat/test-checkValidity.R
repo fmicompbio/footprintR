@@ -16,7 +16,7 @@ test_that("validity checks work", {
                              BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     rme <- addReadStats(rme)
     rme_withreads <- flattenReadLevelAssay(rme)
-    rme_withoutreads <- flattenReadLevelAssay(rme, keep.reads = FALSE)
+    rme_withoutreads <- flattenReadLevelAssay(rme, keepReads = FALSE)
 
     ## Test .getReadLevelAssayNames
     expect_equal(.getReadLevelAssayNames(rme_withreads), "mod_prob")

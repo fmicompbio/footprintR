@@ -6,7 +6,7 @@
 \usage{
 getAnchorRegions(
   se,
-  assay.type = "mod_prob",
+  assayName = "mod_prob",
   regionMidpoints,
   regionWidth,
   prune = TRUE,
@@ -18,7 +18,7 @@ getAnchorRegions(
 \arguments{
 \item{se}{A \code{SummarizedExperiment} object.}
 
-\item{assay.type}{Character vector, the assay(s) from which to extract values.}
+\item{assayName}{Character vector, the assay(s) from which to extract values.}
 
 \item{regionMidpoints}{Either a \code{GPos} object or a character vector
 that can be coerced into a \code{GPos} object, representing the midpoints
@@ -29,7 +29,7 @@ Must be an odd value.}
 
 \item{prune}{Logical scalar. If \code{TRUE} (the default), samples for
 which there are no reads overlapping any of the anchor regions in any
-of the read-level assays in \code{assay.type}
+of the read-level assays in \code{assayName}
 will be completely removed from the returned \code{SummarizedExperiment}
 (also from \code{colData}). If \code{FALSE},
 such samples are retained (in assays with read-level data as a
@@ -58,7 +58,7 @@ midpoint.}
 A \code{SummarizedExperiment} with rows representing relative
 positions within an anchor region (the midpoint of the region corresponds
 to a relative position of 0) and columns representing samples. Each
-column of the assay is an \code{NaArray} (if \code{assay.type} is a
+column of the assay is an \code{NaArray} (if \code{assayName} is a
 read-level assay) or a dense matrix (otherwise), with columns representing
 read-anchor region (or sample-anchor region) combinations. The \code{region}
 column of the \code{colData} records which anchor region a given column
@@ -76,7 +76,7 @@ modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
                  modbase = "a", verbose = FALSE)
 se <- flattenReadLevelAssay(se)
-ar <- getAnchorRegions(se, assay.type = c("mod_prob", "FracMod", "Nvalid"),
+ar <- getAnchorRegions(se, assayName = c("mod_prob", "FracMod", "Nvalid"),
                        regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
                        regionWidth = 9)
 

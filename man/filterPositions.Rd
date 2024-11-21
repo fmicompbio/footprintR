@@ -8,11 +8,11 @@ filterPositions(
   se,
   filters = c("sequenceContext", "coverage", "all.na"),
   sequenceContext = NULL,
-  assay.type.cov = "Nvalid",
-  min.cov = 1,
-  min.nbr.samples = NULL,
-  assay.type.ambig = "Nvalid",
-  assay.type.na = "mod_prob"
+  assayNameCov = "Nvalid",
+  minCov = 1,
+  minNbrSamples = NULL,
+  assayNameAmbig = "Nvalid",
+  assayNameNA = "mod_prob"
 )
 }
 \arguments{
@@ -27,25 +27,25 @@ this vector.}
 retain. To apply this filter, the \code{"sequenceContext"} column must
 be present in \code{rowData(se)} (see \code{addSeqContext}).}
 
-\item{assay.type.cov}{A character scalar indicating the assay to use to
+\item{assayNameCov}{A character scalar indicating the assay to use to
 define the coverage. If this is a read-level assay, coverage is first
 calculated using \code{flattenReadLevelAssay(..., statistics = "Nvalid")}.}
 
-\item{min.cov}{A numeric scalar indicating the lowest acceptable
+\item{minCov}{A numeric scalar indicating the lowest acceptable
 coverage in order to keep a position.}
 
-\item{min.nbr.samples}{A numeric scalar, or \code{NULL}. If \code{NULL}
-(default), the row sum of \code{assay.type.cov} (i.e., the total
+\item{minNbrSamples}{A numeric scalar, or \code{NULL}. If \code{NULL}
+(default), the row sum of \code{assayNameCov} (i.e., the total
 coverage across all samples) is used for the coverage filtering. If
-not \code{NULL}, a position is required to have at least \code{min.cov}
-coverage in at least \code{min.nbr.samples} to be retained.}
+not \code{NULL}, a position is required to have at least \code{minCov}
+coverage in at least \code{minNbrSamples} to be retained.}
 
-\item{assay.type.ambig}{A character scalar indicating the assay to use to
+\item{assayNameAmbig}{A character scalar indicating the assay to use to
 decide which row to retain if multiple rows represent the same
 genomic position (on different strands). The row with the largest row
 sum in this assay is retained.}
 
-\item{assay.type.na}{A character scalar indicating the assay to use as the
+\item{assayNameNA}{A character scalar indicating the assay to use as the
 basis for filtering out positions with NA values across all reads.
 This should be a read level assay.}
 }
@@ -68,7 +68,7 @@ se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
 se <- flattenReadLevelAssay(se)
 se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
 sefilt <- filterPositions(se, c("sequenceContext", "coverage", "all.na"),
-                          min.cov = 5, sequenceContext = "TAG")
+                          minCov = 5, sequenceContext = "TAG")
 
 }
 \author{

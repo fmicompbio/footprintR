@@ -19,7 +19,7 @@ modified bases on the same read (typically calculated by
 \code{\link{calcModbaseSpacing}}.}
 
 \item{hide}{If \code{TRUE} (the default), hide distance counts not used in
-the NRL estimate (\code{mind} parameter from
+the NRL estimate (\code{minDist} parameter from
 \code{\link{estimateNRL}}).}
 
 \item{xlim}{\code{numeric(2)} with the x-axis (distance) limits in the first
