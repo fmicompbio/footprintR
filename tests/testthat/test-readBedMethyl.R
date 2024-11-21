@@ -25,7 +25,7 @@ test_that("readBedMethyl works", {
     expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = -1))
     expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = NULL))
     expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = "error"))
-    expect_error(readBedMethyl(fname1, modbase = 'm', ncpu = "error"))
+    expect_error(readBedMethyl(fname1, modbase = 'm', BPPARAM = "error"))
     expect_error(readBedMethyl(fname1, modbase = 'm', verbose = "error"))
     expect_error(readBedMethyl(c(a = fname1, a = fname2), modbase = c(a = 'm', a = 'a')))
 
@@ -33,7 +33,8 @@ test_that("readBedMethyl works", {
     se0 <- readBedMethyl(fnames = fname1, modbase = 'a')
     suppressMessages(
         expect_message(
-            se1 <- readBedMethyl(fnames = fname1, modbase = 'm', ncpu = 1,
+            se1 <- readBedMethyl(fnames = fname1, modbase = 'm',
+                                 BPPARAM = BiocParallel::SerialParam(),
                                  sequenceReference = ref, verbose = TRUE)
         )
     )

@@ -28,7 +28,7 @@ Imports:
     Biostrings,
     BSgenome,
     data.table,
-    parallel,
+    BiocParallel,
     dplyr,
     tidyr,
     rlang,

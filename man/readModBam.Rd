@@ -14,8 +14,7 @@ readModBam(
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
-  ncpu = 1L,
-  ncpuDecompression = 2L,
+  BPPARAM = bpparam(),
   verbose = FALSE
 )
 }
@@ -45,7 +44,10 @@ all samples.}
 
 \item{nAlnsToSample}{A numeric scalar. If non-zero, \code{regions} is ignored
 and approximately \code{nAlnsToSample} randomly selected alignments on
-\code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.}
+\code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
+In order to make the results reproducible, make sure to set the
+\code{RNGseed} argument in the provided \code{BPPARAM} object (see
+below).}
 
 \item{seqnamesToSampleFrom}{A character vector with one or several sequence
 names (chromosomes) from which to sample alignments from (only used if
@@ -67,14 +69,15 @@ coordinates of single nucleotide variant positions, to be used to
 construct read labels for allele-specific analysis. Ignored if \code{NULL}
 or \code{nAlnsToSample > 0} (sampling-mode).}
 
-\item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
-to use for some of the steps in \code{readModBam} (e.g. the number of
-bam files to process in parallel).}
-
-\item{ncpuDecompression}{A numeric scalar giving the number of parallel CPU
-threads to use for decompressing bam records. When reading from multiple
-bam files in parallel (\code{ncpu > 1}), the total number of threads
-used may be as many as \code{ncpu * ncpuDecompression}.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for some of the steps
+in \code{readModBam()}. The default value
+(\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
+for the current environment, or the default parallel backend registered
+using \code{\link[BiocParallel]{register}}. If randomly sampling reads
+(\code{nAlnsToSample > 0}), make sure to set the \code{RNGseed} argument
+when constructing the \code{BPPARAM} object for reproducible results
+(see also \code{vignette("Random_Numbers", package = "BiocParallel")}).}
 
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
@@ -103,5 +106,5 @@ https://samtools.github.io/hts-specs/SAMtags.pdf describing the
 SAM ML and MM tags for base modifications.
 }
 \author{
-Michael Stadler
+Michael Stadler, Charlotte Soneson
 }

@@ -56,11 +56,8 @@ test_that("readModkitExtract works", {
                                    seqinfo = c(chr2 = 1000)),
                  "'seqnames' contains sequence names with no entries")
     expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
-                                   ncpu = "error"),
-                 "'ncpu' must be of class 'numeric'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
-                                   ncpu = c(1, 2)),
-                 "'ncpu' must have length 1")
+                                   BPPARAM = "error"),
+                 "'BPPARAM' must be of class 'BiocParallelParam'")
     expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
                                    verbose = "error"),
                  "'verbose' must be of class 'logical'")
@@ -75,7 +72,8 @@ test_that("readModkitExtract works", {
             rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
                                      filter = NULL, nrows = Inf, seqinfo = NULL,
                                      sequenceContextWidth = 1, sequenceReference = ref,
-                                     ncpu = 1L, verbose = TRUE)
+                                     BPPARAM = BiocParallel::SerialParam(),
+                                     verbose = TRUE)
     ))
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6432, 1)) ## number of unique positions
@@ -106,7 +104,7 @@ test_that("readModkitExtract works", {
     rme <- readModkitExtract(fnames = fnames[["s1_5mC"]], modbase = "m",
                              filter = c(`m` = 0.6, `-` = 0.5),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::MulticoreParam(2L), verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(6415, 1)) ## number of unique positions
     expect_equal(colnames(rme), "s1")
@@ -134,7 +132,8 @@ test_that("readModkitExtract works", {
     rme <- readModkitExtract(fnames = fnames["s1_5mC"], modbase = "m",
                              filter = "modkit",
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(5893, 1)) ## number of unique positions
     expect_equal(colnames(rme), "s1_5mC")
@@ -163,7 +162,8 @@ test_that("readModkitExtract works", {
                                                "s1_6mA")],
                              modbase = c("m", "m", "a"),
                              filter = NULL, nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
@@ -200,7 +200,8 @@ test_that("readModkitExtract works", {
                              modbase = c(s1_6mA = "a", s1_5mC = "m", s2_5mC = "m"),
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18615, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
@@ -238,7 +239,8 @@ test_that("readModkitExtract works", {
                              modbase = c("m", "a", "m"),
                              filter = "modkit",
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(17459, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s1_6mA", "s2_5mC"))

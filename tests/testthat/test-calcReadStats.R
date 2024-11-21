@@ -74,7 +74,7 @@ test_that("calcReadStats works", {
         "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
         min.Nobs.ppos = 5, stats = c(defaultReadStats, "SEntrModProb"))
     rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
-                         LagRange = c(200, 256), min.Nobs.ppos = 5, 
+                         LagRange = c(200, 256), min.Nobs.ppos = 5,
                          stats = c(defaultReadStats, "SEntrModProb"))
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
@@ -114,7 +114,7 @@ test_that("addReadStats works", {
                            package = "footprintR")
     se <- readModkitExtract(exfiles, modbase = "a")
     se2 <- addReadStats(se, name = "qc2", stats = c(defaultReadStats, "SEntrModProb"))
-    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2", 
+    se3 <- addReadStats(se, min.Nobs.pread = 2600, name = "qc2",
                         stats = c(defaultReadStats, "SEntrModProb"))
 
     # expected errors

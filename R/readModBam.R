@@ -28,9 +28,12 @@
 #' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
 #'     and approximately \code{nAlnsToSample} randomly selected alignments on
 #'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
+#'     In order to make the results reproducible, make sure to set the
+#'     \code{RNGseed} argument in the provided \code{BPPARAM} object (see
+#'     below).
 #' @param seqnamesToSampleFrom A character vector with one or several sequence
 #'     names (chromosomes) from which to sample alignments from (only used if
-#'     `nAlnsToSample` is greater than zero).
+#'     \code{nAlnsToSample} is greater than zero).
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -44,13 +47,15 @@
 #'     coordinates of single nucleotide variant positions, to be used to
 #'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
 #'     or \code{nAlnsToSample > 0} (sampling-mode).
-#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
-#'     to use for some of the steps in \code{readModBam} (e.g. the number of
-#'     bam files to process in parallel).
-#' @param ncpuDecompression A numeric scalar giving the number of parallel CPU
-#'     threads to use for decompressing bam records. When reading from multiple
-#'     bam files in parallel (\code{ncpu > 1}), the total number of threads
-#'     used may be as many as \code{ncpu * ncpuDecompression}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{readModBam()}. The default value
+#'     (\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
+#'     for the current environment, or the default parallel backend registered
+#'     using \code{\link[BiocParallel]{register}}. If randomly sampling reads
+#'     (\code{nAlnsToSample > 0}), make sure to set the \code{RNGseed} argument
+#'     when constructing the \code{BPPARAM} object for reproducible results
+#'     (see also \code{vignette("Random_Numbers", package = "BiocParallel")}).
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -68,7 +73,7 @@
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
 #'     SAM ML and MM tags for base modifications.
 #'
-#' @author Michael Stadler
+#' @author Michael Stadler, Charlotte Soneson
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
 #' @importFrom SparseArray NaArray
@@ -77,7 +82,8 @@
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand
-#' @importFrom parallel mclapply
+#' @importFrom BiocParallel bplapply bpparam bpnworkers bpworkers<-
+#' @importFrom methods is
 #'
 #' @export
 readModBam <- function(bamfiles,
@@ -89,8 +95,7 @@ readModBam <- function(bamfiles,
                        sequenceContextWidth = 0,
                        sequenceReference = NULL,
                        variantPositions = NULL,
-                       ncpu = 1L,
-                       ncpuDecompression = 2L,
+                       BPPARAM = bpparam(),
                        verbose = FALSE) {
     # digest arguments
     .assertVector(x = bamfiles, type = "character")
@@ -149,8 +154,7 @@ readModBam <- function(bamfiles,
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
     .assertVector(x = variantPositions, type = "GPos", allowNULL = TRUE)
-    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, Inf))
-    .assertScalar(x = ncpuDecompression, type = "numeric", rngIncl = c(1, Inf))
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
 
     # sort and subset variantPositions
@@ -166,22 +170,46 @@ readModBam <- function(bamfiles,
         variantRefPositions <- integer(0L)
     }
 
+    # determine the number of parallel threads to be used for
+    # bam files (preferred) and decompression of bam records (if available)
+    # (accept some level of over-subscription)
+    ncpuTotal <- bpnworkers(BPPARAM)
+    if (is(BPPARAM, "MulticoreParam") || is(BPPARAM, "SnowParam")) {
+        ncpuFiles <- min(ncpuTotal, length(bamfiles))
+        oversubscriptionRate <- 2.0
+        ncpuDecompression <- min(8L, max(1L, as.integer(
+            floor(oversubscriptionRate * ncpuTotal / ncpuFiles))))
+        bpworkers(BPPARAM) <- ncpuFiles
+        on.exit(bpworkers(BPPARAM) <- ncpuTotal)
+    } else {
+        ncpuDecompression <- 1L
+    }
+
     # extract modification probabilities from `bamfiles`
     .message("extracting base modifications from modBAM files", noTimer = TRUE)
     regions_str <- as.character(regions, ignore.strand = TRUE)
-    resLL <- mclapply(structure(names(bamfiles), names = names(bamfiles)),
-                                function(nm) {
+    resLL <- bplapply(structure(names(bamfiles), names = names(bamfiles)),
+                      function(nm,
+                               bamf = bamfiles[nm],
+                               myregions_str = regions_str,
+                               mymodbase = modbase[nm],
+                               mynAlnsToSample = nAlnsToSample,
+                               myseqnamesToSampleFrom = seqnamesToSampleFrom,
+                               myvariantRefNames = variantRefNames,
+                               myvariantRefPositions = variantRefPositions,
+                               myncpuDecompression = ncpuDecompression,
+                               myverbose = verbose) {
         # extract modifications (returned list is similar to modkit extract
         # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
-        resL <- read_modbam_cpp(inname_str = bamfiles[nm],
-                                regions = regions_str,
-                                modbase = modbase[nm],
-                                n_alns_to_sample = as.integer(nAlnsToSample),
-                                tnames_for_sampling = seqnamesToSampleFrom,
-                                variantRefNames = variantRefNames,
-                                variantRefPositions = as.integer(variantRefPositions),
-                                n_threads = as.integer(ncpuDecompression),
-                                verbose = verbose)
+        resL <- read_modbam_cpp(inname_str = bamf,
+                                regions = myregions_str,
+                                modbase = mymodbase,
+                                n_alns_to_sample = as.integer(mynAlnsToSample),
+                                tnames_for_sampling = myseqnamesToSampleFrom,
+                                variantRefNames = myvariantRefNames,
+                                variantRefPositions = as.integer(myvariantRefPositions),
+                                n_threads = as.integer(myncpuDecompression),
+                                verbose = myverbose)
 
         # convert 0-based ref_position to 1-based
         resL$ref_position <- resL$ref_position + 1L
@@ -192,13 +220,13 @@ readModBam <- function(bamfiles,
         # a mod_prob of -1 for these.
         resL$mod_prob[resL$mod_prob == -1] <- 0
         resL
-    }, mc.cores = ncpu)
+    }, BPPARAM = BPPARAM)
 
     # create GPos objects for each input
-    gposL <- mclapply(resLL, function(resL) {
-        GPos(seqnames = resL$chrom, pos = resL$ref_position,
-             strand = resL$ref_mod_strand, seqinfo = seqinfo)
-    }, mc.cores = ncpu)
+    gposL <- bplapply(resLL, function(resL, myseqinfo = seqinfo) {
+        GenomicRanges::GPos(seqnames = resL$chrom, pos = resL$ref_position,
+                            strand = resL$ref_mod_strand, seqinfo = myseqinfo)
+    }, BPPARAM = BPPARAM)
 
     # create combined GPos, reduce to unique positions
     .message("finding unique genomic positions...")

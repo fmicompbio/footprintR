@@ -13,7 +13,7 @@ test_that("validity checks work", {
                              modbase = c(s1_6mA = "a", s1_5mC = "m", s2_5mC = "m"),
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
-                             ncpu = 1L, verbose = FALSE)
+                             BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     rme <- addReadStats(rme)
     rme_withreads <- flattenReadLevelAssay(rme)
     rme_withoutreads <- flattenReadLevelAssay(rme, keep.reads = FALSE)

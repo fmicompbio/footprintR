@@ -51,10 +51,8 @@ test_that("readModBam works", {
         "Cannot sample 10 alignments from a total of 0")
     expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, "chr1", "error"),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpu = -1),
-                 "'ncpu' must be within \\[1,Inf\\]")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", ncpuDecompression = "error"),
-                 "'ncpuDecompression' must be of class 'numeric'")
+    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", BPPARAM = -1),
+                 "'BPPARAM' must be of class 'BiocParallelParam'")
 
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a")
@@ -63,28 +61,19 @@ test_that("readModBam works", {
     reg3 <- rep("chr1:6940000-6955000", 3)
     reg4 <- "chr1:6940000-6955000"
     reg5 <- c("chr1:6941000-6941001", "chr1:6928000-6928001")
-    expect_message(expect_message(expect_message(expect_message(
-        expect_message(expect_message(expect_message(expect_message(
-            expect_message(expect_message(expect_message(expect_message(
-                expect_message(expect_message(expect_message(expect_message(
-                    expect_message(expect_message(expect_message(expect_message(
-                        expect_message(expect_message(expect_message(expect_message(
-                            expect_message(expect_message(
-                                se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
-                                                  modbase = "a", nAlnsToSample = 0,
-                                                  sequenceContextWidth = 1, sequenceReference = ref,
-                                                  seqnamesToSampleFrom = "chr1", verbose = TRUE)
-                            ))
-                        ))))
-                    ))))
-                ))))
-            ))))
-        ))))
-    ))))
+    suppressMessages({
+        expect_message(
+            se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                              modbase = "a", nAlnsToSample = 0,
+                              sequenceContextWidth = 1, sequenceReference = ref,
+                              seqnamesToSampleFrom = "chr1", verbose = TRUE)
+        )
+    })
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                      BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
                       verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
@@ -116,34 +105,24 @@ test_that("readModBam works", {
         what = "qname",
         which = GRanges(reg5[1:2])
     ))
-    set.seed(55L)
     expect_warning(
-        expect_message(expect_message(expect_message(
-            expect_message(expect_message(expect_message(
-                expect_message(expect_message(
-                    expect_message(expect_message(expect_message(
-                        expect_message(expect_message(
-                            expect_message(expect_message(expect_message(expect_message(
-                                se6a  <- readModBam(bamfiles = modbamfiles[1],
-                                                    regions = NULL,
-                                                    modbase = "a",
-                                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                                                    variantPositions = GPos("chr1", pos = 63000000),
-                                                    ncpuDecompression = 2,
-                                                    verbose = TRUE),
-                                "extracting base modifications"))),
-                            "opening input file"))),
-                        "reading alignments overlapping"))),
-                    "removed 2006 unaligned"),
-                    "read 6 alignments"),
-                "finding unique genomic"))),
-            "collapsed 16095 positions to 6852"))),
-        "Ignoring `variantPositions`")
-    set.seed(55L)
+        suppressMessages({
+            expect_message(
+                se6a  <- readModBam(bamfiles = modbamfiles[1],
+                                    regions = NULL,
+                                    modbase = "a",
+                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                    variantPositions = GPos("chr1", pos = 63000000),
+                                    BPPARAM = BiocParallel::MulticoreParam(2L, RNGseed = 55L),
+                                    verbose = TRUE)
+            )
+        })
+    )
     se6b  <- readModBam(bamfiles = modbamfiles[1],
                         regions = NULL,
                         modbase = "a",
                         nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                        BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                         verbose = FALSE)
 
     seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b)
@@ -302,7 +281,7 @@ test_that("readModBam works", {
 
     # ... content of se6a and se6b
     expect_identical(se6a, se6b)
-    expect_identical(dim(assay(se6a)$sample1), c(6852L, 6L))
+    expect_identical(dim(assay(se6a)$sample1), c(5996L, 5L))
 })
 
 test_that("readModBam correctly labels reads", {

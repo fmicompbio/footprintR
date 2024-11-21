@@ -37,8 +37,12 @@
 #'     \code{sequenceContextWidth = 0}), no sequence context will be
 #'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 #'     See \code{\link{addSeqContext}} for details.
-#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
-#'     to use for some of the steps in \code{readModkitExtract()}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{readModkitExtract()}. The default value
+#'     (\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
+#'     for the current environment, or the default parallel backend registered
+#'     using \code{\link[BiocParallel]{register}}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -47,7 +51,7 @@
 #'     with each column (sample) corresponding to a position-by-read
 #'     \code{\link[SparseArray]{NaMatrix}}.
 #'
-#' @author Charlotte Soneson
+#' @author Charlotte Soneson, Michael Stadler
 #'
 #' @examples
 #' extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
@@ -63,7 +67,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowRanges
 #' @importFrom data.table fread
-#' @importFrom parallel mclapply
+#' @importFrom BiocParallel bplapply bpparam bpnworkers
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors make_zero_col_DFrame DataFrame
 #' @importFrom SparseArray NaArray
@@ -78,7 +82,7 @@ readModkitExtract <- function(fnames,
                               seqinfo = NULL,
                               sequenceContextWidth = 0,
                               sequenceReference = NULL,
-                              ncpu = 1L,
+                              BPPARAM = bpparam(),
                               verbose = FALSE) {
 
     # digest arguments
@@ -133,7 +137,7 @@ readModkitExtract <- function(fnames,
         }
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric")
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
@@ -152,7 +156,7 @@ readModkitExtract <- function(fnames,
         # read data
         tmp <- fread(
             file = fnames[nm], sep = "\t", nrows = nrows, header = TRUE,
-            nThread = ncpu, data.table = FALSE, verbose = FALSE,
+            nThread = bpnworkers(BPPARAM), data.table = FALSE, verbose = FALSE,
             select = list(character = c("chrom", "call_code", "read_id", "ref_strand"),
                           integer = c("ref_position"),
                           logical = c("fail"),
@@ -190,10 +194,10 @@ readModkitExtract <- function(fnames,
     }
 
     # create GPos objects for each input
-    gposL <- mclapply(dfL, function(df) {
-        GPos(seqnames = df$chrom, pos = df$ref_position,
-             strand = df$ref_strand, seqinfo = seqinfo)
-    }, mc.cores = ncpu)
+    gposL <- bplapply(dfL, function(df, myseqinfo = seqinfo) {
+        GenomicRanges::GPos(seqnames = df$chrom, pos = df$ref_position,
+                            strand = df$ref_strand, seqinfo = myseqinfo)
+    }, BPPARAM = BPPARAM)
 
     # create combined GPos, reduce to unique positions
     .message("finding unique genomic positions...")

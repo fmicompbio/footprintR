@@ -11,7 +11,7 @@ readBedMethyl(
   seqinfo = NULL,
   sequenceContextWidth = 0,
   sequenceReference = NULL,
-  ncpu = 1L,
+  BPPARAM = bpparam(),
   verbose = FALSE
 )
 }
@@ -47,8 +47,11 @@ context to be extracted around modified bases. By default (
 extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 See \code{\link{addSeqContext}} for details.}
 
-\item{ncpu}{A numeric scalar giving the number of parallel CPU threads to
-to use for some of the steps in \code{readBedMethyl()}.}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for some of the steps
+in \code{readBedMethyl()}. The default value (\code{\link[BiocParallel]{bpparam}})
+will select an appropriate value for the current environment, or the
+default parallel backend registered using \code{\link[BiocParallel]{register}}.}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
@@ -76,5 +79,5 @@ readBedMethyl(bmfile, modbase = "m")
 \code{\link{addSeqContext}} used to add the sequence context.
 }
 \author{
-Michael Stadler
+Michael Stadler, Charlotte Soneson
 }

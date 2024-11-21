@@ -30,8 +30,11 @@
 #'     \code{sequenceContextWidth = 0}), no sequence context will be
 #'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
 #'     See \code{\link{addSeqContext}} for details.
-#' @param ncpu A numeric scalar giving the number of parallel CPU threads to
-#'     to use for some of the steps in \code{readBedMethyl()}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{readBedMethyl()}. The default value (\code{\link[BiocParallel]{bpparam}})
+#'     will select an appropriate value for the current environment, or the
+#'     default parallel backend registered using \code{\link[BiocParallel]{register}}.
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -40,7 +43,7 @@
 #'     \code{rowData(x)$sequenceContext} will be a \code{\link[Biostrings]{DNAStringSet}}
 #'     object with the extracted sequences.
 #'
-#' @author Michael Stadler
+#' @author Michael Stadler, Charlotte Soneson
 #'
 #' @examples
 #' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
@@ -60,7 +63,7 @@
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
-#' @importFrom parallel mclapply detectCores
+#' @importFrom BiocParallel bplapply bpparam bpnworkers
 #'
 #' @export
 readBedMethyl <- function(fnames,
@@ -69,7 +72,7 @@ readBedMethyl <- function(fnames,
                           seqinfo = NULL,
                           sequenceContextWidth = 0,
                           sequenceReference = NULL,
-                          ncpu = 1L,
+                          BPPARAM = bpparam(),
                           verbose = FALSE) {
     # digest arguments
     .assertVector(x = fnames, type = "character")
@@ -109,7 +112,7 @@ readBedMethyl <- function(fnames,
         }
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
-    .assertScalar(x = ncpu, type = "numeric", rngIncl = c(1, detectCores()))
+    .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
     if (any(grepl("[.](gz|bz2)$", fnames))) {
         .assertPackagesAvailable("R.utils")
@@ -123,7 +126,7 @@ readBedMethyl <- function(fnames,
     dfL <- lapply(fnames, function(fname) {
         .message("    {.file fname}")
         fread(file = fname, sep = "\t", nrows = nrows, header = FALSE,
-              nThread = ncpu, data.table = FALSE, verbose = FALSE,
+              nThread = bpnworkers(BPPARAM), data.table = FALSE, verbose = FALSE,
               col.names = c("chr", "modbase", "strand", "start", "N_valid", "N_mod"),
               select = list(character = c(1, 4, 6), integer = c(2, 10, 12)))
     })
@@ -131,17 +134,17 @@ readBedMethyl <- function(fnames,
     # filter by `modbase`
     if (!is.null(modbase)) {
         .message("filtering modifications (retaining {modbase})")
-        dfL <- mclapply(dfL, function(df) {
-            df[df$modbase %in% modbase, ]
-        }, mc.cores = ncpu)
+        dfL <- bplapply(dfL, function(df, mymodbase = modbase) {
+            df[df$modbase %in% mymodbase, ]
+        }, BPPARAM = BPPARAM)
     }
 
     # create GPos objects for each input
     # (convert 0-based start from bed format to 1-based start in GenomicRanges)
-    gposL <- mclapply(dfL, function(df) {
-        GPos(seqnames = df$chr, pos = df$start + 1L,
-             strand = df$strand, seqinfo = seqinfo)
-    }, mc.cores = ncpu)
+    gposL <- bplapply(dfL, function(df, myseqinfo = seqinfo) {
+        GenomicRanges::GPos(seqnames = df$chr, pos = df$start + 1L,
+                            strand = df$strand, seqinfo = myseqinfo)
+    }, BPPARAM = BPPARAM)
 
     # create combined GPos
     if (length(dfL) > 1) {
