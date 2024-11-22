@@ -244,7 +244,7 @@ calcReadStats <- function(se,
 
             mat <- assay(sesub, assayName)[[nm]]
 
-            # Non-NA indices:
+            # Non-NA indices
             NNAind <- nnawhich(mat, arr.ind = TRUE)
 
             # Coverage per row (i.e per position)
@@ -252,8 +252,7 @@ calcReadStats <- function(se,
             TBL <- table(NNAind[, 1])
             Nobs[as.numeric(names(TBL))] <- unclass(TBL)
 
-            # Create list of non-zero row indices per column (i.e per read)
-            NNAind <- nnawhich(mat, arr.ind = TRUE)
+            # Create list of non-NA row indices per column (i.e per read)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
 
@@ -278,16 +277,16 @@ calcReadStats <- function(se,
             }
 
             # Iterate over param_names and add columns to stats_res
-            do.call(cbind, bplapply(param_names, function(param, mymat = mat,
+            do.call(cbind, bplapply(param_names, function(param, mycolnames = colnames(mat),
                                                           myuse.reads = use.reads,
                                                           mystatFunctions = statFunctions,
                                                           myNNAvals_byCol = NNAvals_byCol,
                                                           myLagRangeValues = LagRangeValues) {
-                stats_res <- make_zero_col_DFrame(nrow = ncol(mymat))
-                row.names(stats_res) <- colnames(mymat)
+                stats_res <- make_zero_col_DFrame(nrow = length(mycolnames))
+                row.names(stats_res) <- mycolnames
                 if (param %in% c("ACModProb", "PACModProb")) {
                     stats_res[[param]] <- lapply(
-                        structure(colnames(mymat), names = colnames(mymat)), function(r) {
+                        structure(mycolnames, names = mycolnames), function(r) {
                             if (r %in% myuse.reads) {
                                 mystatFunctions[[param]](myNNAvals_byCol[[r]])
                             } else {
@@ -295,7 +294,7 @@ calcReadStats <- function(se,
                             }
                         })
                 } else {
-                    stats_res[[param]] <- rep(NA, ncol(mymat))
+                    stats_res[[param]] <- rep(NA, length(mycolnames))
                     stats_res[myuse.reads, param] <- vapply(myuse.reads, function(r) {
                         statFunctions[[param]](myNNAvals_byCol[[r]])
                     }, numeric(1))
