@@ -247,11 +247,6 @@ calcReadStats <- function(se,
             # Non-NA indices
             NNAind <- nnawhich(mat, arr.ind = TRUE)
 
-            # Coverage per row (i.e per position)
-            Nobs <- rep(0, nrow(mat))
-            TBL <- table(NNAind[, 1])
-            Nobs[as.numeric(names(TBL))] <- unclass(TBL)
-
             # Create list of non-NA row indices per column (i.e per read)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
@@ -263,9 +258,6 @@ calcReadStats <- function(se,
 
             # Number of (valid) observations per read:
             NobsReads <- lengths(NNAind_byCol)
-
-            # Collapsed mod probs per position:
-            MeanModProb <- rowSums(mat) / Nobs
 
             # Include in calculations only reads with sufficient Number of observations:
             use.reads <- colnames(mat)[NobsReads >= minNobsPread]
