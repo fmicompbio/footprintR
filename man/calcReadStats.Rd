@@ -15,7 +15,7 @@ calcReadStats(
   minNobsPread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
-  BPPARAM = bpparam(),
+  BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
 
@@ -72,10 +72,8 @@ autocorrelation (see details section).}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for calculating
-read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
-will select an appropriate value for the current environment, or the
-default parallel backend registered using
-\code{\link[BiocParallel]{register}}.}
+read statistics. The default value is
+(\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 

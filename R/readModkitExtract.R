@@ -39,10 +39,8 @@
 #'     See \code{\link{addSeqContext}} for details.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
-#'     in \code{readModkitExtract()}. The default value
-#'     (\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
-#'     for the current environment, or the default parallel backend registered
-#'     using \code{\link[BiocParallel]{register}}.
+#'     in \code{readModkitExtract()}. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -67,7 +65,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowRanges
 #' @importFrom data.table fread
-#' @importFrom BiocParallel bplapply bpparam bpnworkers
+#' @importFrom BiocParallel bplapply MulticoreParam bpnworkers
 #' @importFrom GenomicRanges GPos sort match
 #' @importFrom S4Vectors make_zero_col_DFrame DataFrame
 #' @importFrom SparseArray NaArray
@@ -82,7 +80,7 @@ readModkitExtract <- function(fnames,
                               seqinfo = NULL,
                               sequenceContextWidth = 0,
                               sequenceReference = NULL,
-                              BPPARAM = bpparam(),
+                              BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                               verbose = FALSE) {
 
     # digest arguments

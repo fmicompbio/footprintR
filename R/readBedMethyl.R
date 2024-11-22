@@ -32,9 +32,8 @@
 #'     See \code{\link{addSeqContext}} for details.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
-#'     in \code{readBedMethyl()}. The default value (\code{\link[BiocParallel]{bpparam}})
-#'     will select an appropriate value for the current environment, or the
-#'     default parallel backend registered using \code{\link[BiocParallel]{register}}.
+#'     in \code{readBedMethyl()}. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)})
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
@@ -63,7 +62,7 @@
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
-#' @importFrom BiocParallel bplapply bpparam bpnworkers
+#' @importFrom BiocParallel bplapply MulticoreParam bpnworkers
 #'
 #' @export
 readBedMethyl <- function(fnames,
@@ -72,7 +71,7 @@ readBedMethyl <- function(fnames,
                           seqinfo = NULL,
                           sequenceContextWidth = 0,
                           sequenceReference = NULL,
-                          BPPARAM = bpparam(),
+                          BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                           verbose = FALSE) {
     # digest arguments
     .assertVector(x = fnames, type = "character")

@@ -11,7 +11,7 @@ readBedMethyl(
   seqinfo = NULL,
   sequenceContextWidth = 0,
   sequenceReference = NULL,
-  BPPARAM = bpparam(),
+  BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
 }
@@ -49,9 +49,8 @@ See \code{\link{addSeqContext}} for details.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps
-in \code{readBedMethyl()}. The default value (\code{\link[BiocParallel]{bpparam}})
-will select an appropriate value for the current environment, or the
-default parallel backend registered using \code{\link[BiocParallel]{register}}.}
+in \code{readBedMethyl()}. The default value is
+(\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)})}
 
 \item{verbose}{If \code{TRUE}, report on progress.}
 }
