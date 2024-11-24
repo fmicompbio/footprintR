@@ -502,6 +502,11 @@ plotRegion <- function(se,
 #'     features by strand.
 #' @param displayNames A logical scalar indicating whether or not to display 
 #'     the names of the features in the plot. 
+#' @param labelSize A numeric scalar representing the font size of the displayed 
+#'     label (if \code{displayNames} is \code{TRUE}).
+#' @param labelPosition A character scalar, either \code{"above"}, 
+#'     \code{"below"} or \code{"inside"}, indicating whether to place the 
+#'     feature labels above, below or inside the respective feature. 
 #' 
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
@@ -513,13 +518,18 @@ plotRegion <- function(se,
 .plotGenomicRegions <- function(x, 
                                 region,
                                 colorByStrand = TRUE,
-                                displayNames = TRUE) {
+                                displayNames = TRUE,
+                                labelSize = 2,
+                                labelPosition = "above") {
     # check input arguments
     .assertVector(x = x, type = "GRangesList")
     .assertVector(x = names(x), type = "character")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = colorByStrand, type = "logical")
     .assertScalar(x = displayNames, type = "logical")
+    .assertScalar(x = labelSize, type = "numeric")
+    .assertScalar(x = labelPosition, type = "character", 
+                  validValues = c("above", "below", "inside"))
     
     # subset GRangesList to elements overlapping the provided region
     x <- subsetByOverlaps(x, region)
@@ -574,20 +584,27 @@ plotRegion <- function(se,
                       ), colour = "gray20")
     }
     if (displayNames) {
+        offset <- ifelse(labelPosition == "above", 0.25,
+                         ifelse(labelPosition == "below", -0.25, 0))
+        vjust <- ifelse(labelPosition == "above", -0.5,
+                        ifelse(labelPosition == "below", 1.5, 0.5))
         gg <- gg + 
-            geom_text(data = fullRange, 
-                      mapping = aes(
-                          x = ifelse(.data[["strand"]] == "+", 
-                                     pmax(.data[["start"]], rng[1]),
-                                     ifelse(.data[["strand"]] == "-",
-                                            pmin(.data[["end"]], rng[2]), 
-                                            0.5 * pmax(.data[["start"]], rng[1]) + 
-                                                0.5 * pmin(.data[["end"]], rng[2]))),
-                          y = as.numeric(.data[["fpname"]]) + 0.25,
-                          label = .data[["fpname"]], vjust = -0.5, 
-                          hjust = ifelse(.data[["strand"]] == "+", 0, 
-                                         ifelse(.data[["strand"]] == "-", 1, 0.5))
-                      ))
+            geom_text(
+                data = fullRange, 
+                mapping = aes(
+                    x = ifelse(.data[["strand"]] == "+", 
+                               pmax(.data[["start"]], rng[1]),
+                               ifelse(.data[["strand"]] == "-",
+                                      pmin(.data[["end"]], rng[2]), 
+                                      0.5 * pmax(.data[["start"]], rng[1]) + 
+                                          0.5 * pmin(.data[["end"]], rng[2]))),
+                    y = as.numeric(.data[["fpname"]]) + offset,
+                    label = .data[["fpname"]], 
+                    vjust = vjust,
+                    hjust = ifelse(.data[["strand"]] == "+", 0.01, 
+                                   ifelse(.data[["strand"]] == "-", 0.99, 0.5))
+                ), 
+                size = labelSize)
     }
     gg <- gg +
         theme_bw() + 
