@@ -287,6 +287,13 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
+#'     this will be the title of the track fill legend. If \code{NULL}, the 
+#'     name of the assay (\code{aname}) will be used.
+#' @param showLegend A logical scalar, indicating whether or not to display
+#'     the legend for the track.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter group_by summarise
@@ -302,7 +309,10 @@ plotRegion <- function(se,
                                stroke = 0.5,
                                drawRead = TRUE,
                                orderReads = TRUE,
-                               modbaseSpace = FALSE) {
+                               modbaseSpace = FALSE,
+                               trackTitle = NULL,
+                               legendTitle = NULL,
+                               showLegend = TRUE) {
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace)
 
@@ -313,7 +323,10 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1])
+    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+                              trackTitle = trackTitle,
+                              legendTitle = legendTitle,
+                              showLegend = showLegend)
 
     # add segments
     if (drawRead) {
@@ -357,6 +370,13 @@ plotRegion <- function(se,
 #'     bases for visualization.
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
+#'     this will be the title of the track fill legend. If \code{NULL}, the 
+#'     name of the assay (\code{aname}) will be used.
+#' @param showLegend A logical scalar, indicating whether or not to display
+#'     the legend for the track.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -371,7 +391,10 @@ plotRegion <- function(se,
                               linewidthTiles = 0,
                               orderReads = TRUE,
                               modbaseSpace = FALSE,
-                              interpolate = FALSE) {
+                              interpolate = FALSE,
+                              trackTitle = NULL,
+                              legendTitle = NULL,
+                              showLegend = TRUE) {
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
 
@@ -382,7 +405,10 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1])
+    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+                              trackTitle = trackTitle,
+                              legendTitle = legendTitle,
+                              showLegend = showLegend)
 
     # add segments
     if (drawRead) {
@@ -426,6 +452,13 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
+#'     this will be the title of the track color legend. If \code{NULL}, 
+#'     'Sample' will be used.
+#' @param showLegend A logical scalar, indicating whether or not to display
+#'     the legend for the track.
 #'
 #' @import ggplot2
 #' @importFrom BiocGenerics start nrow
@@ -442,14 +475,20 @@ plotRegion <- function(se,
                                     doSmooth = TRUE,
                                     arglistSmooth = list(),
                                     spar = 0.01,
-                                    modbaseSpace = FALSE) {
+                                    modbaseSpace = FALSE,
+                                    trackTitle = NULL,
+                                    legendTitle = NULL,
+                                    showLegend = TRUE) {
     # prepare plot data
     df <- .preparePlotdataSummary(x = x, aname = aname,
                                   modbaseSpace = modbaseSpace)
 
     # create base plot
     p <- .createBaseplotSummary(df = df, aname = aname,
-                                chr = unique(seqnames(x))[1])
+                                chr = unique(seqnames(x))[1], 
+                                trackTitle = trackTitle,
+                                legendTitle = legendTitle,
+                                showLegend = showLegend)
 
     # add points
     if (doPoint) {
@@ -507,6 +546,13 @@ plotRegion <- function(se,
 #' @param labelPosition A character scalar, either \code{"above"}, 
 #'     \code{"below"} or \code{"inside"}, indicating whether to place the 
 #'     feature labels above, below or inside the respective feature. 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
+#'     this will be the title of the track fill legend. If \code{NULL}, 
+#'     'strand' will be used.
+#' @param showLegend A logical scalar, indicating whether or not to display
+#'     the legend for the track.
 #' 
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
@@ -519,8 +565,11 @@ plotRegion <- function(se,
                                 region,
                                 colorByStrand = TRUE,
                                 displayNames = TRUE,
-                                labelSize = 2,
-                                labelPosition = "above") {
+                                labelSize = 3,
+                                labelPosition = "above",
+                                trackTitle = NULL,
+                                legendTitle = NULL,
+                                showLegend = TRUE) {
     # check input arguments
     .assertVector(x = x, type = "GRangesList")
     .assertVector(x = names(x), type = "character")
@@ -603,14 +652,16 @@ plotRegion <- function(se,
                     y = as.numeric(.data[["fpname"]]) + offset,
                     label = .data[["fpname"]], 
                     vjust = vjust,
-                    hjust = ifelse(.data[["strand"]] == "+", 0.01, 
-                                   ifelse(.data[["strand"]] == "-", 0.99, 0.5))
+                    hjust = ifelse(.data[["strand"]] == "+", -0.1, 
+                                   ifelse(.data[["strand"]] == "-", 1.1, 0.5))
                 ), 
                 size = labelSize)
     }
     gg <- gg +
+        labs(title = trackTitle,
+             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) + 
         theme_bw() + 
-        theme(legend.position = "right",
+        theme(legend.position = ifelse(showLegend, "right", "none"),
               legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
               axis.ticks.y = element_blank(),
@@ -723,6 +774,12 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scaler with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar (or \code{NULL}) giving the title for
+#'     the color legend.
+#' @param showLegend A logical scalar indicating whether or not to show the 
+#'     legend for the plot.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -731,7 +788,10 @@ plotRegion <- function(se,
 #' @keywords internal
 .createBaseplotSummary <- function(df,
                                    aname,
-                                   chr) {
+                                   chr, 
+                                   trackTitle,
+                                   legendTitle,
+                                   showLegend) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -739,9 +799,10 @@ plotRegion <- function(se,
                       colour = .data[["sample"]])) +
         labs(x = paste0("Position on ", chr),
              y = aname,
-             colour = "Sample") +
+             colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
+             title = trackTitle) +
         theme_bw() +
-        theme(legend.position = "right")
+        theme(legend.position = ifelse(showLegend, "right", "none"))
 
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0)
@@ -757,6 +818,12 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scalar with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#'     the track.
+#' @param legendTitle A character scalar (or \code{NULL}) giving the title for
+#'     the fill legend.
+#' @param showLegend A logical scalar indicating whether or not to show the 
+#'     legend for the plot.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -768,7 +835,10 @@ plotRegion <- function(se,
 #' @keywords internal
 .createBaseplotReads <- function(df,
                                  aname,
-                                 chr) {
+                                 chr,
+                                 trackTitle,
+                                 legendTitle,
+                                 showLegend) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -783,9 +853,10 @@ plotRegion <- function(se,
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = "Reads",
-             fill = aname) +
+             fill = ifelse(!is.null(legendTitle), legendTitle, aname),
+             title = trackTitle) +
         theme_bw() +
-        theme(legend.position = "right",
+        theme(legend.position = ifelse(showLegend, "right", "none"),
               axis.text.y = element_blank(),
               axis.ticks.y = element_blank(),
               panel.grid.major = element_blank(),
