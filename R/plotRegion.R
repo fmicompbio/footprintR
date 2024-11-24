@@ -1,9 +1,9 @@
 # global data.frame of plot types and characteristics
 plotRegionPlotTypes <- data.frame(
     name = c("Point", "Smooth", "PointSmooth",
-             "Lollipop", "Heatmap"),
+             "Lollipop", "Heatmap", "GenomicRegion"),
     type = c("summary", "summary", "summary",
-             "reads", "reads")
+             "reads", "reads", "annotation")
 )
 
 
@@ -104,8 +104,8 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
 #'     footprinting data.
 #'
-#' @importFrom BiocGenerics start
-#' @importFrom SummarizedExperiment assay assayNames rowData nrow
+#' @importFrom BiocGenerics start intersect
+#' @importFrom SummarizedExperiment assay assayNames rowData nrow rowRanges
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels
 #' @importFrom IRanges IRanges subsetByOverlaps
@@ -177,6 +177,12 @@ plotRegion <- function(se,
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
+        if (type_i == "annotation" && 
+            !(is(tracks[[i]]$trackData, "GRangesList") && 
+              !is.null(names(tracks[[i]]$trackData)))) {
+            cli_abort(paste("tracks[[{i}]]$trackData must be a named",
+                            "GRangesList object"))
+        }
 
         if (modbaseSpace &&
             "interpolate" %in% names(tracks[[i]]) &&
@@ -188,29 +194,54 @@ plotRegion <- function(se,
                            "Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
+        if (modbaseSpace &&
+            tracks[[i]]$trackType == "GenomicRegion") {
+            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
+                           "GenomicRegion tracks are included.",
+                           "Setting modbaseSpace=FALSE"))
+            modbaseSpace <- FALSE
+        }
     }
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(se = se, sequenceContext = sequenceContext)
+    
+    # get the regions actually covered in se (to set the plot region for the 
+    # annotation tracks)
+    covregion <- BiocGenerics::intersect(region, 
+                                         range(rowRanges(se), 
+                                               ignore.strand = TRUE),
+                                         ignore.strand = TRUE)
 
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
         tr <- tracks[[i]]
-        args <- c(
-            list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace),
-            tr[!names(tr) %in% c("trackData", "trackType", "x", "aname",
-                                 "modbaseSpace", "doSmooth", "doPoint")]
-        )
+        trt <- plotRegionPlotTypes$type[match(tr$trackType, plotRegionPlotTypes$name)]
+        if (trt %in% c("summary", "reads")) {
+            args <- c(
+                list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace),
+                tr[!names(tr) %in% c("trackData", "trackType", "x", "aname",
+                                     "modbaseSpace", "doSmooth", "doPoint")]
+            )
+        } else if (trt == "annotation") {
+            args <- c(
+                list(x = subsetByOverlaps(tr$trackData, covregion), 
+                     region = covregion), 
+                     tr[!names(tr) %in% c("trackData", "trackType", "x", 
+                                          "region")]
+            )
+        }
         pL[[i]] <- switch(
             tr$trackType,
             Point = do.call(.plotSummaryPointSmooth, c(args, list(doSmooth = FALSE))),
             Smooth = do.call(.plotSummaryPointSmooth, c(args, list(doPoint = FALSE))),
             PointSmooth = do.call(.plotSummaryPointSmooth, args),
             Lollipop = do.call(.plotReadsLollipop, args),
-            Heatmap = do.call(.plotReadsHeatmap, args)
+            Heatmap = do.call(.plotReadsHeatmap, args),
+            GenomicRegion = do.call(.plotGenomicRegions, args)
         )
     }
 
@@ -456,6 +487,130 @@ plotRegion <- function(se,
     return(p)
 }
 
+
+#' Plot an individual track: genomic regions
+#'
+#' @description
+#' This function creates a single plot track with genomic regions and is 
+#' typically called by \code{\link{plotRegion}}.
+#'
+#' @param x A named \code{\link[GenomicRanges]{GRangesList}} object where each 
+#'     entry corresponds to a transcript or genomic feature.
+#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object 
+#'     giving the region to plot.
+#' @param colorByStrand A logical scalar indicating whether or not to color
+#'     features by strand.
+#' @param displayNames A logical scalar indicating whether or not to display 
+#'     the names of the features in the plot. 
+#' 
+#' @import ggplot2
+#' @importFrom IRanges subsetByOverlaps
+#' @importFrom BiocGenerics unlist start end
+#' @importFrom S4Vectors mcols
+#' 
+#' @noRd
+#' @keywords internal
+.plotGenomicRegions <- function(x, 
+                                region,
+                                colorByStrand = TRUE,
+                                displayNames = TRUE) {
+    # check input arguments
+    .assertVector(x = x, type = "GRangesList")
+    .assertVector(x = names(x), type = "character")
+    .assertScalar(x = region, type = "GRanges")
+    .assertScalar(x = colorByStrand, type = "logical")
+    .assertScalar(x = displayNames, type = "logical")
+    
+    # subset GRangesList to elements overlapping the provided region
+    x <- subsetByOverlaps(x, region)
+
+    # create two flattened objects - one with the full range of each feature,
+    # and one with the individual building blocks
+    fullRange <- unlist(range(x), use.names = TRUE)
+    mcols(fullRange)$fpname <- names(fullRange)
+    names(fullRange) <- NULL
+    fullRange <- as.data.frame(fullRange)
+    fullRange$fpname <- factor(fullRange$fpname, 
+                               levels = unique(fullRange$fpname))
+    
+    rangeParts <- unlist(x, use.names = TRUE)
+    mcols(rangeParts)$fpname <- names(rangeParts)
+    names(rangeParts) <- NULL
+    rangeParts <- as.data.frame(rangeParts)
+    rangeParts$fpname <- factor(rangeParts$fpname, 
+                                levels = levels(fullRange$fpname))
+
+    rng <- c(start(region), end(region))
+    
+    # plot
+    gg <- ggplot() + 
+        geom_segment(data = fullRange,
+                     mapping = aes(
+                         x = .data[["start"]],
+                         y = .data[["fpname"]],
+                         xend = .data[["end"]]
+                     ), colour = "gray80")
+    if (colorByStrand) {
+        gg <- gg + 
+            geom_rect(data = rangeParts, 
+                      mapping = aes(
+                          xmin = .data[["start"]],
+                          xmax = .data[["end"]],
+                          ymin = as.numeric(.data[["fpname"]]) - 0.25,
+                          ymax = as.numeric(.data[["fpname"]]) + 0.25,
+                          fill = .data[["strand"]]
+                      ), colour = "gray20") + 
+            scale_fill_manual(values = c("+" = "#82b579",
+                                         "-" = "#c79e9d",
+                                         "*" = "grey80"))
+    } else {
+        gg <- gg + 
+            geom_rect(data = rangeParts, 
+                      mapping = aes(
+                          xmin = .data[["start"]],
+                          xmax = .data[["end"]],
+                          ymin = as.numeric(.data[["fpname"]]) - 0.25,
+                          ymax = as.numeric(.data[["fpname"]]) + 0.25
+                      ), colour = "gray20")
+    }
+    if (displayNames) {
+        gg <- gg + 
+            geom_text(data = fullRange, 
+                      mapping = aes(
+                          x = ifelse(.data[["strand"]] == "+", 
+                                     pmax(.data[["start"]], rng[1]),
+                                     ifelse(.data[["strand"]] == "-",
+                                            pmin(.data[["end"]], rng[2]), 
+                                            0.5 * pmax(.data[["start"]], rng[1]) + 
+                                                0.5 * pmin(.data[["end"]], rng[2]))),
+                          y = as.numeric(.data[["fpname"]]) + 0.25,
+                          label = .data[["fpname"]], vjust = -0.5, 
+                          hjust = ifelse(.data[["strand"]] == "+", 0, 
+                                         ifelse(.data[["strand"]] == "-", 1, 0.5))
+                      ))
+    }
+    gg <- gg +
+        theme_bw() + 
+        theme(legend.position = "right",
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              axis.title = element_blank(),
+              panel.border = element_blank(),
+              axis.line.x = element_line(color = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank())
+    
+    acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+    gg <- gg + coord_cartesian(xlim = rng) +
+        scale_x_continuous(
+            expand = c(0, 0), 
+            labels = label_number(
+                accuracy = acc,
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+    
+    gg
+    
+}
 
 ## helper functions used above -------------------------------------------------
 
@@ -719,8 +874,10 @@ plotRegion <- function(se,
     rng <- range(p0$data$position)
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
     p0 <- p0 + coord_cartesian(xlim = rng) +
-        scale_x_continuous(labels = label_number(
-            accuracy = acc,
-            scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+        scale_x_continuous(
+            expand = c(0, 0), 
+            labels = label_number(
+                accuracy = acc,
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
     return(p0)
 }
