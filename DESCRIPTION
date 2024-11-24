@@ -47,6 +47,7 @@ Suggests:
     R.utils,
     withr,
     BiocManager,
+    MatrixGenerics,
     ComplexUpset,
     Rsamtools,
     sessioninfo
