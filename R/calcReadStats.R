@@ -411,13 +411,13 @@ calcReadStats <- function(se,
                                                           myuseReads = useReads,
                                                           myLowConf = LowConf,
                                                           myLagRangeValues = LagRangeValues) {
-                stats_res <- make_zero_col_DFrame(nrow = length(mycolnames))
+                stats_res <- make_zero_col_DFrame(nrow = length(mycolnames)) # nocov start
                 row.names(stats_res) <- mycolnames
                 stats_res[[param]] <- do.call(param, list(probList = myNNAvals_byCol,
                                                           useReads = myuseReads,
                                                           lowConf = myLowConf,
                                                           xrange = myLagRangeValues))
-                stats_res
+                stats_res # nocov end
             }, BPPARAM = BPPARAM))
         })
     )
