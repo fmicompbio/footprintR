@@ -251,10 +251,8 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #'     \code{calcReadStats}.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for calculating
-#'     read statistics. The default value (\code{\link[BiocParallel]{bpparam}})
-#'     will select an appropriate value for the current environment, or the
-#'     default parallel backend registered using
-#'     \code{\link[BiocParallel]{register}}.
+#'     read statistics. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
 #' @param verbose If \code{TRUE}, report on progress.
 #'
 #' @details
@@ -332,7 +330,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @importFrom SparseArray rowSums nnawhich nnavals
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics colnames
-#' @importFrom BiocParallel bplapply bpparam
+#' @importFrom BiocParallel bplapply MulticoreParam
 #'
 #' @export
 calcReadStats <- function(se,
@@ -344,7 +342,7 @@ calcReadStats <- function(se,
                           minNobsPread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
-                          BPPARAM = bpparam(),
+                          BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                           verbose = FALSE) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")

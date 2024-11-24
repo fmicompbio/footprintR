@@ -14,7 +14,7 @@ readModBam(
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
-  BPPARAM = bpparam(),
+  BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
 }
@@ -71,13 +71,12 @@ or \code{nAlnsToSample > 0} (sampling-mode).}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps
-in \code{readModBam()}. The default value
-(\code{\link[BiocParallel]{bpparam}}) will select an appropriate value
-for the current environment, or the default parallel backend registered
-using \code{\link[BiocParallel]{register}}. If randomly sampling reads
-(\code{nAlnsToSample > 0}), make sure to set the \code{RNGseed} argument
-when constructing the \code{BPPARAM} object for reproducible results
-(see also \code{vignette("Random_Numbers", package = "BiocParallel")}).}
+in \code{readModBam()}. The default value is
+(\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
+If randomly sampling reads (\code{nAlnsToSample > 0}), make sure to set
+the \code{RNGseed} argument when constructing the \code{BPPARAM} object
+for reproducible results (see also
+\code{vignette("Random_Numbers", package = "BiocParallel")}).}
 
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
