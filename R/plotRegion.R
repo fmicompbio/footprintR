@@ -296,6 +296,8 @@ plotRegion <- function(se,
 #'     the legend for the track.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
 #'     containing regions to highlight with a grey shading.
+#' @param facetBySample A logical scalar indicating whether or not to facet
+#'     the plot by sample. 
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter group_by summarise
@@ -315,7 +317,8 @@ plotRegion <- function(se,
                                trackTitle = NULL,
                                legendTitle = NULL,
                                showLegend = TRUE,
-                               highlightRegions = NULL) {
+                               highlightRegions = NULL,
+                               facetBySample = TRUE) {
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
@@ -339,7 +342,8 @@ plotRegion <- function(se,
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
-                              highlightRegions = highlightRegions)
+                              highlightRegions = highlightRegions,
+                              facetBySample = facetBySample)
 
     # add segments
     if (drawRead) {
@@ -392,6 +396,8 @@ plotRegion <- function(se,
 #'     the legend for the track.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
 #'     containing regions to highlight with a grey shading.
+#' @param facetBySample A logical scalar indicating whether or not to facet
+#'     the plot by sample. 
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -410,7 +416,8 @@ plotRegion <- function(se,
                               trackTitle = NULL,
                               legendTitle = NULL,
                               showLegend = TRUE,
-                              highlightRegions = NULL) {
+                              highlightRegions = NULL,
+                              facetBySample = TRUE) {
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
@@ -434,7 +441,8 @@ plotRegion <- function(se,
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
-                              highlightRegions = highlightRegions)
+                              highlightRegions = highlightRegions,
+                              facetBySample = facetBySample)
 
     # add segments
     if (drawRead) {
@@ -880,6 +888,8 @@ plotRegion <- function(se,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
 #'     containing regions to highlight with a grey shading.
+#' @param facetBySample A logical scalar indicating whether or not to facet
+#'     the plot by sample. 
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -895,7 +905,8 @@ plotRegion <- function(se,
                                  trackTitle,
                                  legendTitle,
                                  showLegend,
-                                 highlightRegions) {
+                                 highlightRegions,
+                                 facetBySample) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -903,7 +914,6 @@ plotRegion <- function(se,
                       fill = .data[["value"]])) +
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
-        facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y") +
         labs(x = ifelse(is.numeric(df$position),
                         paste0("Position on ", chr),
                         paste0("Modified positions in ", chr,
@@ -922,6 +932,10 @@ plotRegion <- function(se,
               strip.text.x = element_text(
                   hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
+    if (facetBySample) {
+        p0 <- p0 + 
+            facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y")
+    }
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
 
