@@ -294,6 +294,8 @@ plotRegion <- function(se,
 #'     name of the assay (\code{aname}) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter group_by summarise
@@ -312,7 +314,17 @@ plotRegion <- function(se,
                                modbaseSpace = FALSE,
                                trackTitle = NULL,
                                legendTitle = NULL,
-                               showLegend = TRUE) {
+                               showLegend = TRUE,
+                               highlightRegions = NULL) {
+    .assertVector(x = highlightRegions, type = "GenomicRanges",
+                  allowNULL = TRUE)
+    if (!is.null(highlightRegions)) {
+        highlightRegions <- subsetByOverlaps(highlightRegions, 
+                                             range(rowRanges(x), 
+                                                   ignore.strand = TRUE),
+                                             ignore.strand = TRUE)
+    }
+    
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace)
 
@@ -326,7 +338,8 @@ plotRegion <- function(se,
     p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
-                              showLegend = showLegend)
+                              showLegend = showLegend,
+                              highlightRegions = highlightRegions)
 
     # add segments
     if (drawRead) {
@@ -377,6 +390,8 @@ plotRegion <- function(se,
 #'     name of the assay (\code{aname}) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -394,7 +409,17 @@ plotRegion <- function(se,
                               interpolate = FALSE,
                               trackTitle = NULL,
                               legendTitle = NULL,
-                              showLegend = TRUE) {
+                              showLegend = TRUE,
+                              highlightRegions = NULL) {
+    .assertVector(x = highlightRegions, type = "GenomicRanges",
+                  allowNULL = TRUE)
+    if (!is.null(highlightRegions)) {
+        highlightRegions <- subsetByOverlaps(highlightRegions, 
+                                             range(rowRanges(x), 
+                                                   ignore.strand = TRUE),
+                                             ignore.strand = TRUE)
+    }
+    
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
 
@@ -408,7 +433,8 @@ plotRegion <- function(se,
     p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
-                              showLegend = showLegend)
+                              showLegend = showLegend,
+                              highlightRegions = highlightRegions)
 
     # add segments
     if (drawRead) {
@@ -459,6 +485,8 @@ plotRegion <- function(se,
 #'     'Sample' will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
 #' @importFrom BiocGenerics start nrow
@@ -478,7 +506,18 @@ plotRegion <- function(se,
                                     modbaseSpace = FALSE,
                                     trackTitle = NULL,
                                     legendTitle = NULL,
-                                    showLegend = TRUE) {
+                                    showLegend = TRUE,
+                                    highlightRegions = NULL) {
+    
+    .assertVector(x = highlightRegions, type = "GenomicRanges",
+                  allowNULL = TRUE)
+    if (!is.null(highlightRegions)) {
+        highlightRegions <- subsetByOverlaps(highlightRegions, 
+                                             range(rowRanges(x), 
+                                                   ignore.strand = TRUE),
+                                             ignore.strand = TRUE)
+    }
+    
     # prepare plot data
     df <- .preparePlotdataSummary(x = x, aname = aname,
                                   modbaseSpace = modbaseSpace)
@@ -488,7 +527,8 @@ plotRegion <- function(se,
                                 chr = unique(seqnames(x))[1], 
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
-                                showLegend = showLegend)
+                                showLegend = showLegend,
+                                highlightRegions = highlightRegions)
 
     # add points
     if (doPoint) {
@@ -780,6 +820,8 @@ plotRegion <- function(se,
 #'     the color legend.
 #' @param showLegend A logical scalar indicating whether or not to show the 
 #'     legend for the plot.
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -791,7 +833,8 @@ plotRegion <- function(se,
                                    chr, 
                                    trackTitle,
                                    legendTitle,
-                                   showLegend) {
+                                   showLegend,
+                                   highlightRegions) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -804,6 +847,17 @@ plotRegion <- function(se,
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"))
 
+    if (!is.null(highlightRegions)) {
+        p0 <- p0 + 
+            geom_rect(
+                data = data.frame(highlightRegions),
+                mapping = aes(xmin = start, xmax = end,
+                              ymin = -Inf, ymax = Inf),
+                fill = "gray90",
+                inherit.aes = FALSE
+            )
+    }
+    
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0)
     }
@@ -824,6 +878,8 @@ plotRegion <- function(se,
 #'     the fill legend.
 #' @param showLegend A logical scalar indicating whether or not to show the 
 #'     legend for the plot.
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -838,7 +894,8 @@ plotRegion <- function(se,
                                  chr,
                                  trackTitle,
                                  legendTitle,
-                                 showLegend) {
+                                 showLegend,
+                                 highlightRegions) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -871,7 +928,18 @@ plotRegion <- function(se,
     } else {
         p0 <- .addCoordAxisFormat(p0)
     }
-
+    
+    if (!is.null(highlightRegions)) {
+        p0 <- p0 + 
+            geom_rect(
+                data = data.frame(highlightRegions),
+                mapping = aes(xmin = start, xmax = end,
+                              ymin = -Inf, ymax = Inf),
+                fill = "gray90",
+                inherit.aes = FALSE
+            )
+    }
+    
     return(p0)
 }
 
