@@ -621,7 +621,7 @@ plotRegion <- function(se,
                       ), colour = "gray20") + 
             scale_fill_manual(values = c("+" = "#82b579",
                                          "-" = "#c79e9d",
-                                         "*" = "grey80"),
+                                         "*" = "gray80"),
                               breaks = c("+", "-", "*"),
                               labels = c("+", "-", ""))
     } else {
@@ -632,7 +632,7 @@ plotRegion <- function(se,
                           xmax = .data[["end"]],
                           ymin = as.numeric(.data[["fpname"]]) - 0.25,
                           ymax = as.numeric(.data[["fpname"]]) + 0.25
-                      ), colour = "gray20")
+                      ), colour = "gray20", fill = "gray80")
     }
     if (displayNames) {
         offset <- ifelse(labelPosition == "above", 0.25,
