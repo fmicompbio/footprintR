@@ -572,7 +572,9 @@ plotRegion <- function(se,
                       ), colour = "gray20") + 
             scale_fill_manual(values = c("+" = "#82b579",
                                          "-" = "#c79e9d",
-                                         "*" = "grey80"))
+                                         "*" = "grey80"),
+                              breaks = c("+", "-", "*"),
+                              labels = c("+", "-", ""))
     } else {
         gg <- gg + 
             geom_rect(data = rangeParts, 
@@ -609,6 +611,7 @@ plotRegion <- function(se,
     gg <- gg +
         theme_bw() + 
         theme(legend.position = "right",
+              legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
               axis.ticks.y = element_blank(),
               axis.title = element_blank(),
