@@ -1,3 +1,101 @@
+test_that("read statistic functions work", {
+    # example data
+    # ... mod_prob matrix
+    npos <- 1000L
+    nreads <- 30L
+    lagvals <- 12:64
+    mat <- NaArray(dim = c(npos, nreads),
+                   dimnames = list(paste0("pos", seq.int(npos)),
+                                   paste0("r", seq.int(nreads))),
+                   type = "double")
+    set.seed(123L)
+    rlens <- structure(sample(30:200, size = nreads),
+                       names = colnames(mat))
+    rstarts <- sort(sample(1:800, size = nreads))
+    mat[cbind(unlist(lapply(seq.int(nreads), function(i) {
+        rstarts[i] + seq.int(rlens[i]) - 1
+    })), rep(1:30, rlens))] <- runif(sum(rlens), min = 0, max = 1)
+    expect_equal(colSums(is_nonna(mat)), rlens)
+    # ... list of non-NA values per read
+    ind <- nnawhich(mat, arr.ind = TRUE)
+    probList <- split(nnavals(mat), colnames(mat)[ind[, 2]])[colnames(mat)]
+    expect_identical(lengths(probList), rlens)
+    # ... reads to include
+    useReads <- sort(sample(nreads, size = nreads - 3L))
+    # ... subsets (modified, unmodified)
+    matMod <- matUnmod <- mat
+    nnavals(matMod)[nnavals(mat) < 0.5] <- NA
+    nnavals(matUnmod)[nnavals(mat) >= 0.5] <- NA
+    # ... helper function to get call confidence
+    .callConf <- function(x) {
+        pmax(as.matrix(x), 1 - as.matrix(x))
+    }
+
+    # expected values
+    argL <- list(probList = probList, useReads = useReads, lowConf = 0.7,
+                 xrange = lagvals)
+    resL <- lapply(allReadStats, function(param) {
+        res <- do.call(param, argL)
+        expect_length(res, nreads)
+        if (param %in% c("ACModProb","PACModProb")) {
+            expect_type(res, "list")
+            expect_identical(unname(lengths(res)), rep(length(lagvals), nreads))
+            expect_equal(
+                unname(res[useReads]),
+                switch(param,
+                       "ACModProb" = lapply(useReads, \(i) {
+                           if (length(probList[[i]]) > 64) {
+                               acf(probList[[i]], na.action = na.pass,
+                                   lag.max = 64, plot = FALSE)$acf[lagvals]
+                           } else {
+                               rep(0, length(lagvals))
+                           }
+                       }),
+                       "PACModProb" = lapply(useReads, \(i) {
+                           if (length(probList[[i]]) > 64) {
+                                pacf(probList[[i]], na.action = na.pass,
+                                     lag.max = 64, plot = FALSE)$acf[lagvals]
+                           } else {
+                               rep(0, length(lagvals))
+                           }
+                       })
+                ))
+        } else {
+            expect_type(res, "double")
+            expect_true(all(is.na(res[-useReads])))
+            expect_equal(
+                res[useReads],
+                switch(param,
+                    "MeanModProb" = unname(
+                        colMeans(mat[, useReads], na.rm = TRUE)),
+                    "FracMod" = unname(
+                        colMeans(mat[, useReads] > 0.5, na.rm = TRUE)),
+                    "MeanConf" = unname(colMeans(.callConf(mat[, useReads]),
+                                                 na.rm = TRUE)),
+                    "MeanConfUnm" = unname(colMeans(.callConf(matUnmod[, useReads]),
+                                                    na.rm = TRUE)),
+                    "MeanConfMod" = unname(colMeans(.callConf(matMod[, useReads]),
+                                                    na.rm = TRUE)),
+                    "FracLowConf" = unname(colMeans(abs(0.5 - mat[, useReads]) < 0.2,
+                                                    na.rm = TRUE)),
+                    "SEntrModProb" = unlist(lapply(
+                        useReads, \(i) {
+                            if (length(probList[[i]]) > 64) {
+                                sampleEntropy(probList[[i]], 2L, 0.2)
+                            } else {
+                                NA
+                            }})),
+                    "IQRModProb" = unname(
+                        MatrixGenerics::colIQRs(as.matrix(mat[, useReads]),
+                                                na.rm = TRUE)),
+                    "sdModProb" = unname(SparseArray::colSds(mat[, useReads], na.rm = TRUE)),
+                    "Lag1DModProb" = unlist(lapply(
+                        useReads, \(i) mean(abs(diff(probList[[i]] >= 0.5, lag = 1)))))
+                ))
+        }
+    })
+})
+
 test_that("calcReadStats works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
