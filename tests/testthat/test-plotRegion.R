@@ -28,8 +28,16 @@ test_that("plotRegion works", {
     expect_error(plotRegion(se = se, region = -1))
     expect_error(plotRegion(se = se, region = "error"))
     expect_error(plotRegion(se = seR, tracks = "error"))
+    expect_error(plotRegion(se = seR, tracks = list(list(trackData = "mod_prob"))))
+    expect_error(plotRegion(se = seR, tracks = list(list("mod_prob", "Lollipop"))))
     expect_error(plotRegion(se = seR, tracks = list(list(trackData = "mod_prob",
                                                          trackType = "error"))))
+    expect_error(plotRegion(se = seR, tracks = list(list(trackData = "error",
+                                                         trackType = "Lollipop"))))
+    expect_error(plotRegion(se = se, tracks = list(list(trackData = "Nvalid",
+                                                        trackType = "Lollipop"))))
+    expect_error(plotRegion(se = seR, tracks = list(list(trackData = "mod_prob",
+                                                         trackType = "Smooth"))))
     expect_error(plotRegion(se = se, modbaseSpace = "error"))
     expect_error(plotRegion(se = se, sequenceContext = 1))
     expect_error(plotRegion(se = seR2, sequenceContext = "C"),
@@ -57,14 +65,14 @@ test_that("plotRegion works", {
                          tracks = list(list(trackData = "FracMod",
                                             trackType = "Smooth"),
                                        list(trackData = "mod_prob",
-                                            trackType = "Lollipop"), 
-                                       list(trackData = "mod_prob", 
-                                            trackType = "Heatmap"), 
-                                       list(trackData = "mod_prob", 
+                                            trackType = "Lollipop"),
+                                       list(trackData = "mod_prob",
+                                            trackType = "Heatmap"),
+                                       list(trackData = "mod_prob",
                                             trackType = "Heatmap",
                                             interpolate = TRUE)))
     )
-    
+
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
     expect_s3_class(p3, "ggplot")

@@ -1,9 +1,199 @@
+# -- Global variables ----------------------------------------------------------
 # global vector with default read stats (that will be calculated if
 # stats = NULL in calcReadStats)
 # exclude "SEntrModProb"
 defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "Lag1DModProb", "ACModProb", "PACModProb")
+# global vector with all available read stats functions
+allReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
+                  "MeanConfMod", "FracLowConf", "SEntrModProb",
+                  "IQRModProb", "sdModProb",
+                  "Lag1DModProb", "ACModProb", "PACModProb")
+
+# -- Helper functions to Individual read statistics ----------------------------
+# the helper functions
+# - are currently not exported
+# - have the same name as the statistic in `defaultReadStats`
+# - have at least two arguments:
+#      probList: a list of numeric mod_prob vectors for each read
+#      useReads: a vector defining the elements of probList for which to
+#                calculate the statistic (results for the remaining elements
+#                are NA)
+#      ...     : optional arguments for specific statistics
+# - return a vector or list with length(probList) elements
+#' @noRd
+#' @keywords internal
+MeanModProb <- function(probList, useReads, ...) {
+    stats_res <- unlist(lapply(probList,
+                               function(x) { .Internal(mean(x)) }),
+                        use.names = FALSE)
+    stats_res[setdiff(seq_along(stats_res), useReads)] <- NA
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+FracMod <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        .Internal(mean(probList[[r]] >= 0.5))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+MeanConf <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        .Internal(mean(pmax(probList[[r]], 1 - probList[[r]])))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+MeanConfUnm <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        .Internal(mean((1 - probList[[r]])[probList[[r]] < 0.5]))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+MeanConfMod <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        .Internal(mean(probList[[r]][probList[[r]] >= 0.5]))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+FracLowConf <- function(probList, useReads, lowConf = 0.7, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        sum(abs(0.5 - probList[[r]]) < (lowConf - 0.5)) / length(probList[[r]])
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+#' @importFrom stats IQR
+IQRModProb <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        IQR(probList[[r]])
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+#' @importFrom stats var
+# remark: this is one of the few cases where working on the NAmatrix directly
+#         would spead up things (about 2-fold), thanks to the SparseArray::colSds
+#         but for consistency we keep the list-of-mod_prob version
+sdModProb <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        sqrt(var(probList[[r]]))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+SEntrModProb <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        if (length(probList[[r]]) > 64) {
+            sampleEntropy(probList[[r]], 2L, 0.2)
+        } else {
+            NA
+        }
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+Lag1DModProb <- function(probList, useReads, ...) {
+    stats_res <- rep(NA, length(probList))
+    stats_res[useReads] <- vapply(useReads, function(r) {
+        xC <- probList[[r]] >= 0.5
+        .Internal(mean(abs(diff(xC, lag = 1))))
+    }, numeric(1))
+    stats_res
+}
+
+#' @noRd
+#' @keywords internal
+#' @importFrom stats acf
+ACModProb <- function(probList, useReads, xrange = 12:64, ...) {
+    lagMax <- max(xrange)
+    stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+    stats_res[useReads] <- lapply(useReads, function(r) {
+        if (length(probList[[r]]) > lagMax) {
+            .Call(stats:::C_acf, probList[[r]] - .Internal(mean(probList[[r]])), lagMax, TRUE)[xrange]
+        } else {
+            rep(0, length(xrange))
+        }
+    })
+    stats_res
+}
+# #' @importFrom stats acf na.pass
+# ACModProb <- function(probList, useReads, xrange = 12:64) {
+#     lagMax <- max(xrange)
+#     stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+#     stats_res[useReads] <- lapply(useReads, function(r) {
+#         if (length(probList[[r]]) > lagMax) {
+#             acf(probList[[r]], na.action = na.pass, lag.max = lagMax,
+#                 plot = FALSE)$acf[xrange]
+#         } else {
+#             rep(0, length(xrange))
+#         }
+#     })
+#     stats_res
+# }
+
+#' @noRd
+#' @keywords internal
+#' @importFrom stats pacf
+PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
+    lagMax <- max(xrange)
+    stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+    stats_res[useReads] <- lapply(useReads, function(r) {
+        if (length(probList[[r]]) > lagMax) {
+            acf <- .Call(stats:::C_acf, probList[[r]] - .Internal(mean(probList[[r]])), lagMax, TRUE)
+            drop(.Call(stats:::C_pacf1, acf, lagMax))[xrange]
+        } else {
+            rep(0, length(xrange))
+        }
+    })
+    stats_res
+}
+# #' @importFrom stats pacf na.pass
+# PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
+#     lagMax <- max(xrange)
+#     stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+#     stats_res[useReads] <- lapply(useReads, function(r) {
+#         if (length(probList[[r]]) > lagMax) {
+#             pacf(probList[[r]], na.action = na.pass, lag.max = lagMax,
+#                  plot = FALSE)$acf[xrange]
+#         } else {
+#             rep(0, length(xrange))
+#         }
+#     })
+#     stats_res
+# }
+
+# -- Main function to calculate read statistics or add them to an SE -----------
 
 #' Calculate or add summary statistics for read-level base modification data
 #'
@@ -138,7 +328,6 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 #' @importFrom S4Vectors metadata make_zero_col_DFrame SimpleList
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums nnawhich nnavals
-#' @importFrom stats sd IQR acf pacf na.pass
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics colnames
 #' @importFrom BiocParallel bplapply MulticoreParam
@@ -155,63 +344,12 @@ calcReadStats <- function(se,
                           LagRange = c(12, 64),
                           BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                           verbose = FALSE) {
-    # define functions to calculate summary statistics
-    statFunctions <- list(
-        MeanModProb = mean,
-        FracMod = function(x, c = 0.5) {
-            sum(x >= (0.5 + (c - 0.5))) / sum(abs(0.5 - x) >= (c - 0.5))
-        },
-        MeanConf = function(x) {
-            mean(pmax(x, 1 - x))
-        },
-        MeanConfUnm = function(x) {
-            mean((1 - x)[x < 0.5])
-        },
-        MeanConfMod = function(x) {
-            mean(x[x >= 0.5])
-        },
-        FracLowConf = function(x, c = LowConf) {
-            sum(abs(0.5 - x) < (c - 0.5)) / length(x)
-        },
-        IQRModProb = IQR,
-        sdModProb = sd,
-        SEntrModProb = function(x) {
-            if (length(x) > 64) {
-                sampleEntropy(x, 2L, 0.2)
-            } else {
-                NA
-            }
-        },
-        Lag1DModProb = function(x) {
-            xC <- as.numeric(x >= 0.5)
-            mean(abs(diff(xC, lag = 1)))
-        },
-        ACModProb = function(x, lag.max = max(LagRange),
-                             xrange = LagRangeValues) {
-            if (length(x) > lag.max) {
-                acf(x, na.action = na.pass, lag.max = lag.max,
-                           plot = FALSE)$acf[xrange]
-            } else {
-                rep(0, length(xrange))
-            }
-        },
-        PACModProb = function(x, lag.max = max(LagRange),
-                              xrange = LagRangeValues) {
-            if (length(x) > lag.max) {
-                pacf(x, na.action = na.pass, lag.max = lag.max,
-                            plot = FALSE)$acf[xrange]
-            } else {
-                rep(0, length(xrange))
-            }
-        }
-    )
-
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertVector(x = stats, type = "character", allowNULL = TRUE,
-                  validValues = names(statFunctions))
+                  validValues = allReadStats)
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
     }
@@ -242,16 +380,10 @@ calcReadStats <- function(se,
 
             mat <- assay(sesub, assayName)[[nm]]
 
-            # Non-NA indices:
+            # Non-NA indices
             NNAind <- nnawhich(mat, arr.ind = TRUE)
 
-            # Coverage per row (i.e per position)
-            Nobs <- rep(0, nrow(mat))
-            TBL <- table(NNAind[, 1])
-            Nobs[as.numeric(names(TBL))] <- unclass(TBL)
-
-            # Create list of non-zero row indices per column (i.e per read)
-            NNAind <- nnawhich(mat, arr.ind = TRUE)
+            # Create list of non-NA row indices per column (i.e per read)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
 
@@ -263,11 +395,8 @@ calcReadStats <- function(se,
             # Number of (valid) observations per read:
             NobsReads <- lengths(NNAind_byCol)
 
-            # Collapsed mod probs per position:
-            MeanModProb <- rowSums(mat) / Nobs
-
-            # Include in calculations only reads with sufficient Number of observations:
-            use.reads <- colnames(mat)[NobsReads >= minNobsPread]
+            # Include in calculations only reads with sufficient Number of observations
+            useReads <- which(NobsReads >= minNobsPread)
 
             if (!is.null(stats)) {
                 param_names <- stats
@@ -276,28 +405,18 @@ calcReadStats <- function(se,
             }
 
             # Iterate over param_names and add columns to stats_res
-            do.call(cbind, bplapply(param_names, function(param, mymat = mat,
-                                                          myuse.reads = use.reads,
-                                                          mystatFunctions = statFunctions,
+            do.call(cbind, bplapply(param_names, function(param,
+                                                          mycolnames = colnames(mat),
                                                           myNNAvals_byCol = NNAvals_byCol,
+                                                          myuseReads = useReads,
+                                                          myLowConf = LowConf,
                                                           myLagRangeValues = LagRangeValues) {
-                stats_res <- make_zero_col_DFrame(nrow = ncol(mymat))
-                row.names(stats_res) <- colnames(mymat)
-                if (param %in% c("ACModProb", "PACModProb")) {
-                    stats_res[[param]] <- lapply(
-                        structure(colnames(mymat), names = colnames(mymat)), function(r) {
-                            if (r %in% myuse.reads) {
-                                mystatFunctions[[param]](myNNAvals_byCol[[r]])
-                            } else {
-                                rep(NA, length(myLagRangeValues))
-                            }
-                        })
-                } else {
-                    stats_res[[param]] <- rep(NA, ncol(mymat))
-                    stats_res[myuse.reads, param] <- vapply(myuse.reads, function(r) {
-                        statFunctions[[param]](myNNAvals_byCol[[r]])
-                    }, numeric(1))
-                }
+                stats_res <- make_zero_col_DFrame(nrow = length(mycolnames))
+                row.names(stats_res) <- mycolnames
+                stats_res[[param]] <- do.call(param, list(probList = myNNAvals_byCol,
+                                                          useReads = myuseReads,
+                                                          lowConf = myLowConf,
+                                                          xrange = myLagRangeValues))
                 stats_res
             }, BPPARAM = BPPARAM))
         })
