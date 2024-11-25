@@ -33,7 +33,6 @@ reference:
   - plotRegion
 - title: Helper functions
   contents:
-  - calcReadStats
   - extractSeqContext
   - getAnchorRegions
 - title: Nucleosome repeat length (NRL) analysis
