@@ -242,10 +242,9 @@ getAnchorRegions <- function(se,
     })
 
     # Drop samples without reads if prune=TRUE
-    if (prune) {
+    if (prune && length(metadata(seout)$readLevelData$assayNames) > 0) {
         keepSamples <- c()
-        for (atp in intersect(.getReadLevelAssayNames(se),
-                              assayNames(seout))) {
+        for (atp in metadata(seout)$readLevelData$assayNames) {
             # check only read-level assays
             keepSamples <- union(
                 keepSamples,
