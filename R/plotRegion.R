@@ -135,8 +135,10 @@ plotRegion <- function(se,
     if (is.character(region) && length(region) == 1L) {
         region <- as(region, "GRanges")
     } else if (is.null(region)) {
-        region <- GRanges(seqnames = seqlevels(se)[1],
-                          ranges = IRanges(start = 1, end = .Machine$integer.max))
+        # get the range of covered positions on the first seqname
+        region <- range(
+            rowRanges(se)[seqnames(rowRanges(se)) == seqlevels(se)[1]],
+            ignore.strand = TRUE)
     }
     .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
     .assertScalar(x = modbaseSpace, type = "logical")
