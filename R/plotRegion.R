@@ -15,13 +15,13 @@ plotRegionPlotTypes <- data.frame(
 #' \code{\link{readModkitExtract}}, \code{\link{readModBam}} or 
 #' \code{\link{readBedMethyl}}. The \code{plotReadsLollipop}, 
 #' \code{plotReadsHeatmap}, \code{plotSummaryPointSmooth} and 
-#' \code{plotGenomicRegions} functions are more low-level helper functions 
-#' for creating single plot tracks. These are invoked by \code{plotRegion}, 
+#' \code{plotGenomicRegions} functions are helper functions for creating 
+#' single plot tracks. These are invoked by \code{plotRegion}, 
 #' and typically do not need to be directly called by the user.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level or collapsed single-molecule footprinting data (positions
-#'     in rows and reads or samples in columns). 
+#'     in rows and samples in columns). 
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
 #'     region. Only data from \code{se} overlapping this region will be plotted.
 #'     Alternatively, the region can be specified as a character scalar (e.g.
@@ -31,21 +31,23 @@ plotRegionPlotTypes <- data.frame(
 #' @param tracks A list of named lists, representing the tracks to generate.
 #'     Each element of the outer list defines one track, and has to contain
 #'     at least list entries named 'trackData' (the name of a suitable assay
-#'     in \code{se}) and 'trackType' (the type of plot), plus any additional
+#'     in \code{se}, for data tracks, or a
+#'     \code{\link[GenomicRanges]{GRangesList}} object for the annotation
+#'     tracks) and 'trackType' (the type of plot), plus any additional
 #'     arguments to the respective plot function. Currently supported plot
 #'     types are
 #'     \describe{
 #'         \item{\code{"Point"}}{: A point plot displaying values in the assay.}
-#'         \item{\code{"Smooth"}}{: A smoothed line plot displaying values in the
-#'             assay.}
-#'         \item{\code{"PointSmooth"}}{: A point and smoothed line plot displaying
-#'             values in the assay.}
+#'         \item{\code{"Smooth"}}{: A smoothed line plot displaying values in 
+#'             the assay.}
+#'         \item{\code{"PointSmooth"}}{: A point and smoothed line plot 
+#'             displaying values in the assay.}
 #'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
-#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g., transcripts, 
-#'             peaks, CpG islands).}
+#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g.,  
+#'             transcripts, peaks, CpG islands).}
 #'     }
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
 #'     shown in the space of modified bases and contain only the positions at
@@ -58,13 +60,15 @@ plotRegionPlotTypes <- data.frame(
 #'     using IUPAC redundancy codes. The sequence contexts of modified bases are
 #'     obtained from \code{rowData(se)$sequenceContext} and thus requires that
 #'     \code{se} contains the appropriate information, for example by setting
-#'     the \code{sequenceContext} and \code{sequenceReference} arguments of
-#'     \code{\link{readBedMethyl}} when it was generated, or by adding it using
+#'     the \code{sequenceContextWidth} and \code{sequenceReference} arguments of
+#'     \code{\link{readBedMethyl}}, \code{\link{readModBam}} or
+#'     \code{\link{readModkitExtract}} when reading data, or by adding it using
 #'     \code{\link{addSeqContext}}.
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to 
 #'     display relative positions. If \code{NULL} (the default), absolute 
-#'     genomic positions are used.
+#'     genomic positions are used. Ignored if \code{modbaseSpace} is 
+#'     \code{TRUE}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
@@ -98,19 +102,31 @@ plotRegionPlotTypes <- data.frame(
 #' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
-#' # Heatmap plots (observed only or filled)
+#' # Heatmap plots (observed only or interpolated)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
 #'                               interpolate = TRUE)))
 #'
-#' # multiple plots
+#' # multiple plots, in 'modbase' space
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
 #'                               size = 4),
 #'                          list(trackData = "mod_prob", trackType = "Heatmap")),
 #'            modbaseSpace = TRUE)
+#' 
+#' # combine read-level and summary tracks, 
+#' # set relative heights of tracks, don't facet by sample,  
+#' # change titles of legends
+#' seB <- flattenReadLevelAssay(seB, assayName = "mod_prob")
+#' plotRegion(seB, region = "chr1:6935400-6935450",
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+#'                               size = 4, legendTitle = "6mA", 
+#'                               facetBySample = FALSE),
+#'                          list(trackData = "FracMod", trackType = "Smooth")),
+#'            modbaseSpace = TRUE) + 
+#'     patchwork::plot_layout(heights = c(3, 2))
 #'
 #' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
@@ -226,6 +242,10 @@ plotRegion <- function(
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
 
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
@@ -312,6 +332,16 @@ plotRegion <- function(
 #' 
 #' @export
 #' @rdname plotRegion
+#' 
+#' @examples
+#' extractfiles <- system.file("extdata",
+#'                             c("modkit_extract_rc_6mA_1.tsv.gz",
+#'                               "modkit_extract_rc_6mA_2.tsv.gz"),
+#'                             package = "footprintR")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
+#'                   assayName = "mod_prob", 
+#'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #' 
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -410,6 +440,16 @@ plotReadsLollipop <- function(se,
 #' @export
 #' @rdname plotRegion
 #' 
+#' @examples
+#' extractfiles <- system.file("extdata",
+#'                             c("modkit_extract_rc_6mA_1.tsv.gz",
+#'                               "modkit_extract_rc_6mA_2.tsv.gz"),
+#'                             package = "footprintR")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
+#'                  assayName = "mod_prob", 
+#'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
+#'                   
 #' @import ggplot2
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
@@ -508,6 +548,17 @@ plotReadsHeatmap <- function(se,
 #'
 #' @export
 #' @rdname plotRegion
+#' 
+#' @examples
+#' bmfiles <- system.file("extdata",
+#'                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
+#'                        package = "footprintR")
+#' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+#'
+#' seA <- readBedMethyl(bmfiles, modbase = "m",
+#'                      sequenceContextWidth = 3, sequenceReference = reffile)
+#' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
+#'                        assayName = "Nvalid", doPoint = FALSE)
 #' 
 #' @import ggplot2
 #' @importFrom dplyr group_by ungroup group_modify
@@ -624,6 +675,15 @@ plotSummaryPointSmooth <- function(se,
 #' 
 #' @export
 #' @rdname plotRegion
+#' 
+#' @examples
+#' plotGenomicRegions(grl = GRangesList(
+#'     g1 = GRanges("chr1", IRanges(c(10, 30), c(20, 35)), "+"),
+#'     cgi1 = GRanges("chr1", IRanges(15, 25), "*"),
+#'     g2 = GRanges("chr1", IRanges(c(15, 25), c(20, 40)), "-")),
+#'     region = as("chr1:1-50", "GRanges"),
+#'     labelPosition = "inside",
+#'     labelSize = 5)
 #' 
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
