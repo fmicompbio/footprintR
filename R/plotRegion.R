@@ -322,16 +322,28 @@ plotReadsLollipop <- function(se,
                               showLegend = TRUE,
                               highlightRegions = NULL,
                               facetBySample = TRUE) {
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = region, type = "GRanges")
+    .assertScalar(x = assayName, type = "character", 
+                  validValues = assayNames(se))
+    .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = stroke, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = drawRead, type = "logical")
+    .assertScalar(x = orderReads, type = "logical")
+    .assertScalar(x = modbaseSpace, type = "logical")
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         ## subset highlightRegions - mostly to ensure to only retain 
         ## regions on the right chromosome, so that we can only focus on 
         ## the positions below
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             region,
+        highlightRegions <- subsetByOverlaps(highlightRegions, region,
                                              ignore.strand = TRUE)
     }
+    .assertScalar(x = facetBySample, type = "logical")
     
     # prepare plot data
     df <- .preparePlotdataReads(se, assayName, modbaseSpace)
@@ -395,13 +407,25 @@ plotReadsHeatmap <- function(se,
                              showLegend = TRUE,
                              highlightRegions = NULL,
                              facetBySample = TRUE) {
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = region, type = "GRanges")
+    .assertScalar(x = assayName, type = "character", 
+                  validValues = assayNames(se))
+    .assertScalar(x = drawRead, type = "logical")
+    .assertScalar(x = linewidthTiles, type = "numeric")
+    .assertScalar(x = orderReads, type = "logical")
+    .assertScalar(x = modbaseSpace, type = "logical")
+    .assertScalar(x = interpolate, type = "logical")
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             region,
+        highlightRegions <- subsetByOverlaps(highlightRegions, region,
                                              ignore.strand = TRUE)
     }
+    .assertScalar(x = facetBySample, type = "logical")
     
     # prepare plot data
     df <- .preparePlotdataReads(se, assayName, modbaseSpace, interpolate)
@@ -472,14 +496,26 @@ plotSummaryPointSmooth <- function(se,
                                    showLegend = TRUE,
                                    highlightRegions = NULL) {
     
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = region, type = "GRanges")
+    .assertScalar(x = assayName, type = "character", 
+                  validValues = assayNames(se))
+    .assertScalar(x = doPoint, type = "logical")
+    .assertVector(x = arglistPoint, type = "list")
+    .assertScalar(x = doSmooth, type = "logical")
+    .assertVector(x = arglistSmooth, type = "list")
+    .assertScalar(x = spar, type = "numeric")
+    .assertScalar(x = modbaseSpace, type = "logical")
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             region,
+        highlightRegions <- subsetByOverlaps(highlightRegions, region,
                                              ignore.strand = TRUE)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataSummary(x = se, assayName = assayName,
                                   modbaseSpace = modbaseSpace)
@@ -567,6 +603,9 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = labelSize, type = "numeric")
     .assertScalar(x = labelPosition, type = "character", 
                   validValues = c("above", "below", "inside"))
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
     
     # subset GRangesList to elements overlapping the provided region
     grl <- subsetByOverlaps(grl, region)
