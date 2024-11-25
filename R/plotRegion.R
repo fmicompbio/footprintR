@@ -183,6 +183,13 @@ plotRegion <- function(se,
             cli_abort(paste("tracks[[{i}]]$trackData must be a named",
                             "GRangesList object"))
         }
+        if (type_i == "annotation" && 
+            length(unlist(lapply(tracks[[i]]$trackData, 
+                                 function(y) unique(as.character(strand(y)))))) !=
+            length(tracks[[i]]$trackData)) {
+            cli_abort(paste("There are entries in tracks[[{i}]]$trackData",
+                            "with mixed strand annotations"))
+        }
 
         if (modbaseSpace &&
             "interpolate" %in% names(tracks[[i]]) &&
