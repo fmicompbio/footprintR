@@ -46,9 +46,10 @@
 #'     returned object type, \code{\link{readModkitExtract}} for the function
 #'     used to read the input files.
 #'
-#' @importFrom SummarizedExperiment assays assayNames assay
+#' @importFrom SummarizedExperiment assays assayNames assay assays
 #' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums
+#' @importFrom methods is
 #'
 #' @export
 flattenReadLevelAssay <- function(se,
@@ -60,7 +61,11 @@ flattenReadLevelAssay <- function(se,
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = assayName, type = "character",
-                  validValues = .getReadLevelAssayNames(se))
+                  validValues = assayNames(se)[
+                      vapply(assays(se), function(x) {
+                          is(x, "DFrame")
+                      }, FALSE)
+                  ])
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))

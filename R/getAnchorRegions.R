@@ -11,6 +11,9 @@
 #'     of the desired anchor regions.
 #' @param regionWidth Integer scalar, the desired width of the anchor regions.
 #'     Must be an odd value.
+#' @param anchorName Character scalar that gives the "sequence name" of the
+#'     aligned anchor regions and will be used in generating the
+#'     \code{rowRanges} of the return value.
 #' @param prune Logical scalar. If \code{TRUE} (the default), samples for
 #'     which there are no reads overlapping any of the anchor regions in any
 #'     of the read-level assays in \code{assayName}
@@ -65,7 +68,7 @@
 #'
 #' @importFrom GenomicRanges GPos match strand
 #' @importFrom SparseArray NaArray cbind colSums is_nonna
-#' @importFrom S4Vectors split endoapply make_zero_col_DFrame DataFrame
+#' @importFrom S4Vectors split endoapply make_zero_col_DFrame DataFrame metadata
 #' @importFrom IRanges DataFrameList
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowData assay
 #' @importFrom methods as
@@ -77,6 +80,7 @@ getAnchorRegions <- function(se,
                              assayName = "mod_prob",
                              regionMidpoints,
                              regionWidth,
+                             anchorName = "anchor",
                              prune = TRUE,
                              ignore.strand = FALSE,
                              reverseMinusStrandRegions = FALSE,
@@ -98,6 +102,7 @@ getAnchorRegions <- function(se,
     if (regionWidth %% 2 == 0) {
         stop("regionWidth must be an odd integer")
     }
+    .assertScalar(x = anchorName, type = "character")
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = ignore.strand, type = "logical")
     .assertScalar(x = reverseMinusStrandRegions, type = "logical")
@@ -226,19 +231,20 @@ getAnchorRegions <- function(se,
         # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
         seout <- SummarizedExperiment(
             assays = DataFrameList(assayL),
-            rowData = DataFrame(
-                relpos = seq_len(regionWidth) - floor((regionWidth + 1) / 2)
-            ),
+            rowRanges = GPos(seqnames = anchorName,
+                             pos = seq_len(regionWidth) - floor((regionWidth + 1) / 2)),
             colData = cold,
-            metadata = list()
+            metadata = list(readLevelData = list(
+                assayNames = intersect(assayName, .getReadLevelAssayNames(se)),
+                colDataColumns = paste0("region_", intersect(assayName, .getReadLevelAssayNames(se)))
+            ))
         )
     })
 
     # Drop samples without reads if prune=TRUE
-    if (prune) {
+    if (prune && length(metadata(seout)$readLevelData$assayNames) > 0) {
         keepSamples <- c()
-        for (atp in intersect(.getReadLevelAssayNames(se),
-                              assayNames(seout))) {
+        for (atp in metadata(seout)$readLevelData$assayNames) {
             # check only read-level assays
             keepSamples <- union(
                 keepSamples,

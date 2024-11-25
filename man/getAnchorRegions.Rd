@@ -9,6 +9,7 @@ getAnchorRegions(
   assayName = "mod_prob",
   regionMidpoints,
   regionWidth,
+  anchorName = "anchor",
   prune = TRUE,
   ignore.strand = FALSE,
   reverseMinusStrandRegions = FALSE,
@@ -26,6 +27,10 @@ of the desired anchor regions.}
 
 \item{regionWidth}{Integer scalar, the desired width of the anchor regions.
 Must be an odd value.}
+
+\item{anchorName}{Character scalar that gives the "sequence name" of the
+aligned anchor regions and will be used in generating the
+\code{rowRanges} of the return value.}
 
 \item{prune}{Logical scalar. If \code{TRUE} (the default), samples for
 which there are no reads overlapping any of the anchor regions in any
