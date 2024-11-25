@@ -129,6 +129,11 @@ the \code{sequenceContext} and \code{sequenceReference} arguments of
 \code{\link{readBedMethyl}} when it was generated, or by adding it using
 \code{\link{addSeqContext}}.}
 
+\item{referenceCoordinate}{A numeric scalar providing the coordinate position
+(on the reference sequence in \code{region}) used as an "anchor" to
+display relative positions. If \code{NULL} (the default), absolute
+genomic positions are used.}
+
 \item{assayName}{A character or numerical scalar selecting the assay to plot.}
 
 \item{size}{A numeric scalar giving the size of the points (\code{size}

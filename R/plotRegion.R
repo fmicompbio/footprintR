@@ -61,6 +61,10 @@ plotRegionPlotTypes <- data.frame(
 #'     the \code{sequenceContext} and \code{sequenceReference} arguments of
 #'     \code{\link{readBedMethyl}} when it was generated, or by adding it using
 #'     \code{\link{addSeqContext}}.
+#' @param referenceCoordinate A numeric scalar providing the coordinate position
+#'     (on the reference sequence in \code{region}) used as an "anchor" to 
+#'     display relative positions. If \code{NULL} (the default), absolute 
+#'     genomic positions are used.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
