@@ -217,13 +217,6 @@ plotRegion <- function(se,
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(se = se, sequenceContext = sequenceContext)
     
-    # get the regions actually covered in se (to set the plot region for the 
-    # annotation tracks)
-    covregion <- BiocGenerics::intersect(region, 
-                                         range(rowRanges(se), 
-                                               ignore.strand = TRUE),
-                                         ignore.strand = TRUE)
-
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
@@ -231,14 +224,16 @@ plotRegion <- function(se,
         trt <- plotRegionPlotTypes$type[match(tr$trackType, plotRegionPlotTypes$name)]
         if (trt %in% c("summary", "reads")) {
             args <- c(
-                list(x = se, aname = tr$trackData, modbaseSpace = modbaseSpace),
-                tr[!names(tr) %in% c("trackData", "trackType", "x", "aname",
-                                     "modbaseSpace", "doSmooth", "doPoint")]
+                list(x = se, region = region, aname = tr$trackData, 
+                     modbaseSpace = modbaseSpace),
+                tr[!names(tr) %in% c("trackData", "trackType", "x", "region",
+                                     "aname", "modbaseSpace", "doSmooth", 
+                                     "doPoint")]
             )
         } else if (trt == "annotation") {
             args <- c(
-                list(x = subsetByOverlaps(tr$trackData, covregion), 
-                     region = covregion), 
+                list(x = subsetByOverlaps(tr$trackData, region), 
+                     region = region), 
                      tr[!names(tr) %in% c("trackData", "trackType", "x", 
                                           "region")]
             )
@@ -282,6 +277,8 @@ plotRegion <- function(se,
 #' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level footprinting data (positions in rows and reads in
 #'     columns).
+#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object
+#'     containing the region to plot. 
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param size A numeric scalar giving the size of the points (\code{size}
 #'     argument of \code{\link[ggplot2]{geom_point}}).
@@ -317,6 +314,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .plotReadsLollipop <- function(x,
+                               region, 
                                aname,
                                size = 3.0,
                                stroke = 0.5,
@@ -331,9 +329,11 @@ plotRegion <- function(se,
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
+        ## subset highlightRegions - mostly to ensure to only retain 
+        ## regions on the right chromosome, so that we can only focus on 
+        ## the positions below
         highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
-                                                   ignore.strand = TRUE),
+                                             region,
                                              ignore.strand = TRUE)
     }
     
@@ -347,7 +347,7 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+    p <- .createBaseplotReads(df = df, aname = aname, region = region, 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -416,6 +416,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .plotReadsHeatmap <- function(x,
+                              region,
                               aname,
                               drawRead = TRUE,
                               linewidthTiles = 0,
@@ -431,8 +432,7 @@ plotRegion <- function(se,
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
-                                                   ignore.strand = TRUE),
+                                             region,
                                              ignore.strand = TRUE)
     }
     
@@ -446,7 +446,7 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+    p <- .createBaseplotReads(df = df, aname = aname, region = region, 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -514,6 +514,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .plotSummaryPointSmooth <- function(x,
+                                    region,
                                     aname,
                                     doPoint = TRUE,
                                     arglistPoint = list(),
@@ -530,8 +531,7 @@ plotRegion <- function(se,
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
-                                                   ignore.strand = TRUE),
+                                             region,
                                              ignore.strand = TRUE)
     }
     
@@ -541,7 +541,7 @@ plotRegion <- function(se,
 
     # create base plot
     p <- .createBaseplotSummary(df = df, aname = aname,
-                                chr = unique(seqnames(x))[1], 
+                                region = region, 
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
@@ -661,7 +661,7 @@ plotRegion <- function(se,
     rangeParts$fpname_unique <- factor(rangeParts$fpname_unique, 
                                        levels = fname_unique_full)
 
-    rng <- c(start(region), end(region))
+    rng <- c(start(region) - 0.5, end(region) + 0.5)
     
     # plot
     gg <- ggplot() + 
@@ -852,7 +852,7 @@ plotRegion <- function(se,
 #' @keywords internal
 .createBaseplotSummary <- function(df,
                                    aname,
-                                   chr, 
+                                   region, 
                                    trackTitle,
                                    legendTitle,
                                    showLegend,
@@ -862,7 +862,7 @@ plotRegion <- function(se,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
-        labs(x = paste0("Position on ", chr),
+        labs(x = paste0("Position on ", as.character(seqnames(region))),
              y = aname,
              colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
              title = trackTitle) +
@@ -881,7 +881,7 @@ plotRegion <- function(se,
     }
     
     if (is.numeric(df$position)) {
-        p0 <- .addCoordAxisFormat(p0)
+        p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
 
     return(p0)
@@ -915,7 +915,7 @@ plotRegion <- function(se,
 #' @keywords internal
 .createBaseplotReads <- function(df,
                                  aname,
-                                 chr,
+                                 region,
                                  trackTitle,
                                  legendTitle,
                                  showLegend,
@@ -929,8 +929,8 @@ plotRegion <- function(se,
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
-                        paste0("Position on ", chr),
-                        paste0("Modified positions in ", chr,
+                        paste0("Position on ", as.character(seqnames(region))),
+                        paste0("Modified positions in ", as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = "Reads",
@@ -954,7 +954,7 @@ plotRegion <- function(se,
         p0 <- p0 + theme(axis.text.x = element_blank())
 
     } else {
-        p0 <- .addCoordAxisFormat(p0)
+        p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
     
     if (!is.null(highlightRegions)) {
@@ -1057,8 +1057,8 @@ plotRegion <- function(se,
 #'
 #' @noRd
 #' @keywords internal
-.addCoordAxisFormat <- function(p0) {
-    rng <- range(p0$data$position)
+.addCoordAxisFormat <- function(p0, region) {
+    rng <- c(start(region) - 0.5, end(region) + 0.5)
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
     p0 <- p0 + coord_cartesian(xlim = rng) +
         scale_x_continuous(
