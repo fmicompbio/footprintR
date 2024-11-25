@@ -633,19 +633,24 @@ plotRegion <- function(se,
 
     # create two flattened objects - one with the full range of each feature,
     # and one with the individual building blocks
-    fullRange <- unlist(range(x), use.names = TRUE)
-    mcols(fullRange)$fpname <- names(fullRange)
-    names(fullRange) <- NULL
-    fullRange <- as.data.frame(fullRange)
-    fullRange$fpname <- factor(fullRange$fpname, 
-                               levels = unique(fullRange$fpname))
+    fname_full <- names(x)
+    fname_unique_full <- make.unique(names(x))
+    fname_parts <- rep(fname_full, lengths(x))
+    fname_unique_parts <- rep(fname_unique_full, lengths(x))
     
-    rangeParts <- unlist(x, use.names = TRUE)
-    mcols(rangeParts)$fpname <- names(rangeParts)
-    names(rangeParts) <- NULL
+    fullRange <- unlist(range(x), use.names = FALSE)
+    mcols(fullRange)$fpname <- fname_full
+    mcols(fullRange)$fpname_unique <- fname_unique_full
+    fullRange <- as.data.frame(fullRange)
+    fullRange$fpname_unique <- factor(fullRange$fpname_unique, 
+                                      levels = fname_unique_full)
+    
+    rangeParts <- unlist(x, use.names = FALSE)
+    mcols(rangeParts)$fpname <- fname_parts
+    mcols(rangeParts)$fpname_unique <- fname_unique_parts
     rangeParts <- as.data.frame(rangeParts)
-    rangeParts$fpname <- factor(rangeParts$fpname, 
-                                levels = levels(fullRange$fpname))
+    rangeParts$fpname_unique <- factor(rangeParts$fpname_unique, 
+                                       levels = fname_unique_full)
 
     rng <- c(start(region), end(region))
     
@@ -654,7 +659,7 @@ plotRegion <- function(se,
         geom_segment(data = fullRange,
                      mapping = aes(
                          x = .data[["start"]],
-                         y = .data[["fpname"]],
+                         y = .data[["fpname_unique"]],
                          xend = .data[["end"]]
                      ), colour = "gray80")
     if (colorByStrand) {
@@ -663,8 +668,8 @@ plotRegion <- function(se,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
-                          ymin = as.numeric(.data[["fpname"]]) - 0.25,
-                          ymax = as.numeric(.data[["fpname"]]) + 0.25,
+                          ymin = as.numeric(.data[["fpname_unique"]]) - 0.25,
+                          ymax = as.numeric(.data[["fpname_unique"]]) + 0.25,
                           fill = .data[["strand"]]
                       ), colour = "gray20") + 
             scale_fill_manual(values = c("+" = "#82b579",
@@ -678,8 +683,8 @@ plotRegion <- function(se,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
-                          ymin = as.numeric(.data[["fpname"]]) - 0.25,
-                          ymax = as.numeric(.data[["fpname"]]) + 0.25
+                          ymin = as.numeric(.data[["fpname_unique"]]) - 0.25,
+                          ymax = as.numeric(.data[["fpname_unique"]]) + 0.25
                       ), colour = "gray20", fill = "gray80")
     }
     if (displayNames) {
@@ -697,7 +702,7 @@ plotRegion <- function(se,
                                       pmin(.data[["end"]], rng[2]), 
                                       0.5 * pmax(.data[["start"]], rng[1]) + 
                                           0.5 * pmin(.data[["end"]], rng[2]))),
-                    y = as.numeric(.data[["fpname"]]) + offset,
+                    y = as.numeric(.data[["fpname_unique"]]) + offset,
                     label = .data[["fpname"]], 
                     vjust = vjust,
                     hjust = ifelse(.data[["strand"]] == "+", -0.1, 
