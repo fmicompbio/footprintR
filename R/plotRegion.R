@@ -116,25 +116,24 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
 #'     footprinting data.
 #'
-#' @importFrom BiocGenerics start intersect
-#' @importFrom SummarizedExperiment assay assayNames rowData nrow rowRanges
+#' @importFrom SummarizedExperiment assay assayNames rowRanges
 #' @importFrom GenomicRanges GRanges
-#' @importFrom GenomeInfoDb seqlevels
-#' @importFrom IRanges IRanges subsetByOverlaps
-#' @importFrom dplyr filter mutate arrange group_by ungroup
-#' @importFrom Biostrings vcountPattern
+#' @importFrom GenomeInfoDb seqlevels seqnames
+#' @importFrom IRanges subsetByOverlaps
 #' @import ggplot2
 #' @importFrom patchwork wrap_plots
-#' @importFrom rlang .data
 #' @importFrom cli cli_abort cli_warn
+#' @importFrom methods as
 #'
 #' @export
-plotRegion <- function(se,
-                       region = NULL,
-                       tracks = list(list(trackData = "FracMod", trackType = "Point")),
-                       modbaseSpace = FALSE,
-                       sequenceContext = NULL,
-                       referenceCoordinate = NULL) {
+plotRegion <- function(
+        se,
+        region = NULL,
+        tracks = list(list(trackData = "FracMod", trackType = "Point")),
+        modbaseSpace = FALSE,
+        sequenceContext = NULL,
+        referenceCoordinate = NULL) {
+    
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (is.character(region) && length(region) == 1L) {
@@ -229,13 +228,15 @@ plotRegion <- function(se,
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
-    se <- .keepPositionsBySequenceContext(se = se, sequenceContext = sequenceContext)
+    se <- .keepPositionsBySequenceContext(
+        se = se, sequenceContext = sequenceContext)
     
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
         tr <- tracks[[i]]
-        trt <- plotRegionPlotTypes$type[match(tr$trackType, plotRegionPlotTypes$name)]
+        trt <- plotRegionPlotTypes$type[
+            match(tr$trackType, plotRegionPlotTypes$name)]
         if (trt %in% c("summary", "reads")) {
             args <- c(
                 list(se = se, region = region, assayName = tr$trackData, 
@@ -255,8 +256,10 @@ plotRegion <- function(se,
         }
         pL[[i]] <- switch(
             tr$trackType,
-            Point = do.call(plotSummaryPointSmooth, c(args, list(doSmooth = FALSE))),
-            Smooth = do.call(plotSummaryPointSmooth, c(args, list(doPoint = FALSE))),
+            Point = do.call(plotSummaryPointSmooth, 
+                            c(args, list(doSmooth = FALSE))),
+            Smooth = do.call(plotSummaryPointSmooth, 
+                             c(args, list(doPoint = FALSE))),
             PointSmooth = do.call(plotSummaryPointSmooth, args),
             Lollipop = do.call(plotReadsLollipop, args),
             Heatmap = do.call(plotReadsHeatmap, args),
@@ -311,10 +314,10 @@ plotRegion <- function(se,
 #' @rdname plotRegion
 #' 
 #' @import ggplot2
-#' @importFrom dplyr filter group_by summarise
 #' @importFrom rlang .data
-#' @importFrom BiocGenerics start nrow colnames
-#' @importFrom SummarizedExperiment colData assay
+#' @importFrom SummarizedExperiment assayNames
+#' @importFrom IRanges subsetByOverlaps
+#' @importFrom GenomicRanges shift
 #'
 plotReadsLollipop <- function(se,
                               region, 
@@ -342,7 +345,7 @@ plotReadsLollipop <- function(se,
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
-    .assertVector(x = highlightRegions, type = "GenomicRanges",
+    .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         ## subset highlightRegions - mostly to ensure to only retain 
@@ -408,9 +411,9 @@ plotReadsLollipop <- function(se,
 #' @rdname plotRegion
 #' 
 #' @import ggplot2
-#' @importFrom dplyr filter
-#' @importFrom BiocGenerics start nrow colnames
-#' @importFrom SummarizedExperiment colData assay
+#' @importFrom SummarizedExperiment assayNames
+#' @importFrom IRanges subsetByOverlaps
+#' @importFrom GenomicRanges shift
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -438,7 +441,7 @@ plotReadsHeatmap <- function(se,
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
-    .assertVector(x = highlightRegions, type = "GenomicRanges",
+    .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         highlightRegions <- subsetByOverlaps(highlightRegions, region,
@@ -507,11 +510,12 @@ plotReadsHeatmap <- function(se,
 #' @rdname plotRegion
 #' 
 #' @import ggplot2
-#' @importFrom BiocGenerics start nrow
-#' @importFrom dplyr group_by arrange mutate ungroup group_modify
+#' @importFrom dplyr group_by ungroup group_modify
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
 #' @importFrom GenomicRanges shift
+#' @importFrom IRanges subsetByOverlaps
+#' @importFrom SummarizedExperiment assayNames
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -541,7 +545,7 @@ plotSummaryPointSmooth <- function(se,
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
-    .assertVector(x = highlightRegions, type = "GenomicRanges",
+    .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         highlightRegions <- subsetByOverlaps(highlightRegions, region,
@@ -814,8 +818,8 @@ plotGenomicRegions <- function(grl,
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
 #'
-#' @importFrom BiocGenerics start colnames
-#' @importFrom SummarizedExperiment colData assay
+#' @importFrom BiocGenerics start colnames nrow
+#' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray nnawhich nnavals
 #'
 #' @noRd
@@ -933,9 +937,6 @@ plotGenomicRegions <- function(grl,
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
-#' @importFrom BiocGenerics colnames
-#' @importFrom SummarizedExperiment assay
-#' @importFrom stats cor as.dist
 #'
 #' @noRd
 #' @keywords internal
@@ -956,7 +957,8 @@ plotGenomicRegions <- function(grl,
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
                         paste0("Position on ", as.character(seqnames(region))),
-                        paste0("Modified positions in ", as.character(seqnames(region)),
+                        paste0("Modified positions in ", 
+                               as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = "Reads",
@@ -1051,11 +1053,12 @@ plotGenomicRegions <- function(grl,
     # extract and flatten assay matrix
     X <- as.matrix(assay(x, assayName))
     # group positions into bins of windowWidth
-    bin <- findInterval(x = start(x),
-                        vec = seq(from = min(start(x)),
-                                  to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
-                                  by = windowWidth),
-                        rightmost.closed = TRUE, left.open = FALSE)
+    bin <- findInterval(
+        x = start(x),
+        vec = seq(from = min(start(x)),
+                  to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
+                  by = windowWidth),
+        rightmost.closed = TRUE, left.open = FALSE)
     iByBin <- split(seq.int(nrow(X)), bin)
     XX <- do.call(rbind, lapply(iByBin, function(i) {
         colMeans(X[i, , drop = FALSE], na.rm = TRUE)
