@@ -129,7 +129,8 @@ plotRegion <- function(se,
                        region = NULL,
                        tracks = list(list(trackData = "FracMod", trackType = "Point")),
                        modbaseSpace = FALSE,
-                       sequenceContext = NULL) {
+                       sequenceContext = NULL,
+                       referenceCoordinate = NULL) {
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (is.character(region) && length(region) == 1L) {
@@ -220,6 +221,7 @@ plotRegion <- function(se,
         }
     }
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
 
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
@@ -233,17 +235,18 @@ plotRegion <- function(se,
         if (trt %in% c("summary", "reads")) {
             args <- c(
                 list(se = se, region = region, assayName = tr$trackData, 
-                     modbaseSpace = modbaseSpace),
+                     modbaseSpace = modbaseSpace, 
+                     referenceCoordinate = referenceCoordinate),
                 tr[!names(tr) %in% c("trackData", "trackType", "se", "region",
                                      "assayName", "modbaseSpace", "doSmooth", 
-                                     "doPoint")]
+                                     "doPoint", "referenceCoordinate")]
             )
         } else if (trt == "annotation") {
             args <- c(
                 list(grl = subsetByOverlaps(tr$trackData, region), 
-                     region = region), 
+                     region = region, referenceCoordinate = referenceCoordinate), 
                      tr[!names(tr) %in% c("trackData", "trackType", "grl", 
-                                          "region")]
+                                          "region", "referenceCoordinate")]
             )
         }
         pL[[i]] <- switch(
@@ -321,7 +324,8 @@ plotReadsLollipop <- function(se,
                               legendTitle = NULL,
                               showLegend = TRUE,
                               highlightRegions = NULL,
-                              facetBySample = TRUE) {
+                              facetBySample = TRUE,
+                              referenceCoordinate = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character", 
@@ -344,9 +348,19 @@ plotReadsLollipop <- function(se,
                                              ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    
+    if (!is.null(referenceCoordinate)) {
+        if (!is.null(highlightRegions)) {
+            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
+        }
+        region <- shift(region, -referenceCoordinate)
+    }
     
     # prepare plot data
-    df <- .preparePlotdataReads(se, assayName, modbaseSpace)
+    df <- .preparePlotdataReads(x = se, assayName = assayName, 
+                                modbaseSpace = modbaseSpace, 
+                                referenceCoordinate = referenceCoordinate)
 
     # order reads
     if (orderReads) {
@@ -406,7 +420,8 @@ plotReadsHeatmap <- function(se,
                              legendTitle = NULL,
                              showLegend = TRUE,
                              highlightRegions = NULL,
-                             facetBySample = TRUE) {
+                             facetBySample = TRUE,
+                             referenceCoordinate = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character", 
@@ -426,9 +441,20 @@ plotReadsHeatmap <- function(se,
                                              ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    
+    if (!is.null(referenceCoordinate)) {
+        if (!is.null(highlightRegions)) {
+            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
+        }
+        region <- shift(region, -referenceCoordinate)
+    }
     
     # prepare plot data
-    df <- .preparePlotdataReads(se, assayName, modbaseSpace, interpolate)
+    df <- .preparePlotdataReads(x = se, assayName = assayName, 
+                                modbaseSpace = modbaseSpace, 
+                                interpolate = interpolate, 
+                                referenceCoordinate = referenceCoordinate)
 
     # order reads
     if (orderReads) {
@@ -481,6 +507,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom dplyr group_by arrange mutate ungroup group_modify
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
+#' @importFrom GenomicRanges shift
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -494,7 +521,8 @@ plotSummaryPointSmooth <- function(se,
                                    trackTitle = NULL,
                                    legendTitle = NULL,
                                    showLegend = TRUE,
-                                   highlightRegions = NULL) {
+                                   highlightRegions = NULL,
+                                   referenceCoordinate = NULL) {
     
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
@@ -515,10 +543,19 @@ plotSummaryPointSmooth <- function(se,
         highlightRegions <- subsetByOverlaps(highlightRegions, region,
                                              ignore.strand = TRUE)
     }
-
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    
+    if (!is.null(referenceCoordinate)) {
+        if (!is.null(highlightRegions)) {
+            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
+        }
+        region <- shift(region, -referenceCoordinate)
+    }
+    
     # prepare plot data
     df <- .preparePlotdataSummary(x = se, assayName = assayName,
-                                  modbaseSpace = modbaseSpace)
+                                  modbaseSpace = modbaseSpace,
+                                  referenceCoordinate = referenceCoordinate)
 
     # create base plot
     p <- .createBaseplotSummary(df = df, assayName = assayName,
@@ -593,7 +630,8 @@ plotGenomicRegions <- function(grl,
                                labelPosition = "above",
                                trackTitle = NULL,
                                legendTitle = NULL,
-                               showLegend = TRUE) {
+                               showLegend = TRUE,
+                               referenceCoordinate = NULL) {
     # check input arguments
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
@@ -606,6 +644,7 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     
     # subset GRangesList to elements overlapping the provided region
     grl <- subsetByOverlaps(grl, region)
@@ -632,6 +671,14 @@ plotGenomicRegions <- function(grl,
                                        levels = fname_unique_full)
 
     rng <- c(start(region) - 0.5, end(region) + 0.5)
+    
+    if (!is.null(referenceCoordinate)) {
+        fullRange$start <- fullRange$start - referenceCoordinate
+        fullRange$end <- fullRange$end - referenceCoordinate
+        rangeParts$start <- rangeParts$start - referenceCoordinate
+        rangeParts$end <- rangeParts$end - referenceCoordinate
+        rng <- rng - referenceCoordinate
+    }
     
     # plot
     gg <- ggplot() + 
@@ -703,7 +750,7 @@ plotGenomicRegions <- function(grl,
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank())
     
-    acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+    acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     gg <- gg + coord_cartesian(xlim = rng) +
         scale_x_continuous(
             expand = c(0, 0), 
@@ -733,7 +780,8 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .preparePlotdataSummary <- function(x,
                                     assayName,
-                                    modbaseSpace = FALSE) {
+                                    modbaseSpace = FALSE,
+                                    referenceCoordinate = NULL) {
     assaydat <- assay(x, assayName)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
@@ -744,6 +792,8 @@ plotGenomicRegions <- function(grl,
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,
                                                    decreasing = FALSE)))
+    } else if (!is.null(referenceCoordinate)) {
+        df$position <- df$position - referenceCoordinate
     }
     return(df)
 }
@@ -769,7 +819,8 @@ plotGenomicRegions <- function(grl,
 .preparePlotdataReads <- function(x,
                                   assayName,
                                   modbaseSpace = FALSE,
-                                  interpolate = FALSE) {
+                                  interpolate = FALSE,
+                                  referenceCoordinate = NULL) {
     assaydat <- assay(x, assayName)
     # `assayName` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
@@ -794,6 +845,8 @@ plotGenomicRegions <- function(grl,
         df$position <- factor(df$position,
                               levels = unique(sort(df$position,
                                                    decreasing = FALSE)))
+    } else if (!is.null(referenceCoordinate)) {
+        df$position <- df$position - referenceCoordinate
     }
     return(df)
 }
@@ -1028,7 +1081,7 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .addCoordAxisFormat <- function(p0, region) {
     rng <- c(start(region) - 0.5, end(region) + 0.5)
-    acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
+    acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     p0 <- p0 + coord_cartesian(xlim = rng) +
         scale_x_continuous(
             expand = c(0, 0), 

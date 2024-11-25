@@ -13,7 +13,8 @@ plotRegion(
   region = NULL,
   tracks = list(list(trackData = "FracMod", trackType = "Point")),
   modbaseSpace = FALSE,
-  sequenceContext = NULL
+  sequenceContext = NULL,
+  referenceCoordinate = NULL
 )
 
 plotReadsLollipop(
@@ -29,7 +30,8 @@ plotReadsLollipop(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
-  facetBySample = TRUE
+  facetBySample = TRUE,
+  referenceCoordinate = NULL
 )
 
 plotReadsHeatmap(
@@ -45,7 +47,8 @@ plotReadsHeatmap(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
-  facetBySample = TRUE
+  facetBySample = TRUE,
+  referenceCoordinate = NULL
 )
 
 plotSummaryPointSmooth(
@@ -61,7 +64,8 @@ plotSummaryPointSmooth(
   trackTitle = NULL,
   legendTitle = NULL,
   showLegend = TRUE,
-  highlightRegions = NULL
+  highlightRegions = NULL,
+  referenceCoordinate = NULL
 )
 
 plotGenomicRegions(
@@ -73,7 +77,8 @@ plotGenomicRegions(
   labelPosition = "above",
   trackTitle = NULL,
   legendTitle = NULL,
-  showLegend = TRUE
+  showLegend = TRUE,
+  referenceCoordinate = NULL
 )
 }
 \arguments{
