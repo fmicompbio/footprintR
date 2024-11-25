@@ -39,6 +39,8 @@ plotRegionPlotTypes <- data.frame(
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
+#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g., transcripts, 
+#'             peaks, CpG islands).}
 #'     }
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
 #'     shown in the space of modified bases and contain only the positions at

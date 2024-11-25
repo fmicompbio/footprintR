@@ -40,6 +40,8 @@ values in the assay.}
 color representing the values in the assay).}
 \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 representing the values in the assay).}
+\item{\code{"GenomicRegion"}}{: Genomic annotations (e.g., transcripts,
+peaks, CpG islands).}
 }}
 
 \item{modbaseSpace}{A logical scalar. If \code{TRUE}, the x-axis will be
