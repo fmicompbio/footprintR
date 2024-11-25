@@ -230,7 +230,10 @@ getAnchorRegions <- function(se,
                 relpos = seq_len(regionWidth) - floor((regionWidth + 1) / 2)
             ),
             colData = cold,
-            metadata = list()
+            metadata = list(readLevelData = list(
+                assayNames = intersect(assayName, .getReadLevelAssayNames(se)),
+                colDataColumns = paste0("region_", intersect(assayName, .getReadLevelAssayNames(se)))
+            ))
         )
     })
 
