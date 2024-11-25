@@ -2,6 +2,10 @@
 % Please edit documentation in R/plotRegion.R
 \name{plotRegion}
 \alias{plotRegion}
+\alias{plotReadsLollipop}
+\alias{plotReadsHeatmap}
+\alias{plotSummaryPointSmooth}
+\alias{plotGenomicRegions}
 \title{Plot single-molecule footprinting data for a single genomic region.}
 \usage{
 plotRegion(
@@ -10,6 +14,66 @@ plotRegion(
   tracks = list(list(trackData = "FracMod", trackType = "Point")),
   modbaseSpace = FALSE,
   sequenceContext = NULL
+)
+
+plotReadsLollipop(
+  se,
+  region,
+  assayName,
+  size = 3,
+  stroke = 0.5,
+  drawRead = TRUE,
+  orderReads = TRUE,
+  modbaseSpace = FALSE,
+  trackTitle = NULL,
+  legendTitle = NULL,
+  showLegend = TRUE,
+  highlightRegions = NULL,
+  facetBySample = TRUE
+)
+
+plotReadsHeatmap(
+  se,
+  region,
+  assayName,
+  drawRead = TRUE,
+  linewidthTiles = 0,
+  orderReads = TRUE,
+  modbaseSpace = FALSE,
+  interpolate = FALSE,
+  trackTitle = NULL,
+  legendTitle = NULL,
+  showLegend = TRUE,
+  highlightRegions = NULL,
+  facetBySample = TRUE
+)
+
+plotSummaryPointSmooth(
+  se,
+  region,
+  assayName,
+  doPoint = TRUE,
+  arglistPoint = list(),
+  doSmooth = TRUE,
+  arglistSmooth = list(),
+  spar = 0.01,
+  modbaseSpace = FALSE,
+  trackTitle = NULL,
+  legendTitle = NULL,
+  showLegend = TRUE,
+  highlightRegions = NULL
+)
+
+plotGenomicRegions(
+  grl,
+  region,
+  colorByStrand = TRUE,
+  displayNames = TRUE,
+  labelSize = 3,
+  labelPosition = "above",
+  trackTitle = NULL,
+  legendTitle = NULL,
+  showLegend = TRUE
 )
 }
 \arguments{
@@ -59,15 +123,89 @@ obtained from \code{rowData(se)$sequenceContext} and thus requires that
 the \code{sequenceContext} and \code{sequenceReference} arguments of
 \code{\link{readBedMethyl}} when it was generated, or by adding it using
 \code{\link{addSeqContext}}.}
+
+\item{assayName}{A character or numerical scalar selecting the assay to plot.}
+
+\item{size}{A numeric scalar giving the size of the points (\code{size}
+argument of \code{\link[ggplot2]{geom_point}}).}
+
+\item{stroke}{A numeric scalar giving the stroke (line width) of the point
+outlines (\code{stroke} argument of \code{\link[ggplot2]{geom_point}}).}
+
+\item{drawRead}{A logical scalar. If \code{TRUE}, draw a horizontal line
+segment for each read from its start to its end.}
+
+\item{orderReads}{A logical scalar. If \code{TRUE}, the position of reads
+on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
+where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.}
+
+\item{trackTitle}{A character scalar or \code{NULL}, giving the title of
+the track.}
+
+\item{legendTitle}{A character scalar or \code{NULL}. If not \code{NULL},
+this will be the title of the track fill/color legend. If \code{NULL},
+the name of the assay (\code{assayName}, for heatmaps and lollipop plots)
+\code{"Sample"} (for summary plots), or \code{"strand"} (for genomic
+region plots) will be used.}
+
+\item{showLegend}{A logical scalar, indicating whether or not to display
+the legend for the track.}
+
+\item{highlightRegions}{A \code{\link[GenomicRanges]{GRanges}} object
+containing regions to highlight with a grey shading.}
+
+\item{facetBySample}{A logical scalar indicating whether or not to facet
+the plot by sample (for read-level plots).}
+
+\item{linewidthTiles}{A numeric scalar, the line width of the border drawn
+around each measured base.}
+
+\item{interpolate}{A logical scalar. If \code{TRUE}, the gaps between
+observations are filled in by linear interpolation.}
+
+\item{doPoint}{A logical scalar. If \code{TRUE}, show points in the plot.}
+
+\item{arglistPoint}{A list with arguments to be sent to
+\code{\link[ggplot2]{geom_point}}.}
+
+\item{doSmooth}{A logical scalar. If \code{TRUE}, show a smooth line in the
+plot.}
+
+\item{arglistSmooth}{A list with arguments to be sent to
+\code{\link[ggplot2]{geom_line}}.}
+
+\item{spar}{A numeric scalar typically in (0,1] specifying the desired
+degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).}
+
+\item{grl}{A named \code{\link[GenomicRanges]{GRangesList}} object where each
+entry corresponds to a transcript or genomic feature.}
+
+\item{colorByStrand}{A logical scalar indicating whether or not to color
+features by strand.}
+
+\item{displayNames}{A logical scalar indicating whether or not to display
+the names of the features in the plot.}
+
+\item{labelSize}{A numeric scalar representing the font size of the displayed
+label (if \code{displayNames} is \code{TRUE}).}
+
+\item{labelPosition}{A character scalar, either \code{"above"},
+\code{"below"} or \code{"inside"}, indicating whether to place the
+feature labels above, below or inside the respective feature.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 \code{tracks}.
 }
 \description{
-This function will visualize read-level or collapsed single-molecule
-footprinting data, such as data imported using \code{\link{readModkitExtract}}
-or \code{\link{readBedMethyl}}.
+The \code{plotRegion} function visualizes read-level or collapsed
+single-molecule footprinting data, such as data imported using
+\code{\link{readModkitExtract}}, \code{\link{readModBam}} or
+\code{\link{readBedMethyl}}. The \code{plotReadsLollipop},
+\code{plotReadsHeatmap}, \code{plotSummaryPointSmooth} and
+\code{plotGenomicRegions} functions are more low-level helper functions
+for creating single plot tracks. These are invoked by \code{plotRegion},
+and typically do not need to be directly called by the user.
 }
 \examples{
 # summarized data (5mC)

@@ -10,13 +10,18 @@ plotRegionPlotTypes <- data.frame(
 #' Plot single-molecule footprinting data for a single genomic region.
 #'
 #' @description
-#' This function will visualize read-level or collapsed single-molecule
-#' footprinting data, such as data imported using \code{\link{readModkitExtract}}
-#' or \code{\link{readBedMethyl}}.
+#' The \code{plotRegion} function visualizes read-level or collapsed 
+#' single-molecule footprinting data, such as data imported using 
+#' \code{\link{readModkitExtract}}, \code{\link{readModBam}} or 
+#' \code{\link{readBedMethyl}}. The \code{plotReadsLollipop}, 
+#' \code{plotReadsHeatmap}, \code{plotSummaryPointSmooth} and 
+#' \code{plotGenomicRegions} functions are more low-level helper functions 
+#' for creating single plot tracks. These are invoked by \code{plotRegion}, 
+#' and typically do not need to be directly called by the user.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level or collapsed single-molecule footprinting data (positions
-#'     in rows and reads or samples in columns).
+#'     in rows and reads or samples in columns). 
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
 #'     region. Only data from \code{se} overlapping this region will be plotted.
 #'     Alternatively, the region can be specified as a character scalar (e.g.
@@ -61,6 +66,7 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{tracks}.
 #'
 #' @author Charlotte Soneson, Michael Stadler
+#' @name plotRegion
 #'
 #' @examples
 #' # summarized data (5mC)
@@ -224,28 +230,28 @@ plotRegion <- function(se,
         trt <- plotRegionPlotTypes$type[match(tr$trackType, plotRegionPlotTypes$name)]
         if (trt %in% c("summary", "reads")) {
             args <- c(
-                list(x = se, region = region, aname = tr$trackData, 
+                list(se = se, region = region, assayName = tr$trackData, 
                      modbaseSpace = modbaseSpace),
-                tr[!names(tr) %in% c("trackData", "trackType", "x", "region",
-                                     "aname", "modbaseSpace", "doSmooth", 
+                tr[!names(tr) %in% c("trackData", "trackType", "se", "region",
+                                     "assayName", "modbaseSpace", "doSmooth", 
                                      "doPoint")]
             )
         } else if (trt == "annotation") {
             args <- c(
-                list(x = subsetByOverlaps(tr$trackData, region), 
+                list(grl = subsetByOverlaps(tr$trackData, region), 
                      region = region), 
-                     tr[!names(tr) %in% c("trackData", "trackType", "x", 
+                     tr[!names(tr) %in% c("trackData", "trackType", "grl", 
                                           "region")]
             )
         }
         pL[[i]] <- switch(
             tr$trackType,
-            Point = do.call(.plotSummaryPointSmooth, c(args, list(doSmooth = FALSE))),
-            Smooth = do.call(.plotSummaryPointSmooth, c(args, list(doPoint = FALSE))),
-            PointSmooth = do.call(.plotSummaryPointSmooth, args),
-            Lollipop = do.call(.plotReadsLollipop, args),
-            Heatmap = do.call(.plotReadsHeatmap, args),
-            GenomicRegion = do.call(.plotGenomicRegions, args)
+            Point = do.call(plotSummaryPointSmooth, c(args, list(doSmooth = FALSE))),
+            Smooth = do.call(plotSummaryPointSmooth, c(args, list(doPoint = FALSE))),
+            PointSmooth = do.call(plotSummaryPointSmooth, args),
+            Lollipop = do.call(plotReadsLollipop, args),
+            Heatmap = do.call(plotReadsHeatmap, args),
+            GenomicRegion = do.call(plotGenomicRegions, args)
         )
     }
 
@@ -266,20 +272,9 @@ plotRegion <- function(se,
 }
 
 
-## .plot* functions for plotRegion() -------------------------------------------
+## plot* functions for plotRegion() -------------------------------------------
 
-#' Plot an individual track: read-level data lollipop plot.
-#'
-#' @description
-#' This function creates a single plot track for an assay with read-level
-#' data and is typically called by \code{\link{plotRegion}}.
-#'
-#' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with read-level footprinting data (positions in rows and reads in
-#'     columns).
-#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object
-#'     containing the region to plot. 
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param size A numeric scalar giving the size of the points (\code{size}
 #'     argument of \code{\link[ggplot2]{geom_point}}).
 #' @param stroke A numeric scalar giving the stroke (line width) of the point
@@ -288,44 +283,43 @@ plotRegion <- function(se,
 #'     segment for each read from its start to its end.
 #' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
 #'     on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
-#'     where \code{X} is \code{assay(x, aname)} with zero values set to \code{NA}.
-#' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will
-#'     only contain the positions of modified bases instead of all position in
-#'     the genome. This can be useful to remove the gaps between modified
-#'     bases for visualization.
+#'     where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of 
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, the 
-#'     name of the assay (\code{aname}) will be used.
+#'     this will be the title of the track fill/color legend. If \code{NULL}, 
+#'     the name of the assay (\code{assayName}, for heatmaps and lollipop plots) 
+#'     \code{"Sample"} (for summary plots), or \code{"strand"} (for genomic 
+#'     region plots) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
-#'
+#'     the plot by sample (for read-level plots). 
+#' 
+#' @export
+#' @rdname plotRegion
+#' 
 #' @import ggplot2
 #' @importFrom dplyr filter group_by summarise
 #' @importFrom rlang .data
 #' @importFrom BiocGenerics start nrow colnames
 #' @importFrom SummarizedExperiment colData assay
 #'
-#' @noRd
-#' @keywords internal
-.plotReadsLollipop <- function(x,
-                               region, 
-                               aname,
-                               size = 3.0,
-                               stroke = 0.5,
-                               drawRead = TRUE,
-                               orderReads = TRUE,
-                               modbaseSpace = FALSE,
-                               trackTitle = NULL,
-                               legendTitle = NULL,
-                               showLegend = TRUE,
-                               highlightRegions = NULL,
-                               facetBySample = TRUE) {
+plotReadsLollipop <- function(se,
+                              region, 
+                              assayName,
+                              size = 3.0,
+                              stroke = 0.5,
+                              drawRead = TRUE,
+                              orderReads = TRUE,
+                              modbaseSpace = FALSE,
+                              trackTitle = NULL,
+                              legendTitle = NULL,
+                              showLegend = TRUE,
+                              highlightRegions = NULL,
+                              facetBySample = TRUE) {
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
@@ -338,16 +332,16 @@ plotRegion <- function(se,
     }
     
     # prepare plot data
-    df <- .preparePlotdataReads(x, aname, modbaseSpace)
+    df <- .preparePlotdataReads(se, assayName, modbaseSpace)
 
     # order reads
     if (orderReads) {
         df$read <- factor(as.character(df$read),
-                          levels = .orderReads(x, aname))
+                          levels = .orderReads(se, assayName))
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, aname = aname, region = region, 
+    p <- .createBaseplotReads(df = df, assayName = assayName, region = region, 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -373,61 +367,32 @@ plotRegion <- function(se,
     return(p)
 }
 
-#' Plot an individual track: read-level data heatmap plot.
-#'
-#' @description
-#' This function creates a single plot track for an assay with read-level
-#' data and is typically called by \code{\link{plotRegion}}.
-#'
-#' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with read-level footprinting data (positions in rows and reads in
-#'     columns).
-#' @param aname A character or numerical scalar selecting the assay to plot.
-#' @param drawRead A logical scalar. If \code{TRUE}, draw a horizontal line
-#'     segment for each read from its start to its end.
 #' @param linewidthTiles A numeric scalar, the line width of the border drawn
 #'     around each measured base.
-#' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
-#'     on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
-#'     where \code{X} is \code{assay(x, aname)} with zero values set to \code{NA}.
-#' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will
-#'     only contain the positions of modified bases instead of all position in
-#'     the genome. This can be useful to remove the gaps between modified
-#'     bases for visualization.
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
-#'     the track.
-#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, the 
-#'     name of the assay (\code{aname}) will be used.
-#' @param showLegend A logical scalar, indicating whether or not to display
-#'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
-#'     containing regions to highlight with a grey shading.
-#' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
 #'
+#' @export
+#' @rdname plotRegion
+#' 
 #' @import ggplot2
 #' @importFrom dplyr filter
 #' @importFrom BiocGenerics start nrow colnames
 #' @importFrom SummarizedExperiment colData assay
 #'
-#' @noRd
-#' @keywords internal
-.plotReadsHeatmap <- function(x,
-                              region,
-                              aname,
-                              drawRead = TRUE,
-                              linewidthTiles = 0,
-                              orderReads = TRUE,
-                              modbaseSpace = FALSE,
-                              interpolate = FALSE,
-                              trackTitle = NULL,
-                              legendTitle = NULL,
-                              showLegend = TRUE,
-                              highlightRegions = NULL,
-                              facetBySample = TRUE) {
+plotReadsHeatmap <- function(se,
+                             region,
+                             assayName,
+                             drawRead = TRUE,
+                             linewidthTiles = 0,
+                             orderReads = TRUE,
+                             modbaseSpace = FALSE,
+                             interpolate = FALSE,
+                             trackTitle = NULL,
+                             legendTitle = NULL,
+                             showLegend = TRUE,
+                             highlightRegions = NULL,
+                             facetBySample = TRUE) {
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
@@ -437,16 +402,16 @@ plotRegion <- function(se,
     }
     
     # prepare plot data
-    df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
+    df <- .preparePlotdataReads(se, assayName, modbaseSpace, interpolate)
 
     # order reads
     if (orderReads) {
         df$read <- factor(as.character(df$read),
-                          levels = .orderReads(x, aname))
+                          levels = .orderReads(se, assayName))
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, aname = aname, region = region, 
+    p <- .createBaseplotReads(df = df, assayName = assayName, region = region, 
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -472,16 +437,6 @@ plotRegion <- function(se,
     return(p)
 }
 
-#' Plot an individual track: summary data point and/or smooth line plot.
-#'
-#' @description
-#' This function creates a single plot track for an assay with summary-level
-#' data and is typically called by \code{\link{plotRegion}}.
-#'
-#' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with summary-level footprinting data (positions in rows and samples in
-#'     columns).
-#' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param doPoint A logical scalar. If \code{TRUE}, show points in the plot.
 #' @param arglistPoint A list with arguments to be sent to
 #'     \code{\link[ggplot2]{geom_point}}.
@@ -491,41 +446,29 @@ plotRegion <- function(se,
 #'     \code{\link[ggplot2]{geom_line}}.
 #' @param spar A numeric scalar typically in (0,1] specifying the desired
 #'     degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
-#' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will
-#'     only contain the positions of modified bases instead of all position in
-#'     the genome. This can be useful to remove the gaps between modified
-#'     bases for visualization.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
-#'     the track.
-#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track color legend. If \code{NULL}, 
-#'     'Sample' will be used.
-#' @param showLegend A logical scalar, indicating whether or not to display
-#'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
-#'     containing regions to highlight with a grey shading.
 #'
+#' @export
+#' @rdname plotRegion
+#' 
 #' @import ggplot2
 #' @importFrom BiocGenerics start nrow
 #' @importFrom dplyr group_by arrange mutate ungroup group_modify
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
 #'
-#' @noRd
-#' @keywords internal
-.plotSummaryPointSmooth <- function(x,
-                                    region,
-                                    aname,
-                                    doPoint = TRUE,
-                                    arglistPoint = list(),
-                                    doSmooth = TRUE,
-                                    arglistSmooth = list(),
-                                    spar = 0.01,
-                                    modbaseSpace = FALSE,
-                                    trackTitle = NULL,
-                                    legendTitle = NULL,
-                                    showLegend = TRUE,
-                                    highlightRegions = NULL) {
+plotSummaryPointSmooth <- function(se,
+                                   region,
+                                   assayName,
+                                   doPoint = TRUE,
+                                   arglistPoint = list(),
+                                   doSmooth = TRUE,
+                                   arglistSmooth = list(),
+                                   spar = 0.01,
+                                   modbaseSpace = FALSE,
+                                   trackTitle = NULL,
+                                   legendTitle = NULL,
+                                   showLegend = TRUE,
+                                   highlightRegions = NULL) {
     
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
@@ -536,11 +479,11 @@ plotRegion <- function(se,
     }
     
     # prepare plot data
-    df <- .preparePlotdataSummary(x = x, aname = aname,
+    df <- .preparePlotdataSummary(x = se, assayName = assayName,
                                   modbaseSpace = modbaseSpace)
 
     # create base plot
-    p <- .createBaseplotSummary(df = df, aname = aname,
+    p <- .createBaseplotSummary(df = df, assayName = assayName,
                                 region = region, 
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
@@ -584,16 +527,8 @@ plotRegion <- function(se,
 }
 
 
-#' Plot an individual track: genomic regions
-#'
-#' @description
-#' This function creates a single plot track with genomic regions and is 
-#' typically called by \code{\link{plotRegion}}.
-#'
-#' @param x A named \code{\link[GenomicRanges]{GRangesList}} object where each 
+#' @param grl A named \code{\link[GenomicRanges]{GRangesList}} object where each 
 #'     entry corresponds to a transcript or genomic feature.
-#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object 
-#'     giving the region to plot.
 #' @param colorByStrand A logical scalar indicating whether or not to color
 #'     features by strand.
 #' @param displayNames A logical scalar indicating whether or not to display 
@@ -603,33 +538,27 @@ plotRegion <- function(se,
 #' @param labelPosition A character scalar, either \code{"above"}, 
 #'     \code{"below"} or \code{"inside"}, indicating whether to place the 
 #'     feature labels above, below or inside the respective feature. 
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
-#'     the track.
-#' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, 
-#'     'strand' will be used.
-#' @param showLegend A logical scalar, indicating whether or not to display
-#'     the legend for the track.
+#' 
+#' @export
+#' @rdname plotRegion
 #' 
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics unlist start end
 #' @importFrom S4Vectors mcols
 #' 
-#' @noRd
-#' @keywords internal
-.plotGenomicRegions <- function(x, 
-                                region,
-                                colorByStrand = TRUE,
-                                displayNames = TRUE,
-                                labelSize = 3,
-                                labelPosition = "above",
-                                trackTitle = NULL,
-                                legendTitle = NULL,
-                                showLegend = TRUE) {
+plotGenomicRegions <- function(grl, 
+                               region,
+                               colorByStrand = TRUE,
+                               displayNames = TRUE,
+                               labelSize = 3,
+                               labelPosition = "above",
+                               trackTitle = NULL,
+                               legendTitle = NULL,
+                               showLegend = TRUE) {
     # check input arguments
-    .assertVector(x = x, type = "GRangesList")
-    .assertVector(x = names(x), type = "character")
+    .assertVector(x = grl, type = "GRangesList")
+    .assertVector(x = names(grl), type = "character")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = colorByStrand, type = "logical")
     .assertScalar(x = displayNames, type = "logical")
@@ -638,23 +567,23 @@ plotRegion <- function(se,
                   validValues = c("above", "below", "inside"))
     
     # subset GRangesList to elements overlapping the provided region
-    x <- subsetByOverlaps(x, region)
+    grl <- subsetByOverlaps(grl, region)
 
     # create two flattened objects - one with the full range of each feature,
     # and one with the individual building blocks
-    fname_full <- names(x)
-    fname_unique_full <- make.unique(names(x))
-    fname_parts <- rep(fname_full, lengths(x))
-    fname_unique_parts <- rep(fname_unique_full, lengths(x))
+    fname_full <- names(grl)
+    fname_unique_full <- make.unique(names(grl))
+    fname_parts <- rep(fname_full, lengths(grl))
+    fname_unique_parts <- rep(fname_unique_full, lengths(grl))
     
-    fullRange <- unlist(range(x), use.names = FALSE)
+    fullRange <- unlist(range(grl), use.names = FALSE)
     mcols(fullRange)$fpname <- fname_full
     mcols(fullRange)$fpname_unique <- fname_unique_full
     fullRange <- as.data.frame(fullRange)
     fullRange$fpname_unique <- factor(fullRange$fpname_unique, 
                                       levels = fname_unique_full)
     
-    rangeParts <- unlist(x, use.names = FALSE)
+    rangeParts <- unlist(grl, use.names = FALSE)
     mcols(rangeParts)$fpname <- fname_parts
     mcols(rangeParts)$fpname_unique <- fname_unique_parts
     rangeParts <- as.data.frame(rangeParts)
@@ -742,7 +671,6 @@ plotRegion <- function(se,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
     
     gg
-    
 }
 
 ## helper functions used above -------------------------------------------------
@@ -752,7 +680,7 @@ plotRegion <- function(se,
 #' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with summary-level footprinting data (positions in rows and samples in
 #'     columns).
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the "position"
 #'     column in the return data frame is categorical, instead of giving
 #'     the numeric position in the genome.
@@ -763,9 +691,9 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .preparePlotdataSummary <- function(x,
-                                    aname,
+                                    assayName,
                                     modbaseSpace = FALSE) {
-    assaydat <- assay(x, aname)
+    assaydat <- assay(x, assayName)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
         position = start(x)[i[,"row"]],
@@ -784,7 +712,7 @@ plotRegion <- function(se,
 #' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level footprinting data (positions in rows and reads in
 #'     columns).
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the "position"
 #'     column in the return data frame is categorical, instead of giving
 #'     the numeric position in the genome.
@@ -798,11 +726,11 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .preparePlotdataReads <- function(x,
-                                  aname,
+                                  assayName,
                                   modbaseSpace = FALSE,
                                   interpolate = FALSE) {
-    assaydat <- assay(x, aname)
-    # `aname` columns are grouped reads -> flatten
+    assaydat <- assay(x, assayName)
+    # `assayName` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
     if (interpolate) {
@@ -833,7 +761,7 @@ plotRegion <- function(se,
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataSummary}}.
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scaler with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of 
@@ -851,7 +779,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotSummary <- function(df,
-                                   aname,
+                                   assayName,
                                    region, 
                                    trackTitle,
                                    legendTitle,
@@ -863,7 +791,7 @@ plotRegion <- function(se,
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
         labs(x = paste0("Position on ", as.character(seqnames(region))),
-             y = aname,
+             y = assayName,
              colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
              title = trackTitle) +
         theme_bw() +
@@ -891,7 +819,7 @@ plotRegion <- function(se,
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataReads}}.
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scalar with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of 
@@ -914,7 +842,7 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .createBaseplotReads <- function(df,
-                                 aname,
+                                 assayName,
                                  region,
                                  trackTitle,
                                  legendTitle,
@@ -934,7 +862,7 @@ plotRegion <- function(se,
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = "Reads",
-             fill = ifelse(!is.null(legendTitle), legendTitle, aname),
+             fill = ifelse(!is.null(legendTitle), legendTitle, assayName),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
@@ -1000,13 +928,13 @@ plotRegion <- function(se,
 #' @description
 #' Returns ordered read identifiers (\code{colnames(x)} such that they follow
 #' \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X} is
-#' \code{assay(x, aname)} with zero values set to \code{NA} and overaged over
+#' \code{assay(x, assayName)} with zero values set to \code{NA} and overaged over
 #' windows of \code{windowWidth} nucleotides.
 #'
 #' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with summary-level footprinting data (positions in rows and samples in
 #'     columns).
-#' @param aname A character or numerical scalar selecting the assay to plot.
+#' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param windowWidth A numeric scalar giving the window width for which read-level
 #'     data will be averaged. This should help to reduce the noise and
 #'     allows to compare reads without any common modification calls, such
@@ -1020,10 +948,10 @@ plotRegion <- function(se,
 #' @noRd
 #' @keywords internal
 .orderReads <- function(x,
-                        aname,
+                        assayName,
                         windowWidth = 25) {
     # extract and flatten assay matrix
-    X <- as.matrix(assay(x, aname))
+    X <- as.matrix(assay(x, assayName))
     # group positions into bins of windowWidth
     bin <- findInterval(x = start(x),
                         vec = seq(from = min(start(x)),
