@@ -138,7 +138,12 @@ display relative positions. If \code{NULL} (the default), absolute
 genomic positions are used. Ignored if \code{modbaseSpace} is
 \code{TRUE}.}
 
-\item{assayName}{A character or numerical scalar selecting the assay to plot.}
+\item{assayName}{A character or numerical scalar selecting the assay to plot.
+This should be an existing read-level or summary assay, as appropriate
+for the plot type. A special case is the track name \code{"FracMod"}:
+If \code{se} does not contain a summary assay of that name, but
+\code{"Nmod"} and \code{"Nvalid"} assays are available, \code{"FracMod"}
+will be calculated from \code{assay(se, "Nmod") / assay(se, "Nvalid")}.}
 
 \item{size}{A numeric scalar giving the size of the points (\code{size}
 argument of \code{\link[ggplot2]{geom_point}}).}
