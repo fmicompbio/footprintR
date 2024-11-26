@@ -134,7 +134,7 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
 #'     footprinting data.
 #'
-#' @importFrom SummarizedExperiment assay assayNames rowRanges
+#' @importFrom SummarizedExperiment assay assayNames rowRanges assays
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels seqnames
 #' @importFrom IRanges subsetByOverlaps
@@ -162,9 +162,10 @@ plotRegion <- function(
             rowRanges(se)[seqnames(rowRanges(se)) == seqlevels(se)[1]],
             ignore.strand = TRUE)
     }
-    .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
+    .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertVector(x = tracks, type = "list", rngLen = c(1, Inf))
+    assaysInUse <- c()
     for (i in seq_along(tracks)) {
         if (!is.list(tracks[[i]]) || length(tracks[[i]]) < 2) {
             cli_abort("tracks[[{i}]] has to be a list of length >=2.")
@@ -209,6 +210,10 @@ plotRegion <- function(
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
+        if (type_i %in% c("reads", "summary")) {
+            # add assay to list of assays that are required for the plots
+            assaysInUse <- union(assaysInUse, tracks[[i]]$trackData)
+        }
         if (type_i == "annotation" &&
             !(is(tracks[[i]]$trackData, "GRangesList") &&
               !is.null(names(tracks[[i]]$trackData)))) {
@@ -245,9 +250,19 @@ plotRegion <- function(
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
 
     if (modbaseSpace) {
+        # relative coordinates are not meaningful in modbase space (as there 
+        # are no actual positions indicated anyway)
         referenceCoordinate <- NULL
     }
 
+    # remove assays that are not used in any plot, for faster subsetting of se
+    suppressWarnings(
+        # currently, assigning to assays triggers a deprecation warning
+        # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
+        # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
+        assays(se) <- assays(se)[assaysInUse]
+    )
+    
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
