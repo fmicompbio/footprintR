@@ -114,6 +114,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 5))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-2, 2))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929387-6929391:-"), ignore.strand = TRUE)
@@ -181,6 +183,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 5))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-2, 2))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929387-6929391:-"), ignore.strand = FALSE)
@@ -250,6 +254,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 5))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-2, 2))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929336-6929340:-"), ignore.strand = TRUE)
@@ -346,6 +352,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 9))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929011-6929019:+"), ignore.strand = FALSE)
@@ -401,6 +409,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 9))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:6929011-6929019:+"), ignore.strand = FALSE)
@@ -445,6 +455,8 @@ test_that("getAnchorRegions works", {
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 9))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     expect_null(assay(ar1, "mod_prob")$s1)
@@ -472,6 +484,8 @@ test_that("getAnchorRegions works", {
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 9))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     expect_null(assay(ar1, "mod_prob")$s1)
@@ -497,6 +511,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob")$s1, "NaArray")
     expect_true(is.matrix(SummarizedExperiment::assay(ar1, "Nvalid")$s1))
+    expect_equal(as.character(seqnames(SummarizedExperiment::rowRanges(ar1))),
+                 rep("anchor", 9))
     expect_equal(GenomicRanges::pos(SummarizedExperiment::rowRanges(ar1)), seq(-4, 4))
     # get reads in each sample that overlap each of the regions
     se_r1 <- subsetByOverlaps(se, GRanges("chr1:692911-692919:+"), ignore.strand = FALSE)
