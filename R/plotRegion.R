@@ -930,9 +930,7 @@ plotGenomicRegions <- function(grl,
                                   interpolate = FALSE,
                                   referenceCoordinate = NULL) {
     assaydat <- assay(x, assayName)
-    assaydat <- endoapply(assaydat, function(x) {
-        x[, colSums(is_nonna(x)) > 0] # remove all-NA reads
-    })
+    assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
     # `assayName` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)

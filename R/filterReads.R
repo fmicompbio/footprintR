@@ -1,3 +1,44 @@
+#' Remove all-NA reads
+#'
+#' Remove reads (columns) that contain only NA values from a read-level
+#' assay (\code{DataFrame} of \code{NaArray}s).
+#'
+#' @param x A \code{\link[S4Vectors]{DataFrame}} with
+#'     \code{\link[SparseArray]{NaArray}} objects in its columns (typically
+#'     a read-level assay as returned by \code{\link{readModBam}}).
+#' @param prune A logical scalar. If \code{TRUE} (the default), samples
+#'     (columns of the \code{DataFrame}) for which the NA-read filtering retains none of
+#'     the reads will be completely removed. If \code{FALSE},
+#'     such samples are retained as a zero-column \code{NAMatrix}).
+#'
+#' @returns A \code{DataFrame} of \code{NaArray}s with all columns containing at
+#'     least one non-\code{NA} value.
+#'
+#' @importFrom S4Vectors endoapply
+#' @importFrom SparseArray colSums is_nonna
+#' @importFrom BiocGenerics rownames rownames<-
+#'
+#' @noRd
+#' @keywords internal
+.removeAllNAReads <- function(x, prune = TRUE) {
+    .assertScalar(x = prune, type = "logical")
+
+    rnms <- rownames(x)
+    x <- endoapply(x, function(y) {
+        if (!is.null(dim(y))) {
+            y <- y[, colSums(is_nonna(y)) > 0, drop = FALSE]
+        }
+        y
+    })
+    rownames(x) <- rnms
+
+    if (prune) {
+        x <- x[, unlist(lapply(x, ncol), use.names = FALSE) > 0, drop = FALSE]
+    }
+
+    return(x)
+}
+
 #' Filter reads
 #'
 #' @param se A \code{SummarizedExperiment} object.
@@ -36,45 +77,45 @@
 #'     and from assays that do not store read-level data). If \code{FALSE},
 #'     such samples are retained (in the assays with read-level data as a
 #'     zero-column \code{SparseMatrix}).
-#' @param onlyStats A logical scalar. If \code{FALSE} (the default), the 
-#'     \code{SummarizedExperiment} object will be filtered according to the 
+#' @param onlyStats A logical scalar. If \code{FALSE} (the default), the
+#'     \code{SummarizedExperiment} object will be filtered according to the
 #'     provided thresholds. If \code{TRUE}, the filter statistics are calculated
-#'     and returned, but the object is not subset.  
+#'     and returned, but the object is not subset.
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #' @export
 #'
-#' @returns If \code{onlyStats} is \code{FALSE}, a filtered 
+#' @returns If \code{onlyStats} is \code{FALSE}, a filtered
 #' \code{SummarizedExperiment} object. The metadata of this
 #' object contains a slot named \code{filteredOutReads}, which tabulate all
 #' reads that are filtered out, together with the reason(s) for exclusion.
-#' If \code{onlyStats} is \code{TRUE}, only this table is returned. 
+#' If \code{onlyStats} is \code{TRUE}, only this table is returned.
 #'
 #' @examples
 #' library(SummarizedExperiment)
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
-#'                  modbase = "a", verbose = TRUE, 
+#'                  modbase = "a", verbose = TRUE,
 #'                  BPPARAM = BiocParallel::SerialParam())
-#' se <- addReadStats(se, name = "QC", 
+#' se <- addReadStats(se, name = "QC",
 #'                    BPPARAM = BiocParallel::SerialParam())
-#' 
+#'
 #' ## Filter se
 #' sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
-#' 
+#'
 #' ## Only calculate filter stats
-#' filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000, 
+#' filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000,
 #'                          onlyStats = TRUE)
 #' filtstats
-#' 
+#'
 #' ## Visualize filter stats in UpSet plot, e.g. with ComplexUpset
 #' if (require(ComplexUpset)) {
-#'     ComplexUpset::upset(as.data.frame(filtstats$s1), 
+#'     ComplexUpset::upset(as.data.frame(filtstats$s1),
 #'                         intersect = colnames(filtstats$s1))
 #' }
 #'
-#' @importFrom SparseArray SVT_SparseArray rowSums colSums
+#' @importFrom SparseArray SVT_SparseArray rowSums colSums is_nonna
 #' @importFrom SummarizedExperiment colData
 #'
 filterReads <- function(se, assayName = "mod_prob",
@@ -170,10 +211,9 @@ filterReads <- function(se, assayName = "mod_prob",
         }
 
         ## NA in all positions
+        ### WAS HERE
         readsToRemove[[nm]][colnames(
-            assay(se, assayName)[[nm]][, colSums(
-                assay(se, assayName)[[nm]],
-                na.rm = TRUE) == 0]),
+            .removeAllNAReads(assay(se, assayName)[[nm]])),
             "AllNA"] <- TRUE
     }
 
@@ -187,7 +227,7 @@ filterReads <- function(se, assayName = "mod_prob",
         sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
                              prune = prune, invert = TRUE)
         metadata(sesub)$filteredOutReads <- readsToRemove
-        
+
         ## Remove any positions with all NA values
         sesub <- .removeAllNAPositions(sesub, assayName = assayName)
         return(sesub)

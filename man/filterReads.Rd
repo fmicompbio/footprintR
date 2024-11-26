@@ -87,22 +87,22 @@ library(SummarizedExperiment)
 modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                           package = "footprintR")
 se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
-                 modbase = "a", verbose = TRUE, 
+                 modbase = "a", verbose = TRUE,
                  BPPARAM = BiocParallel::SerialParam())
-se <- addReadStats(se, name = "QC", 
+se <- addReadStats(se, name = "QC",
                    BPPARAM = BiocParallel::SerialParam())
 
 ## Filter se
 sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
 
 ## Only calculate filter stats
-filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000, 
+filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000,
                          onlyStats = TRUE)
 filtstats
 
 ## Visualize filter stats in UpSet plot, e.g. with ComplexUpset
 if (require(ComplexUpset)) {
-    ComplexUpset::upset(as.data.frame(filtstats$s1), 
+    ComplexUpset::upset(as.data.frame(filtstats$s1),
                         intersect = colnames(filtstats$s1))
 }
 

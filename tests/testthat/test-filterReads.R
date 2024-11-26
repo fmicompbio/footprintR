@@ -1,3 +1,30 @@
+test_that(".removeAllNAReads works", {
+    naa1 <- naa2 <- NaArray(dim = c(10, 3))
+    naa1[cbind(1:2, 1:2)] <- 1
+    adat <- make_zero_col_DFrame(nrow = nrow(naa1))
+    adat[["assay1"]] <- naa1
+    adat[["assay2"]] <- naa2
+    adat[["summary1"]] <- rowSums(naa1, na.rm = TRUE)
+    adat[["summary2"]] <- rowSums(naa2, na.rm = FALSE)
+    rownames(adat) <- paste0("r", seq.int(nrow(adat)))
+
+    expect_error(.removeAllNAReads(x = adat, prune = "error"))
+
+    res1 <- .removeAllNAReads(x = adat, prune = FALSE)
+    res2 <- .removeAllNAReads(x = adat, prune = TRUE)
+
+    expect_s4_class(res1, "DataFrame")
+    expect_identical(dim(res1), c(10L, 4L))
+    expect_identical(lapply(res1, ncol), list(assay1 = 2L, assay2 = 0L,
+                                              summary1 = NULL, summary2 = NULL))
+    expect_identical(rownames(res1), rownames(adat))
+
+    expect_s4_class(res2, "DataFrame")
+    expect_identical(dim(res2), c(10L, 2L))
+    expect_identical(lapply(res2, ncol), list(assay1 = 2L, summary1 = NULL))
+    expect_identical(rownames(res2), rownames(adat))
+})
+
 test_that("filterReads works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -123,7 +150,7 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s1), rownames(se$qcc$s1)[2:7])
     expect_equal(nrow(out1$qcc$s2), 5L)
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[3:7])
-    
+
     ## Return filter stats only (compare to previous output)
     stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "readInfo",
                           minQscore = 13, maxEntropy = 0.2,
