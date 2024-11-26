@@ -1015,7 +1015,7 @@ plotGenomicRegions <- function(grl,
 
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank()) + 
-            scale_x_continuous(expand = expansion(mult = 0, add = 0))
+            scale_x_discrete(expand = expansion(mult = 0, add = 0))
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
