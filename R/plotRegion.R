@@ -1049,8 +1049,8 @@ plotGenomicRegions <- function(grl,
             p0 <- p0 +
                 geom_rect(
                     data = dfhr,
-                    mapping = aes(xmin = as.numeric(start) - 0.5, 
-                                  xmax = as.numeric(end) + 0.5,
+                    mapping = aes(xmin = as.numeric(start) - 0.0, 
+                                  xmax = as.numeric(end) + 0.0,
                                   ymin = -Inf, ymax = Inf),
                     fill = "gray90",
                     inherit.aes = FALSE
@@ -1160,8 +1160,8 @@ plotGenomicRegions <- function(grl,
             p0 <- p0 +
                 geom_rect(
                     data = dfhr,
-                    mapping = aes(xmin = as.numeric(start) - 0.5, 
-                                  xmax = as.numeric(end) + 0.5,
+                    mapping = aes(xmin = as.numeric(start) - 0.0, 
+                                  xmax = as.numeric(end) + 0.0,
                                   ymin = -Inf, ymax = Inf),
                     fill = "gray90",
                     inherit.aes = FALSE
