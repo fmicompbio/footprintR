@@ -255,6 +255,7 @@ test_that("plotRegion works - manual inspection", {
     ## Absolute base space, no reference coordinate
     expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        labelAccuracy = 1e-6,
         tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
                            size = 2, stroke = 0.25, legendTitle = "6mA", 
                            highlightRegions = grh),

@@ -14,7 +14,8 @@ plotRegion(
   tracks = list(list(trackData = "FracMod", trackType = "Point")),
   modbaseSpace = FALSE,
   sequenceContext = NULL,
-  referenceCoordinate = NULL
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL
 )
 
 plotReadsLollipop(
@@ -31,7 +32,8 @@ plotReadsLollipop(
   showLegend = TRUE,
   highlightRegions = NULL,
   facetBySample = TRUE,
-  referenceCoordinate = NULL
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL
 )
 
 plotReadsHeatmap(
@@ -48,7 +50,8 @@ plotReadsHeatmap(
   showLegend = TRUE,
   highlightRegions = NULL,
   facetBySample = TRUE,
-  referenceCoordinate = NULL
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL
 )
 
 plotSummaryPointSmooth(
@@ -65,7 +68,8 @@ plotSummaryPointSmooth(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
-  referenceCoordinate = NULL
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL
 )
 
 plotGenomicRegions(
@@ -78,7 +82,8 @@ plotGenomicRegions(
   trackTitle = NULL,
   legendTitle = NULL,
   showLegend = TRUE,
-  referenceCoordinate = NULL
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL
 )
 }
 \arguments{
@@ -137,6 +142,11 @@ the \code{sequenceContextWidth} and \code{sequenceReference} arguments of
 display relative positions. If \code{NULL} (the default), absolute
 genomic positions are used. Ignored if \code{modbaseSpace} is
 \code{TRUE}.}
+
+\item{labelAccuracy}{A numeric scalar indicating the precision of the
+positions along the genomic axis. Will be passed to
+\code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
+value will be derived from \code{region}.}
 
 \item{assayName}{A character or numerical scalar selecting the assay to plot.
 This should be an existing read-level or summary assay, as appropriate

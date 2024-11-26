@@ -69,6 +69,10 @@ plotRegionPlotTypes <- data.frame(
 #'     display relative positions. If \code{NULL} (the default), absolute
 #'     genomic positions are used. Ignored if \code{modbaseSpace} is
 #'     \code{TRUE}.
+#' @param labelAccuracy A numeric scalar indicating the precision of the 
+#'     positions along the genomic axis. Will be passed to 
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#'     value will be derived from \code{region}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
@@ -150,7 +154,8 @@ plotRegion <- function(
         tracks = list(list(trackData = "FracMod", trackType = "Point")),
         modbaseSpace = FALSE,
         sequenceContext = NULL,
-        referenceCoordinate = NULL) {
+        referenceCoordinate = NULL,
+        labelAccuracy = NULL) {
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
@@ -248,6 +253,7 @@ plotRegion <- function(
     }
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
 
     if (modbaseSpace) {
         # relative coordinates are not meaningful in modbase space (as there 
@@ -269,7 +275,7 @@ plotRegion <- function(
         se = se, sequenceContext = sequenceContext)
 
     if (nrow(se) == 0) {
-        stop("No positions retained for plotting!")
+        cli_abort("No positions retained for plotting!")
     }
     
     ## create plots
@@ -282,17 +288,21 @@ plotRegion <- function(
             args <- c(
                 list(se = se, region = region, assayName = tr$trackData,
                      modbaseSpace = modbaseSpace,
-                     referenceCoordinate = referenceCoordinate),
+                     referenceCoordinate = referenceCoordinate,
+                     labelAccuracy = labelAccuracy),
                 tr[!names(tr) %in% c("trackData", "trackType", "se", "region",
                                      "assayName", "modbaseSpace", "doSmooth",
-                                     "doPoint", "referenceCoordinate")]
+                                     "doPoint", "referenceCoordinate",
+                                     "labelAccuracy")]
             )
         } else if (trt == "annotation") {
             args <- c(
                 list(grl = subsetByOverlaps(tr$trackData, region),
-                     region = region, referenceCoordinate = referenceCoordinate),
+                     region = region, labelAccuracy = labelAccuracy,
+                     referenceCoordinate = referenceCoordinate),
                      tr[!names(tr) %in% c("trackData", "trackType", "grl",
-                                          "region", "referenceCoordinate")]
+                                          "region", "referenceCoordinate",
+                                          "labelAccuracy")]
             )
         }
         pL[[i]] <- switch(
@@ -391,7 +401,8 @@ plotReadsLollipop <- function(se,
                               showLegend = TRUE,
                               highlightRegions = NULL,
                               facetBySample = TRUE,
-                              referenceCoordinate = NULL) {
+                              referenceCoordinate = NULL,
+                              labelAccuracy = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -412,6 +423,7 @@ plotReadsLollipop <- function(se,
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
@@ -442,7 +454,8 @@ plotReadsLollipop <- function(se,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBySample = facetBySample,
-                              referenceCoordinate = referenceCoordinate)
+                              referenceCoordinate = referenceCoordinate,
+                              labelAccuracy = labelAccuracy)
 
     # add segments
     if (drawRead) {
@@ -502,7 +515,8 @@ plotReadsHeatmap <- function(se,
                              showLegend = TRUE,
                              highlightRegions = NULL,
                              facetBySample = TRUE,
-                             referenceCoordinate = NULL) {
+                             referenceCoordinate = NULL,
+                             labelAccuracy = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -523,6 +537,7 @@ plotReadsHeatmap <- function(se,
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
@@ -554,7 +569,8 @@ plotReadsHeatmap <- function(se,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBySample = facetBySample,
-                              referenceCoordinate = referenceCoordinate)
+                              referenceCoordinate = referenceCoordinate,
+                              labelAccuracy = labelAccuracy)
 
     # add segments
     if (drawRead) {
@@ -623,7 +639,8 @@ plotSummaryPointSmooth <- function(se,
                                    legendTitle = NULL,
                                    showLegend = TRUE,
                                    highlightRegions = NULL,
-                                   referenceCoordinate = NULL) {
+                                   referenceCoordinate = NULL,
+                                   labelAccuracy = NULL) {
 
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
@@ -645,6 +662,7 @@ plotSummaryPointSmooth <- function(se,
                                                     ignore.strand = TRUE)
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
@@ -669,7 +687,8 @@ plotSummaryPointSmooth <- function(se,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
                                 highlightRegions = highlightRegions,
-                                referenceCoordinate = referenceCoordinate)
+                                referenceCoordinate = referenceCoordinate,
+                                labelAccuracy = labelAccuracy)
 
     # add points
     if (doPoint) {
@@ -747,7 +766,8 @@ plotGenomicRegions <- function(grl,
                                trackTitle = NULL,
                                legendTitle = NULL,
                                showLegend = TRUE,
-                               referenceCoordinate = NULL) {
+                               referenceCoordinate = NULL, 
+                               labelAccuracy = NULL) {
     # check input arguments
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
@@ -761,6 +781,7 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
 
     # subset GRangesList to elements overlapping the provided region
     grl <- subsetByOverlaps(grl, region)
@@ -866,12 +887,14 @@ plotGenomicRegions <- function(grl,
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank())
 
-    acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
+    if (is.null(labelAccuracy)) {
+        labelAccuracy <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
+    }
     gg <- gg + coord_cartesian(xlim = rng) +
         scale_x_continuous(
             expand = c(0, 0),
             labels = label_number(
-                accuracy = acc,
+                accuracy = labelAccuracy,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Gb` = 1e+9)))
 
     gg
@@ -997,7 +1020,8 @@ plotGenomicRegions <- function(grl,
                                    legendTitle,
                                    showLegend,
                                    highlightRegions,
-                                   referenceCoordinate) {
+                                   referenceCoordinate,
+                                   labelAccuracy) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -1024,7 +1048,8 @@ plotGenomicRegions <- function(grl,
         p0 <- p0 + theme(axis.text.x = element_blank()) + 
             scale_x_discrete(expand = expansion(mult = 0, add = 0.5))
     } else {
-        p0 <- .addCoordAxisFormat(p0 = p0, region = region)
+        p0 <- .addCoordAxisFormat(p0 = p0, region = region,
+                                  labelAccuracy = labelAccuracy)
     }
     
     if (!is.null(highlightRegions)) {
@@ -1096,7 +1121,8 @@ plotGenomicRegions <- function(grl,
                                  showLegend,
                                  highlightRegions,
                                  facetBySample, 
-                                 referenceCoordinate) {
+                                 referenceCoordinate,
+                                 labelAccuracy) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -1135,7 +1161,8 @@ plotGenomicRegions <- function(grl,
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
     } else {
-        p0 <- .addCoordAxisFormat(p0 = p0, region = region)
+        p0 <- .addCoordAxisFormat(p0 = p0, region = region,
+                                  labelAccuracy = labelAccuracy)
     }
 
     if (!is.null(highlightRegions)) {
@@ -1257,20 +1284,26 @@ plotGenomicRegions <- function(grl,
 #'
 #' @param p0 A \code{ggplot} object to which to add the axis formatting.
 #'     x-axis values are assumed to be in \code{p0$data$position}.
+#' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
+#'     region. 
+#' @param labelAccuracy The desired accuracy of the labels - if \code{NULL} it
+#'     will be automatically determined.
 #'
 #' @import ggplot2
 #' @importFrom scales label_number
 #'
 #' @noRd
 #' @keywords internal
-.addCoordAxisFormat <- function(p0, region) {
+.addCoordAxisFormat <- function(p0, region, labelAccuracy) {
     rng <- c(start(region) - 0.5, end(region) + 0.5)
-    acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
+    if (is.null(labelAccuracy)) {
+        labelAccuracy <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
+    }
     p0 <- p0 + coord_cartesian(xlim = rng) +
         scale_x_continuous(
             expand = c(0, 0),
             labels = label_number(
-                accuracy = acc,
+                accuracy = labelAccuracy,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Gb` = 1e+9)))
     return(p0)
 }
