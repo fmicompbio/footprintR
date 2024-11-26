@@ -10,18 +10,18 @@ plotRegionPlotTypes <- data.frame(
 #' Plot single-molecule footprinting data for a single genomic region.
 #'
 #' @description
-#' The \code{plotRegion} function visualizes read-level or collapsed 
-#' single-molecule footprinting data, such as data imported using 
-#' \code{\link{readModkitExtract}}, \code{\link{readModBam}} or 
-#' \code{\link{readBedMethyl}}. The \code{plotReadsLollipop}, 
-#' \code{plotReadsHeatmap}, \code{plotSummaryPointSmooth} and 
-#' \code{plotGenomicRegions} functions are helper functions for creating 
-#' single plot tracks. These are invoked by \code{plotRegion}, 
+#' The \code{plotRegion} function visualizes read-level or collapsed
+#' single-molecule footprinting data, such as data imported using
+#' \code{\link{readModkitExtract}}, \code{\link{readModBam}} or
+#' \code{\link{readBedMethyl}}. The \code{plotReadsLollipop},
+#' \code{plotReadsHeatmap}, \code{plotSummaryPointSmooth} and
+#' \code{plotGenomicRegions} functions are helper functions for creating
+#' single plot tracks. These are invoked by \code{plotRegion},
 #' and typically do not need to be directly called by the user.
 #'
 #' @param se A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with read-level or collapsed single-molecule footprinting data (positions
-#'     in rows and samples in columns). 
+#'     in rows and samples in columns).
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
 #'     region. Only data from \code{se} overlapping this region will be plotted.
 #'     Alternatively, the region can be specified as a character scalar (e.g.
@@ -38,15 +38,15 @@ plotRegionPlotTypes <- data.frame(
 #'     types are
 #'     \describe{
 #'         \item{\code{"Point"}}{: A point plot displaying values in the assay.}
-#'         \item{\code{"Smooth"}}{: A smoothed line plot displaying values in 
+#'         \item{\code{"Smooth"}}{: A smoothed line plot displaying values in
 #'             the assay.}
-#'         \item{\code{"PointSmooth"}}{: A point and smoothed line plot 
+#'         \item{\code{"PointSmooth"}}{: A point and smoothed line plot
 #'             displaying values in the assay.}
 #'         \item{\code{"Lollipop"}}{: Lollipop plot (filled circles with the
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
-#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g.,  
+#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g.,
 #'             transcripts, peaks, CpG islands).}
 #'     }
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
@@ -65,9 +65,9 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{readModkitExtract}} when reading data, or by adding it using
 #'     \code{\link{addSeqContext}}.
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
-#'     (on the reference sequence in \code{region}) used as an "anchor" to 
-#'     display relative positions. If \code{NULL} (the default), absolute 
-#'     genomic positions are used. Ignored if \code{modbaseSpace} is 
+#'     (on the reference sequence in \code{region}) used as an "anchor" to
+#'     display relative positions. If \code{NULL} (the default), absolute
+#'     genomic positions are used. Ignored if \code{modbaseSpace} is
 #'     \code{TRUE}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
@@ -117,17 +117,17 @@ plotRegionPlotTypes <- data.frame(
 #'                               size = 4),
 #'                          list(trackData = "mod_prob", trackType = "Heatmap")),
 #'            modbaseSpace = TRUE)
-#' 
-#' # combine read-level and summary tracks, 
-#' # set relative heights of tracks, don't facet by sample,  
+#'
+#' # combine read-level and summary tracks,
+#' # set relative heights of tracks, don't facet by sample,
 #' # change titles of legends
 #' seB <- flattenReadLevelAssay(seB, assayName = "mod_prob")
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
-#'                               size = 4, legendTitle = "6mA", 
+#'                               size = 4, legendTitle = "6mA",
 #'                               facetBySample = FALSE),
 #'                          list(trackData = "FracMod", trackType = "Smooth")),
-#'            modbaseSpace = TRUE) + 
+#'            modbaseSpace = TRUE) +
 #'     patchwork::plot_layout(heights = c(3, 2))
 #'
 #' @seealso \code{\link{readModBam}}, \code{\link{readModkitExtract}} and
@@ -151,7 +151,7 @@ plotRegion <- function(
         modbaseSpace = FALSE,
         sequenceContext = NULL,
         referenceCoordinate = NULL) {
-    
+
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (is.character(region) && length(region) == 1L) {
@@ -209,14 +209,14 @@ plotRegion <- function(
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
-        if (type_i == "annotation" && 
-            !(is(tracks[[i]]$trackData, "GRangesList") && 
+        if (type_i == "annotation" &&
+            !(is(tracks[[i]]$trackData, "GRangesList") &&
               !is.null(names(tracks[[i]]$trackData)))) {
             cli_abort(paste("tracks[[{i}]]$trackData must be a named",
                             "GRangesList object"))
         }
-        if (type_i == "annotation" && 
-            length(unlist(lapply(tracks[[i]]$trackData, 
+        if (type_i == "annotation" &&
+            length(unlist(lapply(tracks[[i]]$trackData,
                                  function(y) unique(as.character(strand(y)))))) !=
             length(tracks[[i]]$trackData)) {
             cli_abort(paste("There are entries in tracks[[{i}]]$trackData",
@@ -247,12 +247,12 @@ plotRegion <- function(
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
-    
+
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
         se = se, sequenceContext = sequenceContext)
-    
+
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
@@ -261,26 +261,26 @@ plotRegion <- function(
             match(tr$trackType, plotRegionPlotTypes$name)]
         if (trt %in% c("summary", "reads")) {
             args <- c(
-                list(se = se, region = region, assayName = tr$trackData, 
-                     modbaseSpace = modbaseSpace, 
+                list(se = se, region = region, assayName = tr$trackData,
+                     modbaseSpace = modbaseSpace,
                      referenceCoordinate = referenceCoordinate),
                 tr[!names(tr) %in% c("trackData", "trackType", "se", "region",
-                                     "assayName", "modbaseSpace", "doSmooth", 
+                                     "assayName", "modbaseSpace", "doSmooth",
                                      "doPoint", "referenceCoordinate")]
             )
         } else if (trt == "annotation") {
             args <- c(
-                list(grl = subsetByOverlaps(tr$trackData, region), 
-                     region = region, referenceCoordinate = referenceCoordinate), 
-                     tr[!names(tr) %in% c("trackData", "trackType", "grl", 
+                list(grl = subsetByOverlaps(tr$trackData, region),
+                     region = region, referenceCoordinate = referenceCoordinate),
+                     tr[!names(tr) %in% c("trackData", "trackType", "grl",
                                           "region", "referenceCoordinate")]
             )
         }
         pL[[i]] <- switch(
             tr$trackType,
-            Point = do.call(plotSummaryPointSmooth, 
+            Point = do.call(plotSummaryPointSmooth,
                             c(args, list(doSmooth = FALSE))),
-            Smooth = do.call(plotSummaryPointSmooth, 
+            Smooth = do.call(plotSummaryPointSmooth,
                              c(args, list(doPoint = FALSE))),
             PointSmooth = do.call(plotSummaryPointSmooth, args),
             Lollipop = do.call(plotReadsLollipop, args),
@@ -318,23 +318,23 @@ plotRegion <- function(
 #' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
 #'     on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
 #'     where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill/color legend. If \code{NULL}, 
-#'     the name of the assay (\code{assayName}, for heatmaps and lollipop plots) 
-#'     \code{"Sample"} (for summary plots), or \code{"strand"} (for genomic 
+#'     this will be the title of the track fill/color legend. If \code{NULL},
+#'     the name of the assay (\code{assayName}, for heatmaps and lollipop plots)
+#'     \code{"Sample"} (for summary plots), or \code{"strand"} (for genomic
 #'     region plots) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample (for read-level plots). 
-#' 
+#'     the plot by sample (for read-level plots).
+#'
 #' @export
 #' @rdname plotRegion
-#' 
+#'
 #' @examples
 #' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
@@ -346,7 +346,7 @@ plotRegion <- function(
 #' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
 #'                   assayName = "mod_prob", 
 #'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
-#' 
+#'
 #' @import ggplot2
 #' @importFrom rlang .data
 #' @importFrom SummarizedExperiment assayNames
@@ -354,7 +354,7 @@ plotRegion <- function(
 #' @importFrom GenomicRanges shift
 #'
 plotReadsLollipop <- function(se,
-                              region, 
+                              region,
                               assayName,
                               size = 3.0,
                               stroke = 0.5,
@@ -369,7 +369,7 @@ plotReadsLollipop <- function(se,
                               referenceCoordinate = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
-    .assertScalar(x = assayName, type = "character", 
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
     .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = stroke, type = "numeric", rngIncl = c(0, Inf))
@@ -382,25 +382,25 @@ plotReadsLollipop <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        ## subset highlightRegions - mostly to ensure to only retain 
-        ## regions on the right chromosome, so that we can only focus on 
+        ## subset highlightRegions - mostly to ensure to only retain
+        ## regions on the right chromosome, so that we can only focus on
         ## the positions below
         highlightRegions <- subsetByOverlaps(highlightRegions, region,
                                              ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    
+
     if (!is.null(referenceCoordinate)) {
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
         region <- shift(region, -referenceCoordinate)
     }
-    
+
     # prepare plot data
-    df <- .preparePlotdataReads(x = se, assayName = assayName, 
-                                modbaseSpace = modbaseSpace, 
+    df <- .preparePlotdataReads(x = se, assayName = assayName,
+                                modbaseSpace = modbaseSpace,
                                 referenceCoordinate = referenceCoordinate)
 
     # order reads
@@ -410,7 +410,7 @@ plotReadsLollipop <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, assayName = assayName, region = region, 
+    p <- .createBaseplotReads(df = df, assayName = assayName, region = region,
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -443,7 +443,7 @@ plotReadsLollipop <- function(se,
 #'
 #' @export
 #' @rdname plotRegion
-#' 
+#'
 #' @examples
 #' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
@@ -455,7 +455,7 @@ plotReadsLollipop <- function(se,
 #' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
 #'                  assayName = "mod_prob", 
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
-#'                   
+#'
 #' @import ggplot2
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
@@ -477,7 +477,7 @@ plotReadsHeatmap <- function(se,
                              referenceCoordinate = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
-    .assertScalar(x = assayName, type = "character", 
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
     .assertScalar(x = drawRead, type = "logical")
     .assertScalar(x = linewidthTiles, type = "numeric")
@@ -495,18 +495,18 @@ plotReadsHeatmap <- function(se,
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    
+
     if (!is.null(referenceCoordinate)) {
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
         region <- shift(region, -referenceCoordinate)
     }
-    
+
     # prepare plot data
-    df <- .preparePlotdataReads(x = se, assayName = assayName, 
-                                modbaseSpace = modbaseSpace, 
-                                interpolate = interpolate, 
+    df <- .preparePlotdataReads(x = se, assayName = assayName,
+                                modbaseSpace = modbaseSpace,
+                                interpolate = interpolate,
                                 referenceCoordinate = referenceCoordinate)
 
     # order reads
@@ -516,7 +516,7 @@ plotReadsHeatmap <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, assayName = assayName, region = region, 
+    p <- .createBaseplotReads(df = df, assayName = assayName, region = region,
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -554,7 +554,7 @@ plotReadsHeatmap <- function(se,
 #'
 #' @export
 #' @rdname plotRegion
-#' 
+#'
 #' @examples
 #' library(GenomicRanges)
 #' bmfiles <- system.file("extdata",
@@ -567,7 +567,7 @@ plotReadsHeatmap <- function(se,
 #'                      BPPARAM = BiocParallel::SerialParam())
 #' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
 #'                        assayName = "Nvalid", doPoint = FALSE)
-#' 
+#'
 #' @import ggplot2
 #' @importFrom dplyr group_by ungroup group_modify
 #' @importFrom rlang .data
@@ -590,10 +590,10 @@ plotSummaryPointSmooth <- function(se,
                                    showLegend = TRUE,
                                    highlightRegions = NULL,
                                    referenceCoordinate = NULL) {
-    
+
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
-    .assertScalar(x = assayName, type = "character", 
+    .assertScalar(x = assayName, type = "character",
                   validValues = assayNames(se))
     .assertScalar(x = doPoint, type = "logical")
     .assertVector(x = arglistPoint, type = "list")
@@ -611,14 +611,14 @@ plotSummaryPointSmooth <- function(se,
                                              ignore.strand = TRUE)
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    
+
     if (!is.null(referenceCoordinate)) {
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
         region <- shift(region, -referenceCoordinate)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataSummary(x = se, assayName = assayName,
                                   modbaseSpace = modbaseSpace,
@@ -626,7 +626,7 @@ plotSummaryPointSmooth <- function(se,
 
     # create base plot
     p <- .createBaseplotSummary(df = df, assayName = assayName,
-                                region = region, 
+                                region = region,
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
@@ -669,21 +669,21 @@ plotSummaryPointSmooth <- function(se,
 }
 
 
-#' @param grl A named \code{\link[GenomicRanges]{GRangesList}} object where each 
+#' @param grl A named \code{\link[GenomicRanges]{GRangesList}} object where each
 #'     entry corresponds to a transcript or genomic feature.
 #' @param colorByStrand A logical scalar indicating whether or not to color
 #'     features by strand.
-#' @param displayNames A logical scalar indicating whether or not to display 
-#'     the names of the features in the plot. 
-#' @param labelSize A numeric scalar representing the font size of the displayed 
+#' @param displayNames A logical scalar indicating whether or not to display
+#'     the names of the features in the plot.
+#' @param labelSize A numeric scalar representing the font size of the displayed
 #'     label (if \code{displayNames} is \code{TRUE}).
-#' @param labelPosition A character scalar, either \code{"above"}, 
-#'     \code{"below"} or \code{"inside"}, indicating whether to place the 
-#'     feature labels above, below or inside the respective feature. 
-#' 
+#' @param labelPosition A character scalar, either \code{"above"},
+#'     \code{"below"} or \code{"inside"}, indicating whether to place the
+#'     feature labels above, below or inside the respective feature.
+#'
 #' @export
 #' @rdname plotRegion
-#' 
+#'
 #' @examples
 #' library(GenomicRanges)
 #' plotGenomicRegions(grl = GRangesList(
@@ -693,13 +693,13 @@ plotSummaryPointSmooth <- function(se,
 #'     region = as("chr1:1-50", "GRanges"),
 #'     labelPosition = "inside",
 #'     labelSize = 5)
-#' 
+#'
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics unlist start end
 #' @importFrom S4Vectors mcols
-#' 
-plotGenomicRegions <- function(grl, 
+#'
+plotGenomicRegions <- function(grl,
                                region,
                                colorByStrand = TRUE,
                                displayNames = TRUE,
@@ -716,13 +716,13 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = colorByStrand, type = "logical")
     .assertScalar(x = displayNames, type = "logical")
     .assertScalar(x = labelSize, type = "numeric")
-    .assertScalar(x = labelPosition, type = "character", 
+    .assertScalar(x = labelPosition, type = "character",
                   validValues = c("above", "below", "inside"))
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = showLegend, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    
+
     # subset GRangesList to elements overlapping the provided region
     grl <- subsetByOverlaps(grl, region)
 
@@ -732,23 +732,23 @@ plotGenomicRegions <- function(grl,
     fname_unique_full <- make.unique(names(grl))
     fname_parts <- rep(fname_full, lengths(grl))
     fname_unique_parts <- rep(fname_unique_full, lengths(grl))
-    
+
     fullRange <- unlist(range(grl), use.names = FALSE)
     mcols(fullRange)$fpname <- fname_full
     mcols(fullRange)$fpname_unique <- fname_unique_full
     fullRange <- as.data.frame(fullRange)
-    fullRange$fpname_unique <- factor(fullRange$fpname_unique, 
+    fullRange$fpname_unique <- factor(fullRange$fpname_unique,
                                       levels = fname_unique_full)
-    
+
     rangeParts <- unlist(grl, use.names = FALSE)
     mcols(rangeParts)$fpname <- fname_parts
     mcols(rangeParts)$fpname_unique <- fname_unique_parts
     rangeParts <- as.data.frame(rangeParts)
-    rangeParts$fpname_unique <- factor(rangeParts$fpname_unique, 
+    rangeParts$fpname_unique <- factor(rangeParts$fpname_unique,
                                        levels = fname_unique_full)
 
     rng <- c(start(region) - 0.5, end(region) + 0.5)
-    
+
     if (!is.null(referenceCoordinate)) {
         fullRange$start <- fullRange$start - referenceCoordinate
         fullRange$end <- fullRange$end - referenceCoordinate
@@ -756,9 +756,9 @@ plotGenomicRegions <- function(grl,
         rangeParts$end <- rangeParts$end - referenceCoordinate
         rng <- rng - referenceCoordinate
     }
-    
+
     # plot
-    gg <- ggplot() + 
+    gg <- ggplot() +
         geom_segment(data = fullRange,
                      mapping = aes(
                          x = .data[["start"]],
@@ -766,23 +766,23 @@ plotGenomicRegions <- function(grl,
                          xend = .data[["end"]]
                      ), colour = "gray80")
     if (colorByStrand) {
-        gg <- gg + 
-            geom_rect(data = rangeParts, 
+        gg <- gg +
+            geom_rect(data = rangeParts,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
                           ymin = as.numeric(.data[["fpname_unique"]]) - 0.25,
                           ymax = as.numeric(.data[["fpname_unique"]]) + 0.25,
                           fill = .data[["strand"]]
-                      ), colour = "gray20") + 
+                      ), colour = "gray20") +
             scale_fill_manual(values = c("+" = "#82b579",
                                          "-" = "#c79e9d",
                                          "*" = "gray80"),
                               breaks = c("+", "-", "*"),
                               labels = c("+", "-", ""))
     } else {
-        gg <- gg + 
-            geom_rect(data = rangeParts, 
+        gg <- gg +
+            geom_rect(data = rangeParts,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
@@ -795,28 +795,28 @@ plotGenomicRegions <- function(grl,
                          ifelse(labelPosition == "below", -0.25, 0))
         vjust <- ifelse(labelPosition == "above", -0.5,
                         ifelse(labelPosition == "below", 1.5, 0.5))
-        gg <- gg + 
+        gg <- gg +
             geom_text(
-                data = fullRange, 
+                data = fullRange,
                 mapping = aes(
-                    x = ifelse(.data[["strand"]] == "+", 
+                    x = ifelse(.data[["strand"]] == "+",
                                pmax(.data[["start"]], rng[1]),
                                ifelse(.data[["strand"]] == "-",
-                                      pmin(.data[["end"]], rng[2]), 
-                                      0.5 * pmax(.data[["start"]], rng[1]) + 
+                                      pmin(.data[["end"]], rng[2]),
+                                      0.5 * pmax(.data[["start"]], rng[1]) +
                                           0.5 * pmin(.data[["end"]], rng[2]))),
                     y = as.numeric(.data[["fpname_unique"]]) + offset,
-                    label = .data[["fpname"]], 
+                    label = .data[["fpname"]],
                     vjust = vjust,
-                    hjust = ifelse(.data[["strand"]] == "+", -0.1, 
+                    hjust = ifelse(.data[["strand"]] == "+", -0.1,
                                    ifelse(.data[["strand"]] == "-", 1.1, 0.5))
-                ), 
+                ),
                 size = labelSize)
     }
     gg <- gg +
         labs(title = trackTitle,
-             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) + 
-        theme_bw() + 
+             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) +
+        theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
               legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
@@ -826,15 +826,15 @@ plotGenomicRegions <- function(grl,
               axis.line.x = element_line(color = "black"),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank())
-    
+
     acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     gg <- gg + coord_cartesian(xlim = rng) +
         scale_x_continuous(
-            expand = c(0, 0), 
+            expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
-    
+
     gg
 }
 
@@ -887,9 +887,10 @@ plotGenomicRegions <- function(grl,
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
 #'
-#' @importFrom BiocGenerics start colnames nrow
-#' @importFrom SummarizedExperiment assay
-#' @importFrom SparseArray nnawhich nnavals
+#' @importFrom BiocGenerics start colnames
+#' @importFrom SummarizedExperiment colData assay
+#' @importFrom SparseArray nnawhich nnavals colSums is_nonna
+#' @importFrom S4Vectors endoapply
 #'
 #' @noRd
 #' @keywords internal
@@ -899,6 +900,9 @@ plotGenomicRegions <- function(grl,
                                   interpolate = FALSE,
                                   referenceCoordinate = NULL) {
     assaydat <- assay(x, assayName)
+    assaydat <- endoapply(assaydat, function(x) {
+        x[, colSums(is_nonna(x)) > 0] # remove all-NA reads
+    })
     # `assayName` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
@@ -935,13 +939,13 @@ plotGenomicRegions <- function(grl,
 #' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scaler with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
 #'     the color legend.
-#' @param showLegend A logical scalar indicating whether or not to show the 
+#' @param showLegend A logical scalar indicating whether or not to show the
 #'     legend for the plot.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
@@ -951,7 +955,7 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .createBaseplotSummary <- function(df,
                                    assayName,
-                                   region, 
+                                   region,
                                    trackTitle,
                                    legendTitle,
                                    showLegend,
@@ -969,7 +973,7 @@ plotGenomicRegions <- function(grl,
         theme(legend.position = ifelse(showLegend, "right", "none"))
 
     if (!is.null(highlightRegions)) {
-        p0 <- p0 + 
+        p0 <- p0 +
             geom_rect(
                 data = data.frame(highlightRegions),
                 mapping = aes(xmin = start, xmax = end,
@@ -978,7 +982,7 @@ plotGenomicRegions <- function(grl,
                 inherit.aes = FALSE
             )
     }
-    
+
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
@@ -993,16 +997,16 @@ plotGenomicRegions <- function(grl,
 #' @param assayName A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scalar with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
 #'     the fill legend.
-#' @param showLegend A logical scalar indicating whether or not to show the 
+#' @param showLegend A logical scalar indicating whether or not to show the
 #'     legend for the plot.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
+#'     the plot by sample.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1026,7 +1030,7 @@ plotGenomicRegions <- function(grl,
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
                         paste0("Position on ", as.character(seqnames(region))),
-                        paste0("Modified positions in ", 
+                        paste0("Modified positions in ",
                                as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
@@ -1044,7 +1048,7 @@ plotGenomicRegions <- function(grl,
                   hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
     if (facetBySample) {
-        p0 <- p0 + 
+        p0 <- p0 +
             facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y")
     }
     if (is.factor(df$position)) {
@@ -1053,9 +1057,9 @@ plotGenomicRegions <- function(grl,
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
-    
+
     if (!is.null(highlightRegions)) {
-        p0 <- p0 + 
+        p0 <- p0 +
             geom_rect(
                 data = data.frame(highlightRegions),
                 mapping = aes(xmin = start, xmax = end,
@@ -1064,7 +1068,7 @@ plotGenomicRegions <- function(grl,
                 inherit.aes = FALSE
             )
     }
-    
+
     return(p0)
 }
 
@@ -1160,7 +1164,7 @@ plotGenomicRegions <- function(grl,
     acc <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     p0 <- p0 + coord_cartesian(xlim = rng) +
         scale_x_continuous(
-            expand = c(0, 0), 
+            expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
