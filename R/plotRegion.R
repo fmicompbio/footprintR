@@ -868,7 +868,7 @@ plotGenomicRegions <- function(grl,
             expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
-                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Gb` = 1e+9)))
 
     gg
 }
@@ -1267,6 +1267,6 @@ plotGenomicRegions <- function(grl,
             expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
-                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
+                scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Gb` = 1e+9)))
     return(p0)
 }
