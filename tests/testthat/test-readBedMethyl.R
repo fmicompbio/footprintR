@@ -15,22 +15,43 @@ test_that("readBedMethyl works", {
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
     # invalid arguments
-    expect_error(readBedMethyl("error"))
-    expect_error(readBedMethyl(fname1, modbase = 'x'))
-    expect_error(readBedMethyl(fname1, modbase = c(nonexistent = 'm')))
-    expect_error(readBedMethyl(fname1, nrows = -1))
-    expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = "error"))
-    expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = c(100)))
-    expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = c(chr2 = 1000)))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = -1))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = NULL))
-    expect_error(readBedMethyl(fname1, modbase = 'm', sequenceContextWidth = 1, sequenceReference = "error"))
+    expect_error(readBedMethyl("error", 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'x', 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = c(nonexistent = 'm'), 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, nrows = -1, 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = "error", 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', seqinfo = c(100), 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', 
+                               seqinfo = c(chr2 = 1000), 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', 
+                               sequenceContextWidth = -1, 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', 
+                               sequenceContextWidth = 1, 
+                               sequenceReference = NULL, 
+                               BPPARAM = BiocParallel::SerialParam()))
+    expect_error(readBedMethyl(fname1, modbase = 'm', 
+                               sequenceContextWidth = 1, 
+                               sequenceReference = "error", 
+                               BPPARAM = BiocParallel::SerialParam()))
     expect_error(readBedMethyl(fname1, modbase = 'm', BPPARAM = "error"))
-    expect_error(readBedMethyl(fname1, modbase = 'm', verbose = "error"))
-    expect_error(readBedMethyl(c(a = fname1, a = fname2), modbase = c(a = 'm', a = 'a')))
+    expect_error(readBedMethyl(fname1, modbase = 'm', 
+                               BPPARAM = BiocParallel::SerialParam(),
+                               verbose = "error"))
+    expect_error(readBedMethyl(c(a = fname1, a = fname2), 
+                               modbase = c(a = 'm', a = 'a'), 
+                               BPPARAM = BiocParallel::SerialParam()))
 
     # expected results
-    se0 <- readBedMethyl(fnames = fname1, modbase = 'a')
+    se0 <- readBedMethyl(fnames = fname1, modbase = 'a', 
+                         BPPARAM = BiocParallel::SerialParam())
     suppressMessages(
         expect_message(
             se1 <- readBedMethyl(fnames = fname1, modbase = 'm',
@@ -40,18 +61,21 @@ test_that("readBedMethyl works", {
     )
     suppressMessages(
         expect_message(
-            se2 <- readBedMethyl(fnames = c(s2 = fname2), modbase = 'm',
+            se2 <- readBedMethyl(fnames = c(s2 = fname2), modbase = 'm', 
+                                 BPPARAM = BiocParallel::SerialParam(),
                                  sequenceContextWidth = 1,
                                  sequenceReference = ref, verbose = TRUE)
         )
     )
 
     se12 <- readBedMethyl(fnames = c(fname1, fname2), modbase = 'm',
-                          sequenceContextWidth = 1, sequenceReference = ref)
+                          sequenceContextWidth = 1, sequenceReference = ref, 
+                          BPPARAM = BiocParallel::SerialParam())
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2),
-                                  modbase = 'm', verbose = TRUE)
+                                  modbase = 'm', verbose = TRUE, 
+                                  BPPARAM = BiocParallel::SerialParam())
         )
     )
     expect_s4_class(se0, "SummarizedExperiment")

@@ -45,8 +45,10 @@
 #' @author Michael Stadler, Charlotte Soneson
 #'
 #' @examples
-#' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", package = "footprintR")
-#' readBedMethyl(bmfile, modbase = "m")
+#' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", 
+#'                       package = "footprintR")
+#' readBedMethyl(bmfile, modbase = "m", 
+#'               BPPARAM = BiocParallel::SerialParam())
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
 #'     [`bedMethyl` format description](https://nanoporetech.github.io/modkit/intro_bedmethyl.html#description-of-bedmethyl-output),

@@ -55,9 +55,11 @@
 #' extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
 #'                         package = "footprintR")
 #' ## ... no filtering
-#' readModkitExtract(extrfile, modbase = "m", filter = NULL)
+#' readModkitExtract(extrfile, modbase = "m", filter = NULL, 
+#'                   BPPARAM = BiocParallel::SerialParam())
 #' ## ... modkit filtering
-#' readModkitExtract(extrfile, modbase = "m", filter = "modkit")
+#' readModkitExtract(extrfile, modbase = "m", filter = "modkit", 
+#'                   BPPARAM = BiocParallel::SerialParam())
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
 #'     \code{\link[SummarizedExperiment]{SummarizedExperiment}} for the returned object type,

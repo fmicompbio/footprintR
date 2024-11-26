@@ -84,7 +84,8 @@ plotRegionPlotTypes <- data.frame(
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile)
+#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      BPPARAM = BiocParallel::SerialParam())
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "GCH")
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "HCG")
@@ -97,7 +98,8 @@ plotRegionPlotTypes <- data.frame(
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
 #'
 #' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
@@ -334,11 +336,13 @@ plotRegion <- function(
 #' @rdname plotRegion
 #' 
 #' @examples
+#' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
 #' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
 #'                   assayName = "mod_prob", 
 #'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
@@ -441,11 +445,13 @@ plotReadsLollipop <- function(se,
 #' @rdname plotRegion
 #' 
 #' @examples
+#' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
 #' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
 #'                  assayName = "mod_prob", 
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
@@ -550,13 +556,15 @@ plotReadsHeatmap <- function(se,
 #' @rdname plotRegion
 #' 
 #' @examples
+#' library(GenomicRanges)
 #' bmfiles <- system.file("extdata",
 #'                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
 #'                        package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile)
+#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      BPPARAM = BiocParallel::SerialParam())
 #' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
 #'                        assayName = "Nvalid", doPoint = FALSE)
 #' 
@@ -677,6 +685,7 @@ plotSummaryPointSmooth <- function(se,
 #' @rdname plotRegion
 #' 
 #' @examples
+#' library(GenomicRanges)
 #' plotGenomicRegions(grl = GRangesList(
 #'     g1 = GRanges("chr1", IRanges(c(10, 30), c(20, 35)), "+"),
 #'     cgi1 = GRanges("chr1", IRanges(15, 25), "*"),
