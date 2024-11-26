@@ -212,8 +212,8 @@ filterReads <- function(se, assayName = "mod_prob",
 
         ## NA in all positions
         readsToRemove[[nm]][colnames(
-            assay(se, assayName)[[nm]][, colSums(
-                is_nonna(assay(se, assayName)[[nm]])) == 0]),
+            assay(se, assayName)[[nm]])[colSums(
+                is_nonna(assay(se, assayName)[[nm]])) == 0],
             "AllNA"] <- TRUE
     }
 
