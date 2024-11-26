@@ -268,6 +268,10 @@ plotRegion <- function(
     se <- .keepPositionsBySequenceContext(
         se = se, sequenceContext = sequenceContext)
 
+    if (nrow(se) == 0) {
+        stop("No positions retained for plotting!")
+    }
+    
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
