@@ -403,8 +403,12 @@ plotReadsLollipop <- function(se,
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
 
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -428,7 +432,8 @@ plotReadsLollipop <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample)
+                              facetBySample = facetBySample,
+                              referenceCoordinate = referenceCoordinate)
 
     # add segments
     if (drawRead) {
@@ -509,8 +514,12 @@ plotReadsHeatmap <- function(se,
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -535,7 +544,8 @@ plotReadsHeatmap <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample)
+                              facetBySample = facetBySample,
+                              referenceCoordinate = referenceCoordinate)
 
     # add segments
     if (drawRead) {
@@ -626,8 +636,12 @@ plotSummaryPointSmooth <- function(se,
                                                     ignore.strand = TRUE)
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -645,7 +659,8 @@ plotSummaryPointSmooth <- function(se,
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
-                                highlightRegions = highlightRegions)
+                                highlightRegions = highlightRegions,
+                                referenceCoordinate = referenceCoordinate)
 
     # add points
     if (doPoint) {
@@ -974,32 +989,70 @@ plotGenomicRegions <- function(grl,
                                    trackTitle,
                                    legendTitle,
                                    showLegend,
-                                   highlightRegions) {
+                                   highlightRegions,
+                                   referenceCoordinate) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
-        labs(x = paste0("Position on ", as.character(seqnames(region))),
+        labs(x = ifelse(is.numeric(df$position),
+                        ifelse(is.null(referenceCoordinate),
+                               paste0("Position on ", 
+                                      as.character(seqnames(region))),
+                               paste0("Position relative to ",
+                                      as.character(seqnames(region)), ":",
+                                      referenceCoordinate)),
+                        paste0("Modified positions in ",
+                               as.character(seqnames(region)),
+                               ":", levels(df$position)[1], "-",
+                               levels(df$position)[nlevels(df$position)])),
              y = assayName,
              colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"))
 
-    if (!is.null(highlightRegions)) {
-        p0 <- p0 +
-            geom_rect(
-                data = data.frame(highlightRegions),
-                mapping = aes(xmin = start, xmax = end,
-                              ymin = -Inf, ymax = Inf),
-                fill = "gray90",
-                inherit.aes = FALSE
-            )
-    }
-
-    if (is.numeric(df$position)) {
+    if (is.factor(df$position)) {
+        p0 <- p0 + theme(axis.text.x = element_blank()) + 
+            scale_x_continuous(expand = expansion(mult = 0, add = 0))
+    } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
+    }
+    
+    if (!is.null(highlightRegions)) {
+        dfhr <- data.frame(highlightRegions)
+        if (is.factor(df$position)) {
+            lvs <- as.numeric(levels(df$position))
+            dfhr$start <- vapply(dfhr$start, function(s) {
+                if (any(lvs >= s)) {
+                    as.character(min(lvs[lvs >= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr$end <- vapply(dfhr$end, function(s) {
+                if (any(lvs <= s)) {
+                    as.character(max(lvs[lvs <= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr <- dfhr[rowSums(is.na(dfhr)) == 0, ]
+            dfhr$start <- factor(dfhr$start, levels = levels(df$position))
+            dfhr$end <- factor(dfhr$end, levels = levels(df$position))
+        }
+        if (nrow(dfhr) > 0) {
+            p0 <- p0 +
+                geom_rect(
+                    data = dfhr,
+                    mapping = aes(xmin = as.numeric(start) - 0.5, 
+                                  xmax = as.numeric(end) + 0.5,
+                                  ymin = -Inf, ymax = Inf),
+                    fill = "gray90",
+                    inherit.aes = FALSE
+                )
+        }
     }
 
     return(p0)
@@ -1035,7 +1088,8 @@ plotGenomicRegions <- function(grl,
                                  legendTitle,
                                  showLegend,
                                  highlightRegions,
-                                 facetBySample) {
+                                 facetBySample, 
+                                 referenceCoordinate) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -1044,7 +1098,12 @@ plotGenomicRegions <- function(grl,
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
-                        paste0("Position on ", as.character(seqnames(region))),
+                        ifelse(is.null(referenceCoordinate), 
+                               paste0("Position on ", 
+                                      as.character(seqnames(region))),
+                               paste0("Position relative to ", 
+                                      as.character(seqnames(region)), ":", 
+                                      referenceCoordinate)),
                         paste0("Modified positions in ",
                                as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
@@ -1068,20 +1127,43 @@ plotGenomicRegions <- function(grl,
     }
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
-
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
 
     if (!is.null(highlightRegions)) {
-        p0 <- p0 +
-            geom_rect(
-                data = data.frame(highlightRegions),
-                mapping = aes(xmin = start, xmax = end,
-                              ymin = -Inf, ymax = Inf),
-                fill = "gray90",
-                inherit.aes = FALSE
-            )
+        dfhr <- data.frame(highlightRegions)
+        if (is.factor(df$position)) {
+            lvs <- as.numeric(levels(df$position))
+            dfhr$start <- vapply(dfhr$start, function(s) {
+                if (any(lvs >= s)) {
+                    as.character(min(lvs[lvs >= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr$end <- vapply(dfhr$end, function(s) {
+                if (any(lvs <= s)) {
+                    as.character(max(lvs[lvs <= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr <- dfhr[rowSums(is.na(dfhr)) == 0, ]
+            dfhr$start <- factor(dfhr$start, levels = levels(df$position))
+            dfhr$end <- factor(dfhr$end, levels = levels(df$position))
+        }
+        if (nrow(dfhr) > 0) {
+            p0 <- p0 +
+                geom_rect(
+                    data = dfhr,
+                    mapping = aes(xmin = as.numeric(start) - 0.5, 
+                                  xmax = as.numeric(end) + 0.5,
+                                  ymin = -Inf, ymax = Inf),
+                    fill = "gray90",
+                    inherit.aes = FALSE
+                )
+        }
     }
 
     return(p0)
