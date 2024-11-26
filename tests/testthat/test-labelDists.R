@@ -33,8 +33,8 @@ test_that("labelDists works", {
                      c(1/5,
                        0/4, 1/4,
                        2/6, 2/5, 2/4,
-                       1,   1,   1,   1,
-                       5/6, 4/5, 4/4, 5/8, 1))
+                       1/2, 1/2, 1/2, 1/2,
+                       5/6, 4/5, 4/4, 5/8, 1/2))
 
     resB <- labelDists(labs, minOverlap = 4)
     expect_identical(resA, resB)
@@ -45,10 +45,10 @@ test_that("labelDists works", {
     expect_true(isSymmetric(resC))
     expect_identical(resC[upper.tri(resC)],
                      c(1/5,
-                       1,   1,
-                       2/6, 2/5, 1,
-                       1,   1,   1,   1,
-                       5/6, 4/5, 1, 5/8, 1))
+                       1/2, 1/2,
+                       2/6, 2/5, 1/2,
+                       1/2, 1/2, 1/2, 1/2,
+                       5/6, 4/5, 1/2, 5/8, 1/2))
 
     resD <- labelDists(randlabs)
     expect_type(resD, "double")
