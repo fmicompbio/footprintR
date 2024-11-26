@@ -96,6 +96,7 @@ se <- readBedMethyl(bedmethylfiles,
                     BPPARAM = BiocParallel::SerialParam())
 se
 ```
+
 These `bedMethyl` files contain summarized data and are read into a
 `RangedSummarizedExperiment` object. The rows here correspond to genomic
 positions:
@@ -103,6 +104,7 @@ positions:
 ```{r rowranges}
 rowRanges(se)
 ```
+
 ... and the columns correspond to the different samples (here corresponding
 to the names of the two input files in `bedmethylfiles`):
 
@@ -120,20 +122,22 @@ assayNames(se)
 head(assay(se, "Nmod"))
 head(assay(se, "Nvalid"))
 ```
+
 From these, you can easily calculate the fraction of modifications:
 
 ```{r fraction-modified}
 fraction_modified <- assay(se, "Nmod") / assay(se, "Nvalid")
 head(fraction_modified)
 ```
+
 Please note that non-finite fractions result from positions that had
 zero coverage in a given sample.
 
 ### Plot data
 
-Use the `plotRegion()` function to visualize data for a specific region,
-here visualizing the accessibility using GpC methylation (sequence context GCH),
-and adding a smooth line:
+The `plotRegion()` function provides a convenient and flexible interface for 
+visualizing data for a specific region. Here we visualize the accessibility 
+using GpC methylation (sequence context GCH), and adding a smooth line:
 
 ```{r plot-region-GCH, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in GCH contexts, coloured by sample."}
 plotRegion(se,
@@ -143,7 +147,8 @@ plotRegion(se,
            sequenceContext = "GCH")
 ```
 
-Or the endogenous DNA methylation (sequence context HCG):
+We can also restrict the plotted sites to focus on endogenous DNA methylation 
+(sequence context HCG):
 
 ```{r plot-region-HCG, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A point plot showing the fraction of modified bases per position in HCG contexts, coloured by sample."}
 plotRegion(se,
@@ -153,7 +158,7 @@ plotRegion(se,
            sequenceContext = "HCG")
 ```
 
-Or just plotting the coverage (`Nvalid`) as a smooth line:
+Or just plot the coverage (`Nvalid`) as a smooth line:
 
 ```{r plot-region-Nvalid, warning=FALSE, fig.width=6, fig.height=4, fig.alt="A smoothed line plot showing the read coverage (Nvalid) per position, coloured by sample."}
 plotRegion(se,

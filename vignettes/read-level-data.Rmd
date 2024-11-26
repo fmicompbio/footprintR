@@ -59,6 +59,7 @@ se <- readModBam(bamfiles = modbamfiles,
                  BPPARAM = BiocParallel::SerialParam())
 se
 ```
+
 This will create a `RangedSummarizedExperiment` object with positions in rows:
 
 ```{r row-data}
@@ -67,10 +68,12 @@ rowRanges(se)
 ```
 
 Just like with summary-level data, columns correspond to samples
+
 ```{r column-data}
 # ... and columns are samples
 colData(se)
 ```
+
 The sample names in the `sample` column are obtained from the input files
 (here `extractfiles`), or if the files are not named will be automatically
 assigned (using `"s1"`, `"s2"` and so on, assuming that each file corresponds
@@ -78,15 +81,18 @@ to a separate sample).
 
 Read-level information is contained in a list under `readInfo`, with one
 element per sample:
+
 ```{r coldata-read-info}
 se$readInfo
 ```
 
 Each sample typically contains several reads (see `se$n_reads`),
 which correspond to the rows of `se$readInfo`, for example for `"sample1"`:
+
 ```{r coldata-read-info-sample1}
 se$readInfo$sample1
 ```
+
 ## Explore assay data
 
 The single assay `mod_prob` is a `DataFrame` with modification probabilities.
@@ -97,10 +103,12 @@ assayNames(se)
 m <- assay(se, "mod_prob")
 m
 ```
+
 In order to store read-level data for variable numbers of reads per sample,
 each sample column is not just a simple vector, but a position-by-read
 `NaMatrix` (a sparse matrix object defined in the
 [`SparseArray`](https://bioconductor.org/packages/SparseArray) package).
+
 ```{r mod-prob-columns1}
 m$sample1
 ```
@@ -119,14 +127,17 @@ ncol(as.matrix(m)) # 5 reads in total
 One advantage of the grouping of reads per sample is that you can easily
 perform per-sample operations using `lapply` (returns a `list`) or `endoapply`
 (returns a `DataFrame`):
+
 ```{r mod-prob-lapply}
 lapply(m, ncol)
 endoapply(m, ncol)
 ```
+
 The `NaMatrix` objects do not store `NA` values and thus use much less
 memory compared to a normal (dense) matrix. The `NA` values here occur
 at positions (rows) that are not covered by the read of that column, and there
 are typically a large fraction of NA values:
+
 ```{r nnacount}
 prod(dim(m$sample1)) # total number of values
 nnacount(m$sample1)  # number of non-NA values
@@ -147,10 +158,11 @@ lapply(m["chr1:6928850:-", ], mean)
 # CORRECT: exclude the NA values (na.rm = TRUE)
 lapply(m["chr1:6928850:-", ], mean, na.rm = TRUE)
 ```
+
 Note that for sample2, in which no read overlaps the selected position,
 `mean(..., na.rm = TRUE)` returns `NaN`.
 
-In most cases it is preferrable to use the convenience functions in
+In most cases it is preferable to use the convenience functions in
 `footprintR`, such as `flattenReadLevelAssay()` (see next section), to calculate
 summaries over reads instead of the `lapply(...)` used above for illustration.
 
@@ -224,6 +236,7 @@ plotRegion(se, region = "chr1:6932700-6932800",
            tracks = list(list(trackData = "mod_prob",
                               trackType = "Heatmap")))
 ```
+
 ```{r plot-region2, warning=FALSE, fig.width=8, fig.height=2.5, fig.alt="A read-level point (lollipop) plot showing modification probabilities of individual modified bases of each read grouped by sample."}
 plotRegion(se, region = "chr1:6932700-6932800",
            tracks = list(list(trackData = "mod_prob",
@@ -277,6 +290,10 @@ plotRegion(se_summary, region = "chr1:6932700-6932800",
                          list(trackData = "mod_prob",
                               trackType = "Lollipop")))
 ```
+
+It is also possible to adapt some of the settings for the individual tracks - 
+for more details we refer to the help page for `plotRegion()`, where all 
+arguments for the respective tracks are listed.
 
 ## Analyze read-level data
 
