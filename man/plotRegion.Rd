@@ -261,16 +261,16 @@ plotRegion(seB, region = "chr1:6935400-6935450",
                          list(trackData = "mod_prob", trackType = "Heatmap")),
            modbaseSpace = TRUE)
 
-# combine read-level and summary tracks, 
-# set relative heights of tracks, don't facet by sample,  
+# combine read-level and summary tracks,
+# set relative heights of tracks, don't facet by sample,
 # change titles of legends
 seB <- flattenReadLevelAssay(seB, assayName = "mod_prob")
 plotRegion(seB, region = "chr1:6935400-6935450",
            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
-                              size = 4, legendTitle = "6mA", 
+                              size = 4, legendTitle = "6mA",
                               facetBySample = FALSE),
                          list(trackData = "FracMod", trackType = "Smooth")),
-           modbaseSpace = TRUE) + 
+           modbaseSpace = TRUE) +
     patchwork::plot_layout(heights = c(3, 2))
 
 extractfiles <- system.file("extdata",
@@ -278,8 +278,8 @@ extractfiles <- system.file("extdata",
                               "modkit_extract_rc_6mA_2.tsv.gz"),
                             package = "footprintR")
 seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
-plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
-                  assayName = "mod_prob", 
+plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"),
+                  assayName = "mod_prob",
                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 
 extractfiles <- system.file("extdata",
@@ -287,10 +287,10 @@ extractfiles <- system.file("extdata",
                               "modkit_extract_rc_6mA_2.tsv.gz"),
                             package = "footprintR")
 seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
-plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
-                 assayName = "mod_prob", 
+plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"),
+                 assayName = "mod_prob",
                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
-                  
+
 bmfiles <- system.file("extdata",
                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
                        package = "footprintR")
