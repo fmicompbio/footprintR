@@ -367,6 +367,7 @@ plotRegion <- function(
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom GenomicRanges shift
+#' @importFrom BiocGenerics intersect
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -397,11 +398,8 @@ plotReadsLollipop <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        ## subset highlightRegions - mostly to ensure to only retain
-        ## regions on the right chromosome, so that we can only focus on
-        ## the positions below
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
@@ -475,6 +473,7 @@ plotReadsLollipop <- function(se,
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom GenomicRanges shift
+#' @importFrom BiocGenerics intersect
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -505,8 +504,8 @@ plotReadsHeatmap <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
@@ -590,6 +589,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom GenomicRanges shift
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom SummarizedExperiment assayNames
+#' @importFrom BiocGenerics intersect
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -622,8 +622,8 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
 
