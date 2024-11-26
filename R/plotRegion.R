@@ -177,8 +177,8 @@ plotRegion <- function(se,
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
-        if (type_i == "annotation" && 
-            !(is(tracks[[i]]$trackData, "GRangesList") && 
+        if (type_i == "annotation" &&
+            !(is(tracks[[i]]$trackData, "GRangesList") &&
               !is.null(names(tracks[[i]]$trackData)))) {
             cli_abort(paste("tracks[[{i}]]$trackData must be a named",
                             "GRangesList object"))
@@ -207,11 +207,11 @@ plotRegion <- function(se,
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(se = se, sequenceContext = sequenceContext)
-    
-    # get the regions actually covered in se (to set the plot region for the 
+
+    # get the regions actually covered in se (to set the plot region for the
     # annotation tracks)
-    covregion <- BiocGenerics::intersect(region, 
-                                         range(rowRanges(se), 
+    covregion <- BiocGenerics::intersect(region,
+                                         range(rowRanges(se),
                                                ignore.strand = TRUE),
                                          ignore.strand = TRUE)
 
@@ -228,9 +228,9 @@ plotRegion <- function(se,
             )
         } else if (trt == "annotation") {
             args <- c(
-                list(x = subsetByOverlaps(tr$trackData, covregion), 
-                     region = covregion), 
-                     tr[!names(tr) %in% c("trackData", "trackType", "x", 
+                list(x = subsetByOverlaps(tr$trackData, covregion),
+                     region = covregion),
+                     tr[!names(tr) %in% c("trackData", "trackType", "x",
                                           "region")]
             )
         }
@@ -287,17 +287,17 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, the 
+#'     this will be the title of the track fill legend. If \code{NULL}, the
 #'     name of the assay (\code{aname}) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
+#'     the plot by sample.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter group_by summarise
@@ -322,12 +322,12 @@ plotRegion <- function(se,
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
+        highlightRegions <- subsetByOverlaps(highlightRegions,
+                                             range(rowRanges(x),
                                                    ignore.strand = TRUE),
                                              ignore.strand = TRUE)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace)
 
@@ -338,7 +338,7 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1],
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -387,17 +387,17 @@ plotRegion <- function(se,
 #'     bases for visualization.
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, the 
+#'     this will be the title of the track fill legend. If \code{NULL}, the
 #'     name of the assay (\code{aname}) will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
+#'     the plot by sample.
 #'
 #' @import ggplot2
 #' @importFrom dplyr filter
@@ -421,12 +421,12 @@ plotRegion <- function(se,
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
+        highlightRegions <- subsetByOverlaps(highlightRegions,
+                                             range(rowRanges(x),
                                                    ignore.strand = TRUE),
                                              ignore.strand = TRUE)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataReads(x, aname, modbaseSpace, interpolate)
 
@@ -437,7 +437,7 @@ plotRegion <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1], 
+    p <- .createBaseplotReads(df, aname, unique(seqnames(x))[1],
                               trackTitle = trackTitle,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
@@ -486,14 +486,14 @@ plotRegion <- function(se,
 #'     only contain the positions of modified bases instead of all position in
 #'     the genome. This can be useful to remove the gaps between modified
 #'     bases for visualization.
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track color legend. If \code{NULL}, 
+#'     this will be the title of the track color legend. If \code{NULL},
 #'     'Sample' will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
@@ -516,23 +516,23 @@ plotRegion <- function(se,
                                     legendTitle = NULL,
                                     showLegend = TRUE,
                                     highlightRegions = NULL) {
-    
+
     .assertVector(x = highlightRegions, type = "GenomicRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, 
-                                             range(rowRanges(x), 
+        highlightRegions <- subsetByOverlaps(highlightRegions,
+                                             range(rowRanges(x),
                                                    ignore.strand = TRUE),
                                              ignore.strand = TRUE)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataSummary(x = x, aname = aname,
                                   modbaseSpace = modbaseSpace)
 
     # create base plot
     p <- .createBaseplotSummary(df = df, aname = aname,
-                                chr = unique(seqnames(x))[1], 
+                                chr = unique(seqnames(x))[1],
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
@@ -578,38 +578,38 @@ plotRegion <- function(se,
 #' Plot an individual track: genomic regions
 #'
 #' @description
-#' This function creates a single plot track with genomic regions and is 
+#' This function creates a single plot track with genomic regions and is
 #' typically called by \code{\link{plotRegion}}.
 #'
-#' @param x A named \code{\link[GenomicRanges]{GRangesList}} object where each 
+#' @param x A named \code{\link[GenomicRanges]{GRangesList}} object where each
 #'     entry corresponds to a transcript or genomic feature.
-#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object 
+#' @param region A length-1 \code{\link[GenomicRanges]{GRanges}} object
 #'     giving the region to plot.
 #' @param colorByStrand A logical scalar indicating whether or not to color
 #'     features by strand.
-#' @param displayNames A logical scalar indicating whether or not to display 
-#'     the names of the features in the plot. 
-#' @param labelSize A numeric scalar representing the font size of the displayed 
+#' @param displayNames A logical scalar indicating whether or not to display
+#'     the names of the features in the plot.
+#' @param labelSize A numeric scalar representing the font size of the displayed
 #'     label (if \code{displayNames} is \code{TRUE}).
-#' @param labelPosition A character scalar, either \code{"above"}, 
-#'     \code{"below"} or \code{"inside"}, indicating whether to place the 
-#'     feature labels above, below or inside the respective feature. 
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param labelPosition A character scalar, either \code{"above"},
+#'     \code{"below"} or \code{"inside"}, indicating whether to place the
+#'     feature labels above, below or inside the respective feature.
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
-#'     this will be the title of the track fill legend. If \code{NULL}, 
+#'     this will be the title of the track fill legend. If \code{NULL},
 #'     'strand' will be used.
 #' @param showLegend A logical scalar, indicating whether or not to display
 #'     the legend for the track.
-#' 
+#'
 #' @import ggplot2
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics unlist start end
 #' @importFrom S4Vectors mcols
-#' 
+#'
 #' @noRd
 #' @keywords internal
-.plotGenomicRegions <- function(x, 
+.plotGenomicRegions <- function(x,
                                 region,
                                 colorByStrand = TRUE,
                                 displayNames = TRUE,
@@ -625,9 +625,9 @@ plotRegion <- function(se,
     .assertScalar(x = colorByStrand, type = "logical")
     .assertScalar(x = displayNames, type = "logical")
     .assertScalar(x = labelSize, type = "numeric")
-    .assertScalar(x = labelPosition, type = "character", 
+    .assertScalar(x = labelPosition, type = "character",
                   validValues = c("above", "below", "inside"))
-    
+
     # subset GRangesList to elements overlapping the provided region
     x <- subsetByOverlaps(x, region)
 
@@ -637,20 +637,20 @@ plotRegion <- function(se,
     mcols(fullRange)$fpname <- names(fullRange)
     names(fullRange) <- NULL
     fullRange <- as.data.frame(fullRange)
-    fullRange$fpname <- factor(fullRange$fpname, 
+    fullRange$fpname <- factor(fullRange$fpname,
                                levels = unique(fullRange$fpname))
-    
+
     rangeParts <- unlist(x, use.names = TRUE)
     mcols(rangeParts)$fpname <- names(rangeParts)
     names(rangeParts) <- NULL
     rangeParts <- as.data.frame(rangeParts)
-    rangeParts$fpname <- factor(rangeParts$fpname, 
+    rangeParts$fpname <- factor(rangeParts$fpname,
                                 levels = levels(fullRange$fpname))
 
     rng <- c(start(region), end(region))
-    
+
     # plot
-    gg <- ggplot() + 
+    gg <- ggplot() +
         geom_segment(data = fullRange,
                      mapping = aes(
                          x = .data[["start"]],
@@ -658,23 +658,23 @@ plotRegion <- function(se,
                          xend = .data[["end"]]
                      ), colour = "gray80")
     if (colorByStrand) {
-        gg <- gg + 
-            geom_rect(data = rangeParts, 
+        gg <- gg +
+            geom_rect(data = rangeParts,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
                           ymin = as.numeric(.data[["fpname"]]) - 0.25,
                           ymax = as.numeric(.data[["fpname"]]) + 0.25,
                           fill = .data[["strand"]]
-                      ), colour = "gray20") + 
+                      ), colour = "gray20") +
             scale_fill_manual(values = c("+" = "#82b579",
                                          "-" = "#c79e9d",
                                          "*" = "gray80"),
                               breaks = c("+", "-", "*"),
                               labels = c("+", "-", ""))
     } else {
-        gg <- gg + 
-            geom_rect(data = rangeParts, 
+        gg <- gg +
+            geom_rect(data = rangeParts,
                       mapping = aes(
                           xmin = .data[["start"]],
                           xmax = .data[["end"]],
@@ -687,28 +687,28 @@ plotRegion <- function(se,
                          ifelse(labelPosition == "below", -0.25, 0))
         vjust <- ifelse(labelPosition == "above", -0.5,
                         ifelse(labelPosition == "below", 1.5, 0.5))
-        gg <- gg + 
+        gg <- gg +
             geom_text(
-                data = fullRange, 
+                data = fullRange,
                 mapping = aes(
-                    x = ifelse(.data[["strand"]] == "+", 
+                    x = ifelse(.data[["strand"]] == "+",
                                pmax(.data[["start"]], rng[1]),
                                ifelse(.data[["strand"]] == "-",
-                                      pmin(.data[["end"]], rng[2]), 
-                                      0.5 * pmax(.data[["start"]], rng[1]) + 
+                                      pmin(.data[["end"]], rng[2]),
+                                      0.5 * pmax(.data[["start"]], rng[1]) +
                                           0.5 * pmin(.data[["end"]], rng[2]))),
                     y = as.numeric(.data[["fpname"]]) + offset,
-                    label = .data[["fpname"]], 
+                    label = .data[["fpname"]],
                     vjust = vjust,
-                    hjust = ifelse(.data[["strand"]] == "+", -0.1, 
+                    hjust = ifelse(.data[["strand"]] == "+", -0.1,
                                    ifelse(.data[["strand"]] == "-", 1.1, 0.5))
-                ), 
+                ),
                 size = labelSize)
     }
     gg <- gg +
         labs(title = trackTitle,
-             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) + 
-        theme_bw() + 
+             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) +
+        theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
               legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
@@ -718,17 +718,17 @@ plotRegion <- function(se,
               axis.line.x = element_line(color = "black"),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank())
-    
+
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
     gg <- gg + coord_cartesian(xlim = rng) +
         scale_x_continuous(
-            expand = c(0, 0), 
+            expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
-    
+
     gg
-    
+
 }
 
 ## helper functions used above -------------------------------------------------
@@ -779,7 +779,8 @@ plotRegion <- function(se,
 #'
 #' @importFrom BiocGenerics start colnames
 #' @importFrom SummarizedExperiment colData assay
-#' @importFrom SparseArray nnawhich nnavals
+#' @importFrom SparseArray nnawhich nnavals colSums is_nonna
+#' @importFrom S4Vectors endoapply
 #'
 #' @noRd
 #' @keywords internal
@@ -788,6 +789,9 @@ plotRegion <- function(se,
                                   modbaseSpace = FALSE,
                                   interpolate = FALSE) {
     assaydat <- assay(x, aname)
+    assaydat <- endoapply(assaydat, function(x) {
+        x[, colSums(is_nonna(x)) > 0] # remove all-NA reads
+    })
     # `aname` columns are grouped reads -> flatten
     sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
@@ -822,13 +826,13 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scaler with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
 #'     the color legend.
-#' @param showLegend A logical scalar indicating whether or not to show the 
+#' @param showLegend A logical scalar indicating whether or not to show the
 #'     legend for the plot.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #'
 #' @import ggplot2
@@ -838,7 +842,7 @@ plotRegion <- function(se,
 #' @keywords internal
 .createBaseplotSummary <- function(df,
                                    aname,
-                                   chr, 
+                                   chr,
                                    trackTitle,
                                    legendTitle,
                                    showLegend,
@@ -856,7 +860,7 @@ plotRegion <- function(se,
         theme(legend.position = ifelse(showLegend, "right", "none"))
 
     if (!is.null(highlightRegions)) {
-        p0 <- p0 + 
+        p0 <- p0 +
             geom_rect(
                 data = data.frame(highlightRegions),
                 mapping = aes(xmin = start, xmax = end,
@@ -865,7 +869,7 @@ plotRegion <- function(se,
                 inherit.aes = FALSE
             )
     }
-    
+
     if (is.numeric(df$position)) {
         p0 <- .addCoordAxisFormat(p0)
     }
@@ -880,16 +884,16 @@ plotRegion <- function(se,
 #' @param aname A character or numerical scalar selecting the assay to plot.
 #' @param chr A character scalar with the sequence name that is being plotted
 #'     (will be used to label the x-axis).
-#' @param trackTitle A character scalar or \code{NULL}, giving the title of 
+#' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
 #'     the fill legend.
-#' @param showLegend A logical scalar indicating whether or not to show the 
+#' @param showLegend A logical scalar indicating whether or not to show the
 #'     legend for the plot.
-#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object 
+#' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
 #' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample. 
+#'     the plot by sample.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -933,7 +937,7 @@ plotRegion <- function(se,
                   hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
     if (facetBySample) {
-        p0 <- p0 + 
+        p0 <- p0 +
             facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y")
     }
     if (is.factor(df$position)) {
@@ -942,9 +946,9 @@ plotRegion <- function(se,
     } else {
         p0 <- .addCoordAxisFormat(p0)
     }
-    
+
     if (!is.null(highlightRegions)) {
-        p0 <- p0 + 
+        p0 <- p0 +
             geom_rect(
                 data = data.frame(highlightRegions),
                 mapping = aes(xmin = start, xmax = end,
@@ -953,7 +957,7 @@ plotRegion <- function(se,
                 inherit.aes = FALSE
             )
     }
-    
+
     return(p0)
 }
 
@@ -1048,7 +1052,7 @@ plotRegion <- function(se,
     acc <- 10^round(log10((rng[2] - rng[1]) / rng[2]))
     p0 <- p0 + coord_cartesian(xlim = rng) +
         scale_x_continuous(
-            expand = c(0, 0), 
+            expand = c(0, 0),
             labels = label_number(
                 accuracy = acc,
                 scale_cut = c(0, ` Kb` = 1000, ` Mb` = 1e+06, ` Bb` = 1e+12)))
