@@ -84,7 +84,8 @@ plotRegionPlotTypes <- data.frame(
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile)
+#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      BPPARAM = BiocParallel::SerialParam())
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "GCH")
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "HCG")
@@ -97,7 +98,8 @@ plotRegionPlotTypes <- data.frame(
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
 #'
 #' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900",
@@ -132,7 +134,7 @@ plotRegionPlotTypes <- data.frame(
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
 #'     footprinting data.
 #'
-#' @importFrom SummarizedExperiment assay assayNames rowRanges
+#' @importFrom SummarizedExperiment assay assayNames rowRanges assays
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels seqnames
 #' @importFrom IRanges subsetByOverlaps
@@ -160,9 +162,10 @@ plotRegion <- function(
             rowRanges(se)[seqnames(rowRanges(se)) == seqlevels(se)[1]],
             ignore.strand = TRUE)
     }
-    .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
+    .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertVector(x = tracks, type = "list", rngLen = c(1, Inf))
+    assaysInUse <- c()
     for (i in seq_along(tracks)) {
         if (!is.list(tracks[[i]]) || length(tracks[[i]]) < 2) {
             cli_abort("tracks[[{i}]] has to be a list of length >=2.")
@@ -207,6 +210,10 @@ plotRegion <- function(
             cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
                             "summary assay in se"))
         }
+        if (type_i %in% c("reads", "summary")) {
+            # add assay to list of assays that are required for the plots
+            assaysInUse <- union(assaysInUse, tracks[[i]]$trackData)
+        }
         if (type_i == "annotation" &&
             !(is(tracks[[i]]$trackData, "GRangesList") &&
               !is.null(names(tracks[[i]]$trackData)))) {
@@ -243,9 +250,19 @@ plotRegion <- function(
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
 
     if (modbaseSpace) {
+        # relative coordinates are not meaningful in modbase space (as there 
+        # are no actual positions indicated anyway)
         referenceCoordinate <- NULL
     }
 
+    # remove assays that are not used in any plot, for faster subsetting of se
+    suppressWarnings(
+        # currently, assigning to assays triggers a deprecation warning
+        # (introduced in https://github.com/Bioconductor/IRanges/commit/b4e9e7e8530a822980259c37cef186c652ba8be5)
+        # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
+        assays(se) <- assays(se)[assaysInUse]
+    )
+    
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
@@ -334,13 +351,15 @@ plotRegion <- function(
 #' @rdname plotRegion
 #'
 #' @examples
+#' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
-#' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"),
-#'                   assayName = "mod_prob",
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
+#' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
+#'                   assayName = "mod_prob", 
 #'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
 #' @import ggplot2
@@ -348,6 +367,7 @@ plotRegion <- function(
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom GenomicRanges shift
+#' @importFrom BiocGenerics intersect
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -378,16 +398,17 @@ plotReadsLollipop <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        ## subset highlightRegions - mostly to ensure to only retain
-        ## regions on the right chromosome, so that we can only focus on
-        ## the positions below
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
 
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -411,7 +432,8 @@ plotReadsLollipop <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample)
+                              facetBySample = facetBySample,
+                              referenceCoordinate = referenceCoordinate)
 
     # add segments
     if (drawRead) {
@@ -441,19 +463,22 @@ plotReadsLollipop <- function(se,
 #' @rdname plotRegion
 #'
 #' @examples
+#' library(GenomicRanges)
 #' extractfiles <- system.file("extdata",
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit")
-#' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"),
-#'                  assayName = "mod_prob",
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#'                          BPPARAM = BiocParallel::SerialParam())
+#' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
+#'                  assayName = "mod_prob", 
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
 #' @import ggplot2
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom GenomicRanges shift
+#' @importFrom BiocGenerics intersect
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -484,13 +509,17 @@ plotReadsHeatmap <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = facetBySample, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -515,7 +544,8 @@ plotReadsHeatmap <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample)
+                              facetBySample = facetBySample,
+                              referenceCoordinate = referenceCoordinate)
 
     # add segments
     if (drawRead) {
@@ -550,13 +580,15 @@ plotReadsHeatmap <- function(se,
 #' @rdname plotRegion
 #'
 #' @examples
+#' library(GenomicRanges)
 #' bmfiles <- system.file("extdata",
 #'                        c("modkit_pileup_1.bed.gz", "modkit_pileup_2.bed.gz"),
 #'                        package = "footprintR")
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile)
+#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      BPPARAM = BiocParallel::SerialParam())
 #' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
 #'                        assayName = "Nvalid", doPoint = FALSE)
 #'
@@ -567,6 +599,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom GenomicRanges shift
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom SummarizedExperiment assayNames
+#' @importFrom BiocGenerics intersect
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -599,12 +632,16 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- subsetByOverlaps(highlightRegions, region,
-                                             ignore.strand = TRUE)
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    
     if (!is.null(referenceCoordinate)) {
+        # shift all ranges
         if (!is.null(highlightRegions)) {
             highlightRegions <- shift(highlightRegions, -referenceCoordinate)
         }
@@ -622,7 +659,8 @@ plotSummaryPointSmooth <- function(se,
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
-                                highlightRegions = highlightRegions)
+                                highlightRegions = highlightRegions,
+                                referenceCoordinate = referenceCoordinate)
 
     # add points
     if (doPoint) {
@@ -677,6 +715,7 @@ plotSummaryPointSmooth <- function(se,
 #' @rdname plotRegion
 #'
 #' @examples
+#' library(GenomicRanges)
 #' plotGenomicRegions(grl = GRangesList(
 #'     g1 = GRanges("chr1", IRanges(c(10, 30), c(20, 35)), "+"),
 #'     cgi1 = GRanges("chr1", IRanges(15, 25), "*"),
@@ -948,32 +987,70 @@ plotGenomicRegions <- function(grl,
                                    trackTitle,
                                    legendTitle,
                                    showLegend,
-                                   highlightRegions) {
+                                   highlightRegions,
+                                   referenceCoordinate) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       colour = .data[["sample"]])) +
-        labs(x = paste0("Position on ", as.character(seqnames(region))),
+        labs(x = ifelse(is.numeric(df$position),
+                        ifelse(is.null(referenceCoordinate),
+                               paste0("Position on ", 
+                                      as.character(seqnames(region))),
+                               paste0("Position relative to ",
+                                      as.character(seqnames(region)), ":",
+                                      referenceCoordinate)),
+                        paste0("Modified positions in ",
+                               as.character(seqnames(region)),
+                               ":", levels(df$position)[1], "-",
+                               levels(df$position)[nlevels(df$position)])),
              y = assayName,
              colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"))
 
-    if (!is.null(highlightRegions)) {
-        p0 <- p0 +
-            geom_rect(
-                data = data.frame(highlightRegions),
-                mapping = aes(xmin = start, xmax = end,
-                              ymin = -Inf, ymax = Inf),
-                fill = "gray90",
-                inherit.aes = FALSE
-            )
-    }
-
-    if (is.numeric(df$position)) {
+    if (is.factor(df$position)) {
+        p0 <- p0 + theme(axis.text.x = element_blank()) + 
+            scale_x_continuous(expand = expansion(mult = 0, add = 0))
+    } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
+    }
+    
+    if (!is.null(highlightRegions)) {
+        dfhr <- data.frame(highlightRegions)
+        if (is.factor(df$position)) {
+            lvs <- as.numeric(levels(df$position))
+            dfhr$start <- vapply(dfhr$start, function(s) {
+                if (any(lvs >= s)) {
+                    as.character(min(lvs[lvs >= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr$end <- vapply(dfhr$end, function(s) {
+                if (any(lvs <= s)) {
+                    as.character(max(lvs[lvs <= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr <- dfhr[rowSums(is.na(dfhr)) == 0, ]
+            dfhr$start <- factor(dfhr$start, levels = levels(df$position))
+            dfhr$end <- factor(dfhr$end, levels = levels(df$position))
+        }
+        if (nrow(dfhr) > 0) {
+            p0 <- p0 +
+                geom_rect(
+                    data = dfhr,
+                    mapping = aes(xmin = as.numeric(start) - 0.5, 
+                                  xmax = as.numeric(end) + 0.5,
+                                  ymin = -Inf, ymax = Inf),
+                    fill = "gray90",
+                    inherit.aes = FALSE
+                )
+        }
     }
 
     return(p0)
@@ -1009,7 +1086,8 @@ plotGenomicRegions <- function(grl,
                                  legendTitle,
                                  showLegend,
                                  highlightRegions,
-                                 facetBySample) {
+                                 facetBySample, 
+                                 referenceCoordinate) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -1018,7 +1096,12 @@ plotGenomicRegions <- function(grl,
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
-                        paste0("Position on ", as.character(seqnames(region))),
+                        ifelse(is.null(referenceCoordinate), 
+                               paste0("Position on ", 
+                                      as.character(seqnames(region))),
+                               paste0("Position relative to ", 
+                                      as.character(seqnames(region)), ":", 
+                                      referenceCoordinate)),
                         paste0("Modified positions in ",
                                as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
@@ -1042,20 +1125,43 @@ plotGenomicRegions <- function(grl,
     }
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
-
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region)
     }
 
     if (!is.null(highlightRegions)) {
-        p0 <- p0 +
-            geom_rect(
-                data = data.frame(highlightRegions),
-                mapping = aes(xmin = start, xmax = end,
-                              ymin = -Inf, ymax = Inf),
-                fill = "gray90",
-                inherit.aes = FALSE
-            )
+        dfhr <- data.frame(highlightRegions)
+        if (is.factor(df$position)) {
+            lvs <- as.numeric(levels(df$position))
+            dfhr$start <- vapply(dfhr$start, function(s) {
+                if (any(lvs >= s)) {
+                    as.character(min(lvs[lvs >= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr$end <- vapply(dfhr$end, function(s) {
+                if (any(lvs <= s)) {
+                    as.character(max(lvs[lvs <= s]))
+                } else {
+                    NA_character_
+                }
+            }, NA_character_)
+            dfhr <- dfhr[rowSums(is.na(dfhr)) == 0, ]
+            dfhr$start <- factor(dfhr$start, levels = levels(df$position))
+            dfhr$end <- factor(dfhr$end, levels = levels(df$position))
+        }
+        if (nrow(dfhr) > 0) {
+            p0 <- p0 +
+                geom_rect(
+                    data = dfhr,
+                    mapping = aes(xmin = as.numeric(start) - 0.5, 
+                                  xmax = as.numeric(end) + 0.5,
+                                  ymin = -Inf, ymax = Inf),
+                    fill = "gray90",
+                    inherit.aes = FALSE
+                )
+        }
     }
 
     return(p0)

@@ -55,7 +55,8 @@ Modification data is read from these files using `readModBam()`:
 se <- readModBam(bamfiles = modbamfiles,
                  regions = "chr1:6940000-7000000",
                  modbase = "a",
-                 verbose = TRUE)
+                 verbose = TRUE, 
+                 BPPARAM = BiocParallel::SerialParam())
 se
 ```
 This will create a `RangedSummarizedExperiment` object with positions in rows:

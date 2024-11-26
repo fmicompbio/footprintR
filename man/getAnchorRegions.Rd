@@ -79,7 +79,8 @@ library(SummarizedExperiment)
 modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                 modbase = "a", verbose = FALSE)
+                 modbase = "a", verbose = FALSE, 
+                 BPPARAM = BiocParallel::SerialParam())
 se <- flattenReadLevelAssay(se)
 ar <- getAnchorRegions(se, assayName = c("mod_prob", "FracMod", "Nvalid"),
                        regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),

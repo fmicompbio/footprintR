@@ -92,7 +92,8 @@ names(bedmethylfiles) <- c("sample1", "sample2")
 se <- readBedMethyl(bedmethylfiles,
                     modbase = "m",
                     sequenceContextWidth = 3,
-                    sequenceReference = reffile)
+                    sequenceReference = reffile, 
+                    BPPARAM = BiocParallel::SerialParam())
 se
 ```
 These `bedMethyl` files contain summarized data and are read into a

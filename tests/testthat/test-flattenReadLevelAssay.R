@@ -10,7 +10,8 @@ suppressPackageStartupMessages({
 test_that("flattenReadLevelAssay works", {
     # example data
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
-    se <- readModkitExtract(exfile, modbase = "a")
+    se <- readModkitExtract(exfile, modbase = "a", 
+                            BPPARAM = BiocParallel::SerialParam())
     se0 <- se
     colData(se0) <- NULL
 

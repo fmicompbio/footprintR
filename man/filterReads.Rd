@@ -87,8 +87,10 @@ library(SummarizedExperiment)
 modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                           package = "footprintR")
 se <- readModBam(bamfile = modbamfile, regions = "chr1:6920000-6995000",
-           modbase = "a", verbose = TRUE)
-se <- addReadStats(se, name = "QC")
+                 modbase = "a", verbose = TRUE,
+                 BPPARAM = BiocParallel::SerialParam())
+se <- addReadStats(se, name = "QC",
+                   BPPARAM = BiocParallel::SerialParam())
 
 ## Filter se
 sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)

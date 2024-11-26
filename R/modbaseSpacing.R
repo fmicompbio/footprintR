@@ -55,7 +55,8 @@
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances
 #' moddist <- calcModbaseSpacing(se)
@@ -157,7 +158,8 @@ calcModbaseSpacing <- function(se,
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances for each sample
 #' moddist <- calcModbaseSpacing(se)
@@ -263,7 +265,8 @@ estimateNRL <- function(x,
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances for each sample
 #' moddist <- calcModbaseSpacing(se)

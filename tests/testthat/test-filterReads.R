@@ -29,9 +29,11 @@ test_that("filterReads works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6990000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se, keepReads = TRUE)
-    se <- addReadStats(se, name = "qcc", stats = c(defaultReadStats, "SEntrModProb"))
+    se <- addReadStats(se, name = "qcc", stats = allReadStats, 
+                       BPPARAM = BiocParallel::SerialParam())
 
     expect_error(filterReads(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")

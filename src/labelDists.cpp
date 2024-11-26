@@ -68,7 +68,7 @@ Rcpp::NumericMatrix labelDists(std::vector<std::string> labels,
              kfrom = std::max(nDashLeading[i], nDashLeading[j]);
              kto = len - std::max(nDashTrailing[i], nDashTrailing[j]);
              if (kto - kfrom < minOverlap) {
-                 dist(i, j) = dist(j, i) = 1.0;
+                 dist(i, j) = dist(j, i) = 0.5;
              } else {
                  ndiff = 0.0;
                  for (k = kfrom; k < kto; k++) {

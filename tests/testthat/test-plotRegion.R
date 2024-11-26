@@ -15,11 +15,13 @@ test_that("plotRegion works", {
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readBedMethyl(fnames = c(fname1, fname2), modbase = "m",
                         sequenceContextWidth = 3,
-                        sequenceReference = ref)
+                        sequenceReference = ref, 
+                        BPPARAM = BiocParallel::SerialParam())
     se0 <- se
     assayNames(se0) <- c("assay1", "assay2")
     fname3 <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
-    seR <- readModkitExtract(fnames = fname3, modbase = 'a')
+    seR <- readModkitExtract(fnames = fname3, modbase = 'a', 
+                             BPPARAM = BiocParallel::SerialParam())
     seR2 <- flattenReadLevelAssay(se = seR)
 
     # invalid arguments
