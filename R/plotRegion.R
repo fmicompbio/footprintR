@@ -1108,7 +1108,9 @@ plotGenomicRegions <- function(grl,
              colour = ifelse(!is.null(legendTitle), legendTitle, colourBy),
              title = trackTitle) +
         theme_bw() +
-        theme(legend.position = ifelse(showLegend, "right", "none"))
+        theme(legend.position = ifelse(showLegend, "right", "none"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank())
 
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank()) + 
