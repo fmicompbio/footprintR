@@ -452,9 +452,9 @@ plotReadsLollipop <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, assayName = assayName, region = region,
+    p <- .createBaseplotReads(df = df, region = region,
                               trackTitle = trackTitle,
-                              legendTitle = legendTitle,
+                              legendTitle = ifelse(!is.null(legendTitle), legendTitle, assayName),
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBy = facetBy,
@@ -569,9 +569,9 @@ plotReadsHeatmap <- function(se,
     }
 
     # create base plot
-    p <- .createBaseplotReads(df = df, assayName = assayName, region = region,
+    p <- .createBaseplotReads(df = df, region = region,
                               trackTitle = trackTitle,
-                              legendTitle = legendTitle,
+                              legendTitle = ifelse(!is.null(legendTitle), legendTitle, assayName),
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBy = facetBy,
@@ -742,7 +742,7 @@ plotSummaryPointSmooth <- function(se,
                                                            "sample"))
 
     # create base plot
-    p <- .createBaseplotSummary(df = df, assayName = assayName,
+    p <- .createBaseplotSummary(df = df, 
                                 region = region,
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
@@ -753,6 +753,7 @@ plotSummaryPointSmooth <- function(se,
                                 colours = colours, 
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
+                                yAxisLabel = assayName,
                                 yAxisRange = yAxisRange)
 
     # add points
@@ -1125,9 +1126,8 @@ plotGenomicRegions <- function(grl,
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataSummary}}.
-#' @param assayName A character or numerical scalar selecting the assay to plot.
-#' @param chr A character scaler with the sequence name that is being plotted
-#'     (will be used to label the x-axis).
+#' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
+#'     region. 
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
@@ -1136,8 +1136,26 @@ plotGenomicRegions <- function(grl,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
+#' @param groupBy A character scalar indicating the column 
+#'     to group the points by for creating smoothed lines. 
+#' @param colourBy A character scalar indicating the column 
+#'     to colour the points and smoothed lines by. 
+#' @param colours A named character vector of colours to use for the unique
+#'     values in the \code{colourBy} annotation column. If \code{NULL} 
+#'     (default), the default \code{ggplot2} colours will be used. 
+#' @param referenceCoordinate A numeric scalar providing the coordinate position
+#'     (on the reference sequence in \code{region}) used as an "anchor" to
+#'     display relative positions. If \code{NULL} (the default), absolute
+#'     genomic positions are used. 
+#' @param labelAccuracy A numeric scalar indicating the precision of the 
+#'     positions along the genomic axis. Will be passed to 
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#'     value will be derived from \code{region}.
+#' @param yAxisLabel A character scalar providing the label to use for the 
+#'     y-axis.
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
-#'     to on the y-axis.
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     data.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1145,7 +1163,6 @@ plotGenomicRegions <- function(grl,
 #' @noRd
 #' @keywords internal
 .createBaseplotSummary <- function(df,
-                                   assayName,
                                    region,
                                    trackTitle,
                                    legendTitle,
@@ -1156,6 +1173,7 @@ plotGenomicRegions <- function(grl,
                                    colours,
                                    referenceCoordinate,
                                    labelAccuracy,
+                                   yAxisLabel,
                                    yAxisRange) {
     p0 <- ggplot(
         data = df,
@@ -1174,7 +1192,7 @@ plotGenomicRegions <- function(grl,
                                as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
-             y = assayName,
+             y = yAxisLabel,
              colour = ifelse(!is.null(legendTitle), legendTitle, colourBy),
              title = trackTitle) +
         theme_bw() +
@@ -1189,7 +1207,7 @@ plotGenomicRegions <- function(grl,
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region,
                                   labelAccuracy = labelAccuracy,
-                                  ylim = yAxisRange)
+                                  yAxisRange = yAxisRange)
     }
     
     if (!is.null(colours)) {
@@ -1238,9 +1256,8 @@ plotGenomicRegions <- function(grl,
 #'
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataReads}}.
-#' @param assayName A character or numerical scalar selecting the assay to plot.
-#' @param chr A character scalar with the sequence name that is being plotted
-#'     (will be used to label the x-axis).
+#' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
+#'     region. 
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
@@ -1251,6 +1268,14 @@ plotGenomicRegions <- function(grl,
 #'     containing regions to highlight with a grey shading.
 #' @param facetBy A character scalar indicating the sample annotation column 
 #'     to facet the plot by (if \code{NULL}, no faceting is done). 
+#' @param referenceCoordinate A numeric scalar providing the coordinate position
+#'     (on the reference sequence in \code{region}) used as an "anchor" to
+#'     display relative positions. If \code{NULL} (the default), absolute
+#'     genomic positions are used. 
+#' @param labelAccuracy A numeric scalar indicating the precision of the 
+#'     positions along the genomic axis. Will be passed to 
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#'     value will be derived from \code{region}.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1258,7 +1283,6 @@ plotGenomicRegions <- function(grl,
 #' @noRd
 #' @keywords internal
 .createBaseplotReads <- function(df,
-                                 assayName,
                                  region,
                                  trackTitle,
                                  legendTitle,
@@ -1286,7 +1310,7 @@ plotGenomicRegions <- function(grl,
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = "Reads",
-             fill = ifelse(!is.null(legendTitle), legendTitle, assayName),
+             fill = legendTitle,
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
@@ -1432,18 +1456,21 @@ plotGenomicRegions <- function(grl,
 #'     region. 
 #' @param labelAccuracy The desired accuracy of the labels - if \code{NULL} it
 #'     will be automatically determined.
+#' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     data.
 #'
 #' @import ggplot2
 #' @importFrom scales label_number
 #'
 #' @noRd
 #' @keywords internal
-.addCoordAxisFormat <- function(p0, region, labelAccuracy, ylim = NULL) {
+.addCoordAxisFormat <- function(p0, region, labelAccuracy, yAxisRange = NULL) {
     rng <- c(start(region) - 0.5, end(region) + 0.5)
     if (is.null(labelAccuracy)) {
         labelAccuracy <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     }
-    p0 <- p0 + coord_cartesian(xlim = rng, ylim = ylim) +
+    p0 <- p0 + coord_cartesian(xlim = rng, ylim = yAxisRange) +
         scale_x_continuous(
             expand = c(0, 0),
             labels = label_number(
