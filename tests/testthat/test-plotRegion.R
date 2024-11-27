@@ -166,18 +166,39 @@ test_that("plotRegion works", {
                                              )
                                          ))))
     expect_error(
-        p13 <- plotRegion(se = seR2, region = "chr1:693-1093",
-                          modbaseSpace = FALSE,
-                          tracks = list(list(trackType = "Lollipop",
-                                             trackData = "mod_prob",
-                                             highlightRegions = GenomicRanges::GRanges(
-                                                 "chr1", IRanges::IRanges(
-                                                     6935410, 6935430
-                                                 )
-                                             )),
-                                        list(trackType = "Smooth",
-                                             trackData = "FracMod"))),
+        plotRegion(se = seR2, region = "chr1:693-1093",
+                   modbaseSpace = FALSE,
+                   tracks = list(list(trackType = "Lollipop",
+                                      trackData = "mod_prob",
+                                      highlightRegions = GenomicRanges::GRanges(
+                                          "chr1", IRanges::IRanges(
+                                              6935410, 6935430
+                                          )
+                                      )),
+                                 list(trackType = "Smooth",
+                                      trackData = "FracMod"))),
         "No positions retained for plotting")
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+                   tracks = list(list(trackType = "Smooth",
+                                      trackData = "Nvalid",
+                                      colours = c(X = "red")))),
+        "Missing colour specification"
+    )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+                   tracks = list(list(trackType = "Smooth",
+                                      trackData = "Nvalid",
+                                      colourBy = "missing"))),
+        "Some requested columns are not present"
+    )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+                   tracks = list(list(trackType = "Heatmap",
+                                      trackData = "mod_prob",
+                                      facetBy = "missing"))),
+        "Some requested columns are not present"
+    )
     
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
