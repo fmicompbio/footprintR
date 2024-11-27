@@ -2,7 +2,8 @@ test_that(".filterPositionsByCoverage works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se, keepReads = TRUE)
 
     ## Calculate coverage
@@ -75,7 +76,8 @@ test_that(".keepPositionsBySequenceContext works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
 
     expect_error(.keepPositionsBySequenceContext(se = "error"),
                  "'se' must be of class 'SummarizedExperiment'")
@@ -138,7 +140,8 @@ test_that(".removeAllNAPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
     # Subset reads to make sure there are positions with all NAs
     se <- subsetReads(se, reads = list(s1 = c(1, 2), s2 = c(1, 3)))
@@ -175,7 +178,8 @@ test_that(".pruneAmbiguousStrandPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
 
     expect_error(.pruneAmbiguousStrandPositions(se = "error"),
@@ -226,7 +230,8 @@ test_that("filterPositions works", {
                                package = "footprintR")
     reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE)
+                     modbase = "a", verbose = FALSE, 
+                     BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
     se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
 

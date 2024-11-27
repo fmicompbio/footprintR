@@ -54,7 +54,8 @@ are implemented in C++ (\code{\link{calcAndCountDist}}) for efficiency.
 }
 \examples{
 modbamfiles <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a")
+se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+                 BPPARAM = BiocParallel::SerialParam())
 
 # get distances
 moddist <- calcModbaseSpacing(se)

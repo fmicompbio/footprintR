@@ -20,48 +20,65 @@ test_that("readModkitExtract works", {
     )
 
     # invalid arguments
-    expect_error(readModkitExtract("error"), "not all `fnames` exist")
-    expect_error(readModkitExtract(c(s1 = fnames[[1]], s1 = fnames[[2]])),
+    expect_error(readModkitExtract("error", 
+                                   BPPARAM = BiocParallel::SerialParam()), 
+                 "not all `fnames` exist")
+    expect_error(readModkitExtract(c(s1 = fnames[[1]], s1 = fnames[[2]]), 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "`names(fnames)` are not unique", fixed = TRUE)
-    expect_error(readModkitExtract(fnames, modbase = NULL),
+    expect_error(readModkitExtract(fnames, modbase = NULL, 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "'modbase' must not be NULL")
-    expect_error(readModkitExtract(fnames, modbase = 1),
+    expect_error(readModkitExtract(fnames, modbase = 1, 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "'modbase' must be of class 'character'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "a")),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "'modbase' must have length 4")
-    expect_error(readModkitExtract(fnames, modbase = "x"),
+    expect_error(readModkitExtract(fnames, modbase = "x", 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "invalid `modbase` values")
     expect_error(readModkitExtract(fnames, modbase = c(s1 = "m", s2 = "m",
-                                                       s3 = "a", s4 = "a")),
+                                                       s3 = "a", s4 = "a"), 
+                                   BPPARAM = BiocParallel::SerialParam()),
                  "names of `modbase` and `fnames` don't agree")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    filter = "error"),
                  "All values in 'filter' must be one of")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    filter = c(0.1, 0.2)),
                  "`filter` must be a named vector")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    filter = c(c = 0.1)),
                  "a filter threshold needs to be supplied")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    nrows = -1),
                  "'nrows' must be within")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    nrows = "error"),
                  "'nrows' must be of class 'numeric'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    seqinfo = c(100)),
                  "`seqinfo` must be ")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    seqinfo = c(chr2 = 1000)),
                  "'seqnames' contains sequence names with no entries")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
                                    BPPARAM = "error"),
                  "'BPPARAM' must be of class 'BiocParallelParam'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    verbose = "error"),
                  "'verbose' must be of class 'logical'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"),
+    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
+                                   BPPARAM = BiocParallel::SerialParam(),
                                    verbose = c(TRUE, FALSE)),
                  "'verbose' must have length 1")
 

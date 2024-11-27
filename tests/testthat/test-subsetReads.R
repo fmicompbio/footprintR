@@ -14,7 +14,8 @@ test_that("subsetReads works", {
                             c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                             package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles,
-                     regions = "chr1:6940000-6955000", modbase = "a")
+                     regions = "chr1:6940000-6955000", modbase = "a", 
+                     BPPARAM = BiocParallel::SerialParam())
     se2 <- flattenReadLevelAssay(se, keepReads = FALSE)
     se3 <- se
     assays(se3) <- SimpleList(mod_prob = assay(se, "mod_prob"),

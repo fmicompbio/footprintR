@@ -286,12 +286,14 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
-#'            modbase = "a", verbose = TRUE)
+#'            modbase = "a", verbose = TRUE, 
+#'            BPPARAM = BiocParallel::SerialParam())
 #'
-#' readStats <- calcReadStats(se)
+#' readStats <- calcReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' readStats$s1
 #'
-#' se_withReadStats <- addReadStats(se, name = "QC")
+#' se_withReadStats <- addReadStats(se, name = "QC", 
+#'                                  BPPARAM = BiocParallel::SerialParam())
 #' se_withReadStats$QC$s1
 #' metadata(se_withReadStats$QC$s1)
 #'

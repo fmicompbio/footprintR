@@ -101,13 +101,18 @@ test_that("calcReadStats works", {
     exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
                           package = "footprintR")
     reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
-    se <- readModkitExtract(exfile, modbase = "a")
+    se <- readModkitExtract(exfile, modbase = "a", 
+                            BPPARAM = BiocParallel::SerialParam())
 
     ## Expected errors
-    expect_error(calcReadStats(se, assayName = "error"), "must be one of: mod_prob")
+    expect_error(calcReadStats(se, assayName = "error", 
+                               BPPARAM = BiocParallel::SerialParam()), 
+                 "must be one of: mod_prob")
 
     ## No coverage requirement
-    rs <- calcReadStats(se, minNobsPpos = 1, stats = c(defaultReadStats, "SEntrModProb"))
+    rs <- calcReadStats(se, minNobsPpos = 1, 
+                        stats = allReadStats, 
+                        BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -140,7 +145,8 @@ test_that("calcReadStats works", {
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
     rs <- calcReadStats(se, verbose = TRUE, minNobsPpos = thr,
-                        stats = c(defaultReadStats, "SEntrModProb"))
+                        stats = allReadStats, 
+                        BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -170,10 +176,12 @@ test_that("calcReadStats works", {
     ## Using `regions` and large LagRange
     rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
         "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
-        minNobsPpos = 5, stats = c(defaultReadStats, "SEntrModProb"))
+        minNobsPpos = 5, stats = allReadStats, 
+        BPPARAM = BiocParallel::SerialParam())
     rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
                          LagRange = c(200, 256), minNobsPpos = 5,
-                         stats = c(defaultReadStats, "SEntrModProb"))
+                         stats = allReadStats, 
+                         BPPARAM = BiocParallel::SerialParam())
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 12L))
@@ -183,17 +191,20 @@ test_that("calcReadStats works", {
 
     ## Using `sequenceContext`, `minNobsPread` and `stats`
     expect_error(calcReadStats(se, regions = "chr1:6935000-6935100",
-                               sequenceContext = c("TAA", "AAA")),
+                               sequenceContext = c("TAA", "AAA"), 
+                               BPPARAM = BiocParallel::SerialParam()),
                  "No sequence context found")
     se1 <- addSeqContext(se, sequenceContextWidth = 3,
                          sequenceReference = reffile)
     expect_identical(colnames(rowData(se1)), "sequenceContext")
     rs1 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
                          sequenceContext = c("TAA", "AAA"), minNobsPpos = 5,
-                         minNobsPread = 1, stats = "MeanModProb")
+                         minNobsPread = 1, stats = "MeanModProb", 
+                         BPPARAM = BiocParallel::SerialParam())
     rs2 <- calcReadStats(se1, regions = "chr1:6935000-6936000",
                          sequenceContext = "WAA", minNobsPpos = 5,
-                         minNobsPread = 1, stats = "MeanModProb")
+                         minNobsPread = 1, stats = "MeanModProb", 
+                         BPPARAM = BiocParallel::SerialParam())
     expect_named(rs1, "s1")
     expect_named(rs2, "s1")
     # ignore metadata()$sequenceContext (expected to differ, explicit vs. IUPAC code)
@@ -210,14 +221,21 @@ test_that("addReadStats works", {
     exfiles <- system.file("extdata", c("modkit_extract_rc_6mA_1.tsv.gz",
                                         "modkit_extract_rc_6mA_2.tsv.gz"),
                            package = "footprintR")
-    se <- readModkitExtract(exfiles, modbase = "a")
-    se2 <- addReadStats(se, name = "qc2", stats = c(defaultReadStats, "SEntrModProb"))
+    se <- readModkitExtract(exfiles, modbase = "a", 
+                            BPPARAM = BiocParallel::SerialParam())
+    se2 <- addReadStats(se, name = "qc2", stats = allReadStats, 
+                        BPPARAM = BiocParallel::SerialParam())
     se3 <- addReadStats(se, minNobsPread = 2600, name = "qc2",
-                        stats = c(defaultReadStats, "SEntrModProb"))
+                        stats = allReadStats, 
+                        BPPARAM = BiocParallel::SerialParam())
 
     # expected errors
-    expect_error(addReadStats(se, name = -1), "must be of class 'character'")
-    expect_error(addReadStats(se, name = c("a", "b")), "must have length 1")
+    expect_error(addReadStats(se, name = -1, 
+                              BPPARAM = BiocParallel::SerialParam()),
+                 "must be of class 'character'")
+    expect_error(addReadStats(se, name = c("a", "b"), 
+                              BPPARAM = BiocParallel::SerialParam()),
+                 "must have length 1")
 
     # expected results
     expect_s4_class(se2, "SummarizedExperiment")

@@ -35,8 +35,10 @@
 #' @author Charlotte Soneson, Michael Stadler
 #'
 #' @examples
-#' exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
-#' se <- readModkitExtract(exfile, modbase = "a")
+#' exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", 
+#'                       package = "footprintR")
+#' se <- readModkitExtract(exfile, modbase = "a", 
+#'                         BPPARAM = BiocParallel::SerialParam())
 #' se
 #'
 #' se_summary <- flattenReadLevelAssay(se)
@@ -46,9 +48,10 @@
 #'     returned object type, \code{\link{readModkitExtract}} for the function
 #'     used to read the input files.
 #'
-#' @importFrom SummarizedExperiment assays assayNames assay
+#' @importFrom SummarizedExperiment assays assayNames assay assays
 #' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums
+#' @importFrom methods is
 #'
 #' @export
 flattenReadLevelAssay <- function(se,
@@ -60,7 +63,11 @@ flattenReadLevelAssay <- function(se,
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = assayName, type = "character",
-                  validValues = .getReadLevelAssayNames(se))
+                  validValues = assayNames(se)[
+                      vapply(assays(se), function(x) {
+                          is(x, "DFrame")
+                      }, FALSE)
+                  ])
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
                                   "Pmod", "AvgConf"))

@@ -26,8 +26,9 @@
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfiles, regions = "chr1:6940000-6955000",
-#'                  modbase = "a", verbose = TRUE)
-#' se <- addReadStats(se)
+#'                  modbase = "a", verbose = TRUE, 
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' plotReadStats(se)
 #'
 #' @import ggplot2
