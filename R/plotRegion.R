@@ -775,6 +775,7 @@ plotSummaryPointSmooth <- function(se,
                 data.frame(position = smooth$x,
                            value_smooth = smooth$y)
             } else if (smoothMethod == "rollingMean") {
+                ok <- is.finite(data[["value"]])
                 # first interpolate linearly
                 if (is.factor(data$position)) {
                     data$position <- as.numeric(data$position)
@@ -783,14 +784,15 @@ plotSummaryPointSmooth <- function(se,
                             to = max(data[["position"]]) + (windowSize - 1) / 2, 
                             by = 1)
                 yint <- rep(NA, length(xint))
-                idxout <- match(data[["position"]], xint)
-                yint[idxout] <- data[["value"]]
+                idxout <- match(data[["position"]][ok], xint)
+                yint[idxout] <- data[["value"]][ok]
                 yint[1] <- yint[idxout[1]]
                 yint[length(yint)] <- yint[idxout[length(idxout)]]
                 yint <- na.approx(yint, maxgap = Inf)
                 # then take rolling mean
                 yint <- rollmean(yint, k = windowSize, 
                                  fill = c(yint[1], NA, yint[length(yint)]))
+                idxout <- match(data[["position"]], xint)
                 data.frame(position = xint[idxout],
                            value_smooth = yint[idxout])
             }

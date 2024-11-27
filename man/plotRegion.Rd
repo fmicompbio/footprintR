@@ -64,7 +64,7 @@ plotSummaryPointSmooth(
   arglistSmooth = list(),
   smoothMethod = "smoothSpline",
   spar = 0.01,
-  windowSize = 3,
+  windowSize = 15,
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
