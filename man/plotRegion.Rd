@@ -71,8 +71,8 @@ plotSummaryPointSmooth(
   showLegend = TRUE,
   highlightRegions = NULL,
   groupBy = "sample",
-  colourBy = "sample",
-  colours = NULL,
+  colorBy = "sample",
+  colors = NULL,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
   yAxisRange = NULL
@@ -228,17 +228,17 @@ if \code{smoothMethod} is \code{"rollingMean"}.}
 to group the points by for creating smoothed lines. By default,
 the points will be grouped by 'sample', corresponding to the columns of
 \code{se}. Typically, the \code{groupBy} column should provide a
-finer (or identical) partition compared to the \code{colourBy} column -
-for example, grouping by sample and colouring by condition.}
+finer (or identical) partition compared to the \code{colorBy} column -
+for example, grouping by sample and coloring by condition.}
 
-\item{colourBy}{A character scalar indicating the sample annotation column
-to colour the points and smoothed lines by. By default, the points and
-lines will be coloured by 'sample', corresponding to the columns of
+\item{colorBy}{A character scalar indicating the sample annotation column
+to color the points and smoothed lines by. By default, the points and
+lines will be colored by 'sample', corresponding to the columns of
 \code{se}.}
 
-\item{colours}{A named character vector of colours to use for the unique
-values in the \code{colourBy} annotation column. If \code{NULL}
-(default), the default \code{ggplot2} colours will be used.}
+\item{colors}{A named character vector of colors to use for the unique
+values in the \code{colorBy} annotation column. If \code{NULL}
+(default), the default \code{ggplot2} colors will be used.}
 
 \item{yAxisRange}{Numeric vector of length 2 giving the range to zoom in
 to on the y-axis. If \code{NULL} (default), will be determined from the

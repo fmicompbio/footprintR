@@ -469,12 +469,12 @@ plotReadsLollipop <- function(se,
                                   x = .data[["start"]],
                                   y = .data[["read"]],
                                   xend = .data[["end"]]
-                              ), colour = "gray80")
+                              ), color = "gray80")
     }
 
     # add lollipops
     p <- p + geom_point(shape = 21, size = size,
-                        stroke = stroke, colour = "black")
+                        stroke = stroke, color = "black")
 
     # return plot
     return(p)
@@ -586,11 +586,11 @@ plotReadsHeatmap <- function(se,
                                   x = .data[["start"]],
                                   y = .data[["read"]],
                                   xend = .data[["end"]]
-                              ), colour = "gray80")
+                              ), color = "gray80")
     }
 
     # add tiles
-    p <- p + geom_tile(colour = "gray20", width = 1, height = 1,
+    p <- p + geom_tile(color = "gray20", width = 1, height = 1,
                        linewidth = linewidthTiles)
 
     # return plot
@@ -618,15 +618,15 @@ plotReadsHeatmap <- function(se,
 #'     to group the points by for creating smoothed lines. By default,
 #'     the points will be grouped by 'sample', corresponding to the columns of 
 #'     \code{se}. Typically, the \code{groupBy} column should provide a 
-#'     finer (or identical) partition compared to the \code{colourBy} column - 
-#'     for example, grouping by sample and colouring by condition.
-#' @param colourBy A character scalar indicating the sample annotation column 
-#'     to colour the points and smoothed lines by. By default, the points and
-#'     lines will be coloured by 'sample', corresponding to the columns of 
+#'     finer (or identical) partition compared to the \code{colorBy} column - 
+#'     for example, grouping by sample and coloring by condition.
+#' @param colorBy A character scalar indicating the sample annotation column 
+#'     to color the points and smoothed lines by. By default, the points and
+#'     lines will be colored by 'sample', corresponding to the columns of 
 #'     \code{se}.
-#' @param colours A named character vector of colours to use for the unique
-#'     values in the \code{colourBy} annotation column. If \code{NULL} 
-#'     (default), the default \code{ggplot2} colours will be used. 
+#' @param colors A named character vector of colors to use for the unique
+#'     values in the \code{colorBy} annotation column. If \code{NULL} 
+#'     (default), the default \code{ggplot2} colors will be used. 
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
 #'     to on the y-axis. If \code{NULL} (default), will be determined from the 
 #'     data.
@@ -674,8 +674,8 @@ plotSummaryPointSmooth <- function(se,
                                    showLegend = TRUE,
                                    highlightRegions = NULL,
                                    groupBy = "sample",
-                                   colourBy = "sample",
-                                   colours = NULL,
+                                   colorBy = "sample",
+                                   colors = NULL,
                                    referenceCoordinate = NULL,
                                    labelAccuracy = NULL,
                                    yAxisRange = NULL) {
@@ -709,13 +709,13 @@ plotSummaryPointSmooth <- function(se,
                                                     ignore.strand = TRUE)
     }
     .assertScalar(x = groupBy, type = "character", allowNULL = TRUE)
-    .assertScalar(x = colourBy, type = "character", allowNULL = TRUE)
-    .assertVector(x = colours, type = "character", allowNULL = TRUE)
-    if (!is.null(colours)) {
-        .assertVector(x = names(colours), type = "character")
-        if (!is.null(colourBy) && 
-                     !all(colData(se)[[colourBy]] %in% names(colours))) {
-            cli_abort("Missing colour specification for some values")
+    .assertScalar(x = colorBy, type = "character", allowNULL = TRUE)
+    .assertVector(x = colors, type = "character", allowNULL = TRUE)
+    if (!is.null(colors)) {
+        .assertVector(x = names(colors), type = "character")
+        if (!is.null(colorBy) && 
+                     !all(colData(se)[[colorBy]] %in% names(colors))) {
+            cli_abort("Missing color specification for some values")
         }
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
@@ -738,7 +738,7 @@ plotSummaryPointSmooth <- function(se,
     df <- .preparePlotdataSummary(x = se, assayName = assayName,
                                   modbaseSpace = modbaseSpace,
                                   referenceCoordinate = referenceCoordinate,
-                                  extraColAnnots = setdiff(c(groupBy, colourBy),
+                                  extraColAnnots = setdiff(c(groupBy, colorBy),
                                                            "sample"))
 
     # create base plot
@@ -749,8 +749,8 @@ plotSummaryPointSmooth <- function(se,
                                 showLegend = showLegend,
                                 highlightRegions = highlightRegions,
                                 groupBy = groupBy,
-                                colourBy = colourBy,
-                                colours = colours, 
+                                colorBy = colorBy,
+                                colors = colors, 
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
                                 yAxisLabel = assayName,
@@ -800,7 +800,7 @@ plotSummaryPointSmooth <- function(se,
 
         # apply the function to each group/color combination
         smooth_data <- df |>
-            group_by(across(all_of(c(groupBy, colourBy)))) |>
+            group_by(across(all_of(c(groupBy, colorBy)))) |>
             group_modify(~ compute_smooth(.x)) |>
             ungroup()
 
@@ -813,7 +813,7 @@ plotSummaryPointSmooth <- function(se,
                                 mapping = aes(x = .data[["position"]],
                                               y = .data[["value_smooth"]],
                                               group = .data[[groupBy]],
-                                              colour = .data[[colourBy]])),
+                                              color = .data[[colorBy]])),
                            arglistSmooth))
     }
 
@@ -920,7 +920,7 @@ plotGenomicRegions <- function(grl,
                          x = .data[["start"]],
                          y = .data[["fpname_unique"]],
                          xend = .data[["end"]]
-                     ), colour = "gray80")
+                     ), color = "gray80")
     if (colorByStrand) {
         gg <- gg +
             geom_rect(data = rangeParts,
@@ -930,7 +930,7 @@ plotGenomicRegions <- function(grl,
                           ymin = as.numeric(.data[["fpname_unique"]]) - 0.25,
                           ymax = as.numeric(.data[["fpname_unique"]]) + 0.25,
                           fill = .data[["strand"]]
-                      ), colour = "gray20") +
+                      ), color = "gray20") +
             scale_fill_manual(values = c("+" = "#82b579",
                                          "-" = "#c79e9d",
                                          "*" = "gray80"),
@@ -944,7 +944,7 @@ plotGenomicRegions <- function(grl,
                           xmax = .data[["end"]],
                           ymin = as.numeric(.data[["fpname_unique"]]) - 0.25,
                           ymax = as.numeric(.data[["fpname_unique"]]) + 0.25
-                      ), colour = "gray20", fill = "gray80")
+                      ), color = "gray20", fill = "gray80")
     }
     if (displayNames) {
         offset <- ifelse(labelPosition == "above", 0.25,
@@ -1144,11 +1144,11 @@ plotGenomicRegions <- function(grl,
 #'     containing regions to highlight with a grey shading.
 #' @param groupBy A character scalar indicating the column 
 #'     to group the points by for creating smoothed lines. 
-#' @param colourBy A character scalar indicating the column 
-#'     to colour the points and smoothed lines by. 
-#' @param colours A named character vector of colours to use for the unique
-#'     values in the \code{colourBy} annotation column. If \code{NULL} 
-#'     (default), the default \code{ggplot2} colours will be used. 
+#' @param colorBy A character scalar indicating the column 
+#'     to color the points and smoothed lines by. 
+#' @param colors A named character vector of colors to use for the unique
+#'     values in the \code{colorBy} annotation column. If \code{NULL} 
+#'     (default), the default \code{ggplot2} colors will be used. 
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
@@ -1175,8 +1175,8 @@ plotGenomicRegions <- function(grl,
                                    showLegend,
                                    highlightRegions,
                                    groupBy,
-                                   colourBy,
-                                   colours,
+                                   colorBy,
+                                   colors,
                                    referenceCoordinate,
                                    labelAccuracy,
                                    yAxisLabel,
@@ -1186,7 +1186,7 @@ plotGenomicRegions <- function(grl,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       group = .data[[groupBy]],
-                      color = .data[[colourBy]])) +
+                      color = .data[[colorBy]])) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ", 
@@ -1199,7 +1199,7 @@ plotGenomicRegions <- function(grl,
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = yAxisLabel,
-             colour = ifelse(!is.null(legendTitle), legendTitle, colourBy),
+             color = ifelse(!is.null(legendTitle), legendTitle, colorBy),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
@@ -1216,8 +1216,8 @@ plotGenomicRegions <- function(grl,
                                   yAxisRange = yAxisRange)
     }
     
-    if (!is.null(colours)) {
-        p0 <- p0 + scale_colour_manual(values = colours)
+    if (!is.null(colors)) {
+        p0 <- p0 + scale_color_manual(values = colors)
     }
     
     if (!is.null(highlightRegions)) {

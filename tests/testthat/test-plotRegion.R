@@ -182,14 +182,14 @@ test_that("plotRegion works", {
         plotRegion(se = seR2, region = "chr1:6935400-6935450", 
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
-                                      colours = c(X = "red")))),
-        "Missing colour specification"
+                                      colors = c(X = "red")))),
+        "Missing color specification"
     )
     expect_error(
         plotRegion(se = seR2, region = "chr1:6935400-6935450", 
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
-                                      colourBy = "missing"))),
+                                      colorBy = "missing"))),
         "Some requested columns are not present"
     )
     expect_error(
@@ -431,13 +431,13 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5, 
                            trackTitle = "Smooth", groupBy = "modbase",
-                           colourBy = "modbase",
+                           colorBy = "modbase",
                            highlightRegions = grh))) + 
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
     
-    ## modbaseSpace = TRUE, change colours
+    ## modbaseSpace = TRUE, change colors
     expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE, 
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
@@ -452,7 +452,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5, 
                            trackTitle = "Smooth", 
-                           colours = c(s1 = "forestgreen", s2 = "firebrick1"),
+                           colors = c(s1 = "forestgreen", s2 = "firebrick1"),
                            highlightRegions = grh))) + 
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
@@ -472,7 +472,7 @@ test_that("plotRegion works - manual inspection", {
                            size = 2, stroke = 0.5), 
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", colourBy = "modbase",
+                           trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh,
                            arglistSmooth = list(linewidth = 2)))) + 
             plot_layout(heights = c(3, 3, 2)),
@@ -493,7 +493,7 @@ test_that("plotRegion works - manual inspection", {
                            size = 2, stroke = 0.5), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", colourBy = "modbase",
+                           trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh, yAxisRange = c(3, 9)))) + 
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
