@@ -53,7 +53,8 @@ Suggests:
     sessioninfo
 LinkingTo: 
     Rcpp,
-    Rhtslib
+    Rhtslib,
+    cli
 SystemRequirements: GNU make
 URL: https://github.com/fmicompbio/footprintR, https://fmicompbio.github.io/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
