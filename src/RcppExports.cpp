@@ -11,13 +11,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // calcAndCountDist
-Rcpp::NumericVector calcAndCountDist(std::vector<int> query, std::vector<int> reference, Rcpp::NumericVector cnt);
+Rcpp::NumericVector calcAndCountDist(std::vector<int> query, std::vector<unsigned int> reference, Rcpp::NumericVector cnt);
 RcppExport SEXP _footprintR_calcAndCountDist(SEXP querySEXP, SEXP referenceSEXP, SEXP cntSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<int> >::type query(querySEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type reference(referenceSEXP);
+    Rcpp::traits::input_parameter< std::vector<unsigned int> >::type reference(referenceSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cnt(cntSEXP);
     rcpp_result_gen = Rcpp::wrap(calcAndCountDist(query, reference, cnt));
     return rcpp_result_gen;
