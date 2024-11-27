@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,13 +102,30 @@ from <code>modBam</code> files using <a href="https://nanoporetech.github.io/mod
 <code class="sourceCode R"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readModBam.html">readModBam</a></span><span class="op">(</span>bamfiles <span class="op">=</span> <span class="va">modbamfiles</span>,</span>
 <span>                 regions <span class="op">=</span> <span class="st">"chr1:6940000-7000000"</span>,</span>
 <span>                 modbase <span class="op">=</span> <span class="st">"a"</span>,</span>
-<span>                 verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>                 verbose <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> extracting base modifications from modBAM files</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_</span>…</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_</span>…</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> reading alignments overlapping 1 target</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> reading alignments overlapping 1 target <span style="color: #B2B2B2;">[37ms]</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> read 3 alignments</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_</span>…</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_</span>…</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> reading alignments overlapping 1 target</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> reading alignments overlapping 1 target <span style="color: #B2B2B2;">[21ms]</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> removed 320 unaligned (e.g. soft-masked) of 10174 called bases</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> read 2 alignments</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[108ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[73ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> collapsed 17739 positions to 7967 unique ones</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[801ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[166ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
@@ -325,7 +342,7 @@ covered positions:</p>
 <p>Note that for sample2, in which no read overlaps the selected
 position, <code>mean(..., na.rm = TRUE)</code> returns
 <code>NaN</code>.</p>
-<p>In most cases it is preferrable to use the convenience functions in
+<p>In most cases it is preferable to use the convenience functions in
 <code>footprintR</code>, such as <code><a href="../reference/flattenReadLevelAssay.html">flattenReadLevelAssay()</a></code>
 (see next section), to calculate summaries over reads instead of the
 <code>lapply(...)</code> used above for illustration.</p>
@@ -467,6 +484,10 @@ input:</p>
 <span>                         <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"mod_prob"</span>,</span>
 <span>                              trackType <span class="op">=</span> <span class="st">"Lollipop"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="read-level-data_files/figure-html/plot-summary-and-read-level-1.png" alt="A plot of modification data combining different track types." width="768"></p>
+<p>It is also possible to adapt some of the settings for the individual
+tracks - for more details we refer to the help page for
+<code><a href="../reference/plotRegion.html">plotRegion()</a></code>, where all arguments for the respective tracks
+are listed.</p>
 </div>
 <div class="section level2">
 <h2 id="analyze-read-level-data">Analyze read-level data<a class="anchor" aria-label="anchor" href="#analyze-read-level-data"></a>
@@ -502,15 +523,15 @@ accurate estimates from a handful of reads:</p>
 <code class="sourceCode R"><span><span class="fu">sessioninfo</span><span class="fu">::</span><span class="fu"><a href="https://r-lib.github.io/sessioninfo/reference/session_info.html" class="external-link">session_info</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Session info ───────────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt;  <span style="color: #555555; font-style: italic;">setting </span> <span style="color: #555555; font-style: italic;">value</span></span></span>
-<span><span class="co">#&gt;  version  R Under development (unstable) (2024-11-20 r87352)</span></span>
-<span><span class="co">#&gt;  os       macOS Sonoma 14.7</span></span>
+<span><span class="co">#&gt;  version  R Under development (unstable) (2024-11-26 r87383)</span></span>
+<span><span class="co">#&gt;  os       macOS Sonoma 14.7.1</span></span>
 <span><span class="co">#&gt;  system   aarch64, darwin20</span></span>
 <span><span class="co">#&gt;  ui       X11</span></span>
 <span><span class="co">#&gt;  language en</span></span>
 <span><span class="co">#&gt;  collate  en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  ctype    en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  tz       UTC</span></span>
-<span><span class="co">#&gt;  date     2024-11-21</span></span>
+<span><span class="co">#&gt;  date     2024-11-27</span></span>
 <span><span class="co">#&gt;  pandoc   3.1.11 @ /usr/local/bin/ (via rmarkdown)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Packages ───────────────────────────────────────────────────────────────────</span></span></span>
@@ -518,7 +539,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  abind                * 1.4-8      <span style="color: #555555;">2024-09-12</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  Biobase              * 2.67.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  BiocGenerics         * 0.53.3     <span style="color: #555555;">2024-11-14</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  BiocIO                 1.17.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
+<span><span class="co">#&gt;  BiocIO                 1.17.1     <span style="color: #555555;">2024-11-25</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  BiocParallel           1.41.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  Biostrings             2.75.1     <span style="color: #555555;">2024-11-07</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  bitops                 1.0-9      <span style="color: #555555;">2024-10-03</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
@@ -539,7 +560,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  fansi                  1.0.6      <span style="color: #555555;">2023-12-08</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  farver                 2.1.2      <span style="color: #555555;">2024-05-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  fastmap                1.2.0      <span style="color: #555555;">2024-05-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  footprintR           * 0.2.0      <span style="color: #555555;">2024-11-21</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
+<span><span class="co">#&gt;  footprintR           * 0.2.1      <span style="color: #555555;">2024-11-27</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
 <span><span class="co">#&gt;  fs                     1.6.5      <span style="color: #555555;">2024-10-30</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  generics             * 0.1.3      <span style="color: #555555;">2022-07-05</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  GenomeInfoDb         * 1.43.1     <span style="color: #555555;">2024-11-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
@@ -566,7 +587,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  patchwork              1.3.0      <span style="color: #555555;">2024-09-16</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  pillar                 1.9.0      <span style="color: #555555;">2023-03-22</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  pkgconfig              2.0.3      <span style="color: #555555;">2019-09-22</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  pkgdown                <span style="color: #BB00BB; font-weight: bold;">2.1.1.9000</span> <span style="color: #555555;">2024-11-21</span> <span style="color: #555555;">[1]</span> <span style="color: #BB00BB; font-weight: bold;">Github (r-lib/pkgdown@7645a47)</span></span></span>
+<span><span class="co">#&gt;  pkgdown                <span style="color: #BB00BB; font-weight: bold;">2.1.1.9000</span> <span style="color: #555555;">2024-11-27</span> <span style="color: #555555;">[1]</span> <span style="color: #BB00BB; font-weight: bold;">Github (r-lib/pkgdown@7a6ffe4)</span></span></span>
 <span><span class="co">#&gt;  purrr                  1.0.2      <span style="color: #555555;">2023-08-10</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  R6                     2.5.1      <span style="color: #555555;">2021-08-19</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  ragg                   1.3.3      <span style="color: #555555;">2024-09-11</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>

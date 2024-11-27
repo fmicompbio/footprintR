@@ -17,7 +17,7 @@ statistics that are calculated."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,7 @@ statistics that are calculated.</p>
 <span>  minNobsPread <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  LowConf <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  LagRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">64</span><span class="op">)</span>,</span>
-<span>  BPPARAM <span class="op">=</span> <span class="fu">bpparam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">MulticoreParam</span><span class="op">(</span><span class="fl">4L</span>, RNGseed <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -149,10 +149,8 @@ autocorrelation (see details section).</p></dd>
 <dt id="arg-bpparam">BPPARAM<a class="anchor" aria-label="anchor" href="#arg-bpparam"></a></dt>
 <dd><p>A <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object that
 controls the number of parallel CPU threads to use for calculating
-read statistics. The default value (<code><a href="https://rdrr.io/pkg/BiocParallel/man/register.html" class="external-link">bpparam</a></code>)
-will select an appropriate value for the current environment, or the
-default parallel backend registered using
-<code><a href="https://rdrr.io/pkg/BiocParallel/man/register.html" class="external-link">register</a></code>.</p></dd>
+read statistics. The default value is
+(<code><a href="https://rdrr.io/pkg/BiocParallel/man/MulticoreParam-class.html" class="external-link">MulticoreParam</a>(4L, RNGseed = 42L)</code>).</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -256,24 +254,25 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-in"><span><span class="va">modbamfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"6mA_1_10reads.bam"</span>,</span></span>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span>bamfile <span class="op">=</span> <span class="va">modbamfile</span>, regions <span class="op">=</span> <span class="st">"chr1:6940000-6955000"</span>,</span></span>
-<span class="r-in"><span>           modbase <span class="op">=</span> <span class="st">"a"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>           modbase <span class="op">=</span> <span class="st">"a"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, </span></span>
+<span class="r-in"><span>           BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> extracting base modifications from modBAM files</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_</span>…</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_</span>…</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> reading alignments overlapping 1 target</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> reading alignments overlapping 1 target <span style="color: #B2B2B2;">[31ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> reading alignments overlapping 1 target <span style="color: #B2B2B2;">[22ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> removed 1724 unaligned (e.g. soft-masked) of 25090 called bases</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> read 3 alignments</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[20ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[15ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> collapsed 11300 positions to 4772 unique ones</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 11300 positions to 4772 unique ones <span style="color: #B2B2B2;">[475ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 11300 positions to 4772 unique ones <span style="color: #B2B2B2;">[60ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">readStats</span> <span class="op">&lt;-</span> <span class="fu">calcReadStats</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">readStats</span> <span class="op">&lt;-</span> <span class="fu">calcReadStats</span><span class="op">(</span><span class="va">se</span>, BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">readStats</span><span class="op">$</span><span class="va">s1</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 11 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         MeanModProb   FracMod  MeanConf</span>
@@ -302,7 +301,8 @@ typically covers the signal of nucleosome periodicity.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9 -0.00443190,-0.00209608,-0.00710440,...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-92e906ae-cddb-4347-a114-bf9137761a8d -0.01637500, 0.00794205,-0.02053895,...</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">se_withReadStats</span> <span class="op">&lt;-</span> <span class="fu">addReadStats</span><span class="op">(</span><span class="va">se</span>, name <span class="op">=</span> <span class="st">"QC"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">se_withReadStats</span> <span class="op">&lt;-</span> <span class="fu">addReadStats</span><span class="op">(</span><span class="va">se</span>, name <span class="op">=</span> <span class="st">"QC"</span>, </span></span>
+<span class="r-in"><span>                                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">se_withReadStats</span><span class="op">$</span><span class="va">QC</span><span class="op">$</span><span class="va">s1</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 3 rows and 11 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                         MeanModProb   FracMod  MeanConf</span>

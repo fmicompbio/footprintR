@@ -17,7 +17,7 @@ represented by NA."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@ represented by <code>NA</code>.</p>
 <span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sequenceContextWidth <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  sequenceReference <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  BPPARAM <span class="op">=</span> <span class="fu">bpparam</span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">MulticoreParam</span><span class="op">(</span><span class="fl">4L</span>, RNGseed <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -126,10 +126,8 @@ See <code><a href="addSeqContext.html">addSeqContext</a></code> for details.</p>
 <dt id="arg-bpparam">BPPARAM<a class="anchor" aria-label="anchor" href="#arg-bpparam"></a></dt>
 <dd><p>A <code><a href="https://rdrr.io/pkg/BiocParallel/man/BiocParallelParam-class.html" class="external-link">BiocParallelParam</a></code> object that
 controls the number of parallel CPU threads to use for some of the steps
-in <code>readModkitExtract()</code>. The default value
-(<code><a href="https://rdrr.io/pkg/BiocParallel/man/register.html" class="external-link">bpparam</a></code>) will select an appropriate value
-for the current environment, or the default parallel backend registered
-using <code><a href="https://rdrr.io/pkg/BiocParallel/man/register.html" class="external-link">register</a></code>.</p></dd>
+in <code>readModkitExtract()</code>. The default value is
+(<code><a href="https://rdrr.io/pkg/BiocParallel/man/MulticoreParam-class.html" class="external-link">MulticoreParam</a>(4L, RNGseed = 42L)</code>).</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -160,7 +158,8 @@ with each column (sample) corresponding to a position-by-read
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">extrfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"modkit_extract_rc_5mC_1.tsv.gz"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co">## ... no filtering</span></span></span>
-<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="cn">NULL</span>, </span></span>
+<span class="r-in"><span>                  BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> dim: 6432 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(3): modkit_threshold filter_threshold readLevelData</span>
@@ -171,7 +170,8 @@ with each column (sample) corresponding to a position-by-read
 <span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
 <span class="r-in"><span><span class="co">## ... modkit filtering</span></span></span>
-<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="st">"modkit"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="st">"modkit"</span>, </span></span>
+<span class="r-in"><span>                  BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5893 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(3): modkit_threshold filter_threshold readLevelData</span>

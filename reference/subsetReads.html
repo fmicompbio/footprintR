@@ -17,7 +17,7 @@ provides a more convenient way to subset these nested reads."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,8 +111,9 @@ object.</p>
 <span class="r-in"><span><span class="va">modbamfiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span></span>
 <span class="r-in"><span>                           <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"6mA_1_10reads.bam"</span>, <span class="st">"6mA_2_10reads.bam"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                           package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span><span class="va">modbamfiles</span>, <span class="st">"chr1:6940000-6955000"</span>, <span class="st">"a"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span><span class="va">modbamfiles</span>, <span class="st">"chr1:6940000-6955000"</span>, <span class="st">"a"</span>, </span></span>
+<span class="r-in"><span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "s1-233e48a7-f379-4dcf-9270-958231125563"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2] "s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9"</span>
@@ -126,7 +127,7 @@ object.</p>
 <span class="r-in"><span><span class="co"># subset by read identifiers</span></span></span>
 <span class="r-in"><span><span class="va">seSub</span> <span class="op">&lt;-</span> <span class="fu">subsetReads</span><span class="op">(</span><span class="va">se</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"s1-233e48a7-f379-4dcf-9270-958231125563"</span>,</span></span>
 <span class="r-in"><span>                           <span class="st">"s2-034b625e-6230-4f8d-a713-3a32cd96c298"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seSub</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seSub</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "s1-233e48a7-f379-4dcf-9270-958231125563"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -137,7 +138,7 @@ object.</p>
 <span class="r-in"><span><span class="co"># subset by a list of indices</span></span></span>
 <span class="r-in"><span><span class="va">seSub</span> <span class="op">&lt;-</span> <span class="fu">subsetReads</span><span class="op">(</span><span class="va">se</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>s1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                              s2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seSub</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seSub</span>, <span class="st">"mod_prob"</span><span class="op">)</span>, <span class="va">colnames</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "s1-233e48a7-f379-4dcf-9270-958231125563"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2] "s1-92e906ae-cddb-4347-a114-bf9137761a8d"</span>

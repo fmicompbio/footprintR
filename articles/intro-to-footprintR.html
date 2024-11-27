@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -135,7 +135,8 @@ specification</a>):</p>
 <span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readBedMethyl.html">readBedMethyl</a></span><span class="op">(</span><span class="va">bedmethylfiles</span>,</span>
 <span>                    modbase <span class="op">=</span> <span class="st">"m"</span>,</span>
 <span>                    sequenceContextWidth <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>                    sequenceReference <span class="op">=</span> <span class="va">reffile</span><span class="op">)</span></span>
+<span>                    sequenceReference <span class="op">=</span> <span class="va">reffile</span>, </span>
+<span>                    BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
 <span><span class="co">#&gt; dim: 12020 2 </span></span>
@@ -170,7 +171,7 @@ here correspond to genomic positions:</p>
 corresponding to the names of the two input files in
 <code>bedmethylfiles</code>):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "sample1" "sample2"</span></span></code></pre></div>
 <p>The data is stored in two matrices (assays) called <code>Nmod</code>
 (the number of modified bases per sample and position) and
@@ -214,9 +215,10 @@ zero coverage in a given sample.</p>
 <div class="section level3">
 <h3 id="plot-data">Plot data<a class="anchor" aria-label="anchor" href="#plot-data"></a>
 </h3>
-<p>Use the <code><a href="../reference/plotRegion.html">plotRegion()</a></code> function to visualize data for a
-specific region, here visualizing the accessibility using GpC
-methylation (sequence context GCH), and adding a smooth line:</p>
+<p>The <code><a href="../reference/plotRegion.html">plotRegion()</a></code> function provides a convenient and
+flexible interface for visualizing data for a specific region. Here we
+visualize the accessibility using GpC methylation (sequence context
+GCH), and adding a smooth line:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>,</span>
 <span>           region <span class="op">=</span> <span class="st">"chr1:6939000-6946000"</span>,</span>
@@ -224,7 +226,8 @@ methylation (sequence context GCH), and adding a smooth line:</p>
 <span>                              trackType <span class="op">=</span> <span class="st">"PointSmooth"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           sequenceContext <span class="op">=</span> <span class="st">"GCH"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="intro-to-footprintR_files/figure-html/plot-region-GCH-1.png" alt="A point plot showing the fraction of modified bases per position in GCH contexts, coloured by sample." width="576"></p>
-<p>Or the endogenous DNA methylation (sequence context HCG):</p>
+<p>We can also restrict the plotted sites to focus on endogenous DNA
+methylation (sequence context HCG):</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>,</span>
 <span>           region <span class="op">=</span> <span class="st">"chr1:6939000-6946000"</span>,</span>
@@ -232,8 +235,7 @@ methylation (sequence context GCH), and adding a smooth line:</p>
 <span>                              trackType <span class="op">=</span> <span class="st">"PointSmooth"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           sequenceContext <span class="op">=</span> <span class="st">"HCG"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="intro-to-footprintR_files/figure-html/plot-region-HCG-1.png" alt="A point plot showing the fraction of modified bases per position in HCG contexts, coloured by sample." width="576"></p>
-<p>Or just plotting the coverage (<code>Nvalid</code>) as a smooth
-line:</p>
+<p>Or just plot the coverage (<code>Nvalid</code>) as a smooth line:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>,</span>
 <span>           region <span class="op">=</span> <span class="st">"chr1:6939000-6946000"</span>,</span>
@@ -249,15 +251,15 @@ line:</p>
 <code class="sourceCode R"><span><span class="fu">sessioninfo</span><span class="fu">::</span><span class="fu"><a href="https://r-lib.github.io/sessioninfo/reference/session_info.html" class="external-link">session_info</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Session info ───────────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt;  <span style="color: #555555; font-style: italic;">setting </span> <span style="color: #555555; font-style: italic;">value</span></span></span>
-<span><span class="co">#&gt;  version  R Under development (unstable) (2024-11-20 r87352)</span></span>
-<span><span class="co">#&gt;  os       macOS Sonoma 14.7</span></span>
+<span><span class="co">#&gt;  version  R Under development (unstable) (2024-11-26 r87383)</span></span>
+<span><span class="co">#&gt;  os       macOS Sonoma 14.7.1</span></span>
 <span><span class="co">#&gt;  system   aarch64, darwin20</span></span>
 <span><span class="co">#&gt;  ui       X11</span></span>
 <span><span class="co">#&gt;  language en</span></span>
 <span><span class="co">#&gt;  collate  en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  ctype    en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  tz       UTC</span></span>
-<span><span class="co">#&gt;  date     2024-11-21</span></span>
+<span><span class="co">#&gt;  date     2024-11-27</span></span>
 <span><span class="co">#&gt;  pandoc   3.1.11 @ /usr/local/bin/ (via rmarkdown)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Packages ───────────────────────────────────────────────────────────────────</span></span></span>
@@ -265,7 +267,7 @@ line:</p>
 <span><span class="co">#&gt;  abind                  1.4-8      <span style="color: #555555;">2024-09-12</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  Biobase              * 2.67.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  BiocGenerics         * 0.53.3     <span style="color: #555555;">2024-11-14</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  BiocIO                 1.17.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
+<span><span class="co">#&gt;  BiocIO                 1.17.1     <span style="color: #555555;">2024-11-25</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  BiocParallel           1.41.0     <span style="color: #555555;">2024-10-29</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  Biostrings             2.75.1     <span style="color: #555555;">2024-11-07</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  bitops                 1.0-9      <span style="color: #555555;">2024-10-03</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
@@ -286,7 +288,7 @@ line:</p>
 <span><span class="co">#&gt;  fansi                  1.0.6      <span style="color: #555555;">2023-12-08</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  farver                 2.1.2      <span style="color: #555555;">2024-05-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  fastmap                1.2.0      <span style="color: #555555;">2024-05-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  footprintR           * 0.2.0      <span style="color: #555555;">2024-11-21</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
+<span><span class="co">#&gt;  footprintR           * 0.2.1      <span style="color: #555555;">2024-11-27</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
 <span><span class="co">#&gt;  fs                     1.6.5      <span style="color: #555555;">2024-10-30</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  generics             * 0.1.3      <span style="color: #555555;">2022-07-05</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  GenomeInfoDb         * 1.43.1     <span style="color: #555555;">2024-11-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
@@ -313,7 +315,7 @@ line:</p>
 <span><span class="co">#&gt;  patchwork              1.3.0      <span style="color: #555555;">2024-09-16</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  pillar                 1.9.0      <span style="color: #555555;">2023-03-22</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  pkgconfig              2.0.3      <span style="color: #555555;">2019-09-22</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  pkgdown                <span style="color: #BB00BB; font-weight: bold;">2.1.1.9000</span> <span style="color: #555555;">2024-11-21</span> <span style="color: #555555;">[1]</span> <span style="color: #BB00BB; font-weight: bold;">Github (r-lib/pkgdown@7645a47)</span></span></span>
+<span><span class="co">#&gt;  pkgdown                <span style="color: #BB00BB; font-weight: bold;">2.1.1.9000</span> <span style="color: #555555;">2024-11-27</span> <span style="color: #555555;">[1]</span> <span style="color: #BB00BB; font-weight: bold;">Github (r-lib/pkgdown@7a6ffe4)</span></span></span>
 <span><span class="co">#&gt;  purrr                  1.0.2      <span style="color: #555555;">2023-08-10</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  R.methodsS3            1.8.2      <span style="color: #555555;">2022-06-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  R.oo                   1.27.0     <span style="color: #555555;">2024-11-01</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
