@@ -1,3 +1,10 @@
+# footprintR 0.2.2
+
+* Rename the facetBySample argument to the read-level plots to facetBy, allowing facetting by an arbitrary sample column
+* Add groupBy and colourBy argument to the summary plots, for specification of arbitrary sample columns to group and colour values by
+* Open up for using other smoothing methods, specified via the smoothMethod argument to the summary plots. Add 'rollingMean' as a first alternative to the smoothing splines
+* Add progress bars and expand messages to track progress when reading modbam files
+
 # footprintR 0.2.1
 
 * Refactor `calcReadStats()` (non-user facing changes)
