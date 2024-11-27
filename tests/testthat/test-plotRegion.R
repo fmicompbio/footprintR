@@ -199,6 +199,21 @@ test_that("plotRegion works", {
                                       facetBy = "missing"))),
         "Some requested columns are not present"
     )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+                   tracks = list(list(trackType = "Smooth",
+                                      trackData = "Nvalid",
+                                      smoothMethod = "rollingMean",
+                                      windowSize = 4))),
+        "windowSize must be an odd integer"
+    )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+                   tracks = list(list(trackType = "Smooth",
+                                      trackData = "Nvalid",
+                                      smoothMethod = "missing"))),
+        "All values in 'smoothMethod' must be one of"
+    )
     
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
