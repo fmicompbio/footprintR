@@ -473,7 +473,8 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5, 
                            trackTitle = "Smooth", colourBy = "modbase",
-                           highlightRegions = grh))) + 
+                           highlightRegions = grh,
+                           arglistSmooth = list(linewidth = 2)))) + 
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")

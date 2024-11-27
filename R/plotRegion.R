@@ -803,12 +803,16 @@ plotSummaryPointSmooth <- function(se,
             ungroup()
 
         # add the smoothed line
-        p <- p + geom_line(
-            data = smooth_data, inherit.aes = FALSE,
-            mapping = aes(x = .data[["position"]],
-                          y = .data[["value_smooth"]],
-                          group = .data[[groupBy]],
-                          colour = .data[[colourBy]]))
+        arglistSmooth <- arglistSmooth[!names(arglistSmooth) %in%
+                                           c("data", "inherit.aes",
+                                             "mapping")]
+        p <- p + do.call(geom_line, 
+                         c(list(data = smooth_data, inherit.aes = FALSE,
+                                mapping = aes(x = .data[["position"]],
+                                              y = .data[["value_smooth"]],
+                                              group = .data[[groupBy]],
+                                              colour = .data[[colourBy]])),
+                           arglistSmooth))
     }
 
     # return the plot
