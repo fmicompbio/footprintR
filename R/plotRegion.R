@@ -129,7 +129,7 @@ plotRegionPlotTypes <- data.frame(
 #' plotRegion(seB, region = "chr1:6935400-6935450",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
 #'                               size = 4, legendTitle = "6mA",
-#'                               facetBySample = FALSE),
+#'                               facetBy = NULL),
 #'                          list(trackData = "FracMod", trackType = "Smooth")),
 #'            modbaseSpace = TRUE) +
 #'     patchwork::plot_layout(heights = c(3, 2))
@@ -363,8 +363,10 @@ plotRegion <- function(
 #'     the legend for the track.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
-#' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample (for read-level plots).
+#' @param facetBy A character scalar indicating the sample annotation column 
+#'     to facet the plot by (if \code{NULL}, no faceting is done). By default,
+#'     the plot will be facetted by 'sample', corresponding to the columns of 
+#'     \code{se}.
 #'
 #' @export
 #' @rdname plotRegion
@@ -400,7 +402,7 @@ plotReadsLollipop <- function(se,
                               legendTitle = NULL,
                               showLegend = TRUE,
                               highlightRegions = NULL,
-                              facetBySample = TRUE,
+                              facetBy = "sample",
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -421,7 +423,7 @@ plotReadsLollipop <- function(se,
         highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
                                                     ignore.strand = TRUE)
     }
-    .assertScalar(x = facetBySample, type = "logical")
+    .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
@@ -439,7 +441,8 @@ plotReadsLollipop <- function(se,
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
-                                referenceCoordinate = referenceCoordinate)
+                                referenceCoordinate = referenceCoordinate, 
+                                extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
     if (orderReads) {
@@ -453,7 +456,7 @@ plotReadsLollipop <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample,
+                              facetBy = facetBy,
                               referenceCoordinate = referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
@@ -514,7 +517,7 @@ plotReadsHeatmap <- function(se,
                              legendTitle = NULL,
                              showLegend = TRUE,
                              highlightRegions = NULL,
-                             facetBySample = TRUE,
+                             facetBy = "sample",
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -535,7 +538,7 @@ plotReadsHeatmap <- function(se,
         highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
                                                     ignore.strand = TRUE)
     }
-    .assertScalar(x = facetBySample, type = "logical")
+    .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
@@ -554,7 +557,8 @@ plotReadsHeatmap <- function(se,
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
                                 interpolate = interpolate,
-                                referenceCoordinate = referenceCoordinate)
+                                referenceCoordinate = referenceCoordinate, 
+                                extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
     if (orderReads) {
@@ -568,7 +572,7 @@ plotReadsHeatmap <- function(se,
                               legendTitle = legendTitle,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
-                              facetBySample = facetBySample,
+                              facetBy = facetBy,
                               referenceCoordinate = referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
@@ -600,6 +604,16 @@ plotReadsHeatmap <- function(se,
 #'     \code{\link[ggplot2]{geom_line}}.
 #' @param spar A numeric scalar typically in (0,1] specifying the desired
 #'     degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
+#' @param groupBy A character scalar indicating the sample annotation column 
+#'     to group the points by for creating smoothed lines. By default,
+#'     the points will be grouped by 'sample', corresponding to the columns of 
+#'     \code{se}. Typically, the \code{groupBy} column should provide a 
+#'     finer (or identical) partition compared to the \code{colourBy} column - 
+#'     for example, grouping by sample and colouring by condition.
+#' @param colourBy A character scalar indicating the sample annotation column 
+#'     to colour the points and smoothed lines by. By default, the points and
+#'     lines will be coloured by 'sample', corresponding to the columns of 
+#'     \code{se}.
 #'
 #' @export
 #' @rdname plotRegion
@@ -618,7 +632,7 @@ plotReadsHeatmap <- function(se,
 #'                        assayName = "Nvalid", doPoint = FALSE)
 #'
 #' @import ggplot2
-#' @importFrom dplyr group_by ungroup group_modify
+#' @importFrom dplyr group_by ungroup group_modify across all_of
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
 #' @importFrom GenomicRanges shift
@@ -639,6 +653,8 @@ plotSummaryPointSmooth <- function(se,
                                    legendTitle = NULL,
                                    showLegend = TRUE,
                                    highlightRegions = NULL,
+                                   groupBy = "sample",
+                                   colourBy = "sample",
                                    referenceCoordinate = NULL,
                                    labelAccuracy = NULL) {
 
@@ -661,6 +677,8 @@ plotSummaryPointSmooth <- function(se,
         highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
                                                     ignore.strand = TRUE)
     }
+    .assertScalar(x = groupBy, type = "character", allowNULL = TRUE)
+    .assertScalar(x = colourBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
@@ -678,7 +696,9 @@ plotSummaryPointSmooth <- function(se,
     # prepare plot data
     df <- .preparePlotdataSummary(x = se, assayName = assayName,
                                   modbaseSpace = modbaseSpace,
-                                  referenceCoordinate = referenceCoordinate)
+                                  referenceCoordinate = referenceCoordinate,
+                                  extraColAnnots = setdiff(c(groupBy, colourBy),
+                                                           "sample"))
 
     # create base plot
     p <- .createBaseplotSummary(df = df, assayName = assayName,
@@ -687,6 +707,8 @@ plotSummaryPointSmooth <- function(se,
                                 legendTitle = legendTitle,
                                 showLegend = showLegend,
                                 highlightRegions = highlightRegions,
+                                groupBy = groupBy,
+                                colourBy = colourBy,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy)
 
@@ -708,9 +730,9 @@ plotSummaryPointSmooth <- function(se,
                        value_smooth = smooth$y)
         }
 
-        # apply the function to each sample
+        # apply the function to each group/color combination
         smooth_data <- df |>
-            group_by(sample) |>
+            group_by(across(all_of(c(groupBy, colourBy)))) |>
             group_modify(~ compute_smooth(.x)) |>
             ungroup()
 
@@ -719,7 +741,8 @@ plotSummaryPointSmooth <- function(se,
             data = smooth_data, inherit.aes = FALSE,
             mapping = aes(x = .data[["position"]],
                           y = .data[["value_smooth"]],
-                          colour = .data[["sample"]]))
+                          group = .data[[groupBy]],
+                          colour = .data[[colourBy]]))
     }
 
     # return the plot
@@ -911,16 +934,25 @@ plotGenomicRegions <- function(grl,
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the "position"
 #'     column in the return data frame is categorical, instead of giving
 #'     the numeric position in the genome.
+#' @param referenceCoordinate A numeric scalar providing the coordinate position
+#'     (on the reference sequence in \code{region}) used as an "anchor" to
+#'     display relative positions. If \code{NULL} (the default), absolute
+#'     genomic positions are used. 
+#' @param extraColAnnots A character vector (or \code{NULL}) with names of 
+#'     columns in \code{colData(x)} to add to the generated data frame.
 #'
-#' @importFrom BiocGenerics start colnames
-#' @importFrom SummarizedExperiment assay
+#' @importFrom BiocGenerics start colnames rownames
+#' @importFrom SummarizedExperiment assay colData
+#' @importFrom cli cli_abort
+#' @importFrom dplyr left_join bind_cols
 #'
 #' @noRd
 #' @keywords internal
 .preparePlotdataSummary <- function(x,
                                     assayName,
                                     modbaseSpace = FALSE,
-                                    referenceCoordinate = NULL) {
+                                    referenceCoordinate = NULL,
+                                    extraColAnnots = NULL) {
     assaydat <- assay(x, assayName)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
@@ -933,6 +965,17 @@ plotGenomicRegions <- function(grl,
                                                    decreasing = FALSE)))
     } else if (!is.null(referenceCoordinate)) {
         df$position <- df$position - referenceCoordinate
+    }
+    if (length(extraColAnnots) != 0) {
+        colExists <- extraColAnnots %in% colnames(colData(x))
+        if (!all(colExists)) {
+            cli_abort("Some requested columns are not present in colData(x)")
+        }
+        df <- df |>
+            left_join(bind_cols(
+                sample = rownames(colData(x)),
+                as.data.frame(colData(x)[, extraColAnnots, drop = FALSE])
+            ), by = "sample")
     }
     return(df)
 }
@@ -948,11 +991,19 @@ plotGenomicRegions <- function(grl,
 #'     the numeric position in the genome.
 #' @param interpolate A logical scalar. If \code{TRUE}, the gaps between
 #'     observations are filled in by linear interpolation.
+#' @param referenceCoordinate A numeric scalar providing the coordinate position
+#'     (on the reference sequence in \code{region}) used as an "anchor" to
+#'     display relative positions. If \code{NULL} (the default), absolute
+#'     genomic positions are used. 
+#' @param extraColAnnots A character vector (or \code{NULL}) with names of 
+#'     columns in \code{colData(x)} to add to the generated data frame.
 #'
-#' @importFrom BiocGenerics start colnames
+#' @importFrom BiocGenerics start colnames rownames
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom SparseArray nnawhich nnavals colSums is_nonna
 #' @importFrom S4Vectors endoapply
+#' @importFrom cli cli_abort
+#' @importFrom dplyr left_join bind_cols
 #'
 #' @noRd
 #' @keywords internal
@@ -960,7 +1011,8 @@ plotGenomicRegions <- function(grl,
                                   assayName,
                                   modbaseSpace = FALSE,
                                   interpolate = FALSE,
-                                  referenceCoordinate = NULL) {
+                                  referenceCoordinate = NULL,
+                                  extraColAnnots = NULL) {
     assaydat <- assay(x, assayName)
     assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
     # `assayName` columns are grouped reads -> flatten
@@ -988,6 +1040,17 @@ plotGenomicRegions <- function(grl,
                                                    decreasing = FALSE)))
     } else if (!is.null(referenceCoordinate)) {
         df$position <- df$position - referenceCoordinate
+    }
+    if (length(extraColAnnots) != 0) {
+        colExists <- extraColAnnots %in% colnames(colData(x))
+        if (!all(colExists)) {
+            cli_abort("Some requested columns are not present in colData(x)")
+        }
+        df <- df |>
+            left_join(bind_cols(
+                sample = rownames(colData(x)),
+                as.data.frame(colData(x)[, extraColAnnots, drop = FALSE])
+            ), by = "sample")
     }
     return(df)
 }
@@ -1020,13 +1083,16 @@ plotGenomicRegions <- function(grl,
                                    legendTitle,
                                    showLegend,
                                    highlightRegions,
+                                   groupBy,
+                                   colourBy,
                                    referenceCoordinate,
                                    labelAccuracy) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
-                      colour = .data[["sample"]])) +
+                      group = .data[[groupBy]],
+                      color = .data[[colourBy]])) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ", 
@@ -1039,7 +1105,7 @@ plotGenomicRegions <- function(grl,
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
              y = assayName,
-             colour = ifelse(!is.null(legendTitle), legendTitle, "Sample"),
+             colour = ifelse(!is.null(legendTitle), legendTitle, colourBy),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"))
@@ -1105,8 +1171,8 @@ plotGenomicRegions <- function(grl,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
-#' @param facetBySample A logical scalar indicating whether or not to facet
-#'     the plot by sample.
+#' @param facetBy A character scalar indicating the sample annotation column 
+#'     to facet the plot by (if \code{NULL}, no faceting is done). 
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1120,7 +1186,7 @@ plotGenomicRegions <- function(grl,
                                  legendTitle,
                                  showLegend,
                                  highlightRegions,
-                                 facetBySample, 
+                                 facetBy, 
                                  referenceCoordinate,
                                  labelAccuracy) {
     p0 <- ggplot(
@@ -1154,9 +1220,9 @@ plotGenomicRegions <- function(grl,
               strip.text.x = element_text(
                   hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
-    if (facetBySample) {
+    if (!is.null(facetBy)) {
         p0 <- p0 +
-            facet_wrap(~ .data[["sample"]], ncol = 1, scales = "free_y")
+            facet_wrap(~ .data[[facetBy]], ncol = 1, scales = "free_y")
     }
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())

@@ -31,7 +31,7 @@ plotReadsLollipop(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
-  facetBySample = TRUE,
+  facetBy = "sample",
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -49,7 +49,7 @@ plotReadsHeatmap(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
-  facetBySample = TRUE,
+  facetBy = "sample",
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -68,6 +68,8 @@ plotSummaryPointSmooth(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
+  groupBy = "sample",
+  colourBy = "sample",
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -183,8 +185,10 @@ the legend for the track.}
 \item{highlightRegions}{A \code{\link[GenomicRanges]{GRanges}} object
 containing regions to highlight with a grey shading.}
 
-\item{facetBySample}{A logical scalar indicating whether or not to facet
-the plot by sample (for read-level plots).}
+\item{facetBy}{A character scalar indicating the sample annotation column
+to facet the plot by (if \code{NULL}, no faceting is done). By default,
+the plot will be facetted by 'sample', corresponding to the columns of
+\code{se}.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}
@@ -205,6 +209,18 @@ plot.}
 
 \item{spar}{A numeric scalar typically in (0,1] specifying the desired
 degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).}
+
+\item{groupBy}{A character scalar indicating the sample annotation column
+to group the points by for creating smoothed lines. By default,
+the points will be grouped by 'sample', corresponding to the columns of
+\code{se}. Typically, the \code{groupBy} column should provide a
+finer (or identical) partition compared to the \code{colourBy} column -
+for example, grouping by sample and colouring by condition.}
+
+\item{colourBy}{A character scalar indicating the sample annotation column
+to colour the points and smoothed lines by. By default, the points and
+lines will be coloured by 'sample', corresponding to the columns of
+\code{se}.}
 
 \item{grl}{A named \code{\link[GenomicRanges]{GRangesList}} object where each
 entry corresponds to a transcript or genomic feature.}
@@ -285,7 +301,7 @@ seB <- flattenReadLevelAssay(seB, assayName = "mod_prob")
 plotRegion(seB, region = "chr1:6935400-6935450",
            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
                               size = 4, legendTitle = "6mA",
-                              facetBySample = FALSE),
+                              facetBy = NULL),
                          list(trackData = "FracMod", trackType = "Smooth")),
            modbaseSpace = TRUE) +
     patchwork::plot_layout(heights = c(3, 2))
