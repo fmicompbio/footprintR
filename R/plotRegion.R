@@ -713,10 +713,11 @@ plotSummaryPointSmooth <- function(se,
                                 labelAccuracy = labelAccuracy)
 
     # add points
-    if (doPoint) {
-        p <- p + do.call(geom_point, arglistPoint)
+    if (!doPoint) {
+        arglistPoint$color <- "transparent"
     }
-
+    p <- p + do.call(geom_point, arglistPoint)
+    
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
         compute_smooth <- function(data) {
