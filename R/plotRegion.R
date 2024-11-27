@@ -616,6 +616,9 @@ plotReadsHeatmap <- function(se,
 #'     to colour the points and smoothed lines by. By default, the points and
 #'     lines will be coloured by 'sample', corresponding to the columns of 
 #'     \code{se}.
+#' @param colours A named character vector of colours to use for the unique
+#'     values in the \code{colourBy} annotation column. If \code{NULL} 
+#'     (default), the default \code{ggplot2} colours will be used. 
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
 #'     to on the y-axis. If \code{NULL} (default), will be determined from the 
 #'     data.
@@ -660,6 +663,7 @@ plotSummaryPointSmooth <- function(se,
                                    highlightRegions = NULL,
                                    groupBy = "sample",
                                    colourBy = "sample",
+                                   colours = NULL,
                                    referenceCoordinate = NULL,
                                    labelAccuracy = NULL,
                                    yAxisRange = NULL) {
@@ -685,6 +689,14 @@ plotSummaryPointSmooth <- function(se,
     }
     .assertScalar(x = groupBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = colourBy, type = "character", allowNULL = TRUE)
+    .assertVector(x = colours, type = "character", allowNULL = TRUE)
+    if (!is.null(colours)) {
+        .assertVector(x = names(colours), type = "character")
+        if (!is.null(colourBy) && 
+                     !all(colData(se)[[colourBy]] %in% names(colours))) {
+            cli_abort("Missing colour specification for some values")
+        }
+    }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     .assertVector(x = yAxisRange, type = "numeric", len = 2, 
@@ -717,6 +729,7 @@ plotSummaryPointSmooth <- function(se,
                                 highlightRegions = highlightRegions,
                                 groupBy = groupBy,
                                 colourBy = colourBy,
+                                colours = colours, 
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
                                 yAxisRange = yAxisRange)
@@ -1098,6 +1111,7 @@ plotGenomicRegions <- function(grl,
                                    highlightRegions,
                                    groupBy,
                                    colourBy,
+                                   colours,
                                    referenceCoordinate,
                                    labelAccuracy,
                                    yAxisRange) {
@@ -1134,6 +1148,10 @@ plotGenomicRegions <- function(grl,
         p0 <- .addCoordAxisFormat(p0 = p0, region = region,
                                   labelAccuracy = labelAccuracy,
                                   ylim = yAxisRange)
+    }
+    
+    if (!is.null(colours)) {
+        p0 <- p0 + scale_colour_manual(values = colours)
     }
     
     if (!is.null(highlightRegions)) {

@@ -70,6 +70,7 @@ plotSummaryPointSmooth(
   highlightRegions = NULL,
   groupBy = "sample",
   colourBy = "sample",
+  colours = NULL,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
   yAxisRange = NULL
@@ -222,6 +223,10 @@ for example, grouping by sample and colouring by condition.}
 to colour the points and smoothed lines by. By default, the points and
 lines will be coloured by 'sample', corresponding to the columns of
 \code{se}.}
+
+\item{colours}{A named character vector of colours to use for the unique
+values in the \code{colourBy} annotation column. If \code{NULL}
+(default), the default \code{ggplot2} colours will be used.}
 
 \item{yAxisRange}{Numeric vector of length 2 giving the range to zoom in
 to on the y-axis. If \code{NULL} (default), will be determined from the

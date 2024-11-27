@@ -401,7 +401,7 @@ test_that("plotRegion works - manual inspection", {
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
     
-    ## modbaseSpace = TRUE
+    ## modbaseSpace = TRUE, change colours
     expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE, 
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
@@ -416,6 +416,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5, 
                            trackTitle = "Smooth", 
+                           colours = c(s1 = "forestgreen", s2 = "firebrick1"),
                            highlightRegions = grh))) + 
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
