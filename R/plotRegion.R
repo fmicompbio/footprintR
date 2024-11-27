@@ -604,8 +604,16 @@ plotReadsHeatmap <- function(se,
 #'     plot.
 #' @param arglistSmooth A list with arguments to be sent to
 #'     \code{\link[ggplot2]{geom_line}}.
+#' @param smoothMethod A character scalar indicating the method to use for 
+#'     smoothing. Current options are \code{"smoothSpline"} and 
+#'     \code{"rollingMean"} (linear interpolation of values to the single-base
+#'     pair level (unless \code{modbaseSpace} is \code{TRUE}), followed by 
+#'     rolling mean calculation).
 #' @param spar A numeric scalar typically in (0,1] specifying the desired
-#'     degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
+#'     degree of smoothing if \code{smoothMethod} is \code{"smoothSpline"} 
+#'     (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
+#' @param windowSize A numeric scalar specifying the window size for smoothing
+#'     if \code{smoothMethod} is \code{"rollingMean"}.
 #' @param groupBy A character scalar indicating the sample annotation column 
 #'     to group the points by for creating smoothed lines. By default,
 #'     the points will be grouped by 'sample', corresponding to the columns of 
@@ -647,6 +655,8 @@ plotReadsHeatmap <- function(se,
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom BiocGenerics intersect
+#' @importFrom zoo na.approx rollmean
+#' @importFrom cli cli_abort
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -655,7 +665,9 @@ plotSummaryPointSmooth <- function(se,
                                    arglistPoint = list(),
                                    doSmooth = TRUE,
                                    arglistSmooth = list(),
+                                   smoothMethod = "smoothSpline",
                                    spar = 0.01,
+                                   windowSize = 3,
                                    modbaseSpace = FALSE,
                                    trackTitle = NULL,
                                    legendTitle = NULL,
@@ -676,7 +688,16 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = arglistPoint, type = "list")
     .assertScalar(x = doSmooth, type = "logical")
     .assertVector(x = arglistSmooth, type = "list")
-    .assertScalar(x = spar, type = "numeric")
+    .assertScalar(x = smoothMethod, type = "character", 
+                  validValues = c("smoothSpline", "rollingMean"))
+    if (smoothMethod == "rollingMean") {
+        .assertScalar(x = windowSize, type = "numeric")
+        if (windowSize %% 2 != 1) {
+            cli_abort("windowSize must be an odd integer")
+        }
+    } else if (smoothMethod == "smoothSpline") {
+        .assertScalar(x = spar, type = "numeric")
+    }
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
@@ -744,13 +765,34 @@ plotSummaryPointSmooth <- function(se,
         # helper function to compute smooth spline for each sample
         compute_smooth <- function(data) {
             ok <- is.finite(data[["value"]])
-            smooth <- smooth.spline(
-                x = data[["position"]][ok],
-                y = data[["value"]][ok],
-                keep.data = FALSE,
-                spar = spar)
-            data.frame(position = smooth$x,
-                       value_smooth = smooth$y)
+            if (smoothMethod == "smoothSpline") {
+                smooth <- smooth.spline(
+                    x = data[["position"]][ok],
+                    y = data[["value"]][ok],
+                    keep.data = FALSE,
+                    spar = spar)
+                data.frame(position = smooth$x,
+                           value_smooth = smooth$y)
+            } else if (smoothMethod == "rollingMean") {
+                # first interpolate linearly
+                if (is.factor(data$position)) {
+                    data$position <- as.numeric(data$position)
+                }
+                xint <- seq(from = min(data[["position"]]) - (windowSize - 1) / 2,
+                            to = max(data[["position"]]) + (windowSize - 1) / 2, 
+                            by = 1)
+                yint <- rep(NA, length(xint))
+                idxout <- match(data[["position"]], xint)
+                yint[idxout] <- data[["value"]]
+                yint[1] <- yint[idxout[1]]
+                yint[length(yint)] <- yint[idxout[length(idxout)]]
+                yint <- na.approx(yint, maxgap = Inf)
+                # then take rolling mean
+                yint <- rollmean(yint, k = windowSize, 
+                                 fill = c(yint[1], NA, yint[length(yint)]))
+                data.frame(position = xint[idxout],
+                           value_smooth = yint[idxout])
+            }
         }
 
         # apply the function to each group/color combination

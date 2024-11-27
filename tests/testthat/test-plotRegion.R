@@ -482,4 +482,48 @@ test_that("plotRegion works - manual inspection", {
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
+    
+    ## ... compare smoothing methods
+    p <- plotRegion(
+        seB, region = "chr1:6935700-6936000", modbaseSpace = FALSE, 
+        tracks = list(list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.1, 
+                           trackTitle = "Smooth spline, spar = 0.1", 
+                           smoothMethod = "smoothSpline"),
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5, 
+                           trackTitle = "Smooth spline, spar = 0.5",
+                           smoothMethod = "smoothSpline"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, windowSize = 3, 
+                           trackTitle = "Rolling mean, windowSize = 3",
+                           smoothMethod = "rollingMean"),
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, windowSize = 15, 
+                           trackTitle = "Rolling mean, windowSize = 15",
+                           smoothMethod = "rollingMean")
+        ))
+    expect_s3_class(p, "ggplot")
+    
+    ## ... compare smoothing methods, in modbaseSpace
+    p <- plotRegion(
+        seB, region = "chr1:6935700-6936000", modbaseSpace = TRUE, 
+        tracks = list(list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.1, 
+                           trackTitle = "Smooth spline, spar = 0.1", 
+                           smoothMethod = "smoothSpline"),
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5, 
+                           trackTitle = "Smooth spline, spar = 0.5",
+                           smoothMethod = "smoothSpline"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, windowSize = 3, 
+                           trackTitle = "Rolling mean, windowSize = 3",
+                           smoothMethod = "rollingMean"),
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, windowSize = 15, 
+                           trackTitle = "Rolling mean, windowSize = 15",
+                           smoothMethod = "rollingMean")
+        ))
+    expect_s3_class(p, "ggplot")
 })

@@ -62,7 +62,9 @@ plotSummaryPointSmooth(
   arglistPoint = list(),
   doSmooth = TRUE,
   arglistSmooth = list(),
+  smoothMethod = "smoothSpline",
   spar = 0.01,
+  windowSize = 3,
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -209,8 +211,18 @@ plot.}
 \item{arglistSmooth}{A list with arguments to be sent to
 \code{\link[ggplot2]{geom_line}}.}
 
+\item{smoothMethod}{A character scalar indicating the method to use for
+smoothing. Current options are \code{"smoothSpline"} and
+\code{"rollingMean"} (linear interpolation of values to the single-base
+pair level (unless \code{modbaseSpace} is \code{TRUE}), followed by
+rolling mean calculation).}
+
 \item{spar}{A numeric scalar typically in (0,1] specifying the desired
-degree of smoothing (\code{spar} argument of \code{\link[stats]{smooth.spline}}).}
+degree of smoothing if \code{smoothMethod} is \code{"smoothSpline"}
+(\code{spar} argument of \code{\link[stats]{smooth.spline}}).}
+
+\item{windowSize}{A numeric scalar specifying the window size for smoothing
+if \code{smoothMethod} is \code{"rollingMean"}.}
 
 \item{groupBy}{A character scalar indicating the sample annotation column
 to group the points by for creating smoothed lines. By default,
