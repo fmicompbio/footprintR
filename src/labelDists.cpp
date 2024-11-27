@@ -38,7 +38,7 @@ Rcpp::NumericMatrix labelDists(std::vector<std::string> labels,
      std::vector<int> nDashLeading(n), nDashTrailing(n);
      for (i = 0; i < n; i ++) {
          // check length
-         if (labels[i].size() != len) {
+         if ((int)labels[i].size() != len) {
              Rcpp::stop("labels[%u] (%s) does not have %u characters",
                         i + 1, labels[i].c_str(), len);
          }

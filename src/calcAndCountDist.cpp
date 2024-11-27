@@ -33,7 +33,7 @@
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericVector calcAndCountDist(std::vector<int> query,
-                                     std::vector<int> reference,
+                                     std::vector<unsigned int> reference,
                                      Rcpp::NumericVector cnt) {
     // declare variables
     unsigned int qi, ri, currquery, d, riold = 0, maxd = cnt.size();
