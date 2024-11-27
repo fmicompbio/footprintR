@@ -405,6 +405,7 @@ plotReadsLollipop <- function(se,
                               facetBy = "sample",
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
+    
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -520,6 +521,7 @@ plotReadsHeatmap <- function(se,
                              facetBy = "sample",
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
+    
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -614,6 +616,9 @@ plotReadsHeatmap <- function(se,
 #'     to colour the points and smoothed lines by. By default, the points and
 #'     lines will be coloured by 'sample', corresponding to the columns of 
 #'     \code{se}.
+#' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     data.
 #'
 #' @export
 #' @rdname plotRegion
@@ -656,7 +661,8 @@ plotSummaryPointSmooth <- function(se,
                                    groupBy = "sample",
                                    colourBy = "sample",
                                    referenceCoordinate = NULL,
-                                   labelAccuracy = NULL) {
+                                   labelAccuracy = NULL,
+                                   yAxisRange = NULL) {
 
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
@@ -681,6 +687,8 @@ plotSummaryPointSmooth <- function(se,
     .assertScalar(x = colourBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    .assertVector(x = yAxisRange, type = "numeric", len = 2, 
+                  allowNULL = TRUE)
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
@@ -710,7 +718,8 @@ plotSummaryPointSmooth <- function(se,
                                 groupBy = groupBy,
                                 colourBy = colourBy,
                                 referenceCoordinate = referenceCoordinate,
-                                labelAccuracy = labelAccuracy)
+                                labelAccuracy = labelAccuracy,
+                                yAxisRange = yAxisRange)
 
     # add points
     if (!doPoint) {
@@ -792,6 +801,7 @@ plotGenomicRegions <- function(grl,
                                showLegend = TRUE,
                                referenceCoordinate = NULL, 
                                labelAccuracy = NULL) {
+    
     # check input arguments
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
@@ -1071,6 +1081,8 @@ plotGenomicRegions <- function(grl,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
+#' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
+#'     to on the y-axis.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1087,7 +1099,8 @@ plotGenomicRegions <- function(grl,
                                    groupBy,
                                    colourBy,
                                    referenceCoordinate,
-                                   labelAccuracy) {
+                                   labelAccuracy,
+                                   yAxisRange) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
@@ -1115,10 +1128,12 @@ plotGenomicRegions <- function(grl,
 
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank()) + 
+            coord_cartesian(ylim = yAxisRange) + 
             scale_x_discrete(expand = expansion(mult = 0, add = 0.5))
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region,
-                                  labelAccuracy = labelAccuracy)
+                                  labelAccuracy = labelAccuracy,
+                                  ylim = yAxisRange)
     }
     
     if (!is.null(highlightRegions)) {
@@ -1363,12 +1378,12 @@ plotGenomicRegions <- function(grl,
 #'
 #' @noRd
 #' @keywords internal
-.addCoordAxisFormat <- function(p0, region, labelAccuracy) {
+.addCoordAxisFormat <- function(p0, region, labelAccuracy, ylim = NULL) {
     rng <- c(start(region) - 0.5, end(region) + 0.5)
     if (is.null(labelAccuracy)) {
         labelAccuracy <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     }
-    p0 <- p0 + coord_cartesian(xlim = rng) +
+    p0 <- p0 + coord_cartesian(xlim = rng, ylim = ylim) +
         scale_x_continuous(
             expand = c(0, 0),
             labels = label_number(

@@ -71,7 +71,8 @@ plotSummaryPointSmooth(
   groupBy = "sample",
   colourBy = "sample",
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  yAxisRange = NULL
 )
 
 plotGenomicRegions(
@@ -221,6 +222,10 @@ for example, grouping by sample and colouring by condition.}
 to colour the points and smoothed lines by. By default, the points and
 lines will be coloured by 'sample', corresponding to the columns of
 \code{se}.}
+
+\item{yAxisRange}{Numeric vector of length 2 giving the range to zoom in
+to on the y-axis. If \code{NULL} (default), will be determined from the
+data.}
 
 \item{grl}{A named \code{\link[GenomicRanges]{GRangesList}} object where each
 entry corresponds to a transcript or genomic feature.}
