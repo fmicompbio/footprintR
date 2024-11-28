@@ -21,7 +21,7 @@ and typically do not need to be directly called by the user."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  facetBySample <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  facetBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
@@ -106,7 +106,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  facetBySample <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  facetBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
@@ -119,14 +119,20 @@ and typically do not need to be directly called by the user.</p>
 <span>  arglistPoint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  doSmooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arglistSmooth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  smoothMethod <span class="op">=</span> <span class="st">"smoothSpline"</span>,</span>
 <span>  spar <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  windowSize <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  trackTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  groupBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>  colorBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisRange <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">plotGenomicRegions</span><span class="op">(</span></span>
@@ -287,9 +293,11 @@ the legend for the track.</p></dd>
 containing regions to highlight with a grey shading.</p></dd>
 
 
-<dt id="arg-facetbysample">facetBySample<a class="anchor" aria-label="anchor" href="#arg-facetbysample"></a></dt>
-<dd><p>A logical scalar indicating whether or not to facet
-the plot by sample (for read-level plots).</p></dd>
+<dt id="arg-facetby">facetBy<a class="anchor" aria-label="anchor" href="#arg-facetby"></a></dt>
+<dd><p>A character scalar indicating the sample annotation column
+to facet the plot by (if <code>NULL</code>, no faceting is done). By default,
+the plot will be facetted by 'sample', corresponding to the columns of
+<code>se</code>.</p></dd>
 
 
 <dt id="arg-linewidthtiles">linewidthTiles<a class="anchor" aria-label="anchor" href="#arg-linewidthtiles"></a></dt>
@@ -321,9 +329,51 @@ plot.</p></dd>
 <code><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></code>.</p></dd>
 
 
+<dt id="arg-smoothmethod">smoothMethod<a class="anchor" aria-label="anchor" href="#arg-smoothmethod"></a></dt>
+<dd><p>A character scalar indicating the method to use for
+smoothing. Current options are <code>"smoothSpline"</code> and
+<code>"rollingMean"</code> (linear interpolation of values to the single-base
+pair level (unless <code>modbaseSpace</code> is <code>TRUE</code>), followed by
+rolling mean calculation).</p></dd>
+
+
 <dt id="arg-spar">spar<a class="anchor" aria-label="anchor" href="#arg-spar"></a></dt>
 <dd><p>A numeric scalar typically in (0,1] specifying the desired
-degree of smoothing (<code>spar</code> argument of <code><a href="https://rdrr.io/r/stats/smooth.spline.html" class="external-link">smooth.spline</a></code>).</p></dd>
+degree of smoothing if <code>smoothMethod</code> is <code>"smoothSpline"</code>
+(<code>spar</code> argument of <code><a href="https://rdrr.io/r/stats/smooth.spline.html" class="external-link">smooth.spline</a></code>).</p></dd>
+
+
+<dt id="arg-windowsize">windowSize<a class="anchor" aria-label="anchor" href="#arg-windowsize"></a></dt>
+<dd><p>A numeric scalar specifying the window size for smoothing
+if <code>smoothMethod</code> is <code>"rollingMean"</code>.</p></dd>
+
+
+<dt id="arg-groupby">groupBy<a class="anchor" aria-label="anchor" href="#arg-groupby"></a></dt>
+<dd><p>A character scalar indicating the sample annotation column
+to group the points by for creating smoothed lines. By default,
+the points will be grouped by 'sample', corresponding to the columns of
+<code>se</code>. Typically, the <code>groupBy</code> column should provide a
+finer (or identical) partition compared to the <code>colorBy</code> column -
+for example, grouping by sample and coloring by condition.</p></dd>
+
+
+<dt id="arg-colorby">colorBy<a class="anchor" aria-label="anchor" href="#arg-colorby"></a></dt>
+<dd><p>A character scalar indicating the sample annotation column
+to color the points and smoothed lines by. By default, the points and
+lines will be colored by 'sample', corresponding to the columns of
+<code>se</code>.</p></dd>
+
+
+<dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
+<dd><p>A named character vector of colors to use for the unique
+values in the <code>colorBy</code> annotation column. If <code>NULL</code>
+(default), the default <code>ggplot2</code> colors will be used.</p></dd>
+
+
+<dt id="arg-yaxisrange">yAxisRange<a class="anchor" aria-label="anchor" href="#arg-yaxisrange"></a></dt>
+<dd><p>Numeric vector of length 2 giving the range to zoom in
+to on the y-axis. If <code>NULL</code> (default), will be determined from the
+data.</p></dd>
 
 
 <dt id="arg-grl">grl<a class="anchor" aria-label="anchor" href="#arg-grl"></a></dt>
@@ -428,7 +478,7 @@ footprinting data.</p></div>
 <span class="r-in"><span><span class="fu">plotRegion</span><span class="op">(</span><span class="va">seB</span>, region <span class="op">=</span> <span class="st">"chr1:6935400-6935450"</span>,</span></span>
 <span class="r-in"><span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"mod_prob"</span>, trackType <span class="op">=</span> <span class="st">"Lollipop"</span>,</span></span>
 <span class="r-in"><span>                              size <span class="op">=</span> <span class="fl">4</span>, legendTitle <span class="op">=</span> <span class="st">"6mA"</span>,</span></span>
-<span class="r-in"><span>                              facetBySample <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                              facetBy <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                         <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"FracMod"</span>, trackType <span class="op">=</span> <span class="st">"Smooth"</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>           modbaseSpace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>    <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>

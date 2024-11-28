@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -225,7 +225,7 @@ GCH), and adding a smooth line:</p>
 <span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"FracMod"</span>,</span>
 <span>                              trackType <span class="op">=</span> <span class="st">"PointSmooth"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           sequenceContext <span class="op">=</span> <span class="st">"GCH"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro-to-footprintR_files/figure-html/plot-region-GCH-1.png" alt="A point plot showing the fraction of modified bases per position in GCH contexts, coloured by sample." width="576"></p>
+<p><img src="intro-to-footprintR_files/figure-html/plot-region-GCH-1.png" alt="A point plot showing the fraction of modified bases per position in GCH contexts, colored by sample." width="576"></p>
 <p>We can also restrict the plotted sites to focus on endogenous DNA
 methylation (sequence context HCG):</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -234,14 +234,14 @@ methylation (sequence context HCG):</p>
 <span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"FracMod"</span>,</span>
 <span>                              trackType <span class="op">=</span> <span class="st">"PointSmooth"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>           sequenceContext <span class="op">=</span> <span class="st">"HCG"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro-to-footprintR_files/figure-html/plot-region-HCG-1.png" alt="A point plot showing the fraction of modified bases per position in HCG contexts, coloured by sample." width="576"></p>
+<p><img src="intro-to-footprintR_files/figure-html/plot-region-HCG-1.png" alt="A point plot showing the fraction of modified bases per position in HCG contexts, colored by sample." width="576"></p>
 <p>Or just plot the coverage (<code>Nvalid</code>) as a smooth line:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>,</span>
 <span>           region <span class="op">=</span> <span class="st">"chr1:6939000-6946000"</span>,</span>
 <span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackData <span class="op">=</span> <span class="st">"Nvalid"</span>,</span>
 <span>                              trackType <span class="op">=</span> <span class="st">"Smooth"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro-to-footprintR_files/figure-html/plot-region-Nvalid-1.png" alt="A smoothed line plot showing the read coverage (Nvalid) per position, coloured by sample." width="576"></p>
+<p><img src="intro-to-footprintR_files/figure-html/plot-region-Nvalid-1.png" alt="A smoothed line plot showing the read coverage (Nvalid) per position, colored by sample." width="576"></p>
 </div>
 </div>
 <div class="section level2">
@@ -259,7 +259,7 @@ methylation (sequence context HCG):</p>
 <span><span class="co">#&gt;  collate  en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  ctype    en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  tz       UTC</span></span>
-<span><span class="co">#&gt;  date     2024-11-27</span></span>
+<span><span class="co">#&gt;  date     2024-11-28</span></span>
 <span><span class="co">#&gt;  pandoc   3.1.11 @ /usr/local/bin/ (via rmarkdown)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Packages ───────────────────────────────────────────────────────────────────</span></span></span>
@@ -288,7 +288,7 @@ methylation (sequence context HCG):</p>
 <span><span class="co">#&gt;  fansi                  1.0.6      <span style="color: #555555;">2023-12-08</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  farver                 2.1.2      <span style="color: #555555;">2024-05-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  fastmap                1.2.0      <span style="color: #555555;">2024-05-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
-<span><span class="co">#&gt;  footprintR           * 0.2.1      <span style="color: #555555;">2024-11-27</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
+<span><span class="co">#&gt;  footprintR           * 0.2.2      <span style="color: #555555;">2024-11-28</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
 <span><span class="co">#&gt;  fs                     1.6.5      <span style="color: #555555;">2024-10-30</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  generics             * 0.1.3      <span style="color: #555555;">2022-07-05</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.5.0)</span></span></span>
 <span><span class="co">#&gt;  GenomeInfoDb         * 1.43.1     <span style="color: #555555;">2024-11-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.21 (R 4.5.0)</span></span></span>
