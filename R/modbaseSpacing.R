@@ -318,14 +318,14 @@ plotModbaseSpacing <- function(x,
 
     # create distance vs. count plot
     p <- ggplot(data = pd, aes(.data[["pos"]], .data[["cnt"]],
-                                colour = .data[["type"]],
+                                color = .data[["type"]],
                                 linewidth = .data[["type"]])) +
         geom_line() +
         labs(x = "Distance between modified bases (bp)",
              y = "Number of distances",
-             colour = element_blank(),
+             color = element_blank(),
              linewidth = element_blank()) +
-        scale_colour_manual(
+        scale_color_manual(
             values = structure(c("gray", "red", "green3"), names = types)) +
         scale_linewidth_manual(
             values = structure(c(0.5, 1, 1), names = types)) +
@@ -355,7 +355,7 @@ plotModbaseSpacing <- function(x,
                       mapping = aes(
                           xmin = .data[["xmin"]], xmax = .data[["xmax"]],
                           ymin = .data[["ymin"]], ymax = .data[["ymax"]]),
-                      fill = "#FF000022", colour = NA) +
+                      fill = "#FF000022", color = NA) +
             geom_line() +
             geom_point(data = data.frame(
                 pos = nrl$peaks[nrl$usePeaks],
