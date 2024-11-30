@@ -853,6 +853,7 @@ plotSummaryPointSmooth <- function(se,
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics unlist start end
 #' @importFrom S4Vectors mcols
+#' @importFrom cli cli_abort
 #'
 plotGenomicRegions <- function(grl,
                                region,
@@ -869,6 +870,9 @@ plotGenomicRegions <- function(grl,
     # check input arguments
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
+    if (any(is.na(names(grl)))) {
+        cli_abort("NA values are not allowed in names(grl)")
+    }
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = colorByStrand, type = "logical")
     .assertScalar(x = displayNames, type = "logical")
