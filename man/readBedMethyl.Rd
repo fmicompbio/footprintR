@@ -8,6 +8,7 @@ readBedMethyl(
   fnames,
   modbase,
   nrows = Inf,
+  sampleAnnot = NULL,
   seqinfo = NULL,
   sequenceContextWidth = 0,
   sequenceReference = NULL,
@@ -35,6 +36,12 @@ elements are in the same order as the files in \code{fnames}. If
 all samples.}
 
 \item{nrows}{Only read \code{nrows} rows of the input file.}
+
+\item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
+for the samples. It must contain at least one column, named
+\code{"sample"}, which must contain all the values of
+\code{names(fnames)}. The provided annotations will be propagated to
+the returned \code{SummarizedExperiment} object.}
 
 \item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 containing information about the set of genomic sequences (chromosomes).

@@ -25,6 +25,11 @@
 #'     elements are in the same order as the files in \code{bamfiles}. If
 #'     \code{modbase} has length 1, the same modified base will be used for
 #'     all samples.
+#' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
+#'     for the samples. It must contain at least one column, named 
+#'     \code{"sample"}, which must contain all the values of 
+#'     \code{names(bamfiles)}. The provided annotations will be propagated to 
+#'     the returned \code{SummarizedExperiment} object. 
 #' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
 #'     and approximately \code{nAlnsToSample} randomly selected alignments on
 #'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
@@ -89,6 +94,7 @@
 readModBam <- function(bamfiles,
                        regions = NULL,
                        modbase,
+                       sampleAnnot = NULL,
                        nAlnsToSample = 0,
                        seqnamesToSampleFrom = "chr19",
                        seqinfo = NULL,
@@ -106,6 +112,17 @@ readModBam <- function(bamfiles,
         names(bamfiles) <- paste0("s", seq_along(bamfiles))
     } else if (any(duplicated(names(bamfiles)))) {
         stop("`names(bamfiles)` are not unique")
+    }
+    .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
+    if (!is.null(sampleAnnot)) {
+        if (!("sample" %in% colnames(sampleAnnot))) {
+            stop("sampleAnnot must have at least a column named 'sample'")
+        }
+        if (!all(names(bamfiles) %in% sampleAnnot$sample)) {
+            stop("Annotation information missing for some samples: ",
+                 paste(setdiff(names(bamfiles), sampleAnnot$sample), 
+                       collapse = ", "))
+        }
     }
     if (is.character(regions)) {
         regions <- as(regions, "GRanges")
@@ -273,16 +290,24 @@ readModBam <- function(bamfiles,
     }
 
     # create SummarizedExperiment object
+    cdata <- DataFrame(
+        row.names = names(bamfiles),
+        sample = names(bamfiles),
+        modbase = modbase[names(bamfiles)],
+        n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
+        readInfo = readdfL
+    )
+    if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
+                                   colnames(sampleAnnot) != "sample", 
+                                   drop = FALSE]
+        cdata <- cbind(cdata, sampleAnnot)
+    }
+    stopifnot(names(modmat) == cdata$sample)
     se <- SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
-        colData = DataFrame(
-            row.names = names(bamfiles),
-            sample = names(bamfiles),
-            modbase = modbase[names(bamfiles)],
-            n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
-            readInfo = readdfL
-        ),
+        colData = cdata,
         metadata = list(readLevelData = list(assayNames = "mod_prob",
                                              colDataColumns = "readInfo"),
                         variantPositions = variantPositions)

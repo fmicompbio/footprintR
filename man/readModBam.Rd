@@ -8,6 +8,7 @@ readModBam(
   bamfiles,
   regions = NULL,
   modbase,
+  sampleAnnot = NULL,
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
   seqinfo = NULL,
@@ -41,6 +42,12 @@ the names of \code{bamfiles}. Otherwise, it will be assumed that the
 elements are in the same order as the files in \code{bamfiles}. If
 \code{modbase} has length 1, the same modified base will be used for
 all samples.}
+
+\item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
+for the samples. It must contain at least one column, named
+\code{"sample"}, which must contain all the values of
+\code{names(bamfiles)}. The provided annotations will be propagated to
+the returned \code{SummarizedExperiment} object.}
 
 \item{nAlnsToSample}{A numeric scalar. If non-zero, \code{regions} is ignored
 and approximately \code{nAlnsToSample} randomly selected alignments on

@@ -9,78 +9,98 @@ suppressPackageStartupMessages({
 test_that("readModkitExtract works", {
     # example data
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
-    fnames <- c(s1_5mC = system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
-                                     package = "footprintR"),
-                s2_5mC = system.file("extdata", "modkit_extract_rc_5mC_2.tsv.gz",
-                                     package = "footprintR"),
-                s1_6mA = system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
-                                     package = "footprintR"),
-                s2_6mA = system.file("extdata", "modkit_extract_rc_6mA_2.tsv.gz",
-                                     package = "footprintR")
+    fnames <- c(
+        s1_5mC = system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
+                             package = "footprintR"),
+        s2_5mC = system.file("extdata", "modkit_extract_rc_5mC_2.tsv.gz",
+                             package = "footprintR"),
+        s1_6mA = system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
+                             package = "footprintR"),
+        s2_6mA = system.file("extdata", "modkit_extract_rc_6mA_2.tsv.gz",
+                             package = "footprintR")
     )
+    sample_annot <- data.frame(
+        sample = c("s1_5mC", "s2_5mC", "s1_6mA", "s2_6mA"), 
+        group = c("g1", "g1", "g2", "g2"))
 
     # invalid arguments
-    expect_error(readModkitExtract("error", 
-                                   BPPARAM = BiocParallel::SerialParam()), 
-                 "not all `fnames` exist")
-    expect_error(readModkitExtract(c(s1 = fnames[[1]], s1 = fnames[[2]]), 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "`names(fnames)` are not unique", fixed = TRUE)
-    expect_error(readModkitExtract(fnames, modbase = NULL, 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "'modbase' must not be NULL")
-    expect_error(readModkitExtract(fnames, modbase = 1, 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "'modbase' must be of class 'character'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "'modbase' must have length 4")
-    expect_error(readModkitExtract(fnames, modbase = "x", 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "invalid `modbase` values")
-    expect_error(readModkitExtract(fnames, modbase = c(s1 = "m", s2 = "m",
-                                                       s3 = "a", s4 = "a"), 
-                                   BPPARAM = BiocParallel::SerialParam()),
-                 "names of `modbase` and `fnames` don't agree")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   filter = "error"),
-                 "All values in 'filter' must be one of")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   filter = c(0.1, 0.2)),
-                 "`filter` must be a named vector")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   filter = c(c = 0.1)),
-                 "a filter threshold needs to be supplied")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   nrows = -1),
-                 "'nrows' must be within")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   nrows = "error"),
-                 "'nrows' must be of class 'numeric'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   seqinfo = c(100)),
-                 "`seqinfo` must be ")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   seqinfo = c(chr2 = 1000)),
-                 "'seqnames' contains sequence names with no entries")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = "error"),
-                 "'BPPARAM' must be of class 'BiocParallelParam'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   verbose = "error"),
-                 "'verbose' must be of class 'logical'")
-    expect_error(readModkitExtract(fnames, modbase = c("m", "m", "a", "a"), 
-                                   BPPARAM = BiocParallel::SerialParam(),
-                                   verbose = c(TRUE, FALSE)),
-                 "'verbose' must have length 1")
+    expect_error(readModkitExtract(
+        fnames = "error", 
+        BPPARAM = BiocParallel::SerialParam()), 
+        "not all `fnames` exist")
+    expect_error(readModkitExtract(
+        fnames = c(s1 = fnames[[1]], s1 = fnames[[2]]), 
+        BPPARAM = BiocParallel::SerialParam()),
+        "`names(fnames)` are not unique", fixed = TRUE)
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = NULL, 
+        BPPARAM = BiocParallel::SerialParam()),
+        "'modbase' must not be NULL")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = 1, 
+        BPPARAM = BiocParallel::SerialParam()),
+        "'modbase' must be of class 'character'")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "a"), 
+        BPPARAM = BiocParallel::SerialParam()),
+        "'modbase' must have length 4")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = "x", 
+        BPPARAM = BiocParallel::SerialParam()),
+        "invalid `modbase` values")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c(s1 = "m", s2 = "m", s3 = "a", s4 = "a"), 
+        BPPARAM = BiocParallel::SerialParam()),
+        "names of `modbase` and `fnames` don't agree")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), filter = "error"),
+        "All values in 'filter' must be one of")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), filter = c(0.1, 0.2)),
+        "`filter` must be a named vector")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), filter = c(c = 0.1)),
+        "a filter threshold needs to be supplied")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), nrows = -1),
+        "'nrows' must be within")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), nrows = "error"),
+        "'nrows' must be of class 'numeric'")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), seqinfo = c(100)),
+        "`seqinfo` must be ")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), seqinfo = c(chr2 = 1000)),
+        "'seqnames' contains sequence names with no entries")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), BPPARAM = "error"),
+        "'BPPARAM' must be of class 'BiocParallelParam'")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), verbose = "error"),
+        "'verbose' must be of class 'logical'")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), verbose = c(TRUE, FALSE)),
+        "'verbose' must have length 1")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), 
+        sampleAnnot = sample_annot[1:2, ]),
+        "Annotation information missing")
+    expect_error(readModkitExtract(
+        fnames = fnames, modbase = c("m", "m", "a", "a"), 
+        BPPARAM = BiocParallel::SerialParam(), 
+        sampleAnnot = sample_annot[, -1, drop = FALSE]),
+        "sampleAnnot must have at least a column")
 
     # expected results
     # ... single file, no filtering
@@ -184,7 +204,50 @@ test_that("readModkitExtract works", {
     expect_s4_class(rme, "RangedSummarizedExperiment")
     expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
     expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(colnames(SummarizedExperiment::colData(rme)), 
+                 c("sample", "modbase"))
     expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
+    expect_length(SummarizedExperiment::assays(rme), 1)
+    expect_named(SummarizedExperiment::assays(rme), "mod_prob")
+    expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")
+    expect_equal(dim(SummarizedExperiment::assay(rme, "mod_prob")[[1]]), c(18655, 10))
+    expect_equal(dim(SummarizedExperiment::assay(rme, "mod_prob")[[2]]), c(18655, 10))
+    expect_equal(dim(SummarizedExperiment::assay(rme, "mod_prob")[[3]]), c(18655, 10))
+    expect_equal(dim(as.matrix(SummarizedExperiment::assay(rme, "mod_prob"))), c(18655, 30))
+    expect_s4_class(SummarizedExperiment::assay(rme)[[1]], "NaMatrix")
+    expect_s4_class(SummarizedExperiment::assay(rme)[[2]], "NaMatrix")
+    expect_s4_class(SummarizedExperiment::assay(rme)[[3]], "NaMatrix")
+    expect_false(is.null(colnames(rme)))
+    expect_length(S4Vectors::metadata(rme), 3)
+    expect_named(S4Vectors::metadata(rme), c("modkit_threshold",
+                                             "filter_threshold",
+                                             "readLevelData"))
+    expect_equal(S4Vectors::metadata(rme)$modkit_threshold,
+                 list(s1_5mC = c(`m` = 0.7988281, `-` = 0.9082031),
+                      s2_5mC = c(`m` = 0.7988281, `-` = 0.9003906),
+                      s1_6mA = c(`a` = -Inf, `-` = 0.8964844)),
+                 ignore_attr = TRUE)
+    expect_equal(S4Vectors::metadata(rme)$filter_threshold,
+                 list(s1_5mC = NULL, s2_5mC = NULL, s1_6mA = NULL),
+                 ignore_attr = TRUE)
+    expect_equal(sum(as.matrix(SummarizedExperiment::assay(rme)), na.rm = TRUE), 8236.457)
+    expect_equal(SparseArray::nnacount(as.matrix(SummarizedExperiment::assay(rme))), 71750) ## total number of rows in the original files
+    
+    # ... multiple files, no filtering, with sample annotation
+    rme <- readModkitExtract(fnames = fnames[c("s1_5mC", "s2_5mC",
+                                               "s1_6mA")],
+                             modbase = c("m", "m", "a"),
+                             sampleAnnot = sample_annot, 
+                             filter = NULL, nrows = Inf, seqinfo = NULL,
+                             BPPARAM = BiocParallel::SerialParam(),
+                             verbose = FALSE)
+    expect_s4_class(rme, "RangedSummarizedExperiment")
+    expect_equal(dim(rme), c(18655, 3)) ## number of unique positions
+    expect_equal(colnames(rme), c("s1_5mC", "s2_5mC", "s1_6mA"))
+    expect_equal(colnames(SummarizedExperiment::colData(rme)), 
+                 c("sample", "modbase", "group"))
+    expect_equal(rme$modbase, c("m", "m", "a"), ignore_attr = TRUE)
+    expect_equal(rme$group, c("g1", "g1", "g2"), ignore_attr = TRUE)
     expect_length(SummarizedExperiment::assays(rme), 1)
     expect_named(SummarizedExperiment::assays(rme), "mod_prob")
     expect_s4_class(SummarizedExperiment::assay(rme, "mod_prob"), "DataFrame")

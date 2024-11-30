@@ -21,52 +21,87 @@ test_that("readModBam works", {
                                   "modkit_extract_rc_6mA_2.tsv.gz"),
                                package = "footprintR")
     names(extractfiles) <- names(modbamfiles)
+    sample_annot <- data.frame(sample = c("sample1", "sample2"), 
+                               group = c("group1", "group1"),
+                               condition = c("cond2", "cond1"))
 
     # invalid arguments
-    expect_error(readModBam("error", "chr1:6940000-6955000", "a", 0, 
+    expect_error(readModBam(bamfiles = "error", 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = "a", nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "not all `bamfiles` exist")
-    expect_error(readModBam(modbamfiles, NULL, "a", 0, 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = NULL, modbase = "a", nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "`regions` must contain at least one genomic range if not in sampling mode")
-    expect_error(readModBam(structure(unname(modbamfiles), names = c("s1", "s1")),
-                            "chr1:6940000-6955000", "a", 0, 
+    expect_error(readModBam(bamfiles = structure(unname(modbamfiles), 
+                                                 names = c("s1", "s1")),
+                            regions = "chr1:6940000-6955000", modbase = "a", 
+                            nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "are not unique")
-    expect_error(readModBam(modbamfiles, "error", "a", 0, 
+    expect_error(readModBam(bamfiles = modbamfiles, regions = "error", 
+                            modbase = "a", nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "GRanges object must contain")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "Z", 0, 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = "Z", nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "invalid `modbase` values")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", 
-                            c("a", "a", "a"), 0, 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = c("a", "a", "a"), nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "must have length")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000",
-                            c(sample1 = "a", sample3 = "a"), 0, 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000",
+                            modbase = c(sample1 = "a", sample3 = "a"), 
+                            nAlnsToSample = 0, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "names of `modbase` and `bamfiles` don't agree")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", -1, 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = "a", nAlnsToSample = -1, 
                             BPPARAM = BiocParallel::SerialParam()),
                  "must be within .0,Inf.")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", "error", 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = "a", nAlnsToSample = "error", 
                             BPPARAM = BiocParallel::SerialParam()),
                  "must be of class 'numeric'")
     expect_error(
         expect_warning(
-            expect_warning(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 10, "error", 
+            expect_warning(readModBam(bamfiles = modbamfiles, 
+                                      regions = "chr1:6940000-6955000", 
+                                      modbase = "a", nAlnsToSample = 10, 
+                                      seqnamesToSampleFrom = "error", 
                                       BPPARAM = BiocParallel::SerialParam()),
                            "Ignoring `regions`"),
             "Ignoring unknown target name"),
         "Cannot sample 10 alignments from a total of 0")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 0, 
-                            "chr1", "error", 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", 
+                            modbase = "a", nAlnsToSample = 0, 
+                            seqnamesToSampleFrom = "chr1", seqinfo = "error", 
                             BPPARAM = BiocParallel::SerialParam()),
                  "`seqinfo` must be `NULL`, a `Seqinfo` object or")
-    expect_error(readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", modbase = "a", 
                             BPPARAM = -1),
                  "'BPPARAM' must be of class 'BiocParallelParam'")
+    expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", modbase = "a",
+                            sampleAnnot = sample_annot[1, ], 
+                            BPPARAM = BiocParallel::SerialParam()),
+                 "Annotation information missing")
+    expect_error(readModBam(
+        bamfiles = modbamfiles, 
+        regions = "chr1:6940000-6955000", modbase = "a",
+        sampleAnnot = sample_annot[, c("group", "condition")], 
+        BPPARAM = BiocParallel::SerialParam()),
+        "sampleAnnot must have at least a column")
 
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a", 
@@ -144,6 +179,12 @@ test_that("readModBam works", {
                         nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
                         BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                         verbose = FALSE)
+    se7  <- readModBam(bamfiles = modbamfiles,
+                       regions = reg5[1:2],
+                       modbase = "a",
+                       sampleAnnot = sample_annot, 
+                       BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                       verbose = FALSE)
 
     seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b)
 
@@ -151,10 +192,9 @@ test_that("readModBam works", {
     expected_coldata_names <- c("sample", "modbase", "n_reads", "readInfo")
     expected_read_info_names <- c("qscore", "read_length", "aligned_length",
                                   "variant_label", "aligned_fraction")
-    for (se in seL) {
+    for (se in c(seL, list(se7))) {
         expect_s4_class(se, "RangedSummarizedExperiment")
         expect_s4_class(rowRanges(se), "GPos")
-        expect_identical(colnames(colData(se)), expected_coldata_names)
         expect_s4_class(colData(se)$readInfo, "SimpleList")
         res_se <- lapply(colData(se)$readInfo, function(df) {
             expect_s4_class(df, "DataFrame")
@@ -166,6 +206,11 @@ test_that("readModBam works", {
         expect_equal(vapply(assay(se, "mod_prob"), ncol, 0), se$n_reads,
                      ignore_attr = TRUE)
     }
+    for (se in seL) {
+        expect_identical(colnames(colData(se)), expected_coldata_names)
+    }
+    expect_identical(colnames(colData(se7)), c(expected_coldata_names, 
+                                               "group", "condition"))
 
     expect_identical(colnames(se1), names(modbamfiles))
     expect_identical(colnames(se2), c("s1", "s2"))
@@ -175,6 +220,7 @@ test_that("readModBam works", {
     expect_identical(colnames(se5b), names(modbamfiles)[1])
     expect_identical(colnames(se6a), names(modbamfiles)[1])
     expect_identical(colnames(se6b), names(modbamfiles)[1])
+    expect_identical(colnames(se7), names(modbamfiles))
 
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -302,6 +348,14 @@ test_that("readModBam works", {
     # ... content of se6a and se6b
     expect_identical(se6a, se6b)
     expect_identical(dim(assay(se6a)$sample1), c(5996L, 5L))
+    
+    # ... content of se7
+    # ... ... check return values
+    mp7 <- assay(se7, "mod_prob")
+    expect_true(paste0("sample1-", aln5b[[1]]$qname) %in% colnames(mp7$sample1))
+    idx <- rownames(se7)
+    expect_identical(mp7[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)],
+                     mp5b[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)])
 })
 
 test_that("readModBam correctly labels reads", {
