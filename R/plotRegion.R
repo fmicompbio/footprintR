@@ -438,7 +438,7 @@ plotReadsLollipop <- function(se,
         }
         region <- shift(region, -referenceCoordinate)
     }
-
+    
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
@@ -463,7 +463,8 @@ plotReadsLollipop <- function(se,
 
     # add segments
     if (drawRead) {
-        dfRead <- .summarizePlotdataPerRead(df)
+        dfRead <- .summarizePlotdataPerRead(
+            df, groupVars = union(facetBy, "sample"))
         p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
                               mapping = aes(
                                   x = .data[["start"]],
@@ -580,7 +581,8 @@ plotReadsHeatmap <- function(se,
 
     # add segments
     if (drawRead) {
-        dfRead <- .summarizePlotdataPerRead(df)
+        dfRead <- .summarizePlotdataPerRead(
+            df, groupVars = union(facetBy, "sample"))
         p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
                               mapping = aes(
                                   x = .data[["start"]],
@@ -1382,12 +1384,12 @@ plotGenomicRegions <- function(grl,
 #' @param dfReads A \code{data.frame} object to summarize, typically generated
 #'     by \code{\link{.preparePlotdataReads}}.
 #'
-#' @importFrom dplyr group_by summarise
+#' @importFrom dplyr group_by summarise across
 #' @importFrom rlang .data
 #'
 #' @noRd
 #' @keywords internal
-.summarizePlotdataPerRead <- function(dfReads) {
+.summarizePlotdataPerRead <- function(dfReads, groupVars = "sample") {
     dfReads |>
         group_by(.data[["read"]]) |>
         summarise(
@@ -1397,7 +1399,7 @@ plotGenomicRegions <- function(grl,
             end = ifelse(is.factor(.data[["position"]]),
                          levels(.data[["position"]])[nlevels(.data[["position"]])],
                          max(.data[["position"]])),
-            sample = unique(.data[["sample"]]),
+            across(groupVars, unique),
             .groups = "drop")
 }
 
