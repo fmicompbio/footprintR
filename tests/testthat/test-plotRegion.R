@@ -65,6 +65,28 @@ test_that("plotRegion works", {
             "chr1", IRanges::IRanges(c(1, 4), c(3, 7)), c("+", "-")
         ))))),
         "There are entries in")
+    
+    tmpgrl <- GenomicRanges::GRangesList(x = GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                 c(6941530, 6941530)), c("+", "+")
+    ))
+    names(tmpgrl) <- NA_character_
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "GenomicRegion", trackData = tmpgrl))),
+        "NA values are not allowed")
+    
+    tmpgrl2 <- GenomicRanges::GRangesList(
+        x = GenomicRanges::GRanges(
+            "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                     c(6941530, 6941530)), c("+", "+")),
+        y = GenomicRanges::GRanges(
+            "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                     c(6941530, 6941530)), c("+", "+")
+        ))
+    names(tmpgrl2) <- c("x", NA_character_)
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "GenomicRegion", trackData = tmpgrl2))),
+        "NA values are not allowed")
 
     # expected results
     p1 <- plotRegion(se = se, region = "chr1:6948000-6952000")
