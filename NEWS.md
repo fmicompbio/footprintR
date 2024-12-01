@@ -4,6 +4,8 @@
 * Add groupBy and colorBy argument to the summary plots, for specification of arbitrary sample columns to group and color values by
 * Open up for using other smoothing methods, specified via the smoothMethod argument to the summary plots. Add 'rollingMean' as a first alternative to the smoothing splines
 * Add progress bars and expand messages to track progress when reading modbam files
+* Add `sampleAnnot` argument to reading functions to enable inclusion of additional sample annotations
+* Add `trim` argument to `readModBam`, to restrict the returned object to the specified regions
 
 # footprintR 0.2.1
 
