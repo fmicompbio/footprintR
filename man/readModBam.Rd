@@ -2,18 +2,20 @@
 % Please edit documentation in R/readModBam.R
 \name{readModBam}
 \alias{readModBam}
-\title{Read base modifications from bam file(s).}
+\title{Read base modifications from bam file(s)}
 \usage{
 readModBam(
   bamfiles,
   regions = NULL,
   modbase,
+  sampleAnnot = NULL,
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
   seqinfo = NULL,
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
+  trim = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
@@ -42,6 +44,12 @@ elements are in the same order as the files in \code{bamfiles}. If
 \code{modbase} has length 1, the same modified base will be used for
 all samples.}
 
+\item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
+for the samples. It must contain at least one column, named
+\code{"sample"}, which must contain all the values of
+\code{names(bamfiles)}. The provided annotations will be propagated to
+the returned \code{SummarizedExperiment} object.}
+
 \item{nAlnsToSample}{A numeric scalar. If non-zero, \code{regions} is ignored
 and approximately \code{nAlnsToSample} randomly selected alignments on
 \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
@@ -68,6 +76,13 @@ See \code{\link{addSeqContext}} for details.}
 coordinates of single nucleotide variant positions, to be used to
 construct read labels for allele-specific analysis. Ignored if \code{NULL}
 or \code{nAlnsToSample > 0} (sampling-mode).}
+
+\item{trim}{A logical scalar. If \code{TRUE}, the returned
+\code{SummarizedExperiment} object will only contain the positions
+overlapping the specified \code{regions}. If \code{FALSE} (default),
+the object will be extended to all positions covered by the reads
+overlapping \code{regions}. In both cases, only reads overlapping
+the specified \code{regions} are included.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps

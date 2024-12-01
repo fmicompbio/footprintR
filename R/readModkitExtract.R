@@ -28,6 +28,11 @@
 #'     unmodified and modified bases, respectively. The names of the vector
 #'     should be \code{"-"} and the value(s) in \code{modbase}.
 #' @param nrows Only read \code{nrows} rows of each input file.
+#' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
+#'     for the samples. It must contain at least one column, named 
+#'     \code{"sample"}, which must contain all the values of 
+#'     \code{names(fnames)}. The provided annotations will be propagated to 
+#'     the returned \code{SummarizedExperiment} object. 
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -79,6 +84,7 @@ readModkitExtract <- function(fnames,
                               modbase,
                               filter = NULL,
                               nrows = Inf,
+                              sampleAnnot = NULL, 
                               seqinfo = NULL,
                               sequenceContextWidth = 0,
                               sequenceReference = NULL,
@@ -94,6 +100,17 @@ readModkitExtract <- function(fnames,
         names(fnames) <- paste0("s", seq_along(fnames))
     } else if (any(duplicated(names(fnames)))) {
         stop("`names(fnames)` are not unique")
+    }
+    .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
+    if (!is.null(sampleAnnot)) {
+        if (!("sample" %in% colnames(sampleAnnot))) {
+            stop("sampleAnnot must have at least a column named 'sample'")
+        }
+        if (!all(names(fnames) %in% sampleAnnot$sample)) {
+            stop("Annotation information missing for some samples: ",
+                 paste(setdiff(names(fnames), sampleAnnot$sample), 
+                       collapse = ", "))
+        }
     }
     if (length(modbase) == 1) {
         modbase <- rep(modbase, length(fnames))
@@ -230,14 +247,22 @@ readModkitExtract <- function(fnames,
     }
 
     # create SummarizedExperiment object
+    cdata <- DataFrame(
+        row.names = names(modmat),
+        sample = names(modmat),
+        modbase = modbase[names(modmat)]
+    )
+    if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
+                                   colnames(sampleAnnot) != "sample", 
+                                   drop = FALSE]
+        cdata <- cbind(cdata, sampleAnnot)
+    }
+    stopifnot(names(modmat) == cdata$sample)
     se <- SummarizedExperiment(
         assays = list(mod_prob = modmat),
         rowRanges = gpos,
-        colData = DataFrame(
-            row.names = names(modmat),
-            sample = names(modmat),
-            modbase = modbase[names(modmat)]
-        ),
+        colData = cdata,
         metadata = list(modkit_threshold = modkit_threshold,
                         filter_threshold = filter_threshold,
                         readLevelData = list(assayNames = "mod_prob",

@@ -25,6 +25,7 @@ test_that("plotRegion works", {
     seR <- readModkitExtract(fnames = fname3, modbase = 'a',
                              BPPARAM = BiocParallel::SerialParam())
     seR2 <- flattenReadLevelAssay(se = seR)
+    seR2 <- addFootprints(seR2, wgt = c(0.5, -0.5), verbose = FALSE)
 
     # invalid arguments
     expect_error(plotRegion(se = "error"))
@@ -65,6 +66,41 @@ test_that("plotRegion works", {
             "chr1", IRanges::IRanges(c(1, 4), c(3, 7)), c("+", "-")
         ))))),
         "There are entries in")
+    
+    tmpgrl <- GenomicRanges::GRangesList(x = GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                 c(6941530, 6941530)), c("+", "+")
+    ))
+    names(tmpgrl) <- NA_character_
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "GenomicRegion", trackData = tmpgrl))),
+        "NA values are not allowed")
+    
+    tmpgrl2 <- GenomicRanges::GRangesList(
+        x = GenomicRanges::GRanges(
+            "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                     c(6941530, 6941530)), c("+", "+")),
+        y = GenomicRanges::GRanges(
+            "chr1", IRanges::IRanges(c(6929104, 6929106), 
+                                     c(6941530, 6941530)), c("+", "+")
+        ))
+    names(tmpgrl2) <- c("x", NA_character_)
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "GenomicRegion", trackData = tmpgrl2))),
+        "NA values are not allowed")
+    
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "Lollipop", trackData = "mod_prob",
+        footprintColumns = "missing"
+    ))), "All values in 'footprintColumns' must be one of")
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "Lollipop", trackData = "mod_prob",
+        footprintColumns = "footprints", footprintColors = c(x = "red")
+    ))), "footprintColors must be provided")
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "Heatmap", trackData = "mod_prob",
+        footprintColumns = "footprints", footprintColors = c(x = "red")
+    ))), "footprintColors must be provided")
 
     # expected results
     p1 <- plotRegion(se = se, region = "chr1:6948000-6952000")
@@ -266,7 +302,16 @@ test_that("plotRegion works - manual inspection", {
     seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
                              BPPARAM = BiocParallel::SerialParam())
     seB <- flattenReadLevelAssay(seB)
-
+    seB <- addFootprints(
+        seB, 
+        wgt = rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), 
+                  c(15, 140, 15)),
+        name = "nucleosome", verbose = FALSE, thresh = 0.05)
+    seB$footprint2 <- seB$nucleosome
+    metadata(seB)$readLevelData$colDataColumns <- union(
+        metadata(seB)$readLevelData$colDataColumns, "footprint2"
+    )
+    
     ## Annotation GRangesList
     grl <- GRangesList(
         CGI1 = GRanges(seqnames = "chr1",
@@ -312,20 +357,25 @@ test_that("plotRegion works - manual inspection", {
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
 
-    ## ... don't color by strand, move labels
+    ## ... don't color by strand, move labels, add footprints
     p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA",
                            orderReads = FALSE, trackTitle = "Heatmap",
-                           facetBy = NULL),
-                      list(trackData = grl, trackType = "GenomicRegion",
-                           colorByStrand = FALSE, labelSize = 3,
+                           facetBy = NULL, footprintColumns = "nucleosome"),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA",
+                           orderReads = FALSE, trackTitle = "Heatmap",
+                           facetBy = NULL, footprintColumns = "nucleosome",
+                           footprintColors = c(nucleosome = "cyan")),
+                      list(trackData = grl, trackType = "GenomicRegion", 
+                           colorByStrand = FALSE, labelSize = 3, 
                            labelPosition = "above", legendTitle = NULL),
                       list(trackData = "Nvalid", trackType = "Smooth",
-                           showLegend = FALSE,
-                           highlightRegions = grh))) +
-        plot_layout(heights = c(3, 1, 2))
+                           showLegend = FALSE, 
+                           highlightRegions = grh))) + 
+        plot_layout(heights = c(3, 3, 1, 2))
     expect_s3_class(p, "ggplot")
 
     ## ... interpolate
@@ -335,9 +385,10 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA",
                            orderReads = FALSE, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = TRUE,
-                           linewidthTiles = 0.25),
-                      list(trackData = grl, trackType = "GenomicRegion",
-                           colorByStrand = FALSE, labelSize = 3,
+                           linewidthTiles = 0.25, 
+                           footprintColumns = c("nucleosome", "footprint2")),
+                      list(trackData = grl, trackType = "GenomicRegion", 
+                           colorByStrand = FALSE, labelSize = 3, 
                            labelPosition = "above", legendTitle = NULL),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
@@ -360,8 +411,9 @@ test_that("plotRegion works - manual inspection", {
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
-                           size = 2, stroke = 0.5),
+                           orderReads = TRUE, facetBy = "sample", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
@@ -404,9 +456,10 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
                            facetBy = "modbase", interpolate = FALSE,
-                           linewidthTiles = 0.25),
-                      list(trackData = grl, trackType = "GenomicRegion",
-                           colorByStrand = TRUE, labelSize = 2,
+                           linewidthTiles = 0.25, 
+                           footprintColumns = "nucleosome"),
+                      list(trackData = grl, trackType = "GenomicRegion", 
+                           colorByStrand = TRUE, labelSize = 2, 
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
@@ -455,8 +508,9 @@ test_that("plotRegion works - manual inspection", {
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
-                           size = 2, stroke = 0.5),
+                           orderReads = TRUE, facetBy = "sample", 
+                           size = 2, stroke = 0.5,
+                           footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
@@ -476,8 +530,9 @@ test_that("plotRegion works - manual inspection", {
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
-                           size = 2, stroke = 0.5),
+                           orderReads = TRUE, facetBy = "modbase", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",

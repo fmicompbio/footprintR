@@ -2,7 +2,7 @@
 % Please edit documentation in R/modbaseSpacing.R
 \name{estimateNRL}
 \alias{estimateNRL}
-\title{Estimate the nucleosome repeat length (NRL) from modified-base distances.}
+\title{Estimate the nucleosome repeat length (NRL) from modified-base distances}
 \usage{
 estimateNRL(
   x,

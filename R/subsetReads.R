@@ -1,4 +1,4 @@
-#' Subset the reads from read-level assays.
+#' Subset the reads from read-level assays
 #'
 #' @description
 #' This function takes read names or indices and subsets them from the

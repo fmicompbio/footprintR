@@ -2,7 +2,7 @@
 % Please edit documentation in R/seqContext.R
 \name{addSeqContext}
 \alias{addSeqContext}
-\title{Add sequence context around positions of interest to a SummarizedExperiment.}
+\title{Add sequence context around positions of interest to a SummarizedExperiment}
 \usage{
 addSeqContext(x, sequenceContextWidth, sequenceReference)
 }

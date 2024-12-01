@@ -2,7 +2,7 @@
 % Please edit documentation in R/modbaseSpacing.R
 \name{plotModbaseSpacing}
 \alias{plotModbaseSpacing}
-\title{Plot annotated distances between modified bases.}
+\title{Plot annotated distances between modified bases}
 \usage{
 plotModbaseSpacing(
   x,
