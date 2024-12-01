@@ -299,7 +299,6 @@ segmentFootprintScores <- function(scoresList,
 # -- helper functions ----------------------------------------------------------
 #' Smooth scores using band-pass filter
 #'
-#' @importFrom signal butter filtfilt
 #' @noRd
 #' @keywords internal
 .filterScores <- function(score, minperiod, maxperiod) {
