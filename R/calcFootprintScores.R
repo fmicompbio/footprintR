@@ -80,14 +80,21 @@ calcFootprintScores <- function(se,
 
     ## Calculate footprint scores
     scoresL <- lapply(adatList, function(adf) {
-        adf |>
-            group_by(readId) |>
-            group_modify(~ calcFootprintScoreForRead(.x$pos, .x$pmod,
-                                                     wgt = wgt,
-                                                     minconf = minconf,
-                                                     minweight = minweight)) |>
-            ungroup() |>
-            as.data.frame()
+        if (nrow(adf) > 0) {
+            adf |>
+                group_by(readId) |>
+                group_modify(~ calcFootprintScoreForRead(.x$pos, .x$pmod,
+                                                         wgt = wgt,
+                                                         minconf = minconf,
+                                                         minweight = minweight)) |>
+                ungroup() |>
+                as.data.frame()
+        } else {
+            data.frame(readId = character(0),
+                       pos = integer(0),
+                       pmod = numeric(0),
+                       score = numeric(0))
+        }
     })
 
     return(scoresL)
@@ -185,44 +192,47 @@ segmentFootprintScores <- function(scoresList,
 
     ## Smooth scores
     if (require("signal", quietly = TRUE)) {
-        irListList <- lapply(structure(names(scoresList),
-                                       names = names(scoresList)),
-                             function(nm) {
-
-            # smooth scores using a band-pass filter
-            dat <- scoresList[[nm]] |>
-                select(readId, pos, score) |>
-                group_by(readId) |>
-                mutate(sscore = .filterScores(score,
-                                              minperiod = minperiod,
-                                              maxperiod = maxperiod)) |>
-                ungroup()
-            iByReadId <- split(seq.int(nrow(dat)), dat$readId)[unique(dat$readId)]
-            midList <- lapply(iByReadId, function(i) {
-
-                # segment smoothed scores
-                sscore <- dat$sscore[i]
-                irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
-                irpos <- irpos[width(irpos) >= lenRange[1] &
-                                   width(irpos) < lenRange[2]]
-                if (length(irpos)) {
-                    xposmax <- viewWhichMaxs(Views(sscore, irpos))
+        irListList <- lapply(
+            structure(names(scoresList), names = names(scoresList)),
+            function(nm) {
+                if (nrow(scoresList[[nm]]) > 0) {
+                    # smooth scores using a band-pass filter
+                    dat <- scoresList[[nm]] |>
+                        select(readId, pos, score) |>
+                        group_by(readId) |>
+                        mutate(sscore = .filterScores(score,
+                                                      minperiod = minperiod,
+                                                      maxperiod = maxperiod)) |>
+                        ungroup()
+                    iByReadId <- split(seq.int(nrow(dat)), 
+                                       dat$readId)[unique(dat$readId)]
+                    midList <- lapply(iByReadId, function(i) {
+                        
+                        # segment smoothed scores
+                        sscore <- dat$sscore[i]
+                        irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
+                        irpos <- irpos[width(irpos) >= lenRange[1] &
+                                           width(irpos) < lenRange[2]]
+                        if (length(irpos)) {
+                            xposmax <- viewWhichMaxs(Views(sscore, irpos))
+                        } else {
+                            xposmax <- numeric(0)
+                        }
+                        
+                        # return midpoints (location of score maxima)
+                        dat$pos[i][xposmax]
+                    })
+                    
+                    # create IRangesList
+                    return(do.call(IRangesList,
+                                   lapply(midList, function(mid) {
+                                       resize(IRanges(start = mid, width = 1L),
+                                              width = width, fix = "center")
+                                   })))
                 } else {
-                    xposmax <- numeric(0)
+                    return(IRangesList())
                 }
-
-                # return midpoints (location of score maxima)
-                dat$pos[i][xposmax]
             })
-
-            # create IRangesList
-            do.call(IRangesList,
-                    lapply(midList, function(mid) {
-                               resize(IRanges(start = mid, width = 1L),
-                                      width = width, fix = "center")
-                           }))
-        })
-
         return(irListList)
     }
 }
