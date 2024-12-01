@@ -17,12 +17,12 @@ test_that("plotRegion works", {
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readBedMethyl(fnames = c(fname1, fname2), modbase = "m",
                         sequenceContextWidth = 3,
-                        sequenceReference = ref, 
+                        sequenceReference = ref,
                         BPPARAM = BiocParallel::SerialParam())
     se0 <- se
     assayNames(se0) <- c("assay1", "assay2")
     fname3 <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", package = "footprintR")
-    seR <- readModkitExtract(fnames = fname3, modbase = 'a', 
+    seR <- readModkitExtract(fnames = fname3, modbase = 'a',
                              BPPARAM = BiocParallel::SerialParam())
     seR2 <- flattenReadLevelAssay(se = seR)
     seR2 <- addFootprints(seR2, wgt = c(0.5, -0.5), verbose = FALSE)
@@ -138,7 +138,7 @@ test_that("plotRegion works", {
     )
     expect_warning(
         p9 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
-                         modbaseSpace = TRUE, 
+                         modbaseSpace = TRUE,
                          tracks = list(list(trackType = "GenomicRegion",
                                             trackData = GenomicRanges::GRangesList(
                                                 a = GenomicRanges::GRanges(
@@ -179,15 +179,15 @@ test_that("plotRegion works", {
                                                  ), "+"
                                              )
                                          ),
-                                         colorByStrand = FALSE)), 
+                                         colorByStrand = FALSE)),
                       referenceCoordinate = 6935400)
     p11 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
                       modbaseSpace = TRUE, referenceCoordinate = 6935400,
-                      tracks = list(list(trackType = "Lollipop", 
+                      tracks = list(list(trackType = "Lollipop",
                                          trackData = "mod_prob")))
     p12 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
-                      modbaseSpace = TRUE, 
-                      tracks = list(list(trackType = "Lollipop", 
+                      modbaseSpace = TRUE,
+                      tracks = list(list(trackType = "Lollipop",
                                          trackData = "mod_prob",
                                          highlightRegions = GenomicRanges::GRanges(
                                              "chr1", IRanges::IRanges(
@@ -215,28 +215,28 @@ test_that("plotRegion works", {
                                       trackData = "FracMod"))),
         "No positions retained for plotting")
     expect_error(
-        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+        plotRegion(se = seR2, region = "chr1:6935400-6935450",
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
                                       colors = c(X = "red")))),
         "Missing color specification"
     )
     expect_error(
-        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+        plotRegion(se = seR2, region = "chr1:6935400-6935450",
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
                                       colorBy = "missing"))),
         "Some requested columns are not present"
     )
     expect_error(
-        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+        plotRegion(se = seR2, region = "chr1:6935400-6935450",
                    tracks = list(list(trackType = "Heatmap",
                                       trackData = "mod_prob",
                                       facetBy = "missing"))),
         "Some requested columns are not present"
     )
     expect_error(
-        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+        plotRegion(se = seR2, region = "chr1:6935400-6935450",
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
                                       smoothMethod = "rollingMean",
@@ -244,13 +244,13 @@ test_that("plotRegion works", {
         "windowSize must be an odd integer"
     )
     expect_error(
-        plotRegion(se = seR2, region = "chr1:6935400-6935450", 
+        plotRegion(se = seR2, region = "chr1:6935400-6935450",
                    tracks = list(list(trackType = "Smooth",
                                       trackData = "Nvalid",
                                       smoothMethod = "missing"))),
         "All values in 'smoothMethod' must be one of"
     )
-    
+
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
     expect_s3_class(p3, "ggplot")
@@ -291,9 +291,9 @@ test_that("plotRegion works", {
     unlink(tmpplot)
 })
 
-## The examples below are provided with the intention that they can be run 
-## manually from time to time to also inspect the output (that is hard to 
-## capture with automated unit tests). 
+## The examples below are provided with the intention that they can be run
+## manually from time to time to also inspect the output (that is hard to
+## capture with automated unit tests).
 test_that("plotRegion works - manual inspection", {
     extractfiles <- system.file("extdata",
                                 c("modkit_extract_rc_6mA_1.tsv.gz",
@@ -314,44 +314,52 @@ test_that("plotRegion works - manual inspection", {
     
     ## Annotation GRangesList
     grl <- GRangesList(
-        CGI1 = GRanges(seqnames = "chr1", 
-                       ranges = IRanges(start = 6935820, end = 6935850), 
+        CGI1 = GRanges(seqnames = "chr1",
+                       ranges = IRanges(start = 6935820, end = 6935850),
                        strand = "*"),
-        g1 = GRanges(seqnames = "chr1", 
-                     ranges = IRanges(start = c(6934800, 6935870), end = c(6935820, 6935900)), 
+        g1 = GRanges(seqnames = "chr1",
+                     ranges = IRanges(start = c(6934800, 6935870), end = c(6935820, 6935900)),
                      strand = "+"),
         g1 = GRanges(seqnames = "chr1",
                      ranges = IRanges(start = c(6934800, 6935840), end = c(6935810, 6935950)),
                      strand = "-"),
-        out = GRanges(seqnames = "chr2", 
-                      ranges = IRanges(start = 6935820, end = 6935850), 
+        out = GRanges(seqnames = "chr2",
+                      ranges = IRanges(start = 6935820, end = 6935850),
                       strand = "*")
     )
-    
+    grlNAname <- grl
+    names(grlNAname)[2] <- NA
+
     ## Regions to highlight
-    grh <- GRanges(seqnames = c("chr1", "chr1", "chr2"), 
+    grh <- GRanges(seqnames = c("chr1", "chr1", "chr2"),
                    ranges = IRanges(start = c(6935830, 6935700, 6935870),
                                     end = c(6935850, 6935820, 6935890)))
-    
+
+    ## NA in grl name
+    expect_error(plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = grlNAname, trackType = "GenomicRegion",
+                           colorByStrand = TRUE))))
+
     ## Absolute base space, no reference coordinate
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         labelAccuracy = 1e-6,
         tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
-                           size = 2, stroke = 0.25, legendTitle = "6mA", 
+                           size = 2, stroke = 0.25, legendTitle = "6mA",
                            highlightRegions = grh),
-                      list(trackData = grl, trackType = "GenomicRegion", 
-                           colorByStrand = TRUE, labelSize = 3, 
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 3,
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "Nvalid", trackType = "Smooth",
-                           showLegend = FALSE))) + 
+                           showLegend = FALSE))) +
         plot_layout(heights = c(3, 1, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## ... don't color by strand, move labels, add footprints
     p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA",
                            orderReads = FALSE, trackTitle = "Heatmap",
@@ -369,10 +377,10 @@ test_that("plotRegion works - manual inspection", {
                            highlightRegions = grh))) + 
         plot_layout(heights = c(3, 3, 1, 2))
     expect_s3_class(p, "ggplot")
-    
+
     ## ... interpolate
     p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA",
                            orderReads = FALSE, trackTitle = "Heatmap",
@@ -383,23 +391,23 @@ test_that("plotRegion works - manual inspection", {
                            colorByStrand = FALSE, labelSize = 3, 
                            labelPosition = "above", legendTitle = NULL),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", 
-                           highlightRegions = grh))) + 
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 2))
     expect_s3_class(p, "ggplot")
-    
+
     ## referenceCoordinate = left border of plot
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6935800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
-                      list(trackData = grl, trackType = "GenomicRegion", 
-                           colorByStrand = TRUE, labelSize = 2, 
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
@@ -407,15 +415,15 @@ test_that("plotRegion works - manual inspection", {
                            size = 2, stroke = 0.5, 
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", 
-                           highlightRegions = grh))) + 
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## referenceCoordinate outside plot (left) - breaks in scale_cut!
-    ## fixed in https://github.com/r-lib/scales/commit/6f2f979a81678c7cd5597b1d18cac78e9cf473c6, 
+    ## fixed in https://github.com/r-lib/scales/commit/6f2f979a81678c7cd5597b1d18cac78e9cf473c6,
     ## but not yet on CRAN
     # expect_warning(p <- plotRegion(
     #     seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
@@ -442,7 +450,7 @@ test_that("plotRegion works - manual inspection", {
 
     ## referenceCoordinate outside plot (right)
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6936800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
@@ -455,44 +463,44 @@ test_that("plotRegion works - manual inspection", {
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample", 
-                           size = 2, stroke = 0.5), 
+                           orderReads = TRUE, facetBy = "sample",
+                           size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", 
-                           highlightRegions = grh))) + 
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## referenceCoordinate in the middle of plot region
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6935850,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
-                      list(trackData = grl, trackType = "GenomicRegion", 
-                           colorByStrand = TRUE, labelSize = 2, 
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample", 
-                           size = 2, stroke = 0.5), 
+                           orderReads = TRUE, facetBy = "sample",
+                           size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
+                           showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", groupBy = "modbase",
                            colorBy = "modbase",
-                           highlightRegions = grh))) + 
+                           highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## modbaseSpace = TRUE, change colors
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
@@ -504,17 +512,17 @@ test_that("plotRegion works - manual inspection", {
                            size = 2, stroke = 0.5,
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
-                           trackTitle = "Smooth", 
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
                            colors = c(s1 = "forestgreen", s2 = "firebrick1"),
-                           highlightRegions = grh))) + 
+                           highlightRegions = grh))) +
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## ... with only smooth
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
@@ -526,17 +534,17 @@ test_that("plotRegion works - manual inspection", {
                            size = 2, stroke = 0.5, 
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "Smooth",
-                           showLegend = FALSE, spar = 0.5, 
+                           showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh,
-                           arglistSmooth = list(linewidth = 2)))) + 
+                           arglistSmooth = list(linewidth = 2)))) +
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## ... change y-axis range
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE, 
+        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = FALSE, trackTitle = "Heatmap",
@@ -544,55 +552,55 @@ test_that("plotRegion works - manual inspection", {
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample", 
-                           size = 2, stroke = 0.5), 
+                           orderReads = TRUE, facetBy = "sample",
+                           size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
+                           showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
-                           highlightRegions = grh, yAxisRange = c(3, 9)))) + 
+                           highlightRegions = grh, yAxisRange = c(3, 9)))) +
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
-    
+
     ## ... compare smoothing methods
     p <- plotRegion(
-        seB, region = "chr1:6935700-6936000", modbaseSpace = FALSE, 
+        seB, region = "chr1:6935700-6936000", modbaseSpace = FALSE,
         tracks = list(list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.1, 
-                           trackTitle = "Smooth spline, spar = 0.1", 
+                           showLegend = FALSE, spar = 0.1,
+                           trackTitle = "Smooth spline, spar = 0.1",
                            smoothMethod = "smoothSpline"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
+                           showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth spline, spar = 0.5",
-                           smoothMethod = "smoothSpline"), 
+                           smoothMethod = "smoothSpline"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, windowSize = 3, 
+                           showLegend = FALSE, windowSize = 3,
                            trackTitle = "Rolling mean, windowSize = 3",
                            smoothMethod = "rollingMean"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, windowSize = 15, 
+                           showLegend = FALSE, windowSize = 15,
                            trackTitle = "Rolling mean, windowSize = 15",
                            smoothMethod = "rollingMean")
         ))
     expect_s3_class(p, "ggplot")
-    
+
     ## ... compare smoothing methods, in modbaseSpace
     p <- plotRegion(
-        seB, region = "chr1:6935700-6936000", modbaseSpace = TRUE, 
+        seB, region = "chr1:6935700-6936000", modbaseSpace = TRUE,
         tracks = list(list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.1, 
-                           trackTitle = "Smooth spline, spar = 0.1", 
+                           showLegend = FALSE, spar = 0.1,
+                           trackTitle = "Smooth spline, spar = 0.1",
                            smoothMethod = "smoothSpline"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, spar = 0.5, 
+                           showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth spline, spar = 0.5",
-                           smoothMethod = "smoothSpline"), 
+                           smoothMethod = "smoothSpline"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, windowSize = 3, 
+                           showLegend = FALSE, windowSize = 3,
                            trackTitle = "Rolling mean, windowSize = 3",
                            smoothMethod = "rollingMean"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
-                           showLegend = FALSE, windowSize = 15, 
+                           showLegend = FALSE, windowSize = 15,
                            trackTitle = "Rolling mean, windowSize = 15",
                            smoothMethod = "rollingMean")
         ))

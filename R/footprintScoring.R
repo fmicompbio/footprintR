@@ -161,7 +161,8 @@ addFootprints <- function(se,
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray nnawhich nnavals
 #' @importFrom BiocGenerics start
-#' @importFrom dplyr group_by group_modify ungroup
+#' @importFrom dplyr mutate group_by group_modify ungroup
+#' @importFrom rlang .data
 #'
 #' @export
 #' @rdname footprintScoring
@@ -198,7 +199,8 @@ calcFootprintScores <- function(se,
     scoresL <- lapply(adatList, function(adf) {
         if (nrow(adf) > 0) {
             adf |>
-                group_by(readId) |>
+                mutate(readId = factor(.data$readId, level = unique(.data$readId))) |>
+                group_by(.data$readId) |>
                 group_modify(~ calcFootprintScoreForRead(.x$pos, .x$pmod,
                                                          wgt = wgt,
                                                          minconf = minconf,
@@ -206,7 +208,7 @@ calcFootprintScores <- function(se,
                 ungroup() |>
                 as.data.frame()
         } else {
-            data.frame(readId = character(0),
+            data.frame(readId = factor(),
                        pos = integer(0),
                        pmod = numeric(0),
                        score = numeric(0))
@@ -222,6 +224,7 @@ calcFootprintScores <- function(se,
 #' @importFrom IRanges IRanges IRangesList coerce Views viewApply viewWhichMaxs
 #'     resize start width
 #' @importFrom dplyr group_by mutate ungroup select
+#' @importFrom rlang .data
 #'
 #' @export
 #' @rdname footprintScoring
@@ -256,8 +259,8 @@ segmentFootprintScores <- function(scoresList,
             if (nrow(scoresList[[nm]]) > 0) {
                 # smooth scores using a band-pass filter
                 dat <- scoresList[[nm]] |>
-                    select(readId, pos, score) |>
-                    group_by(readId) |>
+                    select(.data$readId, .data$pos, .data$score) |>
+                    group_by(.data$readId) |>
                     mutate(sscore = .filterScores(score,
                                                   minperiod = minperiod,
                                                   maxperiod = maxperiod)) |>
