@@ -15,6 +15,7 @@ readModBam(
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
+  trim = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
@@ -75,6 +76,13 @@ See \code{\link{addSeqContext}} for details.}
 coordinates of single nucleotide variant positions, to be used to
 construct read labels for allele-specific analysis. Ignored if \code{NULL}
 or \code{nAlnsToSample > 0} (sampling-mode).}
+
+\item{trim}{A logical scalar. If \code{TRUE}, the returned
+\code{SummarizedExperiment} object will only contain the positions
+overlapping the specified \code{regions}. If \code{FALSE} (default),
+the object will be extended to all positions covered by the reads
+overlapping \code{regions}. In both cases, only reads overlapping
+the specified \code{regions} are included.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps

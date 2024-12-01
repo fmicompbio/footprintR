@@ -52,6 +52,12 @@
 #'     coordinates of single nucleotide variant positions, to be used to
 #'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
 #'     or \code{nAlnsToSample > 0} (sampling-mode).
+#' @param trim A logical scalar. If \code{TRUE}, the returned 
+#'     \code{SummarizedExperiment} object will only contain the positions 
+#'     overlapping the specified \code{regions}. If \code{FALSE} (default), 
+#'     the object will be extended to all positions covered by the reads 
+#'     overlapping \code{regions}. In both cases, only reads overlapping 
+#'     the specified \code{regions} are included. 
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
 #'     in \code{readModBam()}. The default value is
@@ -101,6 +107,7 @@ readModBam <- function(bamfiles,
                        sequenceContextWidth = 0,
                        sequenceReference = NULL,
                        variantPositions = NULL,
+                       trim = FALSE, 
                        BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                        verbose = FALSE) {
     # digest arguments
@@ -171,6 +178,7 @@ readModBam <- function(bamfiles,
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))
     .assertVector(x = variantPositions, type = "GPos", allowNULL = TRUE)
+    .assertScalar(x = trim, type = "logical")
     .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
 
@@ -250,6 +258,11 @@ readModBam <- function(bamfiles,
     gpos <- sort(unique(do.call(c, unname(gposL))))
     .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
+    # if trim=TRUE, trim GPos to only the indicated region
+    if (trim) {
+        gpos <- subsetByOverlaps(gpos, regions)
+    }
+    
     # add sequence context
     if (sequenceContextWidth > 0) {
         .message("extracting sequence contexts")
@@ -272,8 +285,10 @@ readModBam <- function(bamfiles,
                              dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
                              type = "double")
             i <- match(gposL[[nm]], gpos)
+            # if trim=TRUE, not all positions in gposL may be present in gpos
+            found <- which(!is.na(i))
             j <- match(x$read_id, readL[[nm]])
-            namat[cbind(i, j)] <- x$mod_prob
+            namat[cbind(i[found], j[found])] <- x$mod_prob[found]
             modmat[[nm]] <- namat
             rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
             x$read_df$read_id <- NULL

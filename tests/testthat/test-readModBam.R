@@ -92,6 +92,10 @@ test_that("readModBam works", {
                             BPPARAM = -1),
                  "'BPPARAM' must be of class 'BiocParallelParam'")
     expect_error(readModBam(bamfiles = modbamfiles, 
+                            regions = "chr1:6940000-6955000", modbase = "a", 
+                            BPPARAM = BiocParallel::SerialParam, trim = 1),
+                 "'trim' must be of class 'logical'")
+    expect_error(readModBam(bamfiles = modbamfiles, 
                             regions = "chr1:6940000-6955000", modbase = "a",
                             sampleAnnot = sample_annot[1, ], 
                             BPPARAM = BiocParallel::SerialParam()),
@@ -185,8 +189,13 @@ test_that("readModBam works", {
                        sampleAnnot = sample_annot, 
                        BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                        verbose = FALSE)
+    se8 <- readModBam(bamfiles = modbamfiles,
+                      regions = reg1,
+                      modbase = "a",
+                      BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                      trim = TRUE, verbose = FALSE)
 
-    seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b)
+    seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b, se8)
 
     # ... structure
     expected_coldata_names <- c("sample", "modbase", "n_reads", "readInfo")
@@ -221,6 +230,7 @@ test_that("readModBam works", {
     expect_identical(colnames(se6a), names(modbamfiles)[1])
     expect_identical(colnames(se6b), names(modbamfiles)[1])
     expect_identical(colnames(se7), names(modbamfiles))
+    expect_identical(colnames(se8), names(modbamfiles))
 
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -350,12 +360,26 @@ test_that("readModBam works", {
     expect_identical(dim(assay(se6a)$sample1), c(5996L, 5L))
     
     # ... content of se7
-    # ... ... check return values
     mp7 <- assay(se7, "mod_prob")
     expect_true(paste0("sample1-", aln5b[[1]]$qname) %in% colnames(mp7$sample1))
     idx <- rownames(se7)
     expect_identical(mp7[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)],
                      mp5b[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)])
+    
+    # ... content of se8 (like se1, but trimmed)
+    expect_identical(unname(se8$n_reads), c(4L, 6L))
+    expect_identical(dim(se8), c(1009L, 2L))
+    modprob1 <- as.matrix(assay(se1, "mod_prob"))
+    modprob8 <- as.matrix(assay(se8, "mod_prob"))
+    shared_rows <- intersect(rownames(modprob8), rownames(modprob1))
+    shared_cols <- intersect(colnames(modprob8), colnames(modprob1))
+    expect_length(shared_rows, 1009L)
+    expect_length(shared_cols, 10L)
+    expect_identical(modprob1[shared_rows, ], modprob8[shared_rows, ])
+    expect_identical(colnames(se8), names(modbamfiles))
+    expect_identical(lapply(se8$readInfo, rownames),
+                     lapply(assay(se8, "mod_prob"), colnames))
+    expect_identical(se1$readInfo, se8$readInfo)
 })
 
 test_that("readModBam correctly labels reads", {
