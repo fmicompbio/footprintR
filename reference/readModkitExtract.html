@@ -64,6 +64,7 @@ represented by <code>NA</code>.</p>
 <span>  <span class="va">modbase</span>,</span>
 <span>  filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nrows <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  sampleAnnot <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sequenceContextWidth <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  sequenceReference <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -106,6 +107,14 @@ should be <code>"-"</code> and the value(s) in <code>modbase</code>.</p></dd>
 
 <dt id="arg-nrows">nrows<a class="anchor" aria-label="anchor" href="#arg-nrows"></a></dt>
 <dd><p>Only read <code>nrows</code> rows of each input file.</p></dd>
+
+
+<dt id="arg-sampleannot">sampleAnnot<a class="anchor" aria-label="anchor" href="#arg-sampleannot"></a></dt>
+<dd><p>A <code>data.frame</code> (or <code>NULL</code>) providing annotations
+for the samples. It must contain at least one column, named
+<code>"sample"</code>, which must contain all the values of
+<code>names(fnames)</code>. The provided annotations will be propagated to
+the returned <code>SummarizedExperiment</code> object.</p></dd>
 
 
 <dt id="arg-seqinfo">seqinfo<a class="anchor" aria-label="anchor" href="#arg-seqinfo"></a></dt>
