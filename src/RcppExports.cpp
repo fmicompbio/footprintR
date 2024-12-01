@@ -23,6 +23,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calcFootprintScoreForRead
+Rcpp::DataFrame calcFootprintScoreForRead(Rcpp::IntegerVector pos, Rcpp::NumericVector pmod, Rcpp::NumericVector wgt, double minconf, double minweight);
+RcppExport SEXP _footprintR_calcFootprintScoreForRead(SEXP posSEXP, SEXP pmodSEXP, SEXP wgtSEXP, SEXP minconfSEXP, SEXP minweightSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pmod(pmodSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type wgt(wgtSEXP);
+    Rcpp::traits::input_parameter< double >::type minconf(minconfSEXP);
+    Rcpp::traits::input_parameter< double >::type minweight(minweightSEXP);
+    rcpp_result_gen = Rcpp::wrap(calcFootprintScoreForRead(pos, pmod, wgt, minconf, minweight));
+    return rcpp_result_gen;
+END_RCPP
+}
 // labelDists
 Rcpp::NumericMatrix labelDists(std::vector<std::string> labels, int minOverlap);
 RcppExport SEXP _footprintR_labelDists(SEXP labelsSEXP, SEXP minOverlapSEXP) {
@@ -92,6 +107,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
+    {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
