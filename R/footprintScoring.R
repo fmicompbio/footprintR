@@ -250,50 +250,48 @@ segmentFootprintScores <- function(scoresList,
     .message("segmenting footprint scores")
 
     ## Smooth scores
-    if (require("signal", quietly = TRUE)) {
-        irListList <- lapply(
-            structure(names(scoresList), names = names(scoresList)),
-            function(nm) {
-                if (nrow(scoresList[[nm]]) > 0) {
-                    # smooth scores using a band-pass filter
-                    dat <- scoresList[[nm]] |>
-                        select(readId, pos, score) |>
-                        group_by(readId) |>
-                        mutate(sscore = .filterScores(score,
-                                                      minperiod = minperiod,
-                                                      maxperiod = maxperiod)) |>
-                        ungroup()
-                    iByReadId <- split(seq.int(nrow(dat)),
-                                       dat$readId)[unique(dat$readId)]
-                    midList <- lapply(iByReadId, function(i) {
-
-                        # segment smoothed scores
-                        sscore <- dat$sscore[i]
-                        irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
-                        irpos <- irpos[width(irpos) >= lenRange[1] &
-                                           width(irpos) < lenRange[2]]
-                        if (length(irpos)) {
-                            xposmax <- viewWhichMaxs(Views(sscore, irpos))
-                        } else {
-                            xposmax <- numeric(0)
-                        }
-
-                        # return midpoints (location of score maxima)
-                        dat$pos[i][xposmax]
-                    })
-
-                    # create IRangesList
-                    return(do.call(IRangesList,
-                                   lapply(midList, function(mid) {
-                                       resize(IRanges(start = mid, width = 1L),
-                                              width = width, fix = "center")
-                                   })))
-                } else {
-                    return(IRangesList())
-                }
-            })
-        return(irListList)
-    }
+    irListList <- lapply(
+        structure(names(scoresList), names = names(scoresList)),
+        function(nm) {
+            if (nrow(scoresList[[nm]]) > 0) {
+                # smooth scores using a band-pass filter
+                dat <- scoresList[[nm]] |>
+                    select(readId, pos, score) |>
+                    group_by(readId) |>
+                    mutate(sscore = .filterScores(score,
+                                                  minperiod = minperiod,
+                                                  maxperiod = maxperiod)) |>
+                    ungroup()
+                iByReadId <- split(seq.int(nrow(dat)),
+                                   dat$readId)[unique(dat$readId)]
+                midList <- lapply(iByReadId, function(i) {
+                    
+                    # segment smoothed scores
+                    sscore <- dat$sscore[i]
+                    irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
+                    irpos <- irpos[width(irpos) >= lenRange[1] &
+                                       width(irpos) < lenRange[2]]
+                    if (length(irpos)) {
+                        xposmax <- viewWhichMaxs(Views(sscore, irpos))
+                    } else {
+                        xposmax <- numeric(0)
+                    }
+                    
+                    # return midpoints (location of score maxima)
+                    dat$pos[i][xposmax]
+                })
+                
+                # create IRangesList
+                return(do.call(IRangesList,
+                               lapply(midList, function(mid) {
+                                   resize(IRanges(start = mid, width = 1L),
+                                          width = width, fix = "center")
+                               })))
+            } else {
+                return(IRangesList())
+            }
+        })
+    return(irListList)
 }
 
 # -- helper functions ----------------------------------------------------------
