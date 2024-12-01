@@ -297,16 +297,16 @@ segmentFootprintScores <- function(scoresList,
 # -- helper functions ----------------------------------------------------------
 #' Smooth scores using band-pass filter
 #'
-#' @importFrom signal butter filtfilt
 #' @noRd
 #' @keywords internal
 .filterScores <- function(score, minperiod, maxperiod) {
+    .assertPackagesAvailable(pkgs = "signal")
     Wn <- 1 / c(maxperiod, minperiod)
-    testar <- butter(n = 3, W = Wn, type = "pass")
+    testar <- signal::butter(n = 3, W = Wn, type = "pass")
 
     nnaIndex <- which(!is.na(score))
     nnaScores <- score[nnaIndex]
-    nnaSScores <- filtfilt(testar, c(
+    nnaSScores <- signal::filtfilt(testar, c(
         rev(nnaScores), nnaScores, rev(nnaScores)))[
             (length(nnaScores) + 1):(2 * length(nnaScores))]
     sscore <- rep(NA, length(score))
