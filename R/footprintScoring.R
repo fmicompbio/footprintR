@@ -3,9 +3,12 @@
 #' This function calculates the footprinting scores corresponding to a
 #' footprint in the form of a weight vector \code{wgt} for all reads in a
 #' given read-level assay with modification probabilities. The score is based
-#' on a cross-correlation of the modification probabilities (centered by 
-#' subtracting \code{0.5}) with \code{wgt}, weighted by the minimum of 
+#' on a cross-correlation of the modification probabilities (centered by
+#' subtracting \code{0.5}) with \code{wgt}, weighted by the minimum of
 #' \code{minweight} and the modification probability.
+#'
+#' Most of the time, this function will not be called directly, but rather
+#' indirectly via a call to \code{\link{addFootprints}}.
 #'
 #' @param se A \code{SummarizedExperiment} object.
 #' @param wgt Numeric vector with weights that define the footprint to score.
@@ -51,8 +54,8 @@
 #' @importFrom BiocGenerics start
 #' @importFrom dplyr group_by group_modify ungroup
 #'
-#' @noRd
-#' @keywords internal
+#' @export
+#' @rdname footprintScoring
 calcFootprintScores <- function(se,
                                 wgt,
                                 assayName = "mod_prob",
@@ -203,10 +206,10 @@ segmentFootprintScores <- function(scoresList,
                                                       minperiod = minperiod,
                                                       maxperiod = maxperiod)) |>
                         ungroup()
-                    iByReadId <- split(seq.int(nrow(dat)), 
+                    iByReadId <- split(seq.int(nrow(dat)),
                                        dat$readId)[unique(dat$readId)]
                     midList <- lapply(iByReadId, function(i) {
-                        
+
                         # segment smoothed scores
                         sscore <- dat$sscore[i]
                         irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
@@ -217,11 +220,11 @@ segmentFootprintScores <- function(scoresList,
                         } else {
                             xposmax <- numeric(0)
                         }
-                        
+
                         # return midpoints (location of score maxima)
                         dat$pos[i][xposmax]
                     })
-                    
+
                     # create IRangesList
                     return(do.call(IRangesList,
                                    lapply(midList, function(mid) {
@@ -247,8 +250,8 @@ segmentFootprintScores <- function(scoresList,
 #'     Typically centered at zero.
 #' @param assayName A character scalar providing the name of a read-level
 #'     assay in \code{se} that contains modification probabilities.
-#' @param minconf,minweight,minperiod,maxperiod,thresh,lenRange,width 
-#'     Additional arguments passed to helper functions that calculate and 
+#' @param minconf,minweight,minperiod,maxperiod,thresh,lenRange,width
+#'     Additional arguments passed to helper functions that calculate and
 #'     segment footprint scores.
 #' @param name Character scalar giving the column name in \code{colData(se)} in
 #'     which the high-scoring footprints are stored as a list (over samples) or
