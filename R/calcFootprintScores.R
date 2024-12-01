@@ -1,11 +1,11 @@
-#' Calculate footprinting scores for a defined footprint.
+#' Calculate footprinting scores for a defined footprint
 #'
 #' This function calculates the footprinting scores corresponding to a
 #' footprint in the form of a weight vector \code{wgt} for all reads in a
 #' given read-level assay with modification probabilities. The score is based
-#' on a convolution of the modification probabilities (centered by subtracting
-#' \code{0.5}) with \code{wgt}, weighted by the minimum of \code{minweight} and
-#' the modification probability.
+#' on a cross-correlation of the modification probabilities (centered by 
+#' subtracting \code{0.5}) with \code{wgt}, weighted by the minimum of 
+#' \code{minweight} and the modification probability.
 #'
 #' @param se A \code{SummarizedExperiment} object.
 #' @param wgt Numeric vector with weights that define the footprint to score.
@@ -38,7 +38,7 @@
 #' lapply(scoresList, head)
 #'
 #' @returns
-#' A \code{list} of one element per samples. The elements are \code{data.frame}s
+#' A \code{list} with one entry per sample. The elements are \code{data.frame}s
 #' with columns, \code{readId}, \code{pos}, \code{pmod} and \code{score}, in
 #' (continuous) base space from \code{min(pos(rowRanges(se)))} to
 #' \code{max(pos(rowRanges(se)))} (only including positions covered by reads in
@@ -68,7 +68,7 @@ calcFootprintScores <- function(se,
     .assertScalar(x = minconf, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minweight, type = "numeric", rngIncl = c(0, Inf))
 
-    ## Extract list of data.frame's from assay
+    ## Extract list of data.frames from assay
     adatList <- lapply(assay(se, assayName), function(adat) {
         idx <- nnawhich(adat, arr.ind = TRUE)
         data.frame(
@@ -100,17 +100,18 @@ calcFootprintScores <- function(se,
     return(scoresL)
 }
 
-#' Smooth scores using band-pass filter.
+#' Smooth scores using band-pass filter
 #'
+#' @importFrom signal butter filtfilt
 #' @noRd
 #' @keywords internal
 .filterScores <- function(score, minperiod, maxperiod) {
     Wn <- 1 / c(maxperiod, minperiod)
-    testar <- signal::butter(n = 3, W = Wn, type = "pass")
+    testar <- butter(n = 3, W = Wn, type = "pass")
 
     nnaIndex <- which(!is.na(score))
     nnaScores <- score[nnaIndex]
-    nnaSScores <- signal::filtfilt(testar, c(
+    nnaSScores <- filtfilt(testar, c(
         rev(nnaScores), nnaScores, rev(nnaScores)))[
             (length(nnaScores) + 1):(2 * length(nnaScores))]
     sscore <- rep(NA, length(score))
@@ -119,11 +120,9 @@ calcFootprintScores <- function(se,
     return(sscore)
 }
 
-
-
-#' Segment footprinting scores.
+#' Segment footprinting scores
 #'
-#' This function segments footprinting scores, typically calculated by
+#' Segment footprinting scores, typically calculated by
 #' \code{calcFootprintScores}, into high-scoring segments of a constant width.
 #'
 #' @param scoresList A \code{list} of \code{data.frame}s with footprint score
@@ -136,7 +135,7 @@ calcFootprintScores <- function(se,
 #' @param thresh A numeric scalar giving the minimal score of a footprint.
 #'     Higher values make the footprint detection more stringent.
 #' @param lenRange A numeric vector with two elements giving the minimal and
-#'     maximal number of consequtive score values (base pairs) that must be
+#'     maximal number of consecutive score values (base pairs) that must be
 #'     greater than \code{thresh} for a region to be included in the
 #'     returned footprints.
 #' @param width A numeric scalar giving the width of returned footprints.
@@ -237,7 +236,7 @@ segmentFootprintScores <- function(scoresList,
     }
 }
 
-#' Identify and add footprint regions to a SummarizedExperiment.
+#' Identify and add footprint regions to a SummarizedExperiment
 #'
 #' This function identifies regions in each read that score highly for
 #' a footprint provided by a weight vector \code{wgt} and adds them to a
@@ -248,8 +247,9 @@ segmentFootprintScores <- function(scoresList,
 #'     Typically centered at zero.
 #' @param assayName A character scalar providing the name of a read-level
 #'     assay in \code{se} that contains modification probabilities.
-#' @param minconf, Additional arguments passed to helper functions that calculate
-#'     and segment footprint scores.
+#' @param minconf,minweight,minperiod,maxperiod,thresh,lenRange,width 
+#'     Additional arguments passed to helper functions that calculate and 
+#'     segment footprint scores.
 #' @param name Character scalar giving the column name in \code{colData(se)} in
 #'     which the high-scoring footprints are stored as a list (over samples) or
 #'     \code{\link[IRanges]{IRangesList}}s (over reads).

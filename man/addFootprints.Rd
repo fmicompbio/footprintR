@@ -2,7 +2,7 @@
 % Please edit documentation in R/calcFootprintScores.R
 \name{addFootprints}
 \alias{addFootprints}
-\title{Identify and add footprint regions to a SummarizedExperiment.}
+\title{Identify and add footprint regions to a SummarizedExperiment}
 \usage{
 addFootprints(
   se,
@@ -28,8 +28,8 @@ Typically centered at zero.}
 \item{assayName}{A character scalar providing the name of a read-level
 assay in \code{se} that contains modification probabilities.}
 
-\item{minconf, }{Additional arguments passed to helper functions that calculate
-and segment footprint scores.}
+\item{minconf, minweight, minperiod, maxperiod, thresh, lenRange, width}{Additional arguments passed to helper functions that calculate and
+segment footprint scores.}
 
 \item{name}{Character scalar giving the column name in \code{colData(se)} in
 which the high-scoring footprints are stored as a list (over samples) or
