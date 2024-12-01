@@ -1388,7 +1388,7 @@ plotGenomicRegions <- function(grl,
 #' @param dfReads A \code{data.frame} object to summarize, typically generated
 #'     by \code{\link{.preparePlotdataReads}}.
 #'
-#' @importFrom dplyr group_by summarise across
+#' @importFrom dplyr group_by summarise across all_of
 #' @importFrom rlang .data
 #'
 #' @noRd
@@ -1403,7 +1403,7 @@ plotGenomicRegions <- function(grl,
             end = ifelse(is.factor(.data[["position"]]),
                          levels(.data[["position"]])[nlevels(.data[["position"]])],
                          max(.data[["position"]])),
-            across(groupVars, unique),
+            across(all_of(groupVars), unique),
             .groups = "drop")
 }
 
