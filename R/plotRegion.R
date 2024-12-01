@@ -33,7 +33,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
     regdf
 }
 
-#' Plot single-molecule footprinting data for a single genomic region.
+#' Plot single-molecule footprinting data for a single genomic region
 #'
 #' @description
 #' The \code{plotRegion} function visualizes read-level or collapsed

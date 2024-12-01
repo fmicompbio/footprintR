@@ -2,7 +2,7 @@
 % Please edit documentation in R/flattenReadLevelAssay.R
 \name{flattenReadLevelAssay}
 \alias{flattenReadLevelAssay}
-\title{Summarize a read-level object to sample-level.}
+\title{Summarize a read-level object to sample-level}
 \usage{
 flattenReadLevelAssay(
   se,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/readBedMethyl.R
 \name{readBedMethyl}
 \alias{readBedMethyl}
-\title{Read collapsed single-molecule footprinting data from a \code{bedMethyl} file.}
+\title{Read collapsed single-molecule footprinting data from a \code{bedMethyl} file}
 \usage{
 readBedMethyl(
   fnames,

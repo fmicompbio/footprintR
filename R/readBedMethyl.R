@@ -1,4 +1,4 @@
-#' Read collapsed single-molecule footprinting data from a `bedMethyl` file.
+#' Read collapsed single-molecule footprinting data from a `bedMethyl` file
 #'
 #' @description
 #' This function will read collapsed single-molecule footprinting data

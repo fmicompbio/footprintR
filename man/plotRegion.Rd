@@ -6,7 +6,7 @@
 \alias{plotReadsHeatmap}
 \alias{plotSummaryPointSmooth}
 \alias{plotGenomicRegions}
-\title{Plot single-molecule footprinting data for a single genomic region.}
+\title{Plot single-molecule footprinting data for a single genomic region}
 \usage{
 plotRegion(
   se,
