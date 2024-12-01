@@ -1095,7 +1095,7 @@ plotGenomicRegions <- function(grl,
     assaydat <- assay(x, assayName)
     assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
     # `assayName` columns are grouped reads -> flatten
-    sample_ids <- rep(colnames(x), unlist(lapply(assaydat, ncol)))
+    sample_ids <- rep(colnames(assaydat), unlist(lapply(assaydat, ncol)))
     assaydat <- as.matrix(assaydat)
     if (interpolate) {
         assaydat <- .interpolateColumns(assaydat, start(x))
@@ -1108,9 +1108,10 @@ plotGenomicRegions <- function(grl,
     } else {
         i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(
-            position = start(x)[i[,1]],
-            read = factor(colnames(assaydat)[i[,2]], levels = colnames(assaydat)),
-            sample = sample_ids[i[,2]],
+            position = start(x)[i[, 1]],
+            read = factor(colnames(assaydat)[i[, 2]], 
+                          levels = colnames(assaydat)),
+            sample = sample_ids[i[, 2]],
             value = nnavals(assaydat))
     }
     if (modbaseSpace) {
