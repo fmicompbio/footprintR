@@ -27,6 +27,11 @@ reference:
   - filterPositions
   - filterReads
   - subsetReads
+- title: Footprint identification
+  contents:
+  - addFootprints
+  - calcFootprintScores
+  - segmentFootprintScores
 - title: Visualization
   contents:
   - plotReadStats
