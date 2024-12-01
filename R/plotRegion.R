@@ -69,9 +69,9 @@ plotRegionPlotTypes <- data.frame(
 #'     display relative positions. If \code{NULL} (the default), absolute
 #'     genomic positions are used. Ignored if \code{modbaseSpace} is
 #'     \code{TRUE}.
-#' @param labelAccuracy A numeric scalar indicating the precision of the 
-#'     positions along the genomic axis. Will be passed to 
-#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#' @param labelAccuracy A numeric scalar indicating the precision of the
+#'     positions along the genomic axis. Will be passed to
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
@@ -88,7 +88,7 @@ plotRegionPlotTypes <- data.frame(
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      sequenceContextWidth = 3, sequenceReference = reffile,
 #'                      BPPARAM = BiocParallel::SerialParam())
 #'
 #' plotRegion(seA, region = "chr1:6940000-6955000", sequenceContext = "GCH")
@@ -102,7 +102,7 @@ plotRegionPlotTypes <- data.frame(
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
 #'                          BPPARAM = BiocParallel::SerialParam())
 #'
 #' # Lollipop plot
@@ -256,7 +256,7 @@ plotRegion <- function(
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
 
     if (modbaseSpace) {
-        # relative coordinates are not meaningful in modbase space (as there 
+        # relative coordinates are not meaningful in modbase space (as there
         # are no actual positions indicated anyway)
         referenceCoordinate <- NULL
     }
@@ -268,7 +268,7 @@ plotRegion <- function(
         # see issue at https://github.com/Bioconductor/SummarizedExperiment/issues/74
         assays(se) <- assays(se)[assaysInUse]
     )
-    
+
     # subset se
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
@@ -277,7 +277,7 @@ plotRegion <- function(
     if (nrow(se) == 0) {
         cli_abort("No positions retained for plotting!")
     }
-    
+
     ## create plots
     pL <- vector("list", length = length(tracks))
     for (i in seq_along(tracks)) {
@@ -338,10 +338,10 @@ plotRegion <- function(
 ## plot* functions for plotRegion() -------------------------------------------
 
 #' @param assayName A character or numerical scalar selecting the assay to plot.
-#'     This should be an existing read-level or summary assay, as appropriate 
-#'     for the plot type. A special case is the track name \code{"FracMod"}: 
-#'     If \code{se} does not contain a summary assay of that name, but 
-#'     \code{"Nmod"} and \code{"Nvalid"} assays are available, \code{"FracMod"} 
+#'     This should be an existing read-level or summary assay, as appropriate
+#'     for the plot type. A special case is the track name \code{"FracMod"}:
+#'     If \code{se} does not contain a summary assay of that name, but
+#'     \code{"Nmod"} and \code{"Nvalid"} assays are available, \code{"FracMod"}
 #'     will be calculated from \code{assay(se, "Nmod") / assay(se, "Nvalid")}.
 #' @param size A numeric scalar giving the size of the points (\code{size}
 #'     argument of \code{\link[ggplot2]{geom_point}}).
@@ -363,9 +363,9 @@ plotRegion <- function(
 #'     the legend for the track.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
-#' @param facetBy A character scalar indicating the sample annotation column 
+#' @param facetBy A character scalar indicating the sample annotation column
 #'     to facet the plot by (if \code{NULL}, no faceting is done). By default,
-#'     the plot will be facetted by 'sample', corresponding to the columns of 
+#'     the plot will be facetted by 'sample', corresponding to the columns of
 #'     \code{se}.
 #'
 #' @export
@@ -377,10 +377,10 @@ plotRegion <- function(
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
 #'                          BPPARAM = BiocParallel::SerialParam())
-#' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"), 
-#'                   assayName = "mod_prob", 
+#' plotReadsLollipop(seB, region = as("chr1:6935400-6935450", "GRanges"),
+#'                   assayName = "mod_prob",
 #'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
 #' @import ggplot2
@@ -405,7 +405,7 @@ plotReadsLollipop <- function(se,
                               facetBy = "sample",
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
-    
+
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -438,11 +438,11 @@ plotReadsLollipop <- function(se,
         }
         region <- shift(region, -referenceCoordinate)
     }
-    
+
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
-                                referenceCoordinate = referenceCoordinate, 
+                                referenceCoordinate = referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
@@ -495,10 +495,10 @@ plotReadsLollipop <- function(se,
 #'                             c("modkit_extract_rc_6mA_1.tsv.gz",
 #'                               "modkit_extract_rc_6mA_2.tsv.gz"),
 #'                             package = "footprintR")
-#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit", 
+#' seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
 #'                          BPPARAM = BiocParallel::SerialParam())
-#' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"), 
-#'                  assayName = "mod_prob", 
+#' plotReadsHeatmap(seB, region = as("chr1:6935400-6935450", "GRanges"),
+#'                  assayName = "mod_prob",
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
 #' @import ggplot2
@@ -522,7 +522,7 @@ plotReadsHeatmap <- function(se,
                              facetBy = "sample",
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
-    
+
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = assayName, type = "character",
@@ -547,7 +547,7 @@ plotReadsHeatmap <- function(se,
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
-    
+
     if (!is.null(referenceCoordinate)) {
         # shift all ranges
         if (!is.null(highlightRegions)) {
@@ -560,7 +560,7 @@ plotReadsHeatmap <- function(se,
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
                                 interpolate = interpolate,
-                                referenceCoordinate = referenceCoordinate, 
+                                referenceCoordinate = referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
@@ -606,31 +606,31 @@ plotReadsHeatmap <- function(se,
 #'     plot.
 #' @param arglistSmooth A list with arguments to be sent to
 #'     \code{\link[ggplot2]{geom_line}}.
-#' @param smoothMethod A character scalar indicating the method to use for 
-#'     smoothing. Current options are \code{"smoothSpline"} and 
+#' @param smoothMethod A character scalar indicating the method to use for
+#'     smoothing. Current options are \code{"smoothSpline"} and
 #'     \code{"rollingMean"} (linear interpolation of values to the single-base
-#'     pair level (unless \code{modbaseSpace} is \code{TRUE}), followed by 
+#'     pair level (unless \code{modbaseSpace} is \code{TRUE}), followed by
 #'     rolling mean calculation).
 #' @param spar A numeric scalar typically in (0,1] specifying the desired
-#'     degree of smoothing if \code{smoothMethod} is \code{"smoothSpline"} 
+#'     degree of smoothing if \code{smoothMethod} is \code{"smoothSpline"}
 #'     (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
 #' @param windowSize A numeric scalar specifying the window size for smoothing
 #'     if \code{smoothMethod} is \code{"rollingMean"}.
-#' @param groupBy A character scalar indicating the sample annotation column 
+#' @param groupBy A character scalar indicating the sample annotation column
 #'     to group the points by for creating smoothed lines. By default,
-#'     the points will be grouped by 'sample', corresponding to the columns of 
-#'     \code{se}. Typically, the \code{groupBy} column should provide a 
-#'     finer (or identical) partition compared to the \code{colorBy} column - 
+#'     the points will be grouped by 'sample', corresponding to the columns of
+#'     \code{se}. Typically, the \code{groupBy} column should provide a
+#'     finer (or identical) partition compared to the \code{colorBy} column -
 #'     for example, grouping by sample and coloring by condition.
-#' @param colorBy A character scalar indicating the sample annotation column 
+#' @param colorBy A character scalar indicating the sample annotation column
 #'     to color the points and smoothed lines by. By default, the points and
-#'     lines will be colored by 'sample', corresponding to the columns of 
+#'     lines will be colored by 'sample', corresponding to the columns of
 #'     \code{se}.
 #' @param colors A named character vector of colors to use for the unique
-#'     values in the \code{colorBy} annotation column. If \code{NULL} 
-#'     (default), the default \code{ggplot2} colors will be used. 
+#'     values in the \code{colorBy} annotation column. If \code{NULL}
+#'     (default), the default \code{ggplot2} colors will be used.
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
-#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the
 #'     data.
 #'
 #' @export
@@ -644,7 +644,7 @@ plotReadsHeatmap <- function(se,
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' seA <- readBedMethyl(bmfiles, modbase = "m",
-#'                      sequenceContextWidth = 3, sequenceReference = reffile, 
+#'                      sequenceContextWidth = 3, sequenceReference = reffile,
 #'                      BPPARAM = BiocParallel::SerialParam())
 #' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
 #'                        assayName = "Nvalid", doPoint = FALSE)
@@ -690,7 +690,7 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = arglistPoint, type = "list")
     .assertScalar(x = doSmooth, type = "logical")
     .assertVector(x = arglistSmooth, type = "list")
-    .assertScalar(x = smoothMethod, type = "character", 
+    .assertScalar(x = smoothMethod, type = "character",
                   validValues = c("smoothSpline", "rollingMean"))
     if (smoothMethod == "rollingMean") {
         .assertScalar(x = windowSize, type = "numeric")
@@ -715,19 +715,19 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = colors, type = "character", allowNULL = TRUE)
     if (!is.null(colors)) {
         .assertVector(x = names(colors), type = "character")
-        if (!is.null(colorBy) && 
+        if (!is.null(colorBy) &&
                      !all(colData(se)[[colorBy]] %in% names(colors))) {
             cli_abort("Missing color specification for some values")
         }
     }
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
-    .assertVector(x = yAxisRange, type = "numeric", len = 2, 
+    .assertVector(x = yAxisRange, type = "numeric", len = 2,
                   allowNULL = TRUE)
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
-    
+
     if (!is.null(referenceCoordinate)) {
         # shift all ranges
         if (!is.null(highlightRegions)) {
@@ -744,7 +744,7 @@ plotSummaryPointSmooth <- function(se,
                                                            "sample"))
 
     # create base plot
-    p <- .createBaseplotSummary(df = df, 
+    p <- .createBaseplotSummary(df = df,
                                 region = region,
                                 trackTitle = trackTitle,
                                 legendTitle = legendTitle,
@@ -752,7 +752,7 @@ plotSummaryPointSmooth <- function(se,
                                 highlightRegions = highlightRegions,
                                 groupBy = groupBy,
                                 colorBy = colorBy,
-                                colors = colors, 
+                                colors = colors,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
                                 yAxisLabel = assayName,
@@ -763,7 +763,7 @@ plotSummaryPointSmooth <- function(se,
         arglistPoint$color <- "transparent"
     }
     p <- p + do.call(geom_point, arglistPoint)
-    
+
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
         compute_smooth <- function(data) {
@@ -783,7 +783,7 @@ plotSummaryPointSmooth <- function(se,
                     data$position <- as.numeric(data$position)
                 }
                 xint <- seq(from = min(data[["position"]]) - (windowSize - 1) / 2,
-                            to = max(data[["position"]]) + (windowSize - 1) / 2, 
+                            to = max(data[["position"]]) + (windowSize - 1) / 2,
                             by = 1)
                 yint <- rep(NA, length(xint))
                 idxout <- match(data[["position"]][ok], xint)
@@ -792,7 +792,7 @@ plotSummaryPointSmooth <- function(se,
                 yint[length(yint)] <- yint[idxout[length(idxout)]]
                 yint <- na.approx(yint, maxgap = Inf)
                 # then take rolling mean
-                yint <- rollmean(yint, k = windowSize, 
+                yint <- rollmean(yint, k = windowSize,
                                  fill = c(yint[1], NA, yint[length(yint)]))
                 idxout <- match(data[["position"]], xint)
                 data.frame(position = xint[idxout],
@@ -810,7 +810,7 @@ plotSummaryPointSmooth <- function(se,
         arglistSmooth <- arglistSmooth[!names(arglistSmooth) %in%
                                            c("data", "inherit.aes",
                                              "mapping")]
-        p <- p + do.call(geom_line, 
+        p <- p + do.call(geom_line,
                          c(list(data = smooth_data, inherit.aes = FALSE,
                                 mapping = aes(x = .data[["position"]],
                                               y = .data[["value_smooth"]],
@@ -864,9 +864,9 @@ plotGenomicRegions <- function(grl,
                                trackTitle = NULL,
                                legendTitle = NULL,
                                showLegend = TRUE,
-                               referenceCoordinate = NULL, 
+                               referenceCoordinate = NULL,
                                labelAccuracy = NULL) {
-    
+
     # check input arguments
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
@@ -1016,8 +1016,8 @@ plotGenomicRegions <- function(grl,
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
-#'     genomic positions are used. 
-#' @param extraColAnnots A character vector (or \code{NULL}) with names of 
+#'     genomic positions are used.
+#' @param extraColAnnots A character vector (or \code{NULL}) with names of
 #'     columns in \code{colData(x)} to add to the generated data frame.
 #'
 #' @importFrom BiocGenerics start colnames rownames
@@ -1073,8 +1073,8 @@ plotGenomicRegions <- function(grl,
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
-#'     genomic positions are used. 
-#' @param extraColAnnots A character vector (or \code{NULL}) with names of 
+#'     genomic positions are used.
+#' @param extraColAnnots A character vector (or \code{NULL}) with names of
 #'     columns in \code{colData(x)} to add to the generated data frame.
 #'
 #' @importFrom BiocGenerics start colnames rownames
@@ -1139,7 +1139,7 @@ plotGenomicRegions <- function(grl,
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataSummary}}.
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
-#'     region. 
+#'     region.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
@@ -1148,25 +1148,25 @@ plotGenomicRegions <- function(grl,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
-#' @param groupBy A character scalar indicating the column 
-#'     to group the points by for creating smoothed lines. 
-#' @param colorBy A character scalar indicating the column 
-#'     to color the points and smoothed lines by. 
+#' @param groupBy A character scalar indicating the column
+#'     to group the points by for creating smoothed lines.
+#' @param colorBy A character scalar indicating the column
+#'     to color the points and smoothed lines by.
 #' @param colors A named character vector of colors to use for the unique
-#'     values in the \code{colorBy} annotation column. If \code{NULL} 
-#'     (default), the default \code{ggplot2} colors will be used. 
+#'     values in the \code{colorBy} annotation column. If \code{NULL}
+#'     (default), the default \code{ggplot2} colors will be used.
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
-#'     genomic positions are used. 
-#' @param labelAccuracy A numeric scalar indicating the precision of the 
-#'     positions along the genomic axis. Will be passed to 
-#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#'     genomic positions are used.
+#' @param labelAccuracy A numeric scalar indicating the precision of the
+#'     positions along the genomic axis. Will be passed to
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
-#' @param yAxisLabel A character scalar providing the label to use for the 
+#' @param yAxisLabel A character scalar providing the label to use for the
 #'     y-axis.
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
-#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the
 #'     data.
 #'
 #' @import ggplot2
@@ -1195,7 +1195,7 @@ plotGenomicRegions <- function(grl,
                       color = .data[[colorBy]])) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
-                               paste0("Position on ", 
+                               paste0("Position on ",
                                       as.character(seqnames(region))),
                                paste0("Position relative to ",
                                       as.character(seqnames(region)), ":",
@@ -1213,19 +1213,19 @@ plotGenomicRegions <- function(grl,
               panel.grid.minor = element_blank())
 
     if (is.factor(df$position)) {
-        p0 <- p0 + theme(axis.text.x = element_blank()) + 
-            coord_cartesian(ylim = yAxisRange) + 
+        p0 <- p0 + theme(axis.text.x = element_blank()) +
+            coord_cartesian(ylim = yAxisRange) +
             scale_x_discrete(expand = expansion(mult = 0, add = 0.5))
     } else {
         p0 <- .addCoordAxisFormat(p0 = p0, region = region,
                                   labelAccuracy = labelAccuracy,
                                   yAxisRange = yAxisRange)
     }
-    
+
     if (!is.null(colors)) {
         p0 <- p0 + scale_color_manual(values = colors)
     }
-    
+
     if (!is.null(highlightRegions)) {
         dfhr <- data.frame(highlightRegions)
         if (is.factor(df$position)) {
@@ -1252,7 +1252,7 @@ plotGenomicRegions <- function(grl,
             p0 <- p0 +
                 geom_rect(
                     data = dfhr,
-                    mapping = aes(xmin = as.numeric(start) - 0.0, 
+                    mapping = aes(xmin = as.numeric(start) - 0.0,
                                   xmax = as.numeric(end) + 0.0,
                                   ymin = -Inf, ymax = Inf),
                     fill = "gray90",
@@ -1269,7 +1269,7 @@ plotGenomicRegions <- function(grl,
 #' @param df A \code{\link{data.frame}} with the plot data (typically
 #'     created by \code{\link{.preparePlotdataReads}}.
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
-#'     region. 
+#'     region.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar (or \code{NULL}) giving the title for
@@ -1278,15 +1278,15 @@ plotGenomicRegions <- function(grl,
 #'     legend for the plot.
 #' @param highlightRegions A \code{\link[GenomicRanges]{GRanges}} object
 #'     containing regions to highlight with a grey shading.
-#' @param facetBy A character scalar indicating the sample annotation column 
-#'     to facet the plot by (if \code{NULL}, no faceting is done). 
+#' @param facetBy A character scalar indicating the sample annotation column
+#'     to facet the plot by (if \code{NULL}, no faceting is done).
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
-#'     genomic positions are used. 
-#' @param labelAccuracy A numeric scalar indicating the precision of the 
-#'     positions along the genomic axis. Will be passed to 
-#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable 
+#'     genomic positions are used.
+#' @param labelAccuracy A numeric scalar indicating the precision of the
+#'     positions along the genomic axis. Will be passed to
+#'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
 #'
 #' @import ggplot2
@@ -1300,7 +1300,7 @@ plotGenomicRegions <- function(grl,
                                  legendTitle,
                                  showLegend,
                                  highlightRegions,
-                                 facetBy, 
+                                 facetBy,
                                  referenceCoordinate,
                                  labelAccuracy) {
     p0 <- ggplot(
@@ -1311,11 +1311,11 @@ plotGenomicRegions <- function(grl,
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
         labs(x = ifelse(is.numeric(df$position),
-                        ifelse(is.null(referenceCoordinate), 
-                               paste0("Position on ", 
+                        ifelse(is.null(referenceCoordinate),
+                               paste0("Position on ",
                                       as.character(seqnames(region))),
-                               paste0("Position relative to ", 
-                                      as.character(seqnames(region)), ":", 
+                               paste0("Position relative to ",
+                                      as.character(seqnames(region)), ":",
                                       referenceCoordinate)),
                         paste0("Modified positions in ",
                                as.character(seqnames(region)),
@@ -1371,7 +1371,7 @@ plotGenomicRegions <- function(grl,
             p0 <- p0 +
                 geom_rect(
                     data = dfhr,
-                    mapping = aes(xmin = as.numeric(start) - 0.0, 
+                    mapping = aes(xmin = as.numeric(start) - 0.0,
                                   xmax = as.numeric(end) + 0.0,
                                   ymin = -Inf, ymax = Inf),
                     fill = "gray90",
@@ -1424,7 +1424,7 @@ plotGenomicRegions <- function(grl,
 #'     allows to compare reads without any common modification calls, such
 #'     as plus- and minus-strand reads with 6mA calls.
 #'
-#' @importFrom BiocGenerics colnames start
+#' @importFrom BiocGenerics colnames start ncol
 #' @importFrom SummarizedExperiment assay
 #' @importFrom stats cor as.dist hclust
 #' @importFrom SparseArray colMeans
@@ -1436,24 +1436,29 @@ plotGenomicRegions <- function(grl,
                         windowWidth = 25) {
     # extract and flatten assay matrix
     X <- as.matrix(assay(x, assayName))
-    # group positions into bins of windowWidth
-    bin <- findInterval(
-        x = start(x),
-        vec = seq(from = min(start(x)),
-                  to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
-                  by = windowWidth),
-        rightmost.closed = TRUE, left.open = FALSE)
-    iByBin <- split(seq.int(nrow(X)), bin)
-    XX <- do.call(rbind, lapply(iByBin, function(i) {
-        colMeans(X[i, , drop = FALSE], na.rm = TRUE)
-    }))
-    # calculate distances between reads
-    D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
-                                  use = "pairwise.complete")))
-    D[is.na(D)] <- 1.0
-    # cluster reads and return order
-    cl <- hclust(D, method = "ward.D2")
-    return(colnames(X)[cl$order])
+
+    if (ncol(X) > 1) {
+        # group positions into bins of windowWidth
+        bin <- findInterval(
+            x = start(x),
+            vec = seq(from = min(start(x)),
+                      to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
+                      by = windowWidth),
+            rightmost.closed = TRUE, left.open = FALSE)
+        iByBin <- split(seq.int(nrow(X)), bin)
+        XX <- do.call(rbind, lapply(iByBin, function(i) {
+            colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+        }))
+        # calculate distances between reads
+        D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
+                                      use = "pairwise.complete")))
+        D[is.na(D)] <- 1.0
+        # cluster reads and return order
+        cl <- hclust(D, method = "ward.D2")
+        return(colnames(X)[cl$order])
+    } else {
+        return(colnames(X))
+    }
 }
 
 #' Add formatting for base-space x-axis to ggplot object
@@ -1465,11 +1470,11 @@ plotGenomicRegions <- function(grl,
 #' @param p0 A \code{ggplot} object to which to add the axis formatting.
 #'     x-axis values are assumed to be in \code{p0$data$position}.
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
-#'     region. 
+#'     region.
 #' @param labelAccuracy The desired accuracy of the labels - if \code{NULL} it
 #'     will be automatically determined.
 #' @param yAxisRange Numeric vector of length 2 giving the range to zoom in
-#'     to on the y-axis. If \code{NULL} (default), will be determined from the 
+#'     to on the y-axis. If \code{NULL} (default), will be determined from the
 #'     data.
 #'
 #' @import ggplot2
