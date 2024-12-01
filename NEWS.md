@@ -1,3 +1,8 @@
+# footprintR 0.2.3
+
+* Add `addFootprints()` and helper functions `calcFootprintScores()` and
+  `segmentFootprintScores()`
+
 # footprintR 0.2.2
 
 * Rename the facetBySample argument to the read-level plots to facetBy, allowing facetting by an arbitrary sample column
