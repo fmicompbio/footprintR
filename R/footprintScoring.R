@@ -151,7 +151,7 @@ addFootprints <- function(se,
     cd <- colData(se)
     cd[[name]] <- irlL
     colData(se) <- cd
-    metadata(se)$readLevelData$colDataColumns <- c(
+    metadata(se)$readLevelData$colDataColumns <- union(
         metadata(se)$readLevelData$colDataColumns, name
     )
 
