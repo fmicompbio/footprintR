@@ -506,6 +506,7 @@ plotReadsLollipop <- function(se,
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom GenomicRanges shift
 #' @importFrom BiocGenerics intersect
+#' @importFrom rlang .data
 #'
 plotReadsHeatmap <- function(se,
                              region,
