@@ -2,7 +2,7 @@
 % Please edit documentation in R/subsetReads.R
 \name{subsetReads}
 \alias{subsetReads}
-\title{Subset the reads from read-level assays.}
+\title{Subset the reads from read-level assays}
 \usage{
 subsetReads(se, reads, prune = TRUE, invert = FALSE)
 }

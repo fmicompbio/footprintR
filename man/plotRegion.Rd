@@ -6,7 +6,7 @@
 \alias{plotReadsHeatmap}
 \alias{plotSummaryPointSmooth}
 \alias{plotGenomicRegions}
-\title{Plot single-molecule footprinting data for a single genomic region.}
+\title{Plot single-molecule footprinting data for a single genomic region}
 \usage{
 plotRegion(
   se,
@@ -31,6 +31,8 @@ plotReadsLollipop(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
+  footprintColumns = NULL,
+  footprintColors = NULL,
   facetBy = "sample",
   referenceCoordinate = NULL,
   labelAccuracy = NULL
@@ -49,6 +51,8 @@ plotReadsHeatmap(
   legendTitle = NULL,
   showLegend = TRUE,
   highlightRegions = NULL,
+  footprintColumns = NULL,
+  footprintColors = NULL,
   facetBy = "sample",
   referenceCoordinate = NULL,
   labelAccuracy = NULL
@@ -188,6 +192,15 @@ the legend for the track.}
 
 \item{highlightRegions}{A \code{\link[GenomicRanges]{GRanges}} object
 containing regions to highlight with a grey shading.}
+
+\item{footprintColumns}{A character vector with names of columns from
+\code{colData(se)} containing footprints to display. Typically these
+columns are generated using \code{addFootprints}. If \code{NULL}, no
+footprints are displayed.}
+
+\item{footprintColors}{A named character vector with colors to use for
+footprint indications in the plot. The names must correspond to the
+values of \code{footprintColumns}.}
 
 \item{facetBy}{A character scalar indicating the sample annotation column
 to facet the plot by (if \code{NULL}, no faceting is done). By default,

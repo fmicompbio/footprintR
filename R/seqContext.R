@@ -1,4 +1,4 @@
-#' Extract the sequence context around positions of interest.
+#' Extract the sequence context around positions of interest
 #'
 #' @description
 #' This function will extract a sequence context of \code{sequenceContextWidth}
@@ -111,7 +111,7 @@ extractSeqContext <- function(x,
 }
 
 
-#' Add sequence context around positions of interest to a SummarizedExperiment.
+#' Add sequence context around positions of interest to a SummarizedExperiment
 #'
 #' @description
 #' Convenience function to extract sequence context around positions of

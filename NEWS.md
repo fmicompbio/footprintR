@@ -2,6 +2,9 @@
 
 * Add `addFootprints()` and helper functions `calcFootprintScores()` and
   `segmentFootprintScores()`
+* Add `sampleAnnot` argument to reading functions to enable inclusion of additional sample annotations
+* Add `trim` argument to `readModBam`, to restrict the returned object to the specified regions
+* Enable plotting of read-specific (footprint) regions
 
 # footprintR 0.2.2
 

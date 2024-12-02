@@ -9,6 +9,7 @@ readModkitExtract(
   modbase,
   filter = NULL,
   nrows = Inf,
+  sampleAnnot = NULL,
   seqinfo = NULL,
   sequenceContextWidth = 0,
   sequenceReference = NULL,
@@ -40,6 +41,12 @@ unmodified and modified bases, respectively. The names of the vector
 should be \code{"-"} and the value(s) in \code{modbase}.}
 
 \item{nrows}{Only read \code{nrows} rows of each input file.}
+
+\item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
+for the samples. It must contain at least one column, named
+\code{"sample"}, which must contain all the values of
+\code{names(fnames)}. The provided annotations will be propagated to
+the returned \code{SummarizedExperiment} object.}
 
 \item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 containing information about the set of genomic sequences (chromosomes).

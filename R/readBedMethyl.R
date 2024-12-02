@@ -1,4 +1,4 @@
-#' Read collapsed single-molecule footprinting data from a `bedMethyl` file.
+#' Read collapsed single-molecule footprinting data from a `bedMethyl` file
 #'
 #' @description
 #' This function will read collapsed single-molecule footprinting data
@@ -21,6 +21,11 @@
 #'     \code{modbase} has length 1, the same modified base will be used for
 #'     all samples.
 #' @param nrows Only read \code{nrows} rows of the input file.
+#' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
+#'     for the samples. It must contain at least one column, named 
+#'     \code{"sample"}, which must contain all the values of 
+#'     \code{names(fnames)}. The provided annotations will be propagated to 
+#'     the returned \code{SummarizedExperiment} object. 
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -70,6 +75,7 @@
 readBedMethyl <- function(fnames,
                           modbase,
                           nrows = Inf,
+                          sampleAnnot = NULL, 
                           seqinfo = NULL,
                           sequenceContextWidth = 0,
                           sequenceReference = NULL,
@@ -82,6 +88,17 @@ readBedMethyl <- function(fnames,
     }
     if (is.null(names(fnames))) {
         names(fnames) <- paste0("s", seq_along(fnames))
+    }
+    .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
+    if (!is.null(sampleAnnot)) {
+        if (!("sample" %in% colnames(sampleAnnot))) {
+            stop("sampleAnnot must have at least a column named 'sample'")
+        }
+        if (!all(names(fnames) %in% sampleAnnot$sample)) {
+            stop("Annotation information missing for some samples: ",
+                 paste(setdiff(names(fnames), sampleAnnot$sample), 
+                       collapse = ", "))
+        }
     }
     if (length(modbase) == 1) {
         modbase <- rep(modbase, length(fnames))
@@ -176,14 +193,23 @@ readBedMethyl <- function(fnames,
     }
 
     # create summarized experiment
+    cdata <- DataFrame(
+        row.names = nms,
+        sample = nms,
+        modbase = modbase[nms]
+    )
+    if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
+                                   colnames(sampleAnnot) != "sample", 
+                                   drop = FALSE]
+        cdata <- cbind(cdata, sampleAnnot)
+    }
+    stopifnot(colnames(nmod) == cdata$sample,
+              colnames(nval) == cdata$sample)
     se <- SummarizedExperiment(
         assays = list(Nmod = nmod, Nvalid = nval),
         rowRanges = gpos,
-        colData = DataFrame(
-            row.names = nms,
-            sample = nms,
-            modbase = modbase[nms]
-        ),
+        colData = cdata,
         metadata = list(readLevelData = list(assayNames = character(0),
                                              colDataColumns = character(0))))
 

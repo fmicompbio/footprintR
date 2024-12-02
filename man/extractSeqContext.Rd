@@ -2,7 +2,7 @@
 % Please edit documentation in R/seqContext.R
 \name{extractSeqContext}
 \alias{extractSeqContext}
-\title{Extract the sequence context around positions of interest.}
+\title{Extract the sequence context around positions of interest}
 \usage{
 extractSeqContext(x, sequenceContextWidth, sequenceReference)
 }

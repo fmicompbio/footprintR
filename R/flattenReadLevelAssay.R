@@ -1,4 +1,4 @@
-#' Summarize a read-level object to sample-level.
+#' Summarize a read-level object to sample-level
 #'
 #' @description
 #' This function will take a \code{\link[SummarizedExperiment]{SummarizedExperiment}}

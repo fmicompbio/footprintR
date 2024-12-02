@@ -2,7 +2,7 @@
 % Please edit documentation in R/modbaseSpacing.R
 \name{calcModbaseSpacing}
 \alias{calcModbaseSpacing}
-\title{Calculate distances between modified bases on individual reads.}
+\title{Calculate distances between modified bases on individual reads}
 \usage{
 calcModbaseSpacing(
   se,
