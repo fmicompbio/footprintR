@@ -40,7 +40,8 @@ Imports:
     zoo,
     tibble,
     cli,
-    ggforce
+    ggforce,
+    Gmisc
 Suggests:
     rmarkdown,
     knitr,

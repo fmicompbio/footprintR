@@ -172,6 +172,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #' @importFrom patchwork wrap_plots
 #' @importFrom cli cli_abort cli_warn
 #' @importFrom methods as
+#' @importFrom Gmisc fastDoCall
 #'
 #' @export
 plotRegion <- function(
@@ -333,14 +334,14 @@ plotRegion <- function(
         }
         pL[[i]] <- switch(
             tr$trackType,
-            Point = do.call(plotSummaryPointSmooth,
-                            c(args, list(doSmooth = FALSE))),
-            Smooth = do.call(plotSummaryPointSmooth,
-                             c(args, list(doPoint = FALSE))),
-            PointSmooth = do.call(plotSummaryPointSmooth, args),
-            Lollipop = do.call(plotReadsLollipop, args),
-            Heatmap = do.call(plotReadsHeatmap, args),
-            GenomicRegion = do.call(plotGenomicRegions, args)
+            Point = fastDoCall(plotSummaryPointSmooth,
+                               c(args, list(doSmooth = FALSE))),
+            Smooth = fastDoCall(plotSummaryPointSmooth,
+                                c(args, list(doPoint = FALSE))),
+            PointSmooth = fastDoCall(plotSummaryPointSmooth, args),
+            Lollipop = fastDoCall(plotReadsLollipop, args),
+            Heatmap = fastDoCall(plotReadsHeatmap, args),
+            GenomicRegion = fastDoCall(plotGenomicRegions, args)
         )
     }
 
@@ -431,6 +432,7 @@ plotRegion <- function(
 #' @importFrom BiocGenerics intersect sort
 #' @importFrom dplyr rename mutate left_join bind_cols group_split
 #' @importFrom S4Vectors endoapply
+#' @importFrom Gmisc fastDoCall
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -560,7 +562,7 @@ plotReadsLollipop <- function(se,
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
         })
-        fp <- cbind(do.call(
+        fp <- cbind(fastDoCall(
             rbind, fp),
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
@@ -637,6 +639,7 @@ plotReadsLollipop <- function(se,
 #' @importFrom BiocGenerics intersect sort
 #' @importFrom dplyr rename mutate left_join bind_cols group_split
 #' @importFrom S4Vectors endoapply
+#' @importFrom Gmisc fastDoCall
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -784,7 +787,7 @@ plotReadsHeatmap <- function(se,
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
         })
-        fp <- cbind(do.call(
+        fp <- cbind(fastDoCall(
             rbind, fp),
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
@@ -878,6 +881,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom BiocGenerics intersect
 #' @importFrom zoo na.approx rollmean
 #' @importFrom cli cli_abort
+#' @importFrom Gmisc fastDoCall
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -979,7 +983,7 @@ plotSummaryPointSmooth <- function(se,
 
     # add points
     if (doPoint) {
-        p <- p + do.call(geom_point, arglistPoint)
+        p <- p + fastDoCall(geom_point, arglistPoint)
     }
 
     if (doSmooth) {
@@ -1028,15 +1032,15 @@ plotSummaryPointSmooth <- function(se,
         arglistSmooth <- arglistSmooth[!names(arglistSmooth) %in%
                                            c("data", "inherit.aes",
                                              "mapping")]
-        p <- p + do.call(geom_line,
-                         c(list(data = smooth_data, inherit.aes = FALSE,
-                                mapping = aes(x = .data[["position"]],
-                                              y = .data[["value_smooth"]],
-                                              group = .data[[groupBy]],
-                                              color = .data[[colorBy]])),
-                           arglistSmooth))
+        p <- p + fastDoCall(geom_line,
+                            c(list(data = smooth_data, inherit.aes = FALSE,
+                                   mapping = aes(x = .data[["position"]],
+                                                 y = .data[["value_smooth"]],
+                                                 group = .data[[groupBy]],
+                                                 color = .data[[colorBy]])),
+                              arglistSmooth))
     }
-
+    
     # return the plot
     return(p)
 }
@@ -1625,6 +1629,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom SummarizedExperiment assay
 #' @importFrom stats cor as.dist hclust
 #' @importFrom SparseArray colMeans
+#' @importFrom Gmisc fastDoCall
 #'
 #' @noRd
 #' @keywords internal
@@ -1643,7 +1648,7 @@ plotGenomicRegions <- function(grl,
                       by = windowWidth),
             rightmost.closed = TRUE, left.open = FALSE)
         iByBin <- split(seq.int(nrow(X)), bin)
-        XX <- do.call(rbind, lapply(iByBin, function(i) {
+        XX <- fastDoCall(rbind, lapply(iByBin, function(i) {
             colMeans(X[i, , drop = FALSE], na.rm = TRUE)
         }))
         # calculate distances between reads
