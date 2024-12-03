@@ -426,12 +426,6 @@ plotRegion <- function(
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
-#' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges
-#' @importFrom GenomicRanges shift
-#' @importFrom BiocGenerics intersect sort
-#' @importFrom dplyr rename mutate left_join bind_cols
-#' @importFrom S4Vectors endoapply
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -540,12 +534,7 @@ plotReadsLollipop <- function(se,
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
 #' @import ggplot2
-#' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges
-#' @importFrom GenomicRanges shift
-#' @importFrom BiocGenerics intersect sort
-#' @importFrom dplyr rename mutate left_join bind_cols
-#' @importFrom S4Vectors endoapply
+#' @importFrom rlang .data
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -1043,6 +1032,12 @@ plotGenomicRegions <- function(grl,
 #' 
 #' @keywords internal
 #' @noRd
+#'
+#' @importFrom SummarizedExperiment assayNames
+#' @importFrom IRanges ranges
+#' @importFrom GenomicRanges shift
+#' @importFrom BiocGenerics intersect
+#' @importFrom S4Vectors endoapply
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead, 
                                      orderReads, modbaseSpace, trackTitle, 
                                      legendTitle, showLegend, highlightRegions,
@@ -1203,7 +1198,7 @@ plotGenomicRegions <- function(grl,
 #' @param extraColAnnots A character vector (or \code{NULL}) with names of
 #'     columns in \code{colData(x)} to add to the generated data frame.
 #'
-#' @importFrom BiocGenerics start colnames rownames unlist
+#' @importFrom BiocGenerics start colnames rownames unlist sort
 #' @importFrom IRanges IRanges disjointBins
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom SparseArray nnawhich nnavals colSums is_nonna
@@ -1523,7 +1518,7 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 #' @noRd
 #' 
-#' @importFrom dplyr left_join bind_cols
+#' @importFrom dplyr left_join bind_cols rename mutate
 #' @importFrom SummarizedExperiment colData
 .prepareFootprintsForPlot <- function(fp, plotdf, se, facetBy) {
     # unpack list
