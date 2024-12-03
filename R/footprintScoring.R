@@ -259,7 +259,7 @@ segmentFootprintScores <- function(scoresList,
             if (nrow(scoresList[[nm]]) > 0) {
                 # smooth scores using a band-pass filter
                 dat <- scoresList[[nm]] |>
-                    select(.data$readId, .data$pos, .data$score) |>
+                    select("readId", "pos", "score") |>
                     group_by(.data$readId) |>
                     mutate(sscore = .filterScores(score,
                                                   minperiod = minperiod,
