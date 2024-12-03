@@ -362,11 +362,11 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA",
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, footprintColumns = "nucleosome"),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA",
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, footprintColumns = "nucleosome",
                            footprintColors = c(nucleosome = "cyan")),
                       list(trackData = grl, trackType = "GenomicRegion", 
@@ -383,7 +383,7 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA",
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = TRUE,
                            linewidthTiles = 0.25, 
                            footprintColumns = c("nucleosome", "footprint2")),
@@ -403,7 +403,7 @@ test_that("plotRegion works - manual inspection", {
         referenceCoordinate = 6935800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = "squish", trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
@@ -411,7 +411,7 @@ test_that("plotRegion works - manual inspection", {
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample", 
+                           orderReads = "cluster", facetBy = "sample", 
                            size = 2, stroke = 0.5, 
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
@@ -421,7 +421,81 @@ test_that("plotRegion works - manual inspection", {
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
+    
+    ## squish + no facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        referenceCoordinate = 6935800,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", trackTitle = "Heatmap",
+                           facetBy = NULL, interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
+                           labelPosition = "inside", legendTitle = NULL),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", facetBy = NULL, 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
+        plot_layout(heights = c(3, 1, 3, 2))
+    expect_s3_class(p, "ggplot")
+    
+    ## squish + facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        referenceCoordinate = 6935800,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", trackTitle = "Heatmap",
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
+                           labelPosition = "inside", legendTitle = NULL),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", facetBy = "sample", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
+        plot_layout(heights = c(3, 1, 3, 2))
+    expect_s3_class(p, "ggplot")
 
+    ## cluster, with single read
+    setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563"), 
+                         prune = TRUE)
+    p <- plotRegion(
+        setmp, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        referenceCoordinate = 6935800,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "cluster", trackTitle = "Heatmap",
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
+                           labelPosition = "inside", legendTitle = NULL),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", facetBy = "sample", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh))) +
+            plot_layout(heights = c(3, 1, 3, 2))
+    expect_s3_class(p, "ggplot")
+    
     ## referenceCoordinate outside plot (left) - breaks in scale_cut!
     ## fixed in https://github.com/r-lib/scales/commit/6f2f979a81678c7cd5597b1d18cac78e9cf473c6,
     ## but not yet on CRAN
@@ -430,7 +504,7 @@ test_that("plotRegion works - manual inspection", {
     #     referenceCoordinate = 6934800,
     #     tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
     #                        legendTitle = "6mA", highlightRegions = grh,
-    #                        orderReads = FALSE, trackTitle = "Heatmap",
+    #                        orderReads = NULL, trackTitle = "Heatmap",
     #                        facetBy = NULL, interpolate = FALSE,
     #                        linewidthTiles = 0.25),
     #                   list(trackData = grl, trackType = "GenomicRegion",
@@ -438,7 +512,7 @@ test_that("plotRegion works - manual inspection", {
     #                        labelPosition = "inside", legendTitle = NULL),
     #                   list(trackData = "mod_prob", trackType = "Lollipop",
     #                        legendTitle = "6mA", highlightRegions = grh,
-    #                        orderReads = TRUE, facetBy = "sample",
+    #                        orderReads = "cluster", facetBy = "sample",
     #                        size = 2, stroke = 0.5),
     #                   list(trackData = "Nvalid", trackType = "PointSmooth",
     #                        showLegend = FALSE, spar = 0.5,
@@ -449,12 +523,12 @@ test_that("plotRegion works - manual inspection", {
     # expect_s3_class(p, "ggplot")
 
     ## referenceCoordinate outside plot (right)
-    expect_warning(p <- plotRegion(
+    p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6936800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = "modbase", interpolate = FALSE,
                            linewidthTiles = 0.25, 
                            footprintColumns = "nucleosome"),
@@ -463,31 +537,30 @@ test_that("plotRegion works - manual inspection", {
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
+                           orderReads = "squish", facetBy = "sample",
                            size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
-            plot_layout(heights = c(3, 1, 3, 2)),
-        "the standard deviation is zero")
+        plot_layout(heights = c(3, 1, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## referenceCoordinate in the middle of plot region
-    expect_warning(p <- plotRegion(
+    expect_warning(expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6935850,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
-                           facetBy = NULL, interpolate = FALSE,
+                           orderReads = "cluster", trackTitle = "Heatmap",
+                           facetBy = "sample", interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
+                           orderReads = "cluster", facetBy = "sample",
                            size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
@@ -495,7 +568,7 @@ test_that("plotRegion works - manual inspection", {
                            colorBy = "modbase",
                            highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2)),
-        "the standard deviation is zero")
+        "the standard deviation is zero"), "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
 
     ## modbaseSpace = TRUE, change colors
@@ -503,12 +576,12 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample", 
+                           orderReads = "cluster", facetBy = "sample", 
                            size = 2, stroke = 0.5,
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
@@ -521,16 +594,16 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
 
     ## ... with only smooth
-    expect_warning(p <- plotRegion(
+    p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "modbase", 
+                           orderReads = NULL, facetBy = "modbase", 
                            size = 2, stroke = 0.5, 
                            footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "Smooth",
@@ -538,8 +611,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh,
                            arglistSmooth = list(linewidth = 2)))) +
-            plot_layout(heights = c(3, 3, 2)),
-        "the standard deviation is zero")
+        plot_layout(heights = c(3, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## ... change y-axis range
@@ -547,12 +619,12 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = FALSE, trackTitle = "Heatmap",
+                           orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = TRUE, facetBy = "sample",
+                           orderReads = "cluster", facetBy = "sample",
                            size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,

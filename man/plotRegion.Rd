@@ -25,7 +25,7 @@ plotReadsLollipop(
   size = 3,
   stroke = 0.5,
   drawRead = TRUE,
-  orderReads = TRUE,
+  orderReads = "cluster",
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -44,7 +44,7 @@ plotReadsHeatmap(
   assayName,
   drawRead = TRUE,
   linewidthTiles = 0,
-  orderReads = TRUE,
+  orderReads = "cluster",
   modbaseSpace = FALSE,
   interpolate = FALSE,
   trackTitle = NULL,
@@ -174,9 +174,13 @@ outlines (\code{stroke} argument of \code{\link[ggplot2]{geom_point}}).}
 \item{drawRead}{A logical scalar. If \code{TRUE}, draw a horizontal line
 segment for each read from its start to its end.}
 
-\item{orderReads}{A logical scalar. If \code{TRUE}, the position of reads
-on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
-where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.}
+\item{orderReads}{A character scalar, or \code{NULL}. If \code{"cluster"},
+the position of reads on the y-axis will be reordered using
+\code{hclust(as.dist(1-cor(X)))$order}, where \code{X} is
+\code{assay(x, assayName)} with zero values set to \code{NA}. If set to
+\code{"squish"}, the display will be compacted by placing multiple
+reads in the same row when possible. If \code{NULL}, no reordering is
+done.}
 
 \item{trackTitle}{A character scalar or \code{NULL}, giving the title of
 the track.}

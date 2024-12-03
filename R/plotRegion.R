@@ -375,9 +375,13 @@ plotRegion <- function(
 #'     outlines (\code{stroke} argument of \code{\link[ggplot2]{geom_point}}).
 #' @param drawRead A logical scalar. If \code{TRUE}, draw a horizontal line
 #'     segment for each read from its start to its end.
-#' @param orderReads A logical scalar. If \code{TRUE}, the position of reads
-#'     on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
-#'     where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.
+#' @param orderReads A character scalar, or \code{NULL}. If \code{"cluster"}, 
+#'     the position of reads on the y-axis will be reordered using 
+#'     \code{hclust(as.dist(1-cor(X)))$order}, where \code{X} is 
+#'     \code{assay(x, assayName)} with zero values set to \code{NA}. If set to 
+#'     \code{"squish"}, the display will be compacted by placing multiple 
+#'     reads in the same row when possible. If \code{NULL}, no reordering is 
+#'     done. 
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
@@ -419,10 +423,10 @@ plotRegion <- function(
 #' @import ggplot2
 #' @importFrom rlang .data
 #' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges
+#' @importFrom IRanges subsetByOverlaps ranges IRanges disjointBins
 #' @importFrom GenomicRanges shift
-#' @importFrom BiocGenerics intersect
-#' @importFrom dplyr rename mutate left_join bind_cols
+#' @importFrom BiocGenerics intersect sort
+#' @importFrom dplyr rename mutate left_join bind_cols group_split
 #' @importFrom S4Vectors endoapply
 #'
 plotReadsLollipop <- function(se,
@@ -431,7 +435,7 @@ plotReadsLollipop <- function(se,
                               size = 3.0,
                               stroke = 0.5,
                               drawRead = TRUE,
-                              orderReads = TRUE,
+                              orderReads = "cluster",
                               modbaseSpace = FALSE,
                               trackTitle = NULL,
                               legendTitle = NULL,
@@ -450,7 +454,8 @@ plotReadsLollipop <- function(se,
     .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = stroke, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = drawRead, type = "logical")
-    .assertScalar(x = orderReads, type = "logical")
+    .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
+                  validValues = c("cluster", "squish"))
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
@@ -508,9 +513,27 @@ plotReadsLollipop <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
-    if (orderReads) {
+    if (!is.null(orderReads) && orderReads == "cluster") {
         df$read <- factor(as.character(df$read),
                           levels = .orderReads(se, assayName))
+        df$plotRow <- df$read
+    } else if (!is.null(orderReads) && orderReads == "squish") {
+        if (!is.null(facetBy)) {
+            tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
+                summarise(start = min(position), end = max(position))
+        } else {
+            tmp <- df |> group_by(.data$read) |>
+                summarise(start = min(position), end = max(position))
+        }
+        tmp <- tmp |> group_split() |>
+            lapply(function(x) sort(IRanges(start = x$start, end = x$end, 
+                                            names = as.character(x$read)))) |>
+            as("IRangesList") |>
+            disjointBins() |>
+            unlist()
+        df$plotRow <- factor(tmp[as.character(df$read)])
+    } else if (is.null(orderReads)) {
+        df$plotRow <- df$read
     }
 
     # create base plot
@@ -536,6 +559,7 @@ plotReadsLollipop <- function(se,
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
             mutate(read = factor(read, levels = levels(df$read)))
+        fp$plotRow <- df$plotRow[match(fp$read, df$read)]
         fp <- .convertRegionToModBaseSpace(
             regdf = fp, datadf = df)
         # add facetting variable
@@ -550,10 +574,10 @@ plotReadsLollipop <- function(se,
             p <- p +
                 geom_rect(
                     data = fp,
-                    mapping = aes(xmin = as.numeric(start) - 0.0, 
-                                  xmax = as.numeric(end) + 0.0,
-                                  ymin = as.numeric(read) - 0.5, 
-                                  ymax = as.numeric(read) + 0.5),
+                    mapping = aes(xmin = as.numeric(.data$start) - 0.0, 
+                                  xmax = as.numeric(.data$end) + 0.0,
+                                  ymin = as.numeric(.data$plotRow) - 0.5, 
+                                  ymax = as.numeric(.data$plotRow) + 0.5),
                     fill = footprintColors[fpc],
                     inherit.aes = FALSE
                 )
@@ -567,7 +591,7 @@ plotReadsLollipop <- function(se,
         p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
                               mapping = aes(
                                   x = .data[["start"]],
-                                  y = .data[["read"]],
+                                  y = .data[["plotRow"]],
                                   xend = .data[["end"]]
                               ), color = "gray80")
     }
@@ -602,10 +626,10 @@ plotReadsLollipop <- function(se,
 #'
 #' @import ggplot2
 #' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges
+#' @importFrom IRanges subsetByOverlaps ranges IRanges disjointBins
 #' @importFrom GenomicRanges shift
-#' @importFrom BiocGenerics intersect
-#' @importFrom dplyr rename mutate left_join bind_cols
+#' @importFrom BiocGenerics intersect sort
+#' @importFrom dplyr rename mutate left_join bind_cols group_split
 #' @importFrom S4Vectors endoapply
 #'
 plotReadsHeatmap <- function(se,
@@ -613,7 +637,7 @@ plotReadsHeatmap <- function(se,
                              assayName,
                              drawRead = TRUE,
                              linewidthTiles = 0,
-                             orderReads = TRUE,
+                             orderReads = "cluster",
                              modbaseSpace = FALSE,
                              interpolate = FALSE,
                              trackTitle = NULL,
@@ -632,7 +656,8 @@ plotReadsHeatmap <- function(se,
                   validValues = assayNames(se))
     .assertScalar(x = drawRead, type = "logical")
     .assertScalar(x = linewidthTiles, type = "numeric")
-    .assertScalar(x = orderReads, type = "logical")
+    .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
+                  validValues = c("cluster", "squish"))
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = interpolate, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
@@ -692,10 +717,29 @@ plotReadsHeatmap <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"))
 
     # order reads
-    if (orderReads) {
+    if (!is.null(orderReads) && orderReads == "cluster") {
         df$read <- factor(as.character(df$read),
                           levels = .orderReads(se, assayName))
+        df$plotRow <- df$read
+    } else if (!is.null(orderReads) && orderReads == "squish") {
+        if (!is.null(facetBy)) {
+            tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
+                summarise(start = min(position), end = max(position))
+        } else {
+            tmp <- df |> group_by(.data$read) |>
+                summarise(start = min(position), end = max(position))
+        }
+        tmp <- tmp |> group_split() |>
+            lapply(function(x) sort(IRanges(start = x$start, end = x$end, 
+                                            names = as.character(x$read)))) |>
+            as("IRangesList") |>
+            disjointBins() |>
+            unlist()
+        df$plotRow <- factor(tmp[as.character(df$read)])
+    } else if (is.null(orderReads)) {
+        df$plotRow <- df$read
     }
+    
 
     # create base plot
     p <- .createBaseplotReads(df = df, region = region,
@@ -736,6 +780,7 @@ plotReadsHeatmap <- function(se,
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
             mutate(read = factor(read, levels = levels(df$read)))
+        fp$plotRow <- df$plotRow[match(fp$read, df$read)]
         fp <- .convertRegionToModBaseSpace(
             regdf = fp, datadf = df)
         # add facetting variable
@@ -1453,7 +1498,7 @@ plotGenomicRegions <- function(grl,
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
-                      y = .data[["read"]],
+                      y = .data[["plotRow"]],
                       fill = .data[["value"]])) +
         scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
                              direction = -1, na.value = "beige") +
@@ -1523,7 +1568,7 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .summarizePlotdataPerRead <- function(dfReads, groupVars = "sample") {
     dfReads |>
-        group_by(.data[["read"]]) |>
+        group_by(.data[["read"]], .data[["plotRow"]]) |>
         summarise(
             start = ifelse(is.factor(.data[["position"]]),
                            levels(.data[["position"]])[1],
