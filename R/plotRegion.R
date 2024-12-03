@@ -451,89 +451,39 @@ plotReadsLollipop <- function(se,
                               adjustFacetHeight = FALSE,
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
-
-    .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = region, type = "GRanges")
-    .assertScalar(x = assayName, type = "character",
-                  validValues = assayNames(se))
-    .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = stroke, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = drawRead, type = "logical")
-    .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
-                  validValues = c("cluster", "squish"))
-    .assertScalar(x = modbaseSpace, type = "logical")
-    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
-    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
-    .assertScalar(x = showLegend, type = "logical")
-    .assertVector(x = highlightRegions, type = "GRanges",
-                  allowNULL = TRUE)
-    if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
-    }
-    .assertVector(x = footprintColumns, type = "character", allowNULL = TRUE,
-                  validValues = .getReadLevelColDataNames(se))
-    .assertVector(x = footprintColors, type = "character", allowNULL = TRUE)
-    if (!is.null(footprintColors) && !is.null(footprintColumns)) {
-        if (!all(footprintColumns %in% names(footprintColors))) {
-            stop("footprintColors must be provided for all footprintColumns")
-        }
-    } else if (!is.null(footprintColumns) && is.null(footprintColors)) {
-        footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
-        names(footprintColors) <- footprintColumns
-    }
-    .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
-    .assertScalar(x = adjustFacetHeight, type = "logical")
-    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
-    if (modbaseSpace) {
-        referenceCoordinate <- NULL
-    }
-
-    if (!is.null(footprintColumns)) {
-        footprints <- lapply(structure(footprintColumns, 
-                                       names = footprintColumns), 
-                             function(nm) lapply(se[[nm]], function(y) {
-                                 endoapply(y, function(z) BiocGenerics::intersect(z, ranges(region)))
-                             }))
-    }
     
-    if (!is.null(referenceCoordinate)) {
-        # shift all ranges
-        if (!is.null(highlightRegions)) {
-            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
-        }
-        if (!is.null(footprintColumns)) {
-            footprints <- lapply(
-                footprints, 
-                function(x) lapply(x, 
-                                   function(y) shift(y, -referenceCoordinate)))
-        }
-        region <- shift(region, -referenceCoordinate)
-    }
+    argL <- .checkArgsReadLevelPlots(
+        se = se, region = region, assayName = assayName, drawRead = drawRead,
+        orderReads = orderReads, modbaseSpace = modbaseSpace, 
+        trackTitle = trackTitle, legendTitle = legendTitle, 
+        showLegend = showLegend, highlightRegions = highlightRegions,
+        footprintColumns = footprintColumns, footprintColors = footprintColors, 
+        facetBy = facetBy, adjustFacetHeight = adjustFacetHeight, 
+        referenceCoordinate = referenceCoordinate, 
+        labelAccuracy = labelAccuracy, size = size, stroke = stroke)
 
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
-                                referenceCoordinate = referenceCoordinate,
+                                referenceCoordinate = argL$referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads, facetBy = facetBy)
 
     # create base plot
-    p <- .createBaseplotReads(df = df, region = region,
+    p <- .createBaseplotReads(df = df, region = argL$region,
                               trackTitle = trackTitle,
                               legendTitle = ifelse(!is.null(legendTitle),
                                                    legendTitle, assayName),
                               showLegend = showLegend,
-                              highlightRegions = highlightRegions,
+                              highlightRegions = argL$highlightRegions,
                               facetBy = facetBy,
                               adjustFacetHeight = adjustFacetHeight,
-                              referenceCoordinate = referenceCoordinate,
+                              referenceCoordinate = argL$referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
     # add footprints
     for (fpc in footprintColumns) {
-        fp <- footprints[[fpc]]
+        fp <- argL$footprints[[fpc]]
         # unpack list
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
@@ -562,7 +512,7 @@ plotReadsLollipop <- function(se,
                                   xmax = as.numeric(.data$end) + 0.0,
                                   ymin = as.numeric(.data$plotRow) - 0.5, 
                                   ymax = as.numeric(.data$plotRow) + 0.5),
-                    fill = footprintColors[fpc],
+                    fill = argL$footprintColors[fpc],
                     inherit.aes = FALSE
                 )
         }
@@ -635,84 +585,35 @@ plotReadsHeatmap <- function(se,
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
 
-    .assertVector(x = se, type = "SummarizedExperiment")
-    .assertScalar(x = region, type = "GRanges")
-    .assertScalar(x = assayName, type = "character",
-                  validValues = assayNames(se))
-    .assertScalar(x = drawRead, type = "logical")
-    .assertScalar(x = linewidthTiles, type = "numeric")
-    .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
-                  validValues = c("cluster", "squish"))
-    .assertScalar(x = modbaseSpace, type = "logical")
-    .assertScalar(x = interpolate, type = "logical")
-    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
-    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
-    .assertScalar(x = showLegend, type = "logical")
-    .assertVector(x = highlightRegions, type = "GRanges",
-                  allowNULL = TRUE)
-    if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
-    }
-    .assertVector(x = footprintColumns, type = "character", allowNULL = TRUE,
-                  validValues = .getReadLevelColDataNames(se))
-    .assertVector(x = footprintColors, type = "character", allowNULL = TRUE)
-    if (!is.null(footprintColors) && !is.null(footprintColumns)) {
-        if (!all(footprintColumns %in% names(footprintColors))) {
-            stop("footprintColors must be provided for all footprintColumns")
-        }
-    } else if (!is.null(footprintColumns) && is.null(footprintColors)) {
-        footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
-        names(footprintColors) <- footprintColumns
-    }
-    .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
-    .assertScalar(x = adjustFacetHeight, type = "logical")
-    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
-    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
-    if (modbaseSpace) {
-        referenceCoordinate <- NULL
-    }
-
-    if (!is.null(footprintColumns)) {
-        footprints <- lapply(structure(footprintColumns, 
-                                       names = footprintColumns), 
-                             function(nm) lapply(se[[nm]], function(y) {
-                                 endoapply(y, function(z) BiocGenerics::intersect(z, ranges(region)))
-                             }))
-    }
+    argL <- .checkArgsReadLevelPlots(
+        se = se, region = region, assayName = assayName, drawRead = drawRead,
+        orderReads = orderReads, modbaseSpace = modbaseSpace, 
+        trackTitle = trackTitle, legendTitle = legendTitle, 
+        showLegend = showLegend, highlightRegions = highlightRegions,
+        footprintColumns = footprintColumns, footprintColors = footprintColors, 
+        facetBy = facetBy, adjustFacetHeight = adjustFacetHeight, 
+        referenceCoordinate = referenceCoordinate, 
+        labelAccuracy = labelAccuracy, linewidthTiles = linewidthTiles,
+        interpolate = interpolate)
     
-    if (!is.null(referenceCoordinate)) {
-        # shift all ranges
-        if (!is.null(highlightRegions)) {
-            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
-        }
-        if (!is.null(footprintColumns)) {
-            footprints <- lapply(
-                footprints, 
-                function(x) lapply(x, 
-                                   function(y) shift(y, -referenceCoordinate)))
-        }
-        region <- shift(region, -referenceCoordinate)
-    }
-
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
                                 interpolate = interpolate,
-                                referenceCoordinate = referenceCoordinate,
+                                referenceCoordinate = argL$referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads, facetBy = facetBy)
 
     # create base plot
-    p <- .createBaseplotReads(df = df, region = region,
+    p <- .createBaseplotReads(df = df, region = argL$region,
                               trackTitle = trackTitle,
                               legendTitle = ifelse(!is.null(legendTitle),
                                                    legendTitle, assayName),
                               showLegend = showLegend,
-                              highlightRegions = highlightRegions,
+                              highlightRegions = argL$highlightRegions,
                               facetBy = facetBy,
                               adjustFacetHeight  = adjustFacetHeight,
-                              referenceCoordinate = referenceCoordinate,
+                              referenceCoordinate = argL$referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
     # add segments
@@ -733,7 +634,7 @@ plotReadsHeatmap <- function(se,
     
     # add footprints
     for (fpc in footprintColumns) {
-        fp <- footprints[[fpc]]
+        fp <- argL$footprints[[fpc]]
         # unpack list
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
@@ -762,7 +663,7 @@ plotReadsHeatmap <- function(se,
                                   xmax = as.numeric(end) + 0.0,
                                   ymin = as.numeric(read) - 0.5, 
                                   ymax = as.numeric(read) + 0.5),
-                    fill = "transparent", color = footprintColors[fpc],
+                    fill = "transparent", color = argL$footprintColors[fpc],
                     linewidth = 1.5, inherit.aes = FALSE
                 )
         }
@@ -1175,6 +1076,97 @@ plotGenomicRegions <- function(grl,
 }
 
 ## helper functions used above -------------------------------------------------
+
+#' Check arguments for read-level plot functions, and generate required objects
+#' 
+#' @keywords internal
+#' @noRd
+.checkArgsReadLevelPlots <- function(se, region, assayName, drawRead, 
+                                     orderReads, modbaseSpace, trackTitle, 
+                                     legendTitle, showLegend, highlightRegions,
+                                     footprintColumns, footprintColors, 
+                                     facetBy, adjustFacetHeight, 
+                                     referenceCoordinate, labelAccuracy,
+                                     size = 0, stroke = 0, 
+                                     linewidthTiles = 0, interpolate = FALSE) {
+    # check arguments
+    # ... shared arguments
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = region, type = "GRanges")
+    .assertScalar(x = assayName, type = "character",
+                  validValues = assayNames(se))
+    .assertScalar(x = drawRead, type = "logical")
+    .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
+                  validValues = c("cluster", "squish"))
+    .assertScalar(x = modbaseSpace, type = "logical")
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
+    .assertVector(x = highlightRegions, type = "GRanges", allowNULL = TRUE)
+    .assertVector(x = footprintColumns, type = "character", allowNULL = TRUE,
+                  validValues = .getReadLevelColDataNames(se))
+    .assertVector(x = footprintColors, type = "character", allowNULL = TRUE)
+    .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
+    .assertScalar(x = adjustFacetHeight, type = "logical")
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    
+    # ... lollipop-specific arguments
+    .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = stroke, type = "numeric", rngIncl = c(0, Inf))
+    
+    # ... heatmap-specific arguments
+    .assertScalar(x = linewidthTiles, type = "numeric")
+    .assertScalar(x = interpolate, type = "logical")
+    
+    # adjust arguments if necessary
+    if (!is.null(highlightRegions)) {
+        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+                                                    ignore.strand = TRUE)
+    }
+    if (!is.null(footprintColors) && !is.null(footprintColumns)) {
+        if (!all(footprintColumns %in% names(footprintColors))) {
+            stop("footprintColors must be provided for all footprintColumns")
+        }
+    } else if (!is.null(footprintColumns) && is.null(footprintColors)) {
+        footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
+        names(footprintColors) <- footprintColumns
+    }
+    if (modbaseSpace) {
+        referenceCoordinate <- NULL
+    }
+    if (!is.null(footprintColumns)) {
+        footprints <- lapply(
+            structure(footprintColumns, 
+                      names = footprintColumns), 
+            function(nm) lapply(se[[nm]], function(y) {
+                endoapply(y, function(z) 
+                    BiocGenerics::intersect(z, ranges(region)))
+            }))
+    } else {
+        footprints <- NULL
+    }
+    if (!is.null(referenceCoordinate)) {
+        # shift all ranges
+        if (!is.null(highlightRegions)) {
+            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
+        }
+        if (!is.null(footprintColumns)) {
+            footprints <- lapply(
+                footprints, 
+                function(x) lapply(x, 
+                                   function(y) shift(y, -referenceCoordinate)))
+        }
+        region <- shift(region, -referenceCoordinate)
+    }
+    
+    # return possibly adjusted arguments
+    return(list(highlightRegions = highlightRegions, 
+                footprintColors = footprintColors,
+                referenceCoordinate = referenceCoordinate,
+                footprints = footprints, region = region))
+    
+}
 
 #' Create data.frame from SummarizedExperiment for summary-level data
 #'
