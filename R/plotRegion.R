@@ -427,12 +427,11 @@ plotRegion <- function(
 #' @import ggplot2
 #' @importFrom rlang .data
 #' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges IRanges disjointBins
+#' @importFrom IRanges subsetByOverlaps ranges
 #' @importFrom GenomicRanges shift
 #' @importFrom BiocGenerics intersect sort
-#' @importFrom dplyr rename mutate left_join bind_cols group_split
+#' @importFrom dplyr rename mutate left_join bind_cols
 #' @importFrom S4Vectors endoapply
-#' @importFrom Gmisc fastDoCall
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -517,31 +516,8 @@ plotReadsLollipop <- function(se,
     df <- .preparePlotdataReads(x = se, assayName = assayName,
                                 modbaseSpace = modbaseSpace,
                                 referenceCoordinate = referenceCoordinate,
-                                extraColAnnots = setdiff(facetBy, "sample"))
-
-    # order reads
-    if (!is.null(orderReads) && orderReads == "cluster") {
-        df$read <- factor(as.character(df$read),
-                          levels = .orderReads(se, assayName))
-        df$plotRow <- df$read
-    } else if (!is.null(orderReads) && orderReads == "squish") {
-        if (!is.null(facetBy)) {
-            tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
-                summarise(start = min(position), end = max(position))
-        } else {
-            tmp <- df |> group_by(.data$read) |>
-                summarise(start = min(position), end = max(position))
-        }
-        tmp <- tmp |> group_split() |>
-            lapply(function(x) sort(IRanges(start = x$start, end = x$end, 
-                                            names = as.character(x$read)))) |>
-            as("IRangesList") |>
-            disjointBins() |>
-            unlist()
-        df$plotRow <- factor(tmp[as.character(df$read)])
-    } else if (is.null(orderReads)) {
-        df$plotRow <- df$read
-    }
+                                extraColAnnots = setdiff(facetBy, "sample"),
+                                orderReads = orderReads, facetBy = facetBy)
 
     # create base plot
     p <- .createBaseplotReads(df = df, region = region,
@@ -562,7 +538,7 @@ plotReadsLollipop <- function(se,
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
         })
-        fp <- cbind(fastDoCall(
+        fp <- cbind(do.call(
             rbind, fp),
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
@@ -634,12 +610,11 @@ plotReadsLollipop <- function(se,
 #'
 #' @import ggplot2
 #' @importFrom SummarizedExperiment assayNames colData
-#' @importFrom IRanges subsetByOverlaps ranges IRanges disjointBins
+#' @importFrom IRanges subsetByOverlaps ranges
 #' @importFrom GenomicRanges shift
 #' @importFrom BiocGenerics intersect sort
-#' @importFrom dplyr rename mutate left_join bind_cols group_split
+#' @importFrom dplyr rename mutate left_join bind_cols
 #' @importFrom S4Vectors endoapply
-#' @importFrom Gmisc fastDoCall
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -725,32 +700,8 @@ plotReadsHeatmap <- function(se,
                                 modbaseSpace = modbaseSpace,
                                 interpolate = interpolate,
                                 referenceCoordinate = referenceCoordinate,
-                                extraColAnnots = setdiff(facetBy, "sample"))
-
-    # order reads
-    if (!is.null(orderReads) && orderReads == "cluster") {
-        df$read <- factor(as.character(df$read),
-                          levels = .orderReads(se, assayName))
-        df$plotRow <- df$read
-    } else if (!is.null(orderReads) && orderReads == "squish") {
-        if (!is.null(facetBy)) {
-            tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
-                summarise(start = min(position), end = max(position))
-        } else {
-            tmp <- df |> group_by(.data$read) |>
-                summarise(start = min(position), end = max(position))
-        }
-        tmp <- tmp |> group_split() |>
-            lapply(function(x) sort(IRanges(start = x$start, end = x$end, 
-                                            names = as.character(x$read)))) |>
-            as("IRangesList") |>
-            disjointBins() |>
-            unlist()
-        df$plotRow <- factor(tmp[as.character(df$read)])
-    } else if (is.null(orderReads)) {
-        df$plotRow <- df$read
-    }
-    
+                                extraColAnnots = setdiff(facetBy, "sample"),
+                                orderReads = orderReads, facetBy = facetBy)
 
     # create base plot
     p <- .createBaseplotReads(df = df, region = region,
@@ -787,7 +738,7 @@ plotReadsHeatmap <- function(se,
         fp <- lapply(fp, function(x) {
             as.data.frame(unlist(x, use.names = TRUE))
         })
-        fp <- cbind(fastDoCall(
+        fp <- cbind(do.call(
             rbind, fp),
             sample = rep(names(fp), vapply(fp, nrow, 0))) |>
             rename(read = names) |>
@@ -881,7 +832,6 @@ plotReadsHeatmap <- function(se,
 #' @importFrom BiocGenerics intersect
 #' @importFrom zoo na.approx rollmean
 #' @importFrom cli cli_abort
-#' @importFrom Gmisc fastDoCall
 #'
 plotSummaryPointSmooth <- function(se,
                                    region,
@@ -983,7 +933,7 @@ plotSummaryPointSmooth <- function(se,
 
     # add points
     if (doPoint) {
-        p <- p + fastDoCall(geom_point, arglistPoint)
+        p <- p + do.call(geom_point, arglistPoint)
     }
 
     if (doSmooth) {
@@ -1032,13 +982,13 @@ plotSummaryPointSmooth <- function(se,
         arglistSmooth <- arglistSmooth[!names(arglistSmooth) %in%
                                            c("data", "inherit.aes",
                                              "mapping")]
-        p <- p + fastDoCall(geom_line,
-                            c(list(data = smooth_data, inherit.aes = FALSE,
-                                   mapping = aes(x = .data[["position"]],
-                                                 y = .data[["value_smooth"]],
-                                                 group = .data[[groupBy]],
-                                                 color = .data[[colorBy]])),
-                              arglistSmooth))
+        p <- p + do.call(geom_line,
+                         c(list(data = smooth_data, inherit.aes = FALSE,
+                                mapping = aes(x = .data[["position"]],
+                                              y = .data[["value_smooth"]],
+                                              group = .data[[groupBy]],
+                                              color = .data[[colorBy]])),
+                           arglistSmooth))
     }
     
     # return the plot
@@ -1299,12 +1249,13 @@ plotGenomicRegions <- function(grl,
 #' @param extraColAnnots A character vector (or \code{NULL}) with names of
 #'     columns in \code{colData(x)} to add to the generated data frame.
 #'
-#' @importFrom BiocGenerics start colnames rownames
+#' @importFrom BiocGenerics start colnames rownames unlist
+#' @importFrom IRanges IRanges disjointBins
 #' @importFrom SummarizedExperiment colData assay
 #' @importFrom SparseArray nnawhich nnavals colSums is_nonna
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
-#' @importFrom dplyr left_join bind_cols
+#' @importFrom dplyr left_join bind_cols group_by summarise group_split
 #'
 #' @noRd
 #' @keywords internal
@@ -1313,7 +1264,9 @@ plotGenomicRegions <- function(grl,
                                   modbaseSpace = FALSE,
                                   interpolate = FALSE,
                                   referenceCoordinate = NULL,
-                                  extraColAnnots = NULL) {
+                                  extraColAnnots = NULL,
+                                  orderReads = "cluster",
+                                  facetBy = NULL) {
     assaydat <- assay(x, assayName)
     assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
     # `assayName` columns are grouped reads -> flatten
@@ -1354,6 +1307,33 @@ plotGenomicRegions <- function(grl,
                 as.data.frame(colData(x)[, extraColAnnots, drop = FALSE])
             ), by = "sample")
     }
+    
+    # order reads
+    if (!is.null(orderReads) && orderReads == "cluster") {
+        df$read <- factor(as.character(df$read),
+                          levels = .orderReads(x, assayName))
+        df$plotRow <- df$read
+    } else if (!is.null(orderReads) && orderReads == "squish") {
+        if (!is.null(facetBy)) {
+            tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
+                summarise(start = min(.data$position), 
+                          end = max(.data$position))
+        } else {
+            tmp <- df |> group_by(.data$read) |>
+                summarise(start = min(.data$position), 
+                          end = max(.data$position))
+        }
+        tmp <- tmp |> group_split() |>
+            lapply(function(y) sort(IRanges(start = y$start, end = y$end, 
+                                            names = as.character(y$read)))) |>
+            as("IRangesList") |>
+            disjointBins() |>
+            unlist()
+        df$plotRow <- factor(tmp[as.character(df$read)])
+    } else if (is.null(orderReads)) {
+        df$plotRow <- df$read
+    }
+    
     return(df)
 }
 
@@ -1629,7 +1609,6 @@ plotGenomicRegions <- function(grl,
 #' @importFrom SummarizedExperiment assay
 #' @importFrom stats cor as.dist hclust
 #' @importFrom SparseArray colMeans
-#' @importFrom Gmisc fastDoCall
 #'
 #' @noRd
 #' @keywords internal
@@ -1648,7 +1627,7 @@ plotGenomicRegions <- function(grl,
                       by = windowWidth),
             rightmost.closed = TRUE, left.open = FALSE)
         iByBin <- split(seq.int(nrow(X)), bin)
-        XX <- fastDoCall(rbind, lapply(iByBin, function(i) {
+        XX <- do.call(rbind, lapply(iByBin, function(i) {
             colMeans(X[i, , drop = FALSE], na.rm = TRUE)
         }))
         # calculate distances between reads
