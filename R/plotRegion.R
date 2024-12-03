@@ -483,27 +483,8 @@ plotReadsLollipop <- function(se,
 
     # add footprints
     for (fpc in footprintColumns) {
-        fp <- argL$footprints[[fpc]]
-        # unpack list
-        fp <- lapply(fp, function(x) {
-            as.data.frame(unlist(x, use.names = TRUE))
-        })
-        fp <- cbind(do.call(
-            rbind, fp),
-            sample = rep(names(fp), vapply(fp, nrow, 0))) |>
-            rename(read = names) |>
-            mutate(read = factor(read, levels = levels(df$read)))
-        fp$plotRow <- df$plotRow[match(fp$read, df$read)]
-        fp <- .convertRegionToModBaseSpace(
-            regdf = fp, datadf = df)
-        # add facetting variable
-        if (!is.null(facetBy) && facetBy != "sample") {
-            fp <- fp |>
-                left_join(bind_cols(
-                    sample = rownames(colData(se)),
-                    as.data.frame(colData(se)[, facetBy, drop = FALSE])
-                ), by = "sample")
-        }
+        fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
+                                        plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
             p <- p +
                 geom_rect(
@@ -634,27 +615,8 @@ plotReadsHeatmap <- function(se,
     
     # add footprints
     for (fpc in footprintColumns) {
-        fp <- argL$footprints[[fpc]]
-        # unpack list
-        fp <- lapply(fp, function(x) {
-            as.data.frame(unlist(x, use.names = TRUE))
-        })
-        fp <- cbind(do.call(
-            rbind, fp),
-            sample = rep(names(fp), vapply(fp, nrow, 0))) |>
-            rename(read = names) |>
-            mutate(read = factor(read, levels = levels(df$read)))
-        fp$plotRow <- df$plotRow[match(fp$read, df$read)]
-        fp <- .convertRegionToModBaseSpace(
-            regdf = fp, datadf = df)
-        # add facetting variable
-        if (!is.null(facetBy) && facetBy != "sample") {
-            fp <- fp |>
-                left_join(bind_cols(
-                    sample = rownames(colData(se)),
-                    as.data.frame(colData(se)[, facetBy, drop = FALSE])
-                ), by = "sample")
-        }
+        fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
+                                        plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
             p <- p +
                 geom_rect(
@@ -1554,6 +1516,37 @@ plotGenomicRegions <- function(grl,
     }
 
     return(p0)
+}
+
+#' Prepare footprint coordinates for plotting
+#' 
+#' @keywords internal
+#' @noRd
+#' 
+#' @importFrom dplyr left_join bind_cols
+#' @importFrom SummarizedExperiment colData
+.prepareFootprintsForPlot <- function(fp, plotdf, se, facetBy) {
+    # unpack list
+    fp <- lapply(fp, function(x) {
+        as.data.frame(unlist(x, use.names = TRUE))
+    })
+    fp <- cbind(do.call(
+        rbind, fp),
+        sample = rep(names(fp), vapply(fp, nrow, 0))) |>
+        rename(read = names) |>
+        mutate(read = factor(read, levels = levels(plotdf$read)))
+    fp$plotRow <- plotdf$plotRow[match(fp$read, plotdf$read)]
+    fp <- .convertRegionToModBaseSpace(
+        regdf = fp, datadf = plotdf)
+    # add facetting variable
+    if (!is.null(facetBy) && facetBy != "sample") {
+        fp <- fp |>
+            left_join(bind_cols(
+                sample = rownames(colData(se)),
+                as.data.frame(colData(se)[, facetBy, drop = FALSE])
+            ), by = "sample")
+    }
+    return(fp)
 }
 
 #' Per-read summarize a read-level data.frame
