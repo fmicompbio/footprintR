@@ -969,10 +969,9 @@ plotSummaryPointSmooth <- function(se,
                                 yAxisRange = yAxisRange)
 
     # add points
-    if (!doPoint) {
-        arglistPoint$color <- "transparent"
+    if (doPoint) {
+        p <- p + do.call(geom_point, arglistPoint)
     }
-    p <- p + do.call(geom_point, arglistPoint)
 
     if (doSmooth) {
         # helper function to compute smooth spline for each sample
@@ -1398,6 +1397,11 @@ plotGenomicRegions <- function(grl,
                                    labelAccuracy,
                                    yAxisLabel,
                                    yAxisRange) {
+    if (is.null(yAxisRange)) {
+        # set the y-axis range manually to make sure it stays consistent
+        # with/without points
+        yAxisRange <- range(df$value) + c(-1, 1) * 0.05 * diff(range(df$value))
+    }
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
