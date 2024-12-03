@@ -199,7 +199,8 @@ calcFootprintScores <- function(se,
     scoresL <- lapply(adatList, function(adf) {
         if (nrow(adf) > 0) {
             adf |>
-                mutate(readId = factor(.data$readId, level = unique(.data$readId))) |>
+                mutate(readId = factor(.data$readId, 
+                                       levels = unique(.data$readId))) |>
                 group_by(.data$readId) |>
                 group_modify(~ calcFootprintScoreForRead(.x$pos, .x$pmod,
                                                          wgt = wgt,
@@ -261,7 +262,7 @@ segmentFootprintScores <- function(scoresList,
                 dat <- scoresList[[nm]] |>
                     select("readId", "pos", "score") |>
                     group_by(.data$readId) |>
-                    mutate(sscore = .filterScores(score,
+                    mutate(sscore = .filterScores(.data$score,
                                                   minperiod = minperiod,
                                                   maxperiod = maxperiod)) |>
                     ungroup()

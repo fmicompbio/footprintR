@@ -610,10 +610,10 @@ plotReadsHeatmap <- function(se,
             p <- p +
                 geom_rect(
                     data = fp,
-                    mapping = aes(xmin = as.numeric(start) - 0.0, 
-                                  xmax = as.numeric(end) + 0.0,
-                                  ymin = as.numeric(read) - 0.5, 
-                                  ymax = as.numeric(read) + 0.5),
+                    mapping = aes(xmin = as.numeric(.data$start) - 0.0, 
+                                  xmax = as.numeric(.data$end) + 0.0,
+                                  ymin = as.numeric(.data$read) - 0.5, 
+                                  ymax = as.numeric(.data$read) + 0.5),
                     fill = "transparent", color = argL$footprintColors[fpc],
                     linewidth = 1.5, inherit.aes = FALSE
                 )
@@ -1528,8 +1528,8 @@ plotGenomicRegions <- function(grl,
     fp <- cbind(do.call(
         rbind, fp),
         sample = rep(names(fp), vapply(fp, nrow, 0))) |>
-        rename(read = names) |>
-        mutate(read = factor(read, levels = levels(plotdf$read)))
+        rename(read = .data$names) |>
+        mutate(read = factor(.data$read, levels = levels(plotdf$read)))
     fp$plotRow <- plotdf$plotRow[match(fp$read, plotdf$read)]
     fp <- .convertRegionToModBaseSpace(
         regdf = fp, datadf = plotdf)
