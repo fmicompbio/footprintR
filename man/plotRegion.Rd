@@ -34,6 +34,7 @@ plotReadsLollipop(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
+  adjustFacetHeight = FALSE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -54,6 +55,7 @@ plotReadsHeatmap(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
+  adjustFacetHeight = FALSE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -210,6 +212,10 @@ values of \code{footprintColumns}.}
 to facet the plot by (if \code{NULL}, no faceting is done). By default,
 the plot will be facetted by 'sample', corresponding to the columns of
 \code{se}.}
+
+\item{adjustFacetHeight}{A logical scalar. If \code{TRUE}, adjust the
+height of the facets by the number of reads in each of them. If
+\code{FALSE}, all facets have the same height.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}

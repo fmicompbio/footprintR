@@ -39,7 +39,8 @@ Imports:
     Rcpp,
     zoo,
     tibble,
-    cli
+    cli,
+    ggforce
 Suggests:
     rmarkdown,
     knitr,

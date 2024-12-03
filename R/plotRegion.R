@@ -404,6 +404,9 @@ plotRegion <- function(
 #'     to facet the plot by (if \code{NULL}, no faceting is done). By default,
 #'     the plot will be facetted by 'sample', corresponding to the columns of
 #'     \code{se}.
+#' @param adjustFacetHeight A logical scalar. If \code{TRUE}, adjust the 
+#'     height of the facets by the number of reads in each of them. If 
+#'     \code{FALSE}, all facets have the same height.
 #'
 #' @export
 #' @rdname plotRegion
@@ -444,6 +447,7 @@ plotReadsLollipop <- function(se,
                               footprintColumns = NULL,
                               footprintColors = NULL,
                               facetBy = "sample",
+                              adjustFacetHeight = FALSE,
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
 
@@ -478,6 +482,7 @@ plotReadsLollipop <- function(se,
         names(footprintColors) <- footprintColumns
     }
     .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
+    .assertScalar(x = adjustFacetHeight, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
@@ -544,6 +549,7 @@ plotReadsLollipop <- function(se,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBy = facetBy,
+                              adjustFacetHeight = adjustFacetHeight,
                               referenceCoordinate = referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
@@ -647,6 +653,7 @@ plotReadsHeatmap <- function(se,
                              footprintColumns = NULL,
                              footprintColors = NULL,
                              facetBy = "sample",
+                             adjustFacetHeight = FALSE,
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
 
@@ -681,6 +688,7 @@ plotReadsHeatmap <- function(se,
         names(footprintColors) <- footprintColumns
     }
     .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
+    .assertScalar(x = adjustFacetHeight, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
     if (modbaseSpace) {
@@ -749,6 +757,7 @@ plotReadsHeatmap <- function(se,
                               showLegend = showLegend,
                               highlightRegions = highlightRegions,
                               facetBy = facetBy,
+                              adjustFacetHeight  = adjustFacetHeight,
                               referenceCoordinate = referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
@@ -759,7 +768,7 @@ plotReadsHeatmap <- function(se,
         p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
                               mapping = aes(
                                   x = .data[["start"]],
-                                  y = .data[["read"]],
+                                  y = .data[["plotRow"]],
                                   xend = .data[["end"]]
                               ), color = "gray80")
     }
@@ -1476,6 +1485,9 @@ plotGenomicRegions <- function(grl,
 #'     containing regions to highlight with a grey shading.
 #' @param facetBy A character scalar indicating the sample annotation column
 #'     to facet the plot by (if \code{NULL}, no faceting is done).
+#' @param adjustFacetHeight A logical scalar. If \code{TRUE}, adjust the 
+#'     height of the facets by the number of reads in each of them. If 
+#'     \code{FALSE}, all facets have the same height.
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
@@ -1487,6 +1499,7 @@ plotGenomicRegions <- function(grl,
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
+#' @importFrom ggforce facet_col
 #'
 #' @noRd
 #' @keywords internal
@@ -1497,6 +1510,7 @@ plotGenomicRegions <- function(grl,
                                  showLegend,
                                  highlightRegions,
                                  facetBy,
+                                 adjustFacetHeight,
                                  referenceCoordinate,
                                  labelAccuracy) {
     p0 <- ggplot(
@@ -1531,8 +1545,14 @@ plotGenomicRegions <- function(grl,
                   hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
 
     if (!is.null(facetBy)) {
-        p0 <- p0 +
-            facet_wrap(~ .data[[facetBy]], ncol = 1, scales = "free_y")
+        if (adjustFacetHeight) {
+            # adjust facet height to the number of reads
+            p0 <- p0 + 
+                facet_col(~ .data[[facetBy]], scales = "free_y", space = "free")
+        } else {
+            p0 <- p0 +
+                facet_wrap(~ .data[[facetBy]], ncol = 1, scales = "free_y")
+        }
     }
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank())
