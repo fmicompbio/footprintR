@@ -1,3 +1,10 @@
+# footprintR 0.2.4
+
+* Speed up `plotRegion()` for data sets with many reads by replacing `do.call()` with a faster alternative
+* Add option to adjust facet heights to the number of reads in the facet
+* Add option to squish the reads (put more than one read in a row, if possible)
+* Change the `orderReads` argument for read-level plots from a logical to a character indicating the type of ordering
+
 # footprintR 0.2.3
 
 * Add `addFootprints()` and helper functions `calcFootprintScores()` and
