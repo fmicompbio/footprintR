@@ -199,7 +199,8 @@ calcFootprintScores <- function(se,
     scoresL <- lapply(adatList, function(adf) {
         if (nrow(adf) > 0) {
             adf |>
-                mutate(readId = factor(.data$readId, levels = unique(.data$readId))) |>
+                mutate(readId = factor(.data$readId,
+                                       levels = unique(.data$readId))) |>
                 group_by(.data$readId) |>
                 group_modify(~ calcFootprintScoreForRead(.x$pos, .x$pmod,
                                                          wgt = wgt,
@@ -261,14 +262,14 @@ segmentFootprintScores <- function(scoresList,
                 dat <- scoresList[[nm]] |>
                     select("readId", "pos", "score") |>
                     group_by(.data$readId) |>
-                    mutate(sscore = .filterScores(score,
+                    mutate(sscore = .filterScores(.data$score,
                                                   minperiod = minperiod,
                                                   maxperiod = maxperiod)) |>
                     ungroup()
                 iByReadId <- split(seq.int(nrow(dat)),
                                    dat$readId)[unique(dat$readId)]
                 midList <- lapply(iByReadId, function(i) {
-                    
+
                     # segment smoothed scores
                     sscore <- dat$sscore[i]
                     irpos <- as(!is.na(sscore) & sscore > thresh, "IRanges")
@@ -279,11 +280,11 @@ segmentFootprintScores <- function(scoresList,
                     } else {
                         xposmax <- numeric(0)
                     }
-                    
+
                     # return midpoints (location of score maxima)
                     dat$pos[i][xposmax]
                 })
-                
+
                 # create IRangesList
                 return(do.call(IRangesList,
                                lapply(midList, function(mid) {

@@ -25,7 +25,7 @@ plotReadsLollipop(
   size = 3,
   stroke = 0.5,
   drawRead = TRUE,
-  orderReads = TRUE,
+  orderReads = "cluster",
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -34,6 +34,7 @@ plotReadsLollipop(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
+  adjustFacetHeight = FALSE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -44,7 +45,7 @@ plotReadsHeatmap(
   assayName,
   drawRead = TRUE,
   linewidthTiles = 0,
-  orderReads = TRUE,
+  orderReads = "cluster",
   modbaseSpace = FALSE,
   interpolate = FALSE,
   trackTitle = NULL,
@@ -54,6 +55,7 @@ plotReadsHeatmap(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
+  adjustFacetHeight = FALSE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -174,9 +176,14 @@ outlines (\code{stroke} argument of \code{\link[ggplot2]{geom_point}}).}
 \item{drawRead}{A logical scalar. If \code{TRUE}, draw a horizontal line
 segment for each read from its start to its end.}
 
-\item{orderReads}{A logical scalar. If \code{TRUE}, the position of reads
-on the y-axis will be reordered using \code{hclust(as.dist(1-cor(X)))$order},
-where \code{X} is \code{assay(x, assayName)} with zero values set to \code{NA}.}
+\item{orderReads}{A character scalar, or \code{NULL}. If \code{"cluster"},
+the position of reads on the y-axis will be reordered using
+\code{hclust(as.dist(sqrt(2 - 2 * cor(X, method = "pearson", 
+    use = "pairwise.complete"))))$order}, where \code{X} is
+\code{assay(x, assayName)} with zero values set to \code{NA} and averaged
+over windows of 25 nucleotides. If set to \code{"squish"}, the display
+will be compacted by placing multiple reads in the same row when
+possible. If \code{NULL}, no reordering is done.}
 
 \item{trackTitle}{A character scalar or \code{NULL}, giving the title of
 the track.}
@@ -206,6 +213,10 @@ values of \code{footprintColumns}.}
 to facet the plot by (if \code{NULL}, no faceting is done). By default,
 the plot will be facetted by 'sample', corresponding to the columns of
 \code{se}.}
+
+\item{adjustFacetHeight}{A logical scalar. If \code{TRUE}, adjust the
+height of the facets by the number of reads in each of them. If
+\code{FALSE}, all facets have the same height.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}
