@@ -1529,7 +1529,7 @@ plotGenomicRegions <- function(grl,
     fp <- cbind(do.call(
         rbind, fp),
         sample = rep(names(fp), vapply(fp, nrow, 0))) |>
-        rename(read = .data$names) |>
+        rename(read = "names") |>
         mutate(read = factor(.data$read, levels = levels(plotdf$read)))
     fp$plotRow <- plotdf$plotRow[match(fp$read, plotdf$read)]
     fp <- .convertRegionToModBaseSpace(

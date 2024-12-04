@@ -178,7 +178,7 @@ segment for each read from its start to its end.}
 
 \item{orderReads}{A character scalar, or \code{NULL}. If \code{"cluster"},
 the position of reads on the y-axis will be reordered using
-\code{hclust(as.dist(sqrt(2 - 2 * cor(X, method = "pearson", 
+\code{hclust(as.dist(sqrt(2 - 2 * cor(X, method = "pearson",
     use = "pairwise.complete"))))$order}, where \code{X} is
 \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 over windows of 25 nucleotides. If set to \code{"squish"}, the display
