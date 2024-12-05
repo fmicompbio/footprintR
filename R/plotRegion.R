@@ -172,7 +172,6 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #' @importFrom patchwork wrap_plots
 #' @importFrom cli cli_abort cli_warn
 #' @importFrom methods as
-#' @importFrom Gmisc fastDoCall
 #'
 #' @export
 plotRegion <- function(
@@ -313,7 +312,7 @@ plotRegion <- function(
             match(tr$trackType, plotRegionPlotTypes$name)]
         if (trt %in% c("summary", "reads")) {
             args <- c(
-                list(se = se, region = region, assayName = tr$trackData,
+                list(se = quote(se), region = region, assayName = tr$trackData,
                      modbaseSpace = modbaseSpace,
                      referenceCoordinate = referenceCoordinate,
                      labelAccuracy = labelAccuracy),
@@ -324,7 +323,7 @@ plotRegion <- function(
             )
         } else if (trt == "annotation") {
             args <- c(
-                list(grl = subsetByOverlaps(tr$trackData, region),
+                list(grl = quote(subsetByOverlaps(tr$trackData, region)),
                      region = region, labelAccuracy = labelAccuracy,
                      referenceCoordinate = referenceCoordinate),
                      tr[!names(tr) %in% c("trackData", "trackType", "grl",
@@ -334,14 +333,14 @@ plotRegion <- function(
         }
         pL[[i]] <- switch(
             tr$trackType,
-            Point = fastDoCall(plotSummaryPointSmooth,
-                               c(args, list(doSmooth = FALSE))),
-            Smooth = fastDoCall(plotSummaryPointSmooth,
-                                c(args, list(doPoint = FALSE))),
-            PointSmooth = fastDoCall(plotSummaryPointSmooth, args),
-            Lollipop = fastDoCall(plotReadsLollipop, args),
-            Heatmap = fastDoCall(plotReadsHeatmap, args),
-            GenomicRegion = fastDoCall(plotGenomicRegions, args)
+            Point = do.call(plotSummaryPointSmooth,
+                            c(args, list(doSmooth = FALSE))),
+            Smooth = do.call(plotSummaryPointSmooth,
+                             c(args, list(doPoint = FALSE))),
+            PointSmooth = do.call(plotSummaryPointSmooth, args),
+            Lollipop = do.call(plotReadsLollipop, args),
+            Heatmap = do.call(plotReadsHeatmap, args),
+            GenomicRegion = do.call(plotGenomicRegions, args)
         )
     }
 
