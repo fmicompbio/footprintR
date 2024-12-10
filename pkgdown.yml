@@ -4,7 +4,7 @@ pkgdown_sha: dfa28bef27858bd442334b5cce8f645d555914be
 articles:
   intro-to-footprintR: intro-to-footprintR.html
   read-level-data: read-level-data.html
-last_built: 2024-12-05T12:33Z
+last_built: 2024-12-10T13:16Z
 urls:
   reference: https://fmicompbio.github.io/footprintR/reference
   article: https://fmicompbio.github.io/footprintR/articles
