@@ -442,7 +442,7 @@ plotReadsLollipop <- function(se,
                               footprintColumns = NULL,
                               footprintColors = NULL,
                               facetBy = "sample",
-                              adjustFacetHeight = FALSE,
+                              adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
 
@@ -551,7 +551,7 @@ plotReadsHeatmap <- function(se,
                              footprintColumns = NULL,
                              footprintColors = NULL,
                              facetBy = "sample",
-                             adjustFacetHeight = FALSE,
+                             adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
 

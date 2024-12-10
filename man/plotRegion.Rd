@@ -34,7 +34,7 @@ plotReadsLollipop(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
-  adjustFacetHeight = FALSE,
+  adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
@@ -55,7 +55,7 @@ plotReadsHeatmap(
   footprintColumns = NULL,
   footprintColors = NULL,
   facetBy = "sample",
-  adjustFacetHeight = FALSE,
+  adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
 )
