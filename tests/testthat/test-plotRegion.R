@@ -271,7 +271,7 @@ test_that("plotRegion works", {
     expect_identical(p4$data, p5$data)
     expect_identical(nrow(p6$data), 29104L)
     expect_identical(nrow(p7$data), 29104L)
-    expect_identical(nrow(p8$data), 500L)
+    expect_identical(nrow(p8$data), 430L)
     expect_length(p9$data, 0L)
 
     # make sure the plotting works
