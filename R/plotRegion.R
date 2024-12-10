@@ -1001,13 +1001,19 @@ plotGenomicRegions <- function(grl,
     }
     gg <- gg +
         labs(title = trackTitle,
-             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) +
+             fill = ifelse(!is.null(legendTitle), legendTitle, "strand"),
+             x = ifelse(is.null(referenceCoordinate),
+                        paste0("Position on ",
+                               as.character(seqnames(region))),
+                        paste0("Position relative to ",
+                               as.character(seqnames(region)), ":",
+                               referenceCoordinate))) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
               legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
               axis.ticks.y = element_blank(),
-              axis.title = element_blank(),
+              axis.title.y = element_blank(),
               panel.border = element_blank(),
               axis.line.x = element_line(color = "black"),
               panel.grid.major = element_blank(),

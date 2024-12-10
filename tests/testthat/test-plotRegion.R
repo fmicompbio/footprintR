@@ -499,6 +499,7 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
     
     ## facet, different number of reads per facet - don't adjust height
+    ## put GenomicRegion track last - make sure axis text is still shown
     setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563",
                                 "s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9",
                                 "s1-fc4646ce-66f9-401f-b968-e9b0cda14d61",
@@ -511,9 +512,6 @@ test_that("plotRegion works - manual inspection", {
                            orderReads = "squish", trackTitle = "Heatmap",
                            facetBy = "sample", interpolate = FALSE,
                            linewidthTiles = 0.25, adjustFacetHeight = FALSE),
-                      list(trackData = grl, trackType = "GenomicRegion",
-                           colorByStrand = TRUE, labelSize = 2,
-                           labelPosition = "inside", legendTitle = NULL),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", facetBy = "sample", 
@@ -523,7 +521,10 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
-                           highlightRegions = grh))) +
+                           highlightRegions = grh),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
+                           labelPosition = "inside", legendTitle = NULL))) +
         plot_layout(heights = c(3, 1, 3, 2))
     expect_s3_class(p, "ggplot")
 
