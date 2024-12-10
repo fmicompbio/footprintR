@@ -1204,7 +1204,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom SparseArray nnawhich nnavals colSums is_nonna
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
-#' @importFrom dplyr left_join bind_cols group_by summarise group_split
+#' @importFrom dplyr left_join bind_cols group_by summarise group_split filter
 #'
 #' @noRd
 #' @keywords internal
@@ -1228,7 +1228,8 @@ plotGenomicRegions <- function(grl,
             read = factor(rep(colnames(assaydat), each = nrow(assaydat)),
                           levels = colnames(assaydat)),
             sample = rep(sample_ids, each = nrow(assaydat)),
-            value = as.vector(assaydat))
+            value = as.vector(assaydat)) |>
+            filter(!is.na(value))
     } else {
         i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(
