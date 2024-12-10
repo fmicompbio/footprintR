@@ -397,14 +397,14 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 1, 2))
     expect_s3_class(p, "ggplot")
 
-    ## referenceCoordinate = left border of plot
+    ## referenceCoordinate = left border of plot, squish+interpolate heatmap
     expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6935800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", trackTitle = "Heatmap",
-                           facetBy = NULL, interpolate = FALSE,
+                           facetBy = NULL, interpolate = TRUE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
