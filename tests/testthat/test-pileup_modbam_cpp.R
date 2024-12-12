@@ -22,7 +22,7 @@ test_that("pileup_modbam_cpp works", {
     # compare to pileup_modbam_cpp return value
     res <- pileup_modbam_cpp(inname_str = modbamfile, modbase = "a",
                              mod_prob_thresh = 0.7, n_threads = 1,
-                             verbose = FALSE)
+                             verbose = TRUE)
     expect_type(res, "list")
     expect_length(res, 4L)
     expect_named(res, c("ref_name", "ref_pos", "Nmod", "Nvalid"))

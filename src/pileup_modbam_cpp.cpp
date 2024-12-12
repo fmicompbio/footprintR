@@ -137,6 +137,7 @@ int readdata(void *data, bam1_t *b)
 //'
 //' @author Michael Stadler
 //'
+//' @importFrom cli cli_progress_step cli_progress_done
 //'
 //' @noRd
 //' @keywords internal
@@ -161,12 +162,16 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     int buffer_len = 2000;
     char buffer[2000];
     char readbase = '0';
+    uint64_t modposcount = 0;
 
     std::vector<std::string> ref_name;
     std::vector<uint> ref_pos;
     std::vector<uint> Nmod;
     std::vector<uint> Nvalid;
     uint curr_Nmod = 0, curr_Nvalid = 0;
+
+    // ... cli progress bar
+    Rcpp::RObject bar;
 
     // get expected unmodified base corresponding to modbase
     char unmodbase = get_unmodified_base(modbase);
@@ -204,10 +209,15 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     bam_plp_constructor(plpiter, plpconstructor);
     bam_plp_destructor(plpiter, plpdestructor);
 
+    if (verbose) {
+        bar = cli_progress_bar(NA_REAL,
+                               Rcpp::List::create(Rcpp::_["clear"] = false,
+                                                  Rcpp::_["show_after"] = 0.25));
+    }
+
     while ((plp = bam_plp_auto(plpiter, &tid, &refpos, &depth))) {
         memset(&mods, 0, sizeof(mods));
         curr_Nmod = 0;
-        // curr_Nvalid = depth;
         curr_Nvalid = 0;
 
         // iterate over reads overlapping refpos
@@ -233,7 +243,10 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                                            (hts_base_mod_state*)plp[j].cd.p,
                                            mods, NMODS)) == -1) {
                 had_error = true; // # nocov start
-                snprintf(buffer, buffer_len, "Failed to get modifications\n");
+                snprintf(buffer, buffer_len,
+                         "Failed to get modifications from %s on %s (qpos=%d, refpos=%d)\n",
+                         bam_get_qname(plp[j].b), sam_hdr_tid2name(conf.in_samhdr, tid),
+                         plp[j].qpos, refpos);
                 goto end; // # nocov end
             }
 
@@ -252,6 +265,14 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             ref_pos.push_back((uint)refpos + 1);
             Nmod.push_back(curr_Nmod);
             Nvalid.push_back(curr_Nvalid);
+
+            modposcount++;
+            if (verbose && CLI_SHOULD_TICK) {
+                cli_progress_set(bar, (double)modposcount);
+            }
+            if (modposcount % 1000000 == 0) { // # nocov start
+                R_CheckUserInterrupt();
+            } // # nocov end
         }
     }
 

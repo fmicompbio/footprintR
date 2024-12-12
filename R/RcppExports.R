@@ -159,6 +159,7 @@ NULL
 #'
 #' @author Michael Stadler
 #'
+#' @importFrom cli cli_progress_step cli_progress_done
 #'
 #' @noRd
 #' @keywords internal
