@@ -213,10 +213,9 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
 
-            if (plp[j].is_del || plp[j].is_refskip) {
-                // base is deleted in the read
-                //   -> decrease curr_Nvalid and continue with next read
-                // curr_Nvalid--;
+            if (plp[j].is_del || plp[j].is_refskip ||
+                (plp[j].b->core.flag & BAM_FSECONDARY) ||
+                (plp[j].b->core.flag & BAM_FSUPPLEMENTARY)) {
                 continue;
             }
 
