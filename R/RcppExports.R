@@ -162,7 +162,7 @@ NULL
 #'
 #' @noRd
 #' @keywords internal
-pileup_modbam_cpp <- function(inname_str, modbase, mod_prob_thresh = 0.7, n_threads = 2L, verbose = FALSE) {
+pileup_modbam_cpp <- function(inname_str, modbase, mod_prob_thresh = 0.5, n_threads = 2L, verbose = FALSE) {
     .Call(`_footprintR_pileup_modbam_cpp`, inname_str, modbase, mod_prob_thresh, n_threads, verbose)
 }
 

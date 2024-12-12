@@ -143,7 +143,7 @@ int readdata(void *data, bam1_t *b)
 // [[Rcpp::export]]
 Rcpp::List pileup_modbam_cpp(std::string inname_str,
                              char modbase,
-                             double mod_prob_thresh = 0.7,
+                             double mod_prob_thresh = 0.5,
                              int n_threads = 2,
                              bool verbose = false) {
     // variable declarations
@@ -152,7 +152,6 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     conf.inname = (char*)inname_str.c_str();
     bam_plp_t plpiter = NULL;
     int tid = -1, depth = -1, j = 0, modlen = 0;
-    // int dellen = 0, inslen = 0;
     #define NMODS 5
     hts_base_mod mods[NMODS] = {{0}}; //ACGTN
     int refpos = -1;
@@ -169,7 +168,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     std::vector<uint> Nvalid;
     uint curr_Nmod = 0, curr_Nvalid = 0;
 
-    // get expected unmodified base corresponding to `modbase`
+    // get expected unmodified base corresponding to modbase
     char unmodbase = get_unmodified_base(modbase);
     char unmodbase_complement = complement(unmodbase);
 
@@ -179,12 +178,14 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         snprintf(buffer, buffer_len, "Failed to initialize bamdata\n");
         goto end; // # nocov end
     }
+
     // open input files
     if (!(conf.infile = sam_open(conf.inname, "r"))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Could not open %s\n", conf.inname);
         goto end; // # nocov end
     }
+
     // read header
     if (!(conf.in_samhdr = sam_hdr_read(conf.infile))) {
         had_error = true; // # nocov start
@@ -192,35 +193,43 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         goto end; // # nocov end
     }
 
+    // initialize pileup iterator
     if (!(plpiter = bam_plp_init(readdata, &conf))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Failed to initialize pileup data\n");
         goto end; // # nocov end
     }
 
-    // set constructor destructor callbacks
+    // set constructor and destructor callbacks
     bam_plp_constructor(plpiter, plpconstructor);
     bam_plp_destructor(plpiter, plpdestructor);
 
     while ((plp = bam_plp_auto(plpiter, &tid, &refpos, &depth))) {
         memset(&mods, 0, sizeof(mods));
-
-        // Rprintf("%d\t%d\t", tid+1, refpos+1);
         curr_Nmod = 0;
-        curr_Nvalid = depth;
+        // curr_Nvalid = depth;
+        curr_Nvalid = 0;
 
+        // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
-            // dellen = 0;
 
             if (plp[j].is_del || plp[j].is_refskip) {
-                // base is deleted in the read -> decrease curr_Nvalid
-                curr_Nvalid--;
-                // Rprintf("*");
+                // base is deleted in the read
+                //   -> decrease curr_Nvalid and continue with next read
+                // curr_Nvalid--;
                 continue;
             }
-            /*  invoke bam_mods_at_qpos before bam_plp_insertion_mod that the
-                base modification is retrieved before change in pileup pos
-                by the bam_plp_insertion_mod call */
+
+            // check if read j has expected base
+            readbase = toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b),
+                                                     plp[j].qpos)]);
+            if (readbase == (bam_is_rev(plp[j].b) ? unmodbase_complement : unmodbase)) {
+                curr_Nvalid++;
+            } else {
+                continue;
+            }
+
+            // retrieve base modification
             if ((modlen = bam_mods_at_qpos(plp[j].b, plp[j].qpos,
                                            (hts_base_mod_state*)plp[j].cd.p,
                                            mods, NMODS)) == -1) {
@@ -229,59 +238,16 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                 goto end; // # nocov end
             }
 
-            // // use bam_plp_insertion_mod to get insertion and del at the same position
-            // if ((inslen = bam_plp_insertion_mod(&plp[j], (hts_base_mod_state*)plp[j].cd.p, &insdata, &dellen)) == -1) {
-            //     had_error = true; // # nocov start
-            //     snprintf(buffer, buffer_len, "Failed to get insertion status\n");
-            //     goto end; // # nocov end
-            // }
-
-            // //start and end are displayed in UPPER and rest on LOWER, only 1st modification considered
-            // //base and modification
-            // Rprintf("%c%c%c",
-            //         plp[j].is_head ? toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]) :
-            //         (plp[j].is_tail ? toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]) :
-            //         tolower(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)])),
-            //         modlen > 0 ? mods[0].strand ? '-' : '+' : '\0',
-            //         modlen > 0 ? mods[0].modified_base : '\0');
-
-            // check if base is modified and has the expected base
+            // increment curr_Nmod if base is modified and has the expected base
             if (modlen > 0) {
-                readbase = toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]);
-                if (readbase == ((bam_is_rev(plp[j].b) ^ (modlen > 0 && mods[0].strand) ? unmodbase_complement : unmodbase)) &&
-                    ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh)) {
+                if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
                     curr_Nmod++;
                 }
             }
 
-            // //insertion and deletions
-            // if (plp[j].indel > 0) {
-            //     //insertion
-            //     /* insertion data from plp_insertion_mod, note this shows the
-            //        quality value as well which is different from base and
-            //        modification above;
-            //        the lower case display is not attempted either */
-            //     // Rprintf("+%d%s", plp[j].indel, insdata.s);
-            //
-            //     //handle deletion if any
-            //     if (dellen) {
-            //         Rprintf("-%d", dellen);
-            //         for (k = 0; k < dellen; ++k) {
-            //             printf("?");
-            //         }
-            //     }
-            // } else if (plp[j].indel < 0) {
-            //     //deletion
-            //     Rprintf("%d", plp[j].indel);
-            //     for (k = 0; k < -plp[j].indel; ++k) {
-            //         printf("?");
-            //     }
-            // }
-            // Rprintf(" ");
         }
-        // Rprintf("\n");
-        // fflush(stdout);
 
+        // add counters for refpos to return value vectors
         if (curr_Nvalid > 0) {
             ref_name.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
             ref_pos.push_back((uint)refpos + 1);
