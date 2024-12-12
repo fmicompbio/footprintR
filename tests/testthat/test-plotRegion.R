@@ -271,7 +271,7 @@ test_that("plotRegion works", {
     expect_identical(p4$data, p5$data)
     expect_identical(nrow(p6$data), 29104L)
     expect_identical(nrow(p7$data), 29104L)
-    expect_identical(nrow(p8$data), 500L)
+    expect_identical(nrow(p8$data), 430L)
     expect_length(p9$data, 0L)
 
     # make sure the plotting works
@@ -397,14 +397,14 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 1, 2))
     expect_s3_class(p, "ggplot")
 
-    ## referenceCoordinate = left border of plot
+    ## referenceCoordinate = left border of plot, squish+interpolate heatmap
     expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         referenceCoordinate = 6935800,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", trackTitle = "Heatmap",
-                           facetBy = NULL, interpolate = FALSE,
+                           facetBy = NULL, interpolate = TRUE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
@@ -470,7 +470,7 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 1, 3, 2))
     expect_s3_class(p, "ggplot")
     
-    ## facet, different number of reads per facet
+    ## facet, different number of reads per facet - adjust height
     setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563",
                                 "s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9",
                                 "s1-fc4646ce-66f9-401f-b968-e9b0cda14d61",
@@ -482,7 +482,7 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", trackTitle = "Heatmap",
                            facetBy = "sample", interpolate = FALSE,
-                           linewidthTiles = 0.25, adjustFacetHeight = TRUE),
+                           linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL),
@@ -490,12 +490,41 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", facetBy = "sample", 
                            size = 2, stroke = 0.5, 
-                           footprintColumns = "nucleosome",
-                           adjustFacetHeight = TRUE), 
+                           footprintColumns = "nucleosome"), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
+        plot_layout(heights = c(3, 1, 3, 2))
+    expect_s3_class(p, "ggplot")
+    
+    ## facet, different number of reads per facet - don't adjust height
+    ## put GenomicRegion track last - make sure axis text is still shown
+    setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563",
+                                "s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9",
+                                "s1-fc4646ce-66f9-401f-b968-e9b0cda14d61",
+                                "s2-274d50aa-f060-4bcf-901e-4cab771295f6"))
+    p <- plotRegion(
+        setmp, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        referenceCoordinate = 6935800,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", trackTitle = "Heatmap",
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25, adjustFacetHeight = FALSE),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "squish", facetBy = "sample", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome",
+                           adjustFacetHeight = FALSE), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           highlightRegions = grh),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = TRUE, labelSize = 2,
+                           labelPosition = "inside", legendTitle = NULL))) +
         plot_layout(heights = c(3, 1, 3, 2))
     expect_s3_class(p, "ggplot")
 

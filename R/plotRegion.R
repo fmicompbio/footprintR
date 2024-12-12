@@ -442,7 +442,7 @@ plotReadsLollipop <- function(se,
                               footprintColumns = NULL,
                               footprintColors = NULL,
                               facetBy = "sample",
-                              adjustFacetHeight = FALSE,
+                              adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL) {
 
@@ -551,7 +551,7 @@ plotReadsHeatmap <- function(se,
                              footprintColumns = NULL,
                              footprintColors = NULL,
                              facetBy = "sample",
-                             adjustFacetHeight = FALSE,
+                             adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL) {
 
@@ -1001,13 +1001,19 @@ plotGenomicRegions <- function(grl,
     }
     gg <- gg +
         labs(title = trackTitle,
-             fill = ifelse(!is.null(legendTitle), legendTitle, "strand")) +
+             fill = ifelse(!is.null(legendTitle), legendTitle, "strand"),
+             x = ifelse(is.null(referenceCoordinate),
+                        paste0("Position on ",
+                               as.character(seqnames(region))),
+                        paste0("Position relative to ",
+                               as.character(seqnames(region)), ":",
+                               referenceCoordinate))) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
               legend.text = element_text(size = 16),
               axis.text.y = element_blank(),
               axis.ticks.y = element_blank(),
-              axis.title = element_blank(),
+              axis.title.y = element_blank(),
               panel.border = element_blank(),
               axis.line.x = element_line(color = "black"),
               panel.grid.major = element_blank(),
@@ -1204,7 +1210,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom SparseArray nnawhich nnavals colSums is_nonna
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
-#' @importFrom dplyr left_join bind_cols group_by summarise group_split
+#' @importFrom dplyr left_join bind_cols group_by summarise group_split filter
 #'
 #' @noRd
 #' @keywords internal
@@ -1228,7 +1234,8 @@ plotGenomicRegions <- function(grl,
             read = factor(rep(colnames(assaydat), each = nrow(assaydat)),
                           levels = colnames(assaydat)),
             sample = rep(sample_ids, each = nrow(assaydat)),
-            value = as.vector(assaydat))
+            value = as.vector(assaydat)) |>
+            filter(!is.na(value))
     } else {
         i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(
