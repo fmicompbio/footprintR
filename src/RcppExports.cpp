@@ -50,25 +50,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// complement
-char complement(char n);
-RcppExport SEXP _footprintR_complement(SEXP nSEXP) {
+// pileup_modbam_cpp
+Rcpp::List pileup_modbam_cpp(std::string inname_str, char modbase, double mod_prob_thresh, int n_threads, bool verbose);
+RcppExport SEXP _footprintR_pileup_modbam_cpp(SEXP inname_strSEXP, SEXP modbaseSEXP, SEXP mod_prob_threshSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< char >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(complement(n));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_unmodified_base
-char get_unmodified_base(char b);
-RcppExport SEXP _footprintR_get_unmodified_base(SEXP bSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< char >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_unmodified_base(b));
+    Rcpp::traits::input_parameter< std::string >::type inname_str(inname_strSEXP);
+    Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
+    Rcpp::traits::input_parameter< double >::type mod_prob_thresh(mod_prob_threshSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(pileup_modbam_cpp(inname_str, modbase, mod_prob_thresh, n_threads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -104,15 +97,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_unmodified_base
+char get_unmodified_base(char b);
+RcppExport SEXP _footprintR_get_unmodified_base(SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< char >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_unmodified_base(b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// complement
+char complement(char n);
+RcppExport SEXP _footprintR_complement(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< char >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(complement(n));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
-    {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
-    {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
+    {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 5},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
+    {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
+    {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {NULL, NULL, 0}
 };
 

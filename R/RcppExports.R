@@ -92,12 +92,78 @@ labelDists <- function(labels, minOverlap = 2L) {
     .Call(`_footprintR_labelDists`, labels, minOverlap)
 }
 
-complement <- function(n) {
-    .Call(`_footprintR_complement`, n)
-}
+#' Constructor for pileup data in bam_pileup_cd*
+#'
+#' @param data void* (client data)
+#' @param b bam1_t* (bam being loaded)
+#' @param cd bam_pileup_cd* (client data)
+#'
+#' @return An integer scalar (zero on success, non-zero on failure)
+#'
+#' @noRd
+#' @keywords internal
+NULL
 
-get_unmodified_base <- function(b) {
-    .Call(`_footprintR_get_unmodified_base`, b)
+#' Destructor for pileup data in bam_pileup_cd*
+#'
+#' @param data void* (client data)
+#' @param b bam1_t* (bam being loaded)
+#' @param cd bam_pileup_cd* (client data)
+#'
+#' @return An integer scalar (zero)
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Read alignment data for pileup operation
+#'
+#' @param data void* (client callback data holding alignment file handle)
+#' @param b bam1_t* (aligned read)
+#'
+#' @return same as sam_read1
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Read and pile-up base modifications from a bam file.
+#'
+#' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
+#' section 1.7) and return a list of information on modified bases.
+#'
+#' @param inname_str Character scalar with name of the input bam file.
+#' @param modbase Character scalar defining the modified base to extract.
+#'     Only modifications corresponding to \code{modbase} and with the
+#'     corresponding expected base in the read sequence will be extracted.
+#' @param mod_prob_thresh Double scalar defining the minimal mod_prob
+#'     of a base to be considered modified.
+#' @param n_threads Integer scalar defining the number of threads to
+#'     use for decompressing a sam record. Especially using in sampling mode
+#'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
+#'     decompressing bam records than processing them.
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @return A named list with elements \code{"ref_name"},
+#'     \code{"ref_pos"}, \code{"Nmod"} and \code{"Nvalid"}.
+#'
+#' @examples
+#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+#' res <- pileup_modbam_cpp(modbamfile, "a", 0.7, 1, TRUE)
+#' str(res)
+#'
+#' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
+#'     SAM ML and MM tags for base modifications.
+#'     Helpful examples are available in
+#'      https://github.com/samtools/htslib/blob/develop/samples/pileup_mod.c
+#'
+#' @author Michael Stadler
+#'
+#'
+#' @noRd
+#' @keywords internal
+pileup_modbam_cpp <- function(inname_str, modbase, mod_prob_thresh = 0.7, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_pileup_modbam_cpp`, inname_str, modbase, mod_prob_thresh, n_threads, verbose)
 }
 
 #' Read base modifications from a bam file.
@@ -188,5 +254,29 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 #' @keywords internal
 sampleEntropy <- function(data, m, r) {
     .Call(`_footprintR_sampleEntropy`, data, m, r)
+}
+
+#' Get unmodified base corresponding to a modified base
+#'
+#' @param b Modified base as a char
+#'
+#' @return The upper-case unmodified base corresponding to \code{b} as a
+#'     \code{char}.
+#' @noRd
+#' @keywords internal
+get_unmodified_base <- function(b) {
+    .Call(`_footprintR_get_unmodified_base`, b)
+}
+
+#' Create the complement of a base
+#'
+#' @param n single base as a char
+#'
+#' @return char (complement of \code{n})
+#'
+#' @noRd
+#' @keywords internal
+complement <- function(n) {
+    .Call(`_footprintR_complement`, n)
 }
 

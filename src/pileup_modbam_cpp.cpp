@@ -1,0 +1,323 @@
+/*
+ The pileup_modbam_cpp function is in part based on pileup_mod.c (distributed
+ with htslib) and subject to the following copyright and permission notice:
+
+    pileup_mod.c --  showcases the htslib api usage
+
+    Copyright (C) 2023 Genome Research Ltd.
+
+    Author: Vasudeva Sarma <vasudeva.sarma@sanger.ac.uk>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE
+
+*/
+
+#include <string>
+#include <vector>
+#include <unistd.h>
+#include <ctype.h>
+#include <htslib/sam.h>
+#include <Rcpp.h>
+#include <cli/progress.h>
+#include "utils.h"
+
+typedef struct plpconf {
+    char *inname;
+    samFile *infile;
+    sam_hdr_t *in_samhdr;
+} plpconf;
+
+//' Constructor for pileup data in bam_pileup_cd*
+//'
+//' @param data void* (client data)
+//' @param b bam1_t* (bam being loaded)
+//' @param cd bam_pileup_cd* (client data)
+//'
+//' @return An integer scalar (zero on success, non-zero on failure)
+//'
+//' @noRd
+//' @keywords internal
+int plpconstructor(void *data, const bam1_t *b, bam_pileup_cd *cd) {
+    //plpconf *conf= (plpconf*)data; can use this to access anything required from the data in pileup init
+
+    //when using cd, initialize and use as it will be reused after destructor
+    cd->p = hts_base_mod_state_alloc();
+    if (!cd->p) {
+        Rcpp::stop("Failed to allocate base modification state\n");
+        return 1;
+    }
+
+    //parse the bam data and gather modification data from MM tags
+    return (-1 == bam_parse_basemod(b, (hts_base_mod_state*)cd->p)) ? 1 : 0;
+}
+
+//' Destructor for pileup data in bam_pileup_cd*
+//'
+//' @param data void* (client data)
+//' @param b bam1_t* (bam being loaded)
+//' @param cd bam_pileup_cd* (client data)
+//'
+//' @return An integer scalar (zero)
+//'
+//' @noRd
+//' @keywords internal
+int plpdestructor(void *data, const bam1_t *b, bam_pileup_cd *cd) {
+    if (cd->p) {
+        hts_base_mod_state_free((hts_base_mod_state *)cd->p);
+        cd->p = NULL;
+    }
+    return 0;
+}
+
+//' Read alignment data for pileup operation
+//'
+//' @param data void* (client callback data holding alignment file handle)
+//' @param b bam1_t* (aligned read)
+//'
+//' @return same as sam_read1
+//'
+//' @noRd
+//' @keywords internal
+int readdata(void *data, bam1_t *b)
+{
+    plpconf *conf = (plpconf*)data;
+    if (!conf || !conf->infile) {
+        return -2;  //cant read data
+    }
+
+    //read alignment and send
+    return sam_read1(conf->infile, conf->infile->bam_header, b);
+}
+
+//' Read and pile-up base modifications from a bam file.
+//'
+//' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
+//' section 1.7) and return a list of information on modified bases.
+//'
+//' @param inname_str Character scalar with name of the input bam file.
+//' @param modbase Character scalar defining the modified base to extract.
+//'     Only modifications corresponding to \code{modbase} and with the
+//'     corresponding expected base in the read sequence will be extracted.
+//' @param mod_prob_thresh Double scalar defining the minimal mod_prob
+//'     of a base to be considered modified.
+//' @param n_threads Integer scalar defining the number of threads to
+//'     use for decompressing a sam record. Especially using in sampling mode
+//'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
+//'     decompressing bam records than processing them.
+//' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+//'
+//' @return A named list with elements \code{"ref_name"},
+//'     \code{"ref_pos"}, \code{"Nmod"} and \code{"Nvalid"}.
+//'
+//' @examples
+//' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
+//' res <- pileup_modbam_cpp(modbamfile, "a", 0.7, 1, TRUE)
+//' str(res)
+//'
+//' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
+//'     SAM ML and MM tags for base modifications.
+//'     Helpful examples are available in
+//'      https://github.com/samtools/htslib/blob/develop/samples/pileup_mod.c
+//'
+//' @author Michael Stadler
+//'
+//'
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+Rcpp::List pileup_modbam_cpp(std::string inname_str,
+                             char modbase,
+                             double mod_prob_thresh = 0.7,
+                             int n_threads = 2,
+                             bool verbose = false) {
+    // variable declarations
+    bam1_t *bamdata = NULL;
+    plpconf conf = {0};
+    conf.inname = (char*)inname_str.c_str();
+    bam_plp_t plpiter = NULL;
+    int tid = -1, depth = -1, j = 0, modlen = 0;
+    // int dellen = 0, inslen = 0;
+    #define NMODS 5
+    hts_base_mod mods[NMODS] = {{0}}; //ACGTN
+    int refpos = -1;
+    const bam_pileup1_t *plp = NULL;
+    kstring_t insdata = KS_INITIALIZE;
+    bool had_error = false;
+    int buffer_len = 2000;
+    char buffer[2000];
+    char readbase = '0';
+
+    std::vector<std::string> ref_name;
+    std::vector<uint> ref_pos;
+    std::vector<uint> Nmod;
+    std::vector<uint> Nvalid;
+    uint curr_Nmod = 0, curr_Nvalid = 0;
+
+    // get expected unmodified base corresponding to `modbase`
+    char unmodbase = get_unmodified_base(modbase);
+    char unmodbase_complement = complement(unmodbase);
+
+    // initialize
+    if (!(bamdata = bam_init1())) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to initialize bamdata\n");
+        goto end; // # nocov end
+    }
+    // open input files
+    if (!(conf.infile = sam_open(conf.inname, "r"))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Could not open %s\n", conf.inname);
+        goto end; // # nocov end
+    }
+    // read header
+    if (!(conf.in_samhdr = sam_hdr_read(conf.infile))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to read header from file!\n");
+        goto end; // # nocov end
+    }
+
+    if (!(plpiter = bam_plp_init(readdata, &conf))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to initialize pileup data\n");
+        goto end; // # nocov end
+    }
+
+    // set constructor destructor callbacks
+    bam_plp_constructor(plpiter, plpconstructor);
+    bam_plp_destructor(plpiter, plpdestructor);
+
+    while ((plp = bam_plp_auto(plpiter, &tid, &refpos, &depth))) {
+        memset(&mods, 0, sizeof(mods));
+
+        // Rprintf("%d\t%d\t", tid+1, refpos+1);
+        curr_Nmod = 0;
+        curr_Nvalid = depth;
+
+        for (j = 0; j < depth; ++j) {
+            // dellen = 0;
+
+            if (plp[j].is_del || plp[j].is_refskip) {
+                // base is deleted in the read -> decrease curr_Nvalid
+                curr_Nvalid--;
+                // Rprintf("*");
+                continue;
+            }
+            /*  invoke bam_mods_at_qpos before bam_plp_insertion_mod that the
+                base modification is retrieved before change in pileup pos
+                by the bam_plp_insertion_mod call */
+            if ((modlen = bam_mods_at_qpos(plp[j].b, plp[j].qpos,
+                                           (hts_base_mod_state*)plp[j].cd.p,
+                                           mods, NMODS)) == -1) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len, "Failed to get modifications\n");
+                goto end; // # nocov end
+            }
+
+            // // use bam_plp_insertion_mod to get insertion and del at the same position
+            // if ((inslen = bam_plp_insertion_mod(&plp[j], (hts_base_mod_state*)plp[j].cd.p, &insdata, &dellen)) == -1) {
+            //     had_error = true; // # nocov start
+            //     snprintf(buffer, buffer_len, "Failed to get insertion status\n");
+            //     goto end; // # nocov end
+            // }
+
+            // //start and end are displayed in UPPER and rest on LOWER, only 1st modification considered
+            // //base and modification
+            // Rprintf("%c%c%c",
+            //         plp[j].is_head ? toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]) :
+            //         (plp[j].is_tail ? toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]) :
+            //         tolower(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)])),
+            //         modlen > 0 ? mods[0].strand ? '-' : '+' : '\0',
+            //         modlen > 0 ? mods[0].modified_base : '\0');
+
+            // check if base is modified and has the expected base
+            if (modlen > 0) {
+                readbase = toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b), plp[j].qpos)]);
+                if (readbase == ((bam_is_rev(plp[j].b) ^ (modlen > 0 && mods[0].strand) ? unmodbase_complement : unmodbase)) &&
+                    ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh)) {
+                    curr_Nmod++;
+                }
+            }
+
+            // //insertion and deletions
+            // if (plp[j].indel > 0) {
+            //     //insertion
+            //     /* insertion data from plp_insertion_mod, note this shows the
+            //        quality value as well which is different from base and
+            //        modification above;
+            //        the lower case display is not attempted either */
+            //     // Rprintf("+%d%s", plp[j].indel, insdata.s);
+            //
+            //     //handle deletion if any
+            //     if (dellen) {
+            //         Rprintf("-%d", dellen);
+            //         for (k = 0; k < dellen; ++k) {
+            //             printf("?");
+            //         }
+            //     }
+            // } else if (plp[j].indel < 0) {
+            //     //deletion
+            //     Rprintf("%d", plp[j].indel);
+            //     for (k = 0; k < -plp[j].indel; ++k) {
+            //         printf("?");
+            //     }
+            // }
+            // Rprintf(" ");
+        }
+        // Rprintf("\n");
+        // fflush(stdout);
+
+        if (curr_Nvalid > 0) {
+            ref_name.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+            ref_pos.push_back((uint)refpos + 1);
+            Nmod.push_back(curr_Nmod);
+            Nvalid.push_back(curr_Nvalid);
+        }
+    }
+
+end:
+    //clean up
+    if (conf.in_samhdr) {
+        sam_hdr_destroy(conf.in_samhdr);
+    }
+    if (conf.infile) {
+        sam_close(conf.infile);
+    }
+    if (bamdata) {
+        bam_destroy1(bamdata);
+    }
+    if (plpiter) {
+        bam_plp_destroy(plpiter);
+    }
+    ks_free(&insdata);
+
+    if (had_error) {
+        // we encountered an error (message in `buffer`) --> stop
+        Rcpp::stop(buffer);
+
+    } else {
+        // create return list
+        Rcpp::List res = Rcpp::List::create(
+            Rcpp::_["ref_name"] = ref_name,
+            Rcpp::_["ref_pos"] = ref_pos,
+            Rcpp::_["Nmod"] = Nmod,
+            Rcpp::_["Nvalid"] = Nvalid);
+
+        return res;
+    }
+}
