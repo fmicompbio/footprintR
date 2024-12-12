@@ -31,8 +31,8 @@
 #'         \item{"read"}{: Extracts modification probabilities for individual
 #'             reads into an assay called \code{"mod_prob"}.}
 #'         \item{"summary"}{: Counts the total and modified bases for each
-#'             position and strand and returns them in the assays \code{"Nvalid"}
-#'             and \code{"Nmod"}, respectively. ### WAS HERE}
+#'             position and strand and returns them in assays named 
+#'             \code{"Nvalid"} and \code{"Nmod"}, respectively.}
 #'     }
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
 #'     for the samples. It must contain at least one column, named
@@ -61,6 +61,9 @@
 #'     coordinates of single nucleotide variant positions, to be used to
 #'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
 #'     or \code{nAlnsToSample > 0} (sampling-mode).
+#' @param modProbThreshold A numeric scalar, indicating the modification 
+#'     probability threshold to use to classify a base as 'modified' or 
+#'     'unmodified'. Only used if \code{level} is \code{"summary"}.
 #' @param trim A logical scalar. If \code{TRUE}, the returned
 #'     \code{SummarizedExperiment} object will only contain the positions
 #'     overlapping the specified \code{regions}. If \code{FALSE} (default),
@@ -117,6 +120,7 @@ readModBam <- function(bamfiles,
                        sequenceContextWidth = 0,
                        sequenceReference = NULL,
                        variantPositions = NULL,
+                       modProbThreshold = 0.5,
                        trim = FALSE,
                        BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                        verbose = FALSE) {
@@ -130,6 +134,8 @@ readModBam <- function(bamfiles,
     } else if (any(duplicated(names(bamfiles)))) {
         stop("`names(bamfiles)` are not unique")
     }
+    .assertScalar(x = level, type = "character", 
+                  validValues = c("read", "summary"))
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
         if (!("sample" %in% colnames(sampleAnnot))) {
@@ -164,6 +170,9 @@ readModBam <- function(bamfiles,
              paste(unique(modbase[i]), collapse = ", "))
     }
     .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
+    if (nAlnsToSample > 0 && level == "summary") {
+        stop("Read sampling is not supported if level is set to 'summary'")
+    }
     if (nAlnsToSample > 0) {
         if (length(regions) > 0) {
             warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
@@ -178,6 +187,7 @@ readModBam <- function(bamfiles,
             stop("`regions` must contain at least one genomic range if not in sampling mode")
         }
     }
+    .assertScalar(x = modProbThreshold, type = "numeric", rngIncl = c(0, 1))
     .assertVector(x = seqnamesToSampleFrom, type = "character")
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
@@ -226,35 +236,48 @@ readModBam <- function(bamfiles,
     #         would become e.g. "chr1:35000" (no end coordinate), which is
     #         interpreted by htslib as: "read all alignments overlapping chr1:35000-END_OF_chr1"
     regions_str <- paste0(seqnames(regions), ":", start(regions), "-", end(regions))
-    resLL <- bplapply(structure(names(bamfiles), names = names(bamfiles)),
-                      function(nm,
-                               bamf = bamfiles[nm],
-                               myregions_str = regions_str,
-                               mymodbase = modbase[nm],
-                               mynAlnsToSample = nAlnsToSample,
-                               myseqnamesToSampleFrom = seqnamesToSampleFrom,
-                               myvariantRefNames = variantRefNames,
-                               myvariantRefPositions = variantRefPositions,
-                               myncpuDecompression = ncpuDecompression,
-                               myverbose = verbose) {
-        # extract modifications (returned list is similar to modkit extract
-        # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
-        resL <- read_modbam_cpp(inname_str = bamf,
-                                regions = myregions_str,
-                                modbase = mymodbase,
-                                n_alns_to_sample = as.integer(mynAlnsToSample),
-                                tnames_for_sampling = myseqnamesToSampleFrom,
-                                variantRefNames = myvariantRefNames,
-                                variantRefPositions = as.integer(myvariantRefPositions),
-                                n_threads = as.integer(myncpuDecompression),
-                                verbose = myverbose)
-
-        # convert inferred `mod_prob` to zero. Inferred means that the
-        # modification was omitted from the BAM file, e.g. DORADO omits base
-        # modification probabilities less than 0.05, and read_modbam_cpp returns
-        # a mod_prob of -1 for these.
-        resL$mod_prob[resL$mod_prob == -1] <- 0
-        resL
+    resLL <- bplapply(
+        structure(names(bamfiles), names = names(bamfiles)),
+        function(nm,
+                 mylevel = level,
+                 bamf = bamfiles[nm],
+                 myregions_str = regions_str,
+                 mymodbase = modbase[nm],
+                 mymodProbThreshold = modProbThreshold, 
+                 mynAlnsToSample = nAlnsToSample,
+                 myseqnamesToSampleFrom = seqnamesToSampleFrom,
+                 myvariantRefNames = variantRefNames,
+                 myvariantRefPositions = variantRefPositions,
+                 myncpuDecompression = ncpuDecompression,
+                 myverbose = verbose) {
+            
+            if (mylevel == "read") {
+                # extract modifications (returned list is similar to modkit extract
+                # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
+                resL <- read_modbam_cpp(inname_str = bamf,
+                                        regions = myregions_str,
+                                        modbase = mymodbase,
+                                        n_alns_to_sample = as.integer(mynAlnsToSample),
+                                        tnames_for_sampling = myseqnamesToSampleFrom,
+                                        variantRefNames = myvariantRefNames,
+                                        variantRefPositions = as.integer(myvariantRefPositions),
+                                        n_threads = as.integer(myncpuDecompression),
+                                        verbose = myverbose)
+                
+                # convert inferred `mod_prob` to zero. Inferred means that the
+                # modification was omitted from the BAM file, e.g. DORADO omits base
+                # modification probabilities less than 0.05, and read_modbam_cpp returns
+                # a mod_prob of -1 for these.
+                resL$mod_prob[resL$mod_prob == -1] <- 0
+            } else {
+                resL <- pileup_modbam_cpp(inname_str = bamf,
+                                          regions = myregions_str,
+                                          modbase = mymodbase,
+                                          mod_prob_thresh = mymodProbThreshold,
+                                          n_threads = as.integer(myncpuDecompression),
+                                          verbose = myverbose)
+            }
+            resL
     }, BPPARAM = BPPARAM)
 
     # create GPos objects for each input
@@ -282,61 +305,95 @@ readModBam <- function(bamfiles,
             sequenceReference = sequenceReference)
     }
 
-    # extract unique read names
-    readL <- lapply(resLL, function(resL) resL$read_df$read_id)
-
-    # modified probability
-    modmat <- make_zero_col_DFrame(nrow = length(gpos))
-    readdfL <- SimpleList()
-    for (nm in names(bamfiles)) {
-        x <- resLL[[nm]]
-        if (length(x$read_id) > 0) {
-            namat <- NaArray(dim = c(length(gpos), length(readL[[nm]])),
-                             dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
-                             type = "double")
-            i <- match(gposL[[nm]], gpos)
+    if (level == "read") {
+        # extract unique read names
+        readL <- lapply(resLL, function(resL) resL$read_df$read_id)
+        
+        # modified probability
+        modmat <- make_zero_col_DFrame(nrow = length(gpos))
+        readdfL <- SimpleList()
+        for (nm in names(bamfiles)) {
+            x <- resLL[[nm]]
+            if (length(x$read_id) > 0) {
+                namat <- NaArray(dim = c(length(gpos), length(readL[[nm]])),
+                                 dimnames = list(NULL, paste0(nm, "-", readL[[nm]])),
+                                 type = "double")
+                i <- match(gposL[[nm]], gpos)
+                # if trim=TRUE, not all positions in gposL may be present in gpos
+                found <- which(!is.na(i))
+                j <- match(x$read_id, readL[[nm]])
+                namat[cbind(i[found], j[found])] <- x$mod_prob[found]
+                modmat[[nm]] <- namat
+                rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
+                x$read_df$read_id <- NULL
+                x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
+                readdfL[[nm]] <- DataFrame(x$read_df)
+            } else {
+                modmat[[nm]] <- NaArray(dim = c(length(gpos), 0), type = "double")
+                readdfL[[nm]] <- DataFrame(qscore = numeric(0),
+                                           read_length = integer(0),
+                                           aligned_length = integer(0),
+                                           variant_label = character(0),
+                                           aligned_fraction = numeric(0))
+            }
+        }
+    } else {
+        Nmod <- matrix(0, nrow = length(gpos), ncol = length(bamfiles))
+        Nvalid <- matrix(0, nrow = length(gpos), ncol = length(bamfiles))
+        for (i in seq_along(bamfiles)) {
+            nm <- names(bamfiles)[i]
             # if trim=TRUE, not all positions in gposL may be present in gpos
-            found <- which(!is.na(i))
-            j <- match(x$read_id, readL[[nm]])
-            namat[cbind(i[found], j[found])] <- x$mod_prob[found]
-            modmat[[nm]] <- namat
-            rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
-            x$read_df$read_id <- NULL
-            x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
-            readdfL[[nm]] <- DataFrame(x$read_df)
-        } else {
-            modmat[[nm]] <- NaArray(dim = c(length(gpos), 0), type = "double")
-            readdfL[[nm]] <- DataFrame(qscore = numeric(0),
-                                       read_length = integer(0),
-                                       aligned_length = integer(0),
-                                       variant_label = character(0),
-                                       aligned_fraction = numeric(0))
+            j <- match(gposL[[nm]], gpos)
+            found <- which(!is.na(j))
+            Nmod[j[found], i] <- resLL[[nm]]$Nmod[found]
+            Nvalid[j[found], i] <- resLL[[nm]]$Nvalid[found]
+            FracMod <- Nmod / Nvalid
         }
     }
-
+    
     # create SummarizedExperiment object
     cdata <- DataFrame(
         row.names = names(bamfiles),
         sample = names(bamfiles),
-        modbase = modbase[names(bamfiles)],
-        n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
-        readInfo = readdfL
+        modbase = modbase[names(bamfiles)]
     )
+    if (level == "read") {
+        cdata <- cbind(
+            cdata, 
+            DataFrame(n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
+                      readInfo = readdfL)
+        )
+    }
     if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
         sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample),
                                    colnames(sampleAnnot) != "sample",
                                    drop = FALSE]
         cdata <- cbind(cdata, sampleAnnot)
     }
-    stopifnot(names(modmat) == cdata$sample)
-    se <- SummarizedExperiment(
-        assays = list(mod_prob = modmat),
-        rowRanges = gpos,
-        colData = cdata,
-        metadata = list(readLevelData = list(assayNames = "mod_prob",
-                                             colDataColumns = "readInfo"),
-                        variantPositions = variantPositions)
-    )
+    if (level == "read") {
+        stopifnot(names(modmat) == cdata$sample)
+        se <- SummarizedExperiment(
+            assays = list(mod_prob = modmat),
+            rowRanges = gpos,
+            colData = cdata,
+            metadata = list(readLevelData = list(assayNames = "mod_prob",
+                                                 colDataColumns = "readInfo"),
+                            variantPositions = variantPositions)
+        )
+    } else {
+        stopifnot(colnames(Nmod) == cdata$sample,
+                  colnames(Nvalid) == cdata$sample,
+                  colnames(FracMod) == cdata$sample)
+        se <- SummarizedExperiment(
+            assays = list(Nmod = Nmod,
+                          Nvalid = Nvalid,
+                          FracMod = FracMod),
+            rowRanges = gpos,
+            colData = cdata,
+            metadata = list(readLevelData = list(assayNames = character(0),
+                                                 colDataColumns = character(0)))
+        )
+    }
     if (nrow(se) > 0) {
         rownames(se) <- paste0(
             seqnames(rowRanges(se)), ":", pos(rowRanges(se)), ":",

@@ -71,6 +71,18 @@ test_that("readModBam works", {
                             modbase = "a", nAlnsToSample = "error",
                             BPPARAM = BiocParallel::SerialParam()),
                  "must be of class 'numeric'")
+    expect_error(readModBam(bamfiles = modbamfiles,
+                            regions = "chr1:6940000-6955000",
+                            modbase = "a", nAlnsToSample = 0,
+                            level = 1,
+                            BPPARAM = BiocParallel::SerialParam()),
+                 "must be of class 'character'")
+    expect_error(readModBam(bamfiles = modbamfiles,
+                            regions = "chr1:6940000-6955000",
+                            modbase = "a", nAlnsToSample = 0,
+                            level = "error",
+                            BPPARAM = BiocParallel::SerialParam()),
+                 "must be one of")
     expect_error(
         expect_warning(
             expect_warning(readModBam(bamfiles = modbamfiles,
@@ -106,6 +118,12 @@ test_that("readModBam works", {
         sampleAnnot = sample_annot[, c("group", "condition")],
         BPPARAM = BiocParallel::SerialParam()),
         "sampleAnnot must have at least a column")
+    expect_error(readModBam(bamfiles = modbamfiles,
+                            regions = "chr1:6940000-6955000",
+                            modbase = "a", nAlnsToSample = 5,
+                            level = "summary",
+                            BPPARAM = BiocParallel::SerialParam()),
+                 "Read sampling is not supported")
 
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a",
@@ -124,24 +142,47 @@ test_that("readModBam works", {
                               BPPARAM = BiocParallel::SerialParam())
         )
     })
+    se1sum <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                         modbase = "a", level = "summary", nAlnsToSample = 0,
+                         sequenceContextWidth = 1, sequenceReference = ref,
+                         seqnamesToSampleFrom = "chr1", verbose = FALSE,
+                         BPPARAM = BiocParallel::SerialParam())
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
                       verbose = FALSE)
+    se2sum <- readModBam(bamfiles = unname(modbamfiles),
+                         regions = reg2,
+                         modbase = "a", level = "summary",
+                         nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                         BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
+                         verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
                       modbase = "a",
                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       BPPARAM = BiocParallel::SerialParam(),
                       verbose = FALSE)
+    se3sum <- readModBam(bamfiles = modbamfiles,
+                         regions = reg3,
+                         modbase = "a", level = "summary",
+                         nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                         BPPARAM = BiocParallel::SerialParam(),
+                         verbose = FALSE)
     se4 <- readModBam(bamfiles = modbamfiles,
                       regions = reg4,
                       modbase = c("a", "m"),
                       nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                       BPPARAM = BiocParallel::SerialParam(),
                       verbose = FALSE)
+    se4sum <- readModBam(bamfiles = modbamfiles,
+                         regions = reg4, level = "summary",
+                         modbase = c("a", "m"),
+                         nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                         BPPARAM = BiocParallel::SerialParam(),
+                         verbose = FALSE)
     se5a <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1],
                        modbase = "a",
@@ -189,16 +230,29 @@ test_that("readModBam works", {
                        sampleAnnot = sample_annot,
                        BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                        verbose = FALSE)
+    se7sum  <- readModBam(bamfiles = modbamfiles,
+                          regions = reg5[1:2],
+                          modbase = "a", level = "summary",
+                          sampleAnnot = sample_annot,
+                          BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                          verbose = FALSE)
     se8 <- readModBam(bamfiles = modbamfiles,
                       regions = reg1,
                       modbase = "a",
                       BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                       trim = TRUE, verbose = FALSE)
+    se8sum <- readModBam(bamfiles = modbamfiles,
+                         regions = reg1,
+                         modbase = "a", level = "summary",
+                         BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                         trim = TRUE, verbose = FALSE)
 
     seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b, se8)
+    seLsum <- list(se1sum, se2sum, se3sum, se4sum, se8sum)
 
     # ... structure
     expected_coldata_names <- c("sample", "modbase", "n_reads", "readInfo")
+    expected_coldata_names_summary <- c("sample", "modbase")
     expected_read_info_names <- c("qscore", "read_length", "aligned_length",
                                   "variant_label", "aligned_fraction")
     for (se in c(seL, list(se7))) {
@@ -220,18 +274,36 @@ test_that("readModBam works", {
     }
     expect_identical(colnames(colData(se7)), c(expected_coldata_names,
                                                "group", "condition"))
+    ## ... ... summary-level
+    for (se in c(seLsum, list(se7sum))) {
+        expect_s4_class(se, "RangedSummarizedExperiment")
+        expect_s4_class(rowRanges(se), "GPos")
+        expect_identical(assayNames(se), c("Nmod", "Nvalid", "FracMod"))
+        expect_type(assay(se, "Nmod"), "double")
+    }
+    for (se in seLsum) {
+        expect_identical(colnames(colData(se)), expected_coldata_names_summary)
+    }
+    expect_identical(colnames(colData(se7sum)), c(expected_coldata_names_summary,
+                                                  "group", "condition"))
 
     expect_identical(colnames(se1), names(modbamfiles))
+    expect_identical(colnames(se1sum), names(modbamfiles))
     expect_identical(colnames(se2), c("s1", "s2"))
+    expect_identical(colnames(se2sum), c("s1", "s2"))
     expect_identical(colnames(se3), names(modbamfiles))
+    expect_identical(colnames(se3sum), names(modbamfiles))
     expect_identical(colnames(se4), names(modbamfiles))
+    expect_identical(colnames(se4sum), names(modbamfiles))
     expect_identical(colnames(se5a), names(modbamfiles)[1])
     expect_identical(colnames(se5b), names(modbamfiles)[1])
     expect_identical(colnames(se6a), names(modbamfiles)[1])
     expect_identical(colnames(se6b), names(modbamfiles)[1])
     expect_identical(colnames(se7), names(modbamfiles))
+    expect_identical(colnames(se7sum), names(modbamfiles))
     expect_identical(colnames(se8), names(modbamfiles))
-
+    expect_identical(colnames(se8sum), names(modbamfiles))
+    
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
     expect_identical(dim(se1), c(8691L, 2L))
@@ -272,7 +344,16 @@ test_that("readModBam works", {
                      lapply(structure(se1$n_reads, names = colnames(se1)), function(n) rep(NA_character_, n)))
     expect_equal(unclass(table(as.character(SummarizedExperiment::rowData(se1)$sequenceContext))),
                  c(A = 8108L, C = 128L, G = 393L, T = 62L), ignore_attr = TRUE)
-
+    # ... compare to se1sum
+    expect_identical(rownames(se1), rownames(se1sum))
+    se1tmp <- flattenReadLevelAssay(se1)
+    expect_identical(assay(se1tmp, "Nmod"), assay(se1sum, "Nmod"))
+    expect_identical(assay(se1tmp, "Nvalid"), assay(se1sum, "Nvalid"))
+    expect_identical(assay(se1tmp, "FracMod"), assay(se1sum, "FracMod"))
+    expect_identical(colData(se1)[, c("sample", "modbase")],
+                     colData(se1sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se1), rowRanges(se1sum))
+    
     # ... content se2
     expect_identical(unname(se2$n_reads), c(3L, 2L))
     expect_identical(dim(se2), dim(se3))
@@ -285,7 +366,16 @@ test_that("readModBam works", {
                      lapply(se3$readInfo, "[[", nm),
                      ignore_attr = TRUE)
     }
-
+    # ... compare to se2sum
+    expect_identical(rownames(se2), rownames(se2sum))
+    se2tmp <- flattenReadLevelAssay(se2)
+    expect_identical(assay(se2tmp, "Nmod"), assay(se2sum, "Nmod"))
+    expect_identical(assay(se2tmp, "Nvalid"), assay(se2sum, "Nvalid"))
+    expect_identical(assay(se2tmp, "FracMod"), assay(se2sum, "FracMod"))
+    expect_identical(colData(se2)[, c("sample", "modbase")],
+                     colData(se2sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se2), rowRanges(se2sum))
+    
     # ... content se3
     expect_identical(unname(se3$n_reads), c(3L, 2L))
     expect_identical(dim(se3), c(7967L, 2L))
@@ -317,7 +407,16 @@ test_that("readModBam works", {
                          sample1 = c(14801L, 11214L, 12227L),
                          sample2 = c(11234L, 9898L)
                      ))
-
+    # ... compare to se3sum
+    expect_identical(rownames(se3), rownames(se3sum))
+    se3tmp <- flattenReadLevelAssay(se3)
+    expect_identical(assay(se3tmp, "Nmod"), assay(se3sum, "Nmod"))
+    expect_identical(assay(se3tmp, "Nvalid"), assay(se3sum, "Nvalid"))
+    expect_identical(assay(se3tmp, "FracMod"), assay(se3sum, "FracMod"))
+    expect_identical(colData(se3)[, c("sample", "modbase")],
+                     colData(se3sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se3), rowRanges(se3sum))
+    
     # ... content se4
     expect_identical(unname(se4$n_reads), c(3L, 0L))
     expect_identical(dim(se4), c(4772L, 2L))
@@ -338,7 +437,16 @@ test_that("readModBam works", {
                          sample1 = c(14801L, 11214L, 12227L),
                          sample2 = integer(0)
                      ))
-
+    # ... compare to se4sum
+    # expect_identical(rownames(se4), rownames(se4sum))
+    # se4tmp <- flattenReadLevelAssay(se4)
+    # expect_identical(assay(se4tmp, "Nmod"), assay(se4sum, "Nmod"))
+    # expect_identical(assay(se4tmp, "Nvalid"), assay(se4sum, "Nvalid"))
+    # expect_identical(assay(se4tmp, "FracMod"), assay(se4sum, "FracMod"))
+    # expect_identical(colData(se4)[, c("sample", "modbase")],
+    #                  colData(se4sum)[, c("sample", "modbase")])
+    # expect_identical(rowRanges(se4), rowRanges(se4sum))
+    
     # ... content of se5a and se5b (se5a should be a subset of se5b)
     # ... ... check ground truth
     expect_identical(names(aln5a), names(aln5b)[1])
@@ -365,6 +473,15 @@ test_that("readModBam works", {
     idx <- rownames(se7)
     expect_identical(mp7[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)],
                      mp5b[idx, "sample1"][, paste0("sample1-", aln5b[[1]]$qname)])
+    # ... compare to se7sum
+    expect_identical(rownames(se7), rownames(se7sum))
+    se7tmp <- flattenReadLevelAssay(se7)
+    expect_identical(assay(se7tmp, "Nmod"), assay(se7sum, "Nmod"))
+    expect_identical(assay(se7tmp, "Nvalid"), assay(se7sum, "Nvalid"))
+    expect_identical(assay(se7tmp, "FracMod"), assay(se7sum, "FracMod"))
+    expect_identical(colData(se7)[, c("sample", "modbase")],
+                     colData(se7sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se7), rowRanges(se7sum))
 
     # ... content of se8 (like se1, but trimmed)
     expect_identical(unname(se8$n_reads), c(4L, 6L))
@@ -380,6 +497,15 @@ test_that("readModBam works", {
     expect_identical(lapply(se8$readInfo, rownames),
                      lapply(assay(se8, "mod_prob"), colnames))
     expect_identical(se1$readInfo, se8$readInfo)
+    # ... compare to se8sum
+    expect_identical(rownames(se8), rownames(se8sum))
+    se8tmp <- flattenReadLevelAssay(se8)
+    expect_identical(assay(se8tmp, "Nmod"), assay(se8sum, "Nmod"))
+    expect_identical(assay(se8tmp, "Nvalid"), assay(se8sum, "Nvalid"))
+    expect_identical(assay(se8tmp, "FracMod"), assay(se8sum, "FracMod"))
+    expect_identical(colData(se8)[, c("sample", "modbase")],
+                     colData(se8sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se8), rowRanges(se8sum))
 })
 
 test_that("readModBam correctly labels reads", {

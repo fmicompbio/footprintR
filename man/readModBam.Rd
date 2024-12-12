@@ -8,6 +8,7 @@ readModBam(
   bamfiles,
   regions = NULL,
   modbase,
+  level = "read",
   sampleAnnot = NULL,
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
@@ -15,6 +16,7 @@ readModBam(
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
+  modProbThreshold = 0.5,
   trim = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
@@ -43,6 +45,16 @@ the names of \code{bamfiles}. Otherwise, it will be assumed that the
 elements are in the same order as the files in \code{bamfiles}. If
 \code{modbase} has length 1, the same modified base will be used for
 all samples.}
+
+\item{level}{Character scalar specifying the level of returned modification
+data. Supported values are:
+\describe{
+\item{"read"}{: Extracts modification probabilities for individual
+reads into an assay called \code{"mod_prob"}.}
+\item{"summary"}{: Counts the total and modified bases for each
+position and strand and returns them in assays named
+\code{"Nvalid"} and \code{"Nmod"}, respectively.}
+}}
 
 \item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
 for the samples. It must contain at least one column, named
@@ -76,6 +88,10 @@ See \code{\link{addSeqContext}} for details.}
 coordinates of single nucleotide variant positions, to be used to
 construct read labels for allele-specific analysis. Ignored if \code{NULL}
 or \code{nAlnsToSample > 0} (sampling-mode).}
+
+\item{modProbThreshold}{A numeric scalar, indicating the modification
+probability threshold to use to classify a base as 'modified' or
+'unmodified'. Only used if \code{level} is \code{"summary"}.}
 
 \item{trim}{A logical scalar. If \code{TRUE}, the returned
 \code{SummarizedExperiment} object will only contain the positions

@@ -330,7 +330,6 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             ref_mod_strand.push_back('+');
             Nmod.push_back(curr_Nmod[0]);
             Nvalid.push_back(curr_Nvalid[0]);
-
         }
 
         // ... minus strand
