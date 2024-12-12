@@ -61,8 +61,10 @@ int plpconstructor(void *data, const bam1_t *b, bam_pileup_cd *cd) {
     //when using cd, initialize and use as it will be reused after destructor
     cd->p = hts_base_mod_state_alloc();
     if (!cd->p) {
+        // # nocov start
         Rcpp::stop("Failed to allocate base modification state\n");
         return 1;
+        // # nocov end
     }
 
     //parse the bam data and gather modification data from MM tags
@@ -100,7 +102,9 @@ int readdata(void *data, bam1_t *b)
 {
     plpconf *conf = (plpconf*)data;
     if (!conf || !conf->infile) {
+        // # nocov start
         return -2;  //cant read data
+        // # nocov end
     }
 
     //read alignment and send
@@ -212,10 +216,12 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
 
     // load index file
     if (!(conf.idx = sam_index_load(conf.infile, conf.inname))) {
+        // # nocov start
         had_error = true;
         snprintf(buffer, buffer_len,
                  "Failed to load the index for %s\n", conf.inname);
         goto end;
+        // # nocov end
     }
 
     // read header
@@ -234,9 +240,11 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
 
     // create multi-region iterator
     if (!(conf.iter = sam_itr_regarray(conf.idx, conf.in_samhdr, regions_c, regcnt))) {
+        // # nocov start
         had_error = true;
         snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
         goto end;
+        // # nocov end
     }
 
     // initialize pileup iterator
@@ -283,12 +291,14 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             if ((modlen = bam_mods_at_qpos(plp[j].b, plp[j].qpos,
                                            (hts_base_mod_state*)plp[j].cd.p,
                                            mods, NMODS)) == -1) {
-                had_error = true; // # nocov start
+                // # nocov start
+                had_error = true;
                 snprintf(buffer, buffer_len,
                          "Failed to get modifications from %s on %s (qpos=%d, refpos=%d)\n",
                          bam_get_qname(plp[j].b), sam_hdr_tid2name(conf.in_samhdr, tid),
                          plp[j].qpos, refpos);
-                goto end; // # nocov end
+                goto end;
+                // # nocov end
             }
 
             // increment curr_Nmod if base is modified and has the expected base
@@ -309,7 +319,9 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
 
             modposcount++;
             if (verbose && CLI_SHOULD_TICK) {
+                // # nocov start
                 cli_progress_set(bar, (double)modposcount);
+                // # nocov end
             }
             if (modposcount % 1000000 == 0) { // # nocov start
                 R_CheckUserInterrupt();
@@ -341,7 +353,9 @@ end:
 
     if (had_error) {
         // we encountered an error (message in `buffer`) --> stop
+        // # nocov start
         Rcpp::stop(buffer);
+        // # nocov end
 
     } else {
         // create return list
