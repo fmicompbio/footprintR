@@ -136,8 +136,10 @@ int readdata(void *data, bam1_t *b)
 //'     decompressing bam records than processing them.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
-//' @return A named list with elements \code{"chrom"},
-//'     \code{"ref_position"}, \code{"Nmod"} and \code{"Nvalid"}.
+//' @return A named list with elements \code{"chrom"} (chromosome name),
+//'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
+//'     \code{"Nmod"} (number of modified bases) and \code{"Nvalid"} (number of
+//'     total bases).
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")

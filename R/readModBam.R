@@ -239,9 +239,6 @@ readModBam <- function(bamfiles,
                                 n_threads = as.integer(myncpuDecompression),
                                 verbose = myverbose)
 
-        # convert 0-based ref_position to 1-based
-        resL$ref_position <- resL$ref_position + 1L
-
         # convert inferred `mod_prob` to zero. Inferred means that the
         # modification was omitted from the BAM file, e.g. DORADO omits base
         # modification probabilities less than 0.05, and read_modbam_cpp returns

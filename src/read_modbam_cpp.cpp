@@ -462,7 +462,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'     (the read identifier), \code{"qscore"} (the read quality score recorded
 //'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
 //'     total read length), and \code{"aligned_length"} (the number of
-//'     aligned bases).
+//'     aligned bases), and \code{"ref_position"}, which is 0-based in
+//'     the output of \code{modkit extract}, but 1-based here.
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
@@ -832,6 +833,11 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 Rcpp::_["aligned_length"] = df_aligned_length,
                 Rcpp::_["variant_label"] = df_variant_label
             );
+
+            // convert 0-based ref_position to 1-based ref_position
+            std::for_each(ref_position.begin(),
+                          ref_position.end(),
+                          [](int &x) { x += 1; });
 
             // create return list
             Rcpp::List res = Rcpp::List::create(

@@ -155,8 +155,10 @@ NULL
 #'     decompressing bam records than processing them.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"chrom"},
-#'     \code{"ref_position"}, \code{"Nmod"} and \code{"Nvalid"}.
+#' @return A named list with elements \code{"chrom"} (chromosome name),
+#'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
+#'     \code{"Nmod"} (number of modified bases) and \code{"Nvalid"} (number of
+#'     total bases).
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
@@ -210,7 +212,8 @@ pileup_modbam_cpp <- function(inname_str, regions, modbase, mod_prob_thresh = 0.
 #'     (the read identifier), \code{"qscore"} (the read quality score recorded
 #'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
 #'     total read length), and \code{"aligned_length"} (the number of
-#'     aligned bases).
+#'     aligned bases), and \code{"ref_position"}, which is 0-based in
+#'     the output of \code{modkit extract}, but 1-based here.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")

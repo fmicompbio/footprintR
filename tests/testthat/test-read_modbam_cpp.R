@@ -149,6 +149,7 @@ test_that("read_modbam_cpp works", {
     ## expected results --------------------------------------------------------
     # ... run read_modbam_cpp
     df <- read.delim(extractfile)
+    df$ref_position <- df$ref_position + 1L # modkit-extract has 0-based coordinates
     suppressMessages(expect_message(
         res1 <- read_modbam_cpp(inname_str = modbamfile,
                                 regions = "chr1:6940000-6955000",
@@ -340,8 +341,8 @@ test_that("read_modbam_cpp works", {
     expect_equal(res4, list(
         read_id = rep(c("artificial-read-1", "artificial-read-2"), c(5, 3)),
         forward_read_position = c(0L, 7L, 10L, 15L, 19L, 21L, 15L, 7L),
-        ref_position = c(6940000L, 6940007L, 6940011L, 6940014L, 6940018L,
-                         6940003L, 6940009L, 6940016L),
+        ref_position = c(6940001L, 6940008L, 6940012L, 6940015L, 6940019L,
+                         6940004L, 6940010L, 6940017L),
         chrom = rep("chr1", 8),
         ref_mod_strand = rep(c("+", "-"), c(5, 3)),
         call_code = c("a", "a", "-", "a", "a", "a", "-", "-"),
