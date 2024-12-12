@@ -133,6 +133,17 @@ NULL
 #' section 1.7) and return a list of information on modified bases.
 #'
 #' @param inname_str Character scalar with name of the input bam file.
+#' @param regions Character vector specifying the region(s) for which
+#'     to extract overlapping reads, in the form \code{"chr:start-end"}.
+#'     The strings are interpreted by htslib, which understands:
+#'     \describe{
+#'         \item{"REF" or "REF:"}{: All reads with RNAME REF}
+#'         \item{"REF:START"}{: Reads with RNAME REF overlapping START to end of REF}
+#'         \item{"REF:-END"}{: Reads with RNAME REF overlapping start of REF to END}
+#'         \item{"REF:START-END"}{: Reads with RNAME REF overlapping START to END}
+#'         \item{"."}{: All reads from the start of the file}
+#'         \item{"*"}{: Unmapped reads at the end of the file (RNAME '*' in SAM)}
+#'     }
 #' @param modbase Character scalar defining the modified base to extract.
 #'     Only modifications corresponding to \code{modbase} and with the
 #'     corresponding expected base in the read sequence will be extracted.
@@ -144,12 +155,12 @@ NULL
 #'     decompressing bam records than processing them.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"ref_name"},
-#'     \code{"ref_pos"}, \code{"Nmod"} and \code{"Nvalid"}.
+#' @return A named list with elements \code{"chrom"},
+#'     \code{"ref_position"}, \code{"Nmod"} and \code{"Nvalid"}.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' res <- pileup_modbam_cpp(modbamfile, "a", 0.7, 1, TRUE)
+#' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", 0.7, 1, TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -163,8 +174,8 @@ NULL
 #'
 #' @noRd
 #' @keywords internal
-pileup_modbam_cpp <- function(inname_str, modbase, mod_prob_thresh = 0.5, n_threads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_pileup_modbam_cpp`, inname_str, modbase, mod_prob_thresh, n_threads, verbose)
+pileup_modbam_cpp <- function(inname_str, regions, modbase, mod_prob_thresh = 0.5, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_pileup_modbam_cpp`, inname_str, regions, modbase, mod_prob_thresh, n_threads, verbose)
 }
 
 #' Read base modifications from a bam file.

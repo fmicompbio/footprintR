@@ -41,6 +41,8 @@ typedef struct plpconf {
     char *inname;
     samFile *infile;
     sam_hdr_t *in_samhdr;
+    hts_idx_t *idx;
+    hts_itr_t *iter;
 } plpconf;
 
 //' Constructor for pileup data in bam_pileup_cd*
@@ -102,7 +104,8 @@ int readdata(void *data, bam1_t *b)
     }
 
     //read alignment and send
-    return sam_read1(conf->infile, conf->infile->bam_header, b);
+    // return sam_read1(conf->infile, conf->infile->bam_header, b);
+    return sam_itr_next(conf->infile, conf->iter, b);
 }
 
 //' Read and pile-up base modifications from a bam file.
@@ -111,6 +114,17 @@ int readdata(void *data, bam1_t *b)
 //' section 1.7) and return a list of information on modified bases.
 //'
 //' @param inname_str Character scalar with name of the input bam file.
+//' @param regions Character vector specifying the region(s) for which
+//'     to extract overlapping reads, in the form \code{"chr:start-end"}.
+//'     The strings are interpreted by htslib, which understands:
+//'     \describe{
+//'         \item{"REF" or "REF:"}{: All reads with RNAME REF}
+//'         \item{"REF:START"}{: Reads with RNAME REF overlapping START to end of REF}
+//'         \item{"REF:-END"}{: Reads with RNAME REF overlapping start of REF to END}
+//'         \item{"REF:START-END"}{: Reads with RNAME REF overlapping START to END}
+//'         \item{"."}{: All reads from the start of the file}
+//'         \item{"*"}{: Unmapped reads at the end of the file (RNAME '*' in SAM)}
+//'     }
 //' @param modbase Character scalar defining the modified base to extract.
 //'     Only modifications corresponding to \code{modbase} and with the
 //'     corresponding expected base in the read sequence will be extracted.
@@ -122,12 +136,12 @@ int readdata(void *data, bam1_t *b)
 //'     decompressing bam records than processing them.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
-//' @return A named list with elements \code{"ref_name"},
-//'     \code{"ref_pos"}, \code{"Nmod"} and \code{"Nvalid"}.
+//' @return A named list with elements \code{"chrom"},
+//'     \code{"ref_position"}, \code{"Nmod"} and \code{"Nvalid"}.
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-//' res <- pileup_modbam_cpp(modbamfile, "a", 0.7, 1, TRUE)
+//' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", 0.7, 1, TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -143,6 +157,7 @@ int readdata(void *data, bam1_t *b)
 //' @keywords internal
 // [[Rcpp::export]]
 Rcpp::List pileup_modbam_cpp(std::string inname_str,
+                             std::vector<std::string> regions,
                              char modbase,
                              double mod_prob_thresh = 0.5,
                              int n_threads = 2,
@@ -163,12 +178,14 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     char buffer[2000];
     char readbase = '0';
     uint64_t modposcount = 0;
+    unsigned int regcnt = 0;
+    char **regions_c = NULL;
 
-    std::vector<std::string> ref_name;
-    std::vector<uint> ref_pos;
-    std::vector<uint> Nmod;
-    std::vector<uint> Nvalid;
-    uint curr_Nmod = 0, curr_Nvalid = 0;
+    std::vector<std::string> chrom;
+    std::vector<int> ref_position;
+    std::vector<int> Nmod;
+    std::vector<int> Nvalid;
+    int curr_Nmod = 0, curr_Nvalid = 0;
 
     // ... cli progress bar
     Rcpp::RObject bar;
@@ -191,11 +208,33 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         goto end; // # nocov end
     }
 
+    // load index file
+    if (!(conf.idx = sam_index_load(conf.infile, conf.inname))) {
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to load the index for %s\n", conf.inname);
+        goto end;
+    }
+
     // read header
     if (!(conf.in_samhdr = sam_hdr_read(conf.infile))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Failed to read header from file!\n");
         goto end; // # nocov end
+    }
+
+    // convert regions to C arrays
+    regcnt = (unsigned int) regions.size();
+    regions_c = (char**) calloc(regcnt, sizeof(char*));
+    for (int i = 0; i < (int) regcnt; i++) {
+        regions_c[i] = (char*) regions[i].c_str();
+    }
+
+    // create multi-region iterator
+    if (!(conf.iter = sam_itr_regarray(conf.idx, conf.in_samhdr, regions_c, regcnt))) {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+        goto end;
     }
 
     // initialize pileup iterator
@@ -261,8 +300,8 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
 
         // add counters for refpos to return value vectors
         if (curr_Nvalid > 0) {
-            ref_name.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
-            ref_pos.push_back((uint)refpos + 1);
+            chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+            ref_position.push_back(refpos + 1);
             Nmod.push_back(curr_Nmod);
             Nvalid.push_back(curr_Nvalid);
 
@@ -284,6 +323,12 @@ end:
     if (conf.infile) {
         sam_close(conf.infile);
     }
+    if (conf.iter) {
+        sam_itr_destroy(conf.iter);
+    }
+    if (conf.idx) {
+        hts_idx_destroy(conf.idx);
+    }
     if (bamdata) {
         bam_destroy1(bamdata);
     }
@@ -299,8 +344,8 @@ end:
     } else {
         // create return list
         Rcpp::List res = Rcpp::List::create(
-            Rcpp::_["ref_name"] = ref_name,
-            Rcpp::_["ref_pos"] = ref_pos,
+            Rcpp::_["chrom"] = chrom,
+            Rcpp::_["ref_position"] = ref_position,
             Rcpp::_["Nmod"] = Nmod,
             Rcpp::_["Nvalid"] = Nvalid);
 
