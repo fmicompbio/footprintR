@@ -142,8 +142,9 @@ int readdata(void *data, bam1_t *b)
 //'
 //' @return A named list with elements \code{"chrom"} (chromosome name),
 //'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
-//'     \code{"Nmod"} (number of modified bases) and \code{"Nvalid"} (number of
-//'     total bases).
+//'     \code{"ref_mod_strand"} (the strand relative to the reference on which
+//'     the modification was identified),  \code{"Nmod"} (number of modified
+//'     bases) and \code{"Nvalid"} (number of total bases).
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
@@ -183,15 +184,18 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     int buffer_len = 2000;
     char buffer[2000];
     char readbase = '0';
-    uint64_t modposcount = 0;
+    uint64_t refposcount = 0;
     unsigned int regcnt = 0;
     char **regions_c = NULL;
 
     std::vector<std::string> chrom;
     std::vector<int> ref_position;
+    std::vector<char> ref_mod_strand;
     std::vector<int> Nmod;
     std::vector<int> Nvalid;
-    int curr_Nmod = 0, curr_Nvalid = 0;
+    int curr_Nmod[2] = {0, 0};   // for +/- strand modification counts
+    int curr_Nvalid[2] = {0, 0};
+    int curr_strand = 0;
 
     // ... cli progress bar
     Rcpp::RObject bar;
@@ -259,15 +263,20 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     bam_plp_destructor(plpiter, plpdestructor);
 
     if (verbose) {
-        bar = cli_progress_bar(NA_REAL,
-                               Rcpp::List::create(Rcpp::_["clear"] = false,
-                                                  Rcpp::_["show_after"] = 0.25));
+        bar = cli_progress_bar(
+            NA_REAL,
+            Rcpp::List::create(
+                Rcpp::_["clear"] = false,
+                Rcpp::_["show_after"] = 0.25,
+                Rcpp::_["format"] = "{cli::pb_spin} {sprintf(\"%.3f\", cli::pb_current / 1e6)} Mio. genomic positions processed ({sprintf(\"%.3f Mio./s\", cli::pb_rate_raw / 1e6)}) [{cli::pb_elapsed}]"));
     }
 
     while ((plp = bam_plp_auto(plpiter, &tid, &refpos, &depth))) {
         memset(&mods, 0, sizeof(mods));
-        curr_Nmod = 0;
-        curr_Nvalid = 0;
+        curr_Nmod[0] = 0;
+        curr_Nmod[1] = 0;
+        curr_Nvalid[0] = 0;
+        curr_Nvalid[1] = 0;
 
         // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
@@ -281,9 +290,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             // check if read j has expected base
             readbase = toupper(seq_nt16_str[bam_seqi(bam_get_seq(plp[j].b),
                                                      plp[j].qpos)]);
-            if (readbase == (bam_is_rev(plp[j].b) ? unmodbase_complement : unmodbase)) {
-                curr_Nvalid++;
-            } else {
+            if (readbase != (bam_is_rev(plp[j].b) ? unmodbase_complement : unmodbase)) {
                 continue;
             }
 
@@ -301,32 +308,49 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                 // # nocov end
             }
 
-            // increment curr_Nmod if base is modified and has the expected base
+            // increment curr_Nmod[curr_strand] if base is modified and has the expected base
             if (modlen > 0) {
+                curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
+                curr_Nvalid[curr_strand]++;
                 if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
-                    curr_Nmod++;
+                    curr_Nmod[curr_strand]++;
                 }
+            } else {
+                curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
+                curr_Nvalid[curr_strand]++;
             }
 
         }
 
         // add counters for refpos to return value vectors
-        if (curr_Nvalid > 0) {
+        // ... plus strand
+        if (curr_Nvalid[0] > 0) {
             chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
             ref_position.push_back(refpos + 1);
-            Nmod.push_back(curr_Nmod);
-            Nvalid.push_back(curr_Nvalid);
+            ref_mod_strand.push_back('+');
+            Nmod.push_back(curr_Nmod[0]);
+            Nvalid.push_back(curr_Nvalid[0]);
 
-            modposcount++;
-            if (verbose && CLI_SHOULD_TICK) {
-                // # nocov start
-                cli_progress_set(bar, (double)modposcount);
-                // # nocov end
-            }
-            if (modposcount % 1000000 == 0) { // # nocov start
-                R_CheckUserInterrupt();
-            } // # nocov end
         }
+
+        // ... minus strand
+        if (curr_Nvalid[1] > 0) {
+            chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+            ref_position.push_back(refpos + 1);
+            ref_mod_strand.push_back('-');
+            Nmod.push_back(curr_Nmod[1]);
+            Nvalid.push_back(curr_Nvalid[1]);
+        }
+
+        refposcount++;
+        if (verbose && CLI_SHOULD_TICK) {
+            // # nocov start
+            cli_progress_set(bar, (double)refposcount);
+            // # nocov end
+        }
+        if (refposcount % 1000000 == 0) { // # nocov start
+            R_CheckUserInterrupt();
+        } // # nocov end
     }
 
 end:
@@ -362,6 +386,7 @@ end:
         Rcpp::List res = Rcpp::List::create(
             Rcpp::_["chrom"] = chrom,
             Rcpp::_["ref_position"] = ref_position,
+            Rcpp::_["ref_mod_strand"] = ref_mod_strand,
             Rcpp::_["Nmod"] = Nmod,
             Rcpp::_["Nvalid"] = Nvalid);
 

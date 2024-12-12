@@ -6,13 +6,15 @@ test_that("pileup_modbam_cpp works", {
                         tnames_for_sampling = "chr1",
                         variantRefNames = character(0),
                         variantRefPositions = integer(0),
-                        n_threads = 1, verbose = FALSE)[c("chrom", "ref_position", "mod_prob")] |>
+                        n_threads = 1, verbose = FALSE)[c("chrom", "ref_position",
+                                                          "ref_mod_strand",
+                                                          "mod_prob")] |>
             as.data.frame() |>
-            dplyr::group_by(chrom, ref_position) |>
+            dplyr::group_by(chrom, ref_position, ref_mod_strand) |>
             dplyr::summarise(Nmod = sum(mod_prob >= mod_prob_thresh),
                              Nvalid = dplyr::n(),
                              .groups = "drop") |>
-            dplyr::arrange(ref_position) |>
+            dplyr::arrange(ref_position, ref_mod_strand) |>
             as.list()
     }
 
@@ -30,8 +32,9 @@ test_that("pileup_modbam_cpp works", {
                                  n_threads = 1, verbose = TRUE)
     })
     expect_type(res, "list")
-    expect_length(res, 4L)
-    expect_named(res, c("chrom", "ref_position", "Nmod", "Nvalid"))
+    expect_length(res, 5L)
+    expect_named(res, c("chrom", "ref_position", "ref_mod_strand",
+                        "Nmod", "Nvalid"))
     expect_identical(res0, res)
 
     # reading alignments overlapping a region
@@ -46,7 +49,8 @@ test_that("pileup_modbam_cpp works", {
                              modbase = "a", mod_prob_thresh = thresh,
                              n_threads = 1, verbose = FALSE)
     expect_type(res, "list")
-    expect_length(res, 4L)
-    expect_named(res, c("chrom", "ref_position", "Nmod", "Nvalid"))
+    expect_length(res, 5L)
+    expect_named(res, c("chrom", "ref_position", "ref_mod_strand",
+                        "Nmod", "Nvalid"))
     expect_identical(res0, res)
 })

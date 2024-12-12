@@ -157,8 +157,9 @@ NULL
 #'
 #' @return A named list with elements \code{"chrom"} (chromosome name),
 #'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
-#'     \code{"Nmod"} (number of modified bases) and \code{"Nvalid"} (number of
-#'     total bases).
+#'     \code{"ref_mod_strand"} (the strand relative to the reference on which
+#'     the modification was identified),  \code{"Nmod"} (number of modified
+#'     bases) and \code{"Nvalid"} (number of total bases).
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")

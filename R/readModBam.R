@@ -25,6 +25,15 @@
 #'     elements are in the same order as the files in \code{bamfiles}. If
 #'     \code{modbase} has length 1, the same modified base will be used for
 #'     all samples.
+#' @param level Character scalar specifying the level of returned modification
+#'     data. Supported values are:
+#'     \describe{
+#'         \item{"read"}{: Extracts modification probabilities for individual
+#'             reads into an assay called \code{"mod_prob"}.}
+#'         \item{"summary"}{: Counts the total and modified bases for each
+#'             position and strand and returns them in the assays \code{"Nvalid"}
+#'             and \code{"Nmod"}, respectively. ### WAS HERE}
+#'     }
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
 #'     for the samples. It must contain at least one column, named
 #'     \code{"sample"}, which must contain all the values of
@@ -100,6 +109,7 @@
 readModBam <- function(bamfiles,
                        regions = NULL,
                        modbase,
+                       level = "read",
                        sampleAnnot = NULL,
                        nAlnsToSample = 0,
                        seqnamesToSampleFrom = "chr19",
