@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <Rcpp.h>
 #include <cli/progress.h>
+#include "utils.h"
 
 
 // Helper functions
@@ -195,59 +196,6 @@ std::string construct_read_label(const bam1_t *aln,
     }
 
     return label;
-}
-
-// create the complement of a base
-// [[Rcpp::export]]
-char complement(char n) {
-    switch(n) {
-    case 'A':
-    case 'a':
-        return 'T';
-    case 'T':
-    case 't':
-        return 'A';
-    case 'G':
-    case 'g':
-        return 'C';
-    case 'C':
-    case 'c':
-        return 'G';
-    case 'N':
-    case 'n':
-    default:
-        return 'N';
-    }
-}
-
-// get unmodified base corresponding to a modified base `b`
-// [[Rcpp::export]]
-char get_unmodified_base(char b) {
-    switch (b) {
-    case 'm':
-    case 'h':
-    case 'f':
-    case 'c':
-    case 'C':
-        return 'C';
-    case 'g':
-    case 'e':
-    case 'b':
-    case 'T':
-        return 'T';
-    case 'U':
-        return 'U';
-    case 'a':
-    case 'A':
-        return 'A';
-    case 'o':
-    case 'G':
-        return 'G';
-    case 'n':
-    case 'N':
-    default:
-        return 'N';
-    }
 }
 
 // calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
