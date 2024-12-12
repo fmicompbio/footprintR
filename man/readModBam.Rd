@@ -112,7 +112,7 @@ a modification probability of zero.
 modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                           package = "footprintR")
 readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
-           modbase = "a", verbose = TRUE, 
+           modbase = "a", verbose = TRUE,
            BPPARAM = BiocParallel::SerialParam())
 
 }

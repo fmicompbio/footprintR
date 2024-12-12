@@ -26,10 +26,10 @@
 #'     \code{modbase} has length 1, the same modified base will be used for
 #'     all samples.
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
-#'     for the samples. It must contain at least one column, named 
-#'     \code{"sample"}, which must contain all the values of 
-#'     \code{names(bamfiles)}. The provided annotations will be propagated to 
-#'     the returned \code{SummarizedExperiment} object. 
+#'     for the samples. It must contain at least one column, named
+#'     \code{"sample"}, which must contain all the values of
+#'     \code{names(bamfiles)}. The provided annotations will be propagated to
+#'     the returned \code{SummarizedExperiment} object.
 #' @param nAlnsToSample A numeric scalar. If non-zero, \code{regions} is ignored
 #'     and approximately \code{nAlnsToSample} randomly selected alignments on
 #'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
@@ -52,19 +52,19 @@
 #'     coordinates of single nucleotide variant positions, to be used to
 #'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
 #'     or \code{nAlnsToSample > 0} (sampling-mode).
-#' @param trim A logical scalar. If \code{TRUE}, the returned 
-#'     \code{SummarizedExperiment} object will only contain the positions 
-#'     overlapping the specified \code{regions}. If \code{FALSE} (default), 
-#'     the object will be extended to all positions covered by the reads 
-#'     overlapping \code{regions}. In both cases, only reads overlapping 
-#'     the specified \code{regions} are included. 
+#' @param trim A logical scalar. If \code{TRUE}, the returned
+#'     \code{SummarizedExperiment} object will only contain the positions
+#'     overlapping the specified \code{regions}. If \code{FALSE} (default),
+#'     the object will be extended to all positions covered by the reads
+#'     overlapping \code{regions}. In both cases, only reads overlapping
+#'     the specified \code{regions} are included.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
 #'     in \code{readModBam()}. The default value is
 #'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
-#'     If randomly sampling reads (\code{nAlnsToSample > 0}), make sure to set 
-#'     the \code{RNGseed} argument when constructing the \code{BPPARAM} object 
-#'     for reproducible results (see also 
+#'     If randomly sampling reads (\code{nAlnsToSample > 0}), make sure to set
+#'     the \code{RNGseed} argument when constructing the \code{BPPARAM} object
+#'     for reproducible results (see also
 #'     \code{vignette("Random_Numbers", package = "BiocParallel")}).
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
@@ -78,7 +78,7 @@
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
-#'            modbase = "a", verbose = TRUE, 
+#'            modbase = "a", verbose = TRUE,
 #'            BPPARAM = BiocParallel::SerialParam())
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -88,7 +88,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
 #' @importFrom SparseArray NaArray
-#' @importFrom GenomicRanges GPos sort match
+#' @importFrom GenomicRanges GPos sort match seqnames start end
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
@@ -107,7 +107,7 @@ readModBam <- function(bamfiles,
                        sequenceContextWidth = 0,
                        sequenceReference = NULL,
                        variantPositions = NULL,
-                       trim = FALSE, 
+                       trim = FALSE,
                        BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                        verbose = FALSE) {
     # digest arguments
@@ -127,7 +127,7 @@ readModBam <- function(bamfiles,
         }
         if (!all(names(bamfiles) %in% sampleAnnot$sample)) {
             stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(bamfiles), sampleAnnot$sample), 
+                 paste(setdiff(names(bamfiles), sampleAnnot$sample),
                        collapse = ", "))
         }
     }
@@ -212,7 +212,10 @@ readModBam <- function(bamfiles,
 
     # extract modification probabilities from `bamfiles`
     .message("extracting base modifications from modBAM files", noTimer = TRUE)
-    regions_str <- as.character(regions, ignore.strand = TRUE)
+    # remark: unsafe to use as.character(GRanges) here, as a length-1 range
+    #         would become e.g. "chr1:35000" (no end coordinate), which is
+    #         interpreted by htslib as: "read all alignments overlapping chr1:35000-END_OF_chr1"
+    regions_str <- paste0(seqnames(regions), ":", start(regions), "-", end(regions))
     resLL <- bplapply(structure(names(bamfiles), names = names(bamfiles)),
                       function(nm,
                                bamf = bamfiles[nm],
@@ -262,7 +265,7 @@ readModBam <- function(bamfiles,
     if (trim) {
         gpos <- subsetByOverlaps(gpos, regions)
     }
-    
+
     # add sequence context
     if (sequenceContextWidth > 0) {
         .message("extracting sequence contexts")
@@ -313,8 +316,8 @@ readModBam <- function(bamfiles,
         readInfo = readdfL
     )
     if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
-        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
-                                   colnames(sampleAnnot) != "sample", 
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample),
+                                   colnames(sampleAnnot) != "sample",
                                    drop = FALSE]
         cdata <- cbind(cdata, sampleAnnot)
     }
