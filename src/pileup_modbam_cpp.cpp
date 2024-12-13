@@ -187,6 +187,8 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     uint64_t refposcount = 0;
     unsigned int regcnt = 0;
     char **regions_c = NULL;
+    int strand = 0, impl = 0;
+    char canonical = '0';
 
     std::vector<std::string> chrom;
     std::vector<int> ref_position;
@@ -309,17 +311,19 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             }
 
             // increment curr_Nmod[curr_strand] if base is modified and has the expected base
-            if (modlen > 0) {
-                curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
-                curr_Nvalid[curr_strand]++;
-                if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
-                    curr_Nmod[curr_strand]++;
+            if (bam_mods_query_type((hts_base_mod_state*)plp[j].cd.p, 
+                                    modbase, &strand, &impl, &canonical) == 0) {
+                if (modlen > 0) {
+                    curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
+                    curr_Nvalid[curr_strand]++;
+                    if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
+                        curr_Nmod[curr_strand]++;
+                    }
+                } else {
+                    curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
+                    curr_Nvalid[curr_strand]++;
                 }
-            } else {
-                curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
-                curr_Nvalid[curr_strand]++;
             }
-
         }
 
         // add counters for refpos to return value vectors

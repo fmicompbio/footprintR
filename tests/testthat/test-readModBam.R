@@ -438,14 +438,14 @@ test_that("readModBam works", {
                          sample2 = integer(0)
                      ))
     # ... compare to se4sum
-    # expect_identical(rownames(se4), rownames(se4sum))
-    # se4tmp <- flattenReadLevelAssay(se4)
-    # expect_identical(assay(se4tmp, "Nmod"), assay(se4sum, "Nmod"))
-    # expect_identical(assay(se4tmp, "Nvalid"), assay(se4sum, "Nvalid"))
-    # expect_identical(assay(se4tmp, "FracMod"), assay(se4sum, "FracMod"))
-    # expect_identical(colData(se4)[, c("sample", "modbase")],
-    #                  colData(se4sum)[, c("sample", "modbase")])
-    # expect_identical(rowRanges(se4), rowRanges(se4sum))
+    expect_identical(rownames(se4), rownames(se4sum))
+    se4tmp <- flattenReadLevelAssay(se4)
+    expect_identical(assay(se4tmp, "Nmod"), assay(se4sum, "Nmod"))
+    expect_identical(assay(se4tmp, "Nvalid"), assay(se4sum, "Nvalid"))
+    expect_identical(assay(se4tmp, "FracMod"), assay(se4sum, "FracMod"))
+    expect_identical(colData(se4)[, c("sample", "modbase")],
+                     colData(se4sum)[, c("sample", "modbase")])
+    expect_identical(rowRanges(se4), rowRanges(se4sum))
     
     # ... content of se5a and se5b (se5a should be a subset of se5b)
     # ... ... check ground truth
