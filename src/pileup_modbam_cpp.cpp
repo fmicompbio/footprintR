@@ -313,10 +313,9 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         curr_Nmod[1] = 0;
         curr_Nvalid[0] = 0;
         curr_Nvalid[1] = 0;
-
+        
         // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
-
             if (plp[j].is_del || plp[j].is_refskip ||
                 (plp[j].b->core.flag & BAM_FSECONDARY) ||
                 (plp[j].b->core.flag & BAM_FSUPPLEMENTARY)) {
@@ -361,7 +360,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                         read_id.push_back(bam_get_qname(plp[j].b));
                         mod_prob.push_back(((double) mods[0].qual + 0.5) / 256.0);
                     }
-                } else {
+                } else if (impl) {
                     curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
                     if (level == "summary") {
                         curr_Nvalid[curr_strand]++;
