@@ -198,24 +198,6 @@ std::string construct_read_label(const bam1_t *aln,
     return label;
 }
 
-// calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
-int calculate_aligned_bases(bam1_t *bamdata) {
-    uint32_t *cigar = bam_get_cigar(bamdata);
-    int aligned_bases = 0;
-
-    // loop over CIGAR operations
-    for (uint32_t i = 0; i < bamdata->core.n_cigar; i++) {
-        uint32_t op = bam_cigar_op(cigar[i]);
-
-        // only count 'M', '=', or 'X' operations
-        if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
-            aligned_bases += bam_cigar_oplen(cigar[i]);
-        }
-    }
-
-    return aligned_bases;
-}
-
 // process a single bam record:
 // - increase alignment counter (passed by reference)
 // - extract information from record (qscore, modification information, etc.)
