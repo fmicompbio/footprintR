@@ -98,8 +98,7 @@ int plpdestructor(void *data, const bam1_t *b, bam_pileup_cd *cd) {
 //'
 //' @noRd
 //' @keywords internal
-int readdata(void *data, bam1_t *b)
-{
+int readdata(void *data, bam1_t *b) {
     plpconf *conf = (plpconf*)data;
     if (!conf || !conf->infile) {
         // # nocov start
@@ -110,6 +109,26 @@ int readdata(void *data, bam1_t *b)
     //read alignment and send
     // return sam_read1(conf->infile, conf->infile->bam_header, b);
     return sam_itr_next(conf->infile, conf->iter, b);
+}
+
+//' Find unique values in a vector
+//' 
+//' @param original A string vector with possibly repeated values
+//' 
+//' @return A vector with only the unique values from 'original'
+//' 
+//' @noRd
+//' @keywords internal
+std::vector<std::string> uniquevals(const std::vector<std::string> &original) {
+    std::vector<std::string> result;
+    std::set<std::string> aux;
+    for (auto it = original.begin(); it != original.end(); ++it) {
+        if (aux.find(*it) == aux.end()) {
+            aux.insert(*it);
+            result.push_back(*it);
+        }
+    }
+    return result;
 }
 
 //' Read and pile-up base modifications from a bam file.
@@ -132,6 +151,11 @@ int readdata(void *data, bam1_t *b)
 //' @param modbase Character scalar defining the modified base to extract.
 //'     Only modifications corresponding to \code{modbase} and with the
 //'     corresponding expected base in the read sequence will be extracted.
+//' @param level Character scalar indicating whether to return summary-level or
+//'     read-level data. Valid values are "summary" and "read". The read-level
+//'     results from \code{pileup_modbam_cpp} correspond to those from 
+//'     \code{read_modbam_cpp}, but does not contain all annotations currently
+//'     returned by the latter. 
 //' @param mod_prob_thresh Double scalar defining the minimal mod_prob
 //'     of a base to be considered modified.
 //' @param n_threads Integer scalar defining the number of threads to
@@ -143,12 +167,17 @@ int readdata(void *data, bam1_t *b)
 //' @return A named list with elements \code{"chrom"} (chromosome name),
 //'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
 //'     \code{"ref_mod_strand"} (the strand relative to the reference on which
-//'     the modification was identified),  \code{"Nmod"} (number of modified
-//'     bases) and \code{"Nvalid"} (number of total bases).
+//'     the modification was identified). If \code{level} is \code{"summary"}, 
+//'     the list additionally contains slots \code{"Nmod"} (number of modified
+//'     bases) and \code{"Nvalid"} (number of total bases). If \code{level} is
+//'     \code{"read"}, it contains slots \code{"mod_prob"} and \code{"read_id"}.
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-//' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", 0.7, 1, TRUE)
+//' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "summary", 0.7, 1, TRUE)
+//' str(res)
+//' 
+//' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "read", 0.7, 1, TRUE)
 //' str(res)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -156,7 +185,7 @@ int readdata(void *data, bam1_t *b)
 //'     Helpful examples are available in
 //'      https://github.com/samtools/htslib/blob/develop/samples/pileup_mod.c
 //'
-//' @author Michael Stadler
+//' @author Michael Stadler, Charlotte Soneson
 //'
 //' @importFrom cli cli_progress_step cli_progress_done
 //'
@@ -166,6 +195,7 @@ int readdata(void *data, bam1_t *b)
 Rcpp::List pileup_modbam_cpp(std::string inname_str,
                              std::vector<std::string> regions,
                              char modbase,
+                             std::string level = "summary",
                              double mod_prob_thresh = 0.5,
                              int n_threads = 2,
                              bool verbose = false) {
@@ -189,15 +219,19 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     char **regions_c = NULL;
     int strand = 0, impl = 0;
     char canonical = '0';
+    Rcpp::List res;
 
-    std::vector<std::string> chrom;
-    std::vector<int> ref_position;
-    std::vector<char> ref_mod_strand;
+    // ... return values
     std::vector<int> Nmod;
     std::vector<int> Nvalid;
+    std::vector<double> mod_prob;
+    std::vector<std::string> read_id;
     int curr_Nmod[2] = {0, 0};   // for +/- strand modification counts
     int curr_Nvalid[2] = {0, 0};
     int curr_strand = 0;
+    std::vector<std::string> chrom;
+    std::vector<int> ref_position;
+    std::vector<char> ref_mod_strand;
 
     // ... cli progress bar
     Rcpp::RObject bar;
@@ -315,36 +349,54 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                                     modbase, &strand, &impl, &canonical) == 0) {
                 if (modlen > 0) {
                     curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
-                    curr_Nvalid[curr_strand]++;
-                    if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
-                        curr_Nmod[curr_strand]++;
+                    if (level == "summary") {
+                        curr_Nvalid[curr_strand]++;
+                        if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
+                            curr_Nmod[curr_strand]++;
+                        }
+                    } else if (level == "read") {
+                        chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+                        ref_position.push_back(refpos + 1);
+                        ref_mod_strand.push_back(curr_strand == 0 ? '+' : '-');
+                        read_id.push_back(bam_get_qname(plp[j].b));
+                        mod_prob.push_back(((double) mods[0].qual + 0.5) / 256.0);
                     }
                 } else {
                     curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
-                    curr_Nvalid[curr_strand]++;
+                    if (level == "summary") {
+                        curr_Nvalid[curr_strand]++;
+                    } else if (level == "read") {
+                        chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+                        ref_position.push_back(refpos + 1);
+                        ref_mod_strand.push_back(curr_strand == 0 ? '+' : '-');
+                        read_id.push_back(bam_get_qname(plp[j].b));
+                        mod_prob.push_back(-1.0);
+                    }
                 }
             }
         }
 
         // add counters for refpos to return value vectors
-        // ... plus strand
-        if (curr_Nvalid[0] > 0) {
-            chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
-            ref_position.push_back(refpos + 1);
-            ref_mod_strand.push_back('+');
-            Nmod.push_back(curr_Nmod[0]);
-            Nvalid.push_back(curr_Nvalid[0]);
+        if (level == "summary") {
+            // ... plus strand
+            if (curr_Nvalid[0] > 0) {
+                chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+                ref_position.push_back(refpos + 1);
+                ref_mod_strand.push_back('+');
+                Nmod.push_back(curr_Nmod[0]);
+                Nvalid.push_back(curr_Nvalid[0]);
+            }
+            
+            // ... minus strand
+            if (curr_Nvalid[1] > 0) {
+                chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+                ref_position.push_back(refpos + 1);
+                ref_mod_strand.push_back('-');
+                Nmod.push_back(curr_Nmod[1]);
+                Nvalid.push_back(curr_Nvalid[1]);
+            }
         }
-
-        // ... minus strand
-        if (curr_Nvalid[1] > 0) {
-            chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
-            ref_position.push_back(refpos + 1);
-            ref_mod_strand.push_back('-');
-            Nmod.push_back(curr_Nmod[1]);
-            Nvalid.push_back(curr_Nvalid[1]);
-        }
-
+        
         refposcount++;
         if (verbose && CLI_SHOULD_TICK) {
             // # nocov start
@@ -386,13 +438,27 @@ end:
 
     } else {
         // create return list
-        Rcpp::List res = Rcpp::List::create(
-            Rcpp::_["chrom"] = chrom,
-            Rcpp::_["ref_position"] = ref_position,
-            Rcpp::_["ref_mod_strand"] = ref_mod_strand,
-            Rcpp::_["Nmod"] = Nmod,
-            Rcpp::_["Nvalid"] = Nvalid);
+        if (level == "summary") {
+            res = Rcpp::List::create(
+                Rcpp::_["chrom"] = chrom,
+                Rcpp::_["ref_position"] = ref_position,
+                Rcpp::_["ref_mod_strand"] = ref_mod_strand,
+                Rcpp::_["Nmod"] = Nmod,
+                Rcpp::_["Nvalid"] = Nvalid);
+        } else if (level == "read") {
+            std::vector<std::string> df_read_id = uniquevals(read_id);
+            Rcpp::DataFrame df = Rcpp::DataFrame::create(
+                Rcpp::_["read_id"] = df_read_id);
+            res = Rcpp::List::create(
+                Rcpp::_["chrom"] = chrom,
+                Rcpp::_["ref_position"] = ref_position,
+                Rcpp::_["ref_mod_strand"] = ref_mod_strand,
+                Rcpp::_["mod_prob"] = mod_prob,
+                Rcpp::_["read_id"] = read_id,
+                Rcpp::_["read_df"] = df);
+        }
 
         return res;
     }
 }
+

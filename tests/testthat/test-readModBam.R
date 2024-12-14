@@ -147,6 +147,11 @@ test_that("readModBam works", {
                          sequenceContextWidth = 1, sequenceReference = ref,
                          seqnamesToSampleFrom = "chr1", verbose = FALSE,
                          BPPARAM = BiocParallel::SerialParam())
+    se1quick <- readModBam(bamfiles = modbamfiles, regions = reg1,
+                           modbase = "a", level = "quickread", nAlnsToSample = 0,
+                           sequenceContextWidth = 1, sequenceReference = ref,
+                           seqnamesToSampleFrom = "chr1", verbose = FALSE,
+                           BPPARAM = BiocParallel::SerialParam())
     se2 <- readModBam(bamfiles = unname(modbamfiles),
                       regions = reg2,
                       modbase = "a",
@@ -159,6 +164,12 @@ test_that("readModBam works", {
                          nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                          BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
                          verbose = FALSE)
+    se2quick <- readModBam(bamfiles = unname(modbamfiles),
+                           regions = reg2,
+                           modbase = "a", level = "quickread",
+                           nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                           BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
+                           verbose = FALSE)
     se3 <- readModBam(bamfiles = modbamfiles,
                       regions = reg3,
                       modbase = "a",
@@ -171,6 +182,12 @@ test_that("readModBam works", {
                          nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                          BPPARAM = BiocParallel::SerialParam(),
                          verbose = FALSE)
+    se3quick <- readModBam(bamfiles = modbamfiles,
+                           regions = reg3,
+                           modbase = "a", level = "quickread",
+                           nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                           BPPARAM = BiocParallel::SerialParam(),
+                           verbose = FALSE)
     se4 <- readModBam(bamfiles = modbamfiles,
                       regions = reg4,
                       modbase = c("a", "m"),
@@ -183,6 +200,12 @@ test_that("readModBam works", {
                          nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
                          BPPARAM = BiocParallel::SerialParam(),
                          verbose = FALSE)
+    se4quick <- readModBam(bamfiles = modbamfiles,
+                           regions = reg4, level = "quickread",
+                           modbase = c("a", "m"),
+                           nAlnsToSample = 0, seqnamesToSampleFrom = "chr1",
+                           BPPARAM = BiocParallel::SerialParam(),
+                           verbose = FALSE)
     se5a <- readModBam(bamfiles = modbamfiles[1],
                        regions = reg5[1],
                        modbase = "a",
@@ -236,6 +259,12 @@ test_that("readModBam works", {
                           sampleAnnot = sample_annot,
                           BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                           verbose = FALSE)
+    se7quick  <- readModBam(bamfiles = modbamfiles,
+                            regions = reg5[1:2],
+                            modbase = "a", level = "quickread",
+                            sampleAnnot = sample_annot,
+                            BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                            verbose = FALSE)
     se8 <- readModBam(bamfiles = modbamfiles,
                       regions = reg1,
                       modbase = "a",
@@ -246,15 +275,22 @@ test_that("readModBam works", {
                          modbase = "a", level = "summary",
                          BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
                          trim = TRUE, verbose = FALSE)
+    se8quick <- readModBam(bamfiles = modbamfiles,
+                           regions = reg1,
+                           modbase = "a", level = "quickread",
+                           BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                           trim = TRUE, verbose = FALSE)
 
     seL <- list(se1, se2, se3, se4, se5a, se5b, se6a, se6b, se8)
     seLsum <- list(se1sum, se2sum, se3sum, se4sum, se8sum)
+    seLquick <- list(se1quick, se2quick, se3quick, se4quick, se8quick)
 
     # ... structure
     expected_coldata_names <- c("sample", "modbase", "n_reads", "readInfo")
     expected_coldata_names_summary <- c("sample", "modbase")
     expected_read_info_names <- c("qscore", "read_length", "aligned_length",
                                   "variant_label", "aligned_fraction")
+    expected_read_info_names_quick <- c("aligned_fraction")
     for (se in c(seL, list(se7))) {
         expect_s4_class(se, "RangedSummarizedExperiment")
         expect_s4_class(rowRanges(se), "GPos")
@@ -287,22 +323,49 @@ test_that("readModBam works", {
     expect_identical(colnames(colData(se7sum)), c(expected_coldata_names_summary,
                                                   "group", "condition"))
 
+    ## ... ... quick-read
+    for (se in c(seLquick, list(se7quick))) {
+        expect_s4_class(se, "RangedSummarizedExperiment")
+        expect_s4_class(rowRanges(se), "GPos")
+        expect_s4_class(colData(se)$readInfo, "SimpleList")
+        res_se <- lapply(colData(se)$readInfo, function(df) {
+            expect_s4_class(df, "DataFrame")
+            expect_named(df, expected_read_info_names_quick)
+        })
+        expect_identical(assayNames(se), "mod_prob")
+        expect_s4_class(assay(se, "mod_prob"), "DFrame")
+        expect_s4_class(assay(se, "mod_prob")[[1]], "NaMatrix")
+        expect_equal(vapply(assay(se, "mod_prob"), ncol, 0), se$n_reads,
+                     ignore_attr = TRUE)
+    }
+    for (se in seLquick) {
+        expect_identical(colnames(colData(se)), expected_coldata_names)
+    }
+    expect_identical(colnames(colData(se7quick)), c(expected_coldata_names,
+                                                    "group", "condition"))
+    
     expect_identical(colnames(se1), names(modbamfiles))
     expect_identical(colnames(se1sum), names(modbamfiles))
+    expect_identical(colnames(se1quick), names(modbamfiles))
     expect_identical(colnames(se2), c("s1", "s2"))
     expect_identical(colnames(se2sum), c("s1", "s2"))
+    expect_identical(colnames(se2quick), c("s1", "s2"))
     expect_identical(colnames(se3), names(modbamfiles))
     expect_identical(colnames(se3sum), names(modbamfiles))
+    expect_identical(colnames(se3quick), names(modbamfiles))
     expect_identical(colnames(se4), names(modbamfiles))
     expect_identical(colnames(se4sum), names(modbamfiles))
+    expect_identical(colnames(se4quick), names(modbamfiles))
     expect_identical(colnames(se5a), names(modbamfiles)[1])
     expect_identical(colnames(se5b), names(modbamfiles)[1])
     expect_identical(colnames(se6a), names(modbamfiles)[1])
     expect_identical(colnames(se6b), names(modbamfiles)[1])
     expect_identical(colnames(se7), names(modbamfiles))
     expect_identical(colnames(se7sum), names(modbamfiles))
+    expect_identical(colnames(se7quick), names(modbamfiles))
     expect_identical(colnames(se8), names(modbamfiles))
     expect_identical(colnames(se8sum), names(modbamfiles))
+    expect_identical(colnames(se8quick), names(modbamfiles))
     
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
@@ -353,6 +416,18 @@ test_that("readModBam works", {
     expect_identical(colData(se1)[, c("sample", "modbase")],
                      colData(se1sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se1), rowRanges(se1sum))
+    # ... compare to se1quick
+    expect_identical(rownames(se1), rownames(se1quick))
+    expect_identical(rowRanges(se1), rowRanges(se1quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se1, "mod_prob"), 
+                     assay(se1quick, "mod_prob"))
+    expect_identical(metadata(se1), metadata(se1quick))
+    expect_identical(colData(se1)[, c("sample", "modbase", "n_reads")],
+                     colData(se1quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se1)$readInfo$sample1),
+                     rownames(colData(se1quick)$readInfo$sample1))
     
     # ... content se2
     expect_identical(unname(se2$n_reads), c(3L, 2L))
@@ -375,6 +450,18 @@ test_that("readModBam works", {
     expect_identical(colData(se2)[, c("sample", "modbase")],
                      colData(se2sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se2), rowRanges(se2sum))
+    # ... compare to se2quick
+    expect_identical(rownames(se2), rownames(se2quick))
+    expect_identical(rowRanges(se2), rowRanges(se2quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se2, "mod_prob"), 
+                     assay(se2quick, "mod_prob"))
+    expect_identical(metadata(se2), metadata(se2quick))
+    expect_identical(colData(se2)[, c("sample", "modbase", "n_reads")],
+                     colData(se2quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se2)$readInfo$sample1),
+                     rownames(colData(se2quick)$readInfo$sample1))
     
     # ... content se3
     expect_identical(unname(se3$n_reads), c(3L, 2L))
@@ -416,6 +503,18 @@ test_that("readModBam works", {
     expect_identical(colData(se3)[, c("sample", "modbase")],
                      colData(se3sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se3), rowRanges(se3sum))
+    # ... compare to se3quick
+    expect_identical(rownames(se3), rownames(se3quick))
+    expect_identical(rowRanges(se3), rowRanges(se3quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se3, "mod_prob"), 
+                     assay(se3quick, "mod_prob"))
+    expect_identical(metadata(se3), metadata(se3quick))
+    expect_identical(colData(se3)[, c("sample", "modbase", "n_reads")],
+                     colData(se3quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se3)$readInfo$sample1),
+                     rownames(colData(se3quick)$readInfo$sample1))
     
     # ... content se4
     expect_identical(unname(se4$n_reads), c(3L, 0L))
@@ -446,6 +545,18 @@ test_that("readModBam works", {
     expect_identical(colData(se4)[, c("sample", "modbase")],
                      colData(se4sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se4), rowRanges(se4sum))
+    # ... compare to se4quick
+    expect_identical(rownames(se4), rownames(se4quick))
+    expect_identical(rowRanges(se4), rowRanges(se4quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se4, "mod_prob"), 
+                     assay(se4quick, "mod_prob"))
+    expect_identical(metadata(se4), metadata(se4quick))
+    expect_identical(colData(se4)[, c("sample", "modbase", "n_reads")],
+                     colData(se4quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se4)$readInfo$sample1),
+                     rownames(colData(se4quick)$readInfo$sample1))
     
     # ... content of se5a and se5b (se5a should be a subset of se5b)
     # ... ... check ground truth
@@ -482,6 +593,18 @@ test_that("readModBam works", {
     expect_identical(colData(se7)[, c("sample", "modbase")],
                      colData(se7sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se7), rowRanges(se7sum))
+    # ... compare to se7quick
+    expect_identical(rownames(se7), rownames(se7quick))
+    expect_identical(rowRanges(se7), rowRanges(se7quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se7, "mod_prob"), 
+                     assay(se7quick, "mod_prob"))
+    expect_identical(metadata(se7), metadata(se7quick))
+    expect_identical(colData(se7)[, c("sample", "modbase", "n_reads")],
+                     colData(se7quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se7)$readInfo$sample1),
+                     rownames(colData(se7quick)$readInfo$sample1))
 
     # ... content of se8 (like se1, but trimmed)
     expect_identical(unname(se8$n_reads), c(4L, 6L))
@@ -506,6 +629,18 @@ test_that("readModBam works", {
     expect_identical(colData(se8)[, c("sample", "modbase")],
                      colData(se8sum)[, c("sample", "modbase")])
     expect_identical(rowRanges(se8), rowRanges(se8sum))
+    # ... compare to se8quick
+    expect_identical(rownames(se8), rownames(se8quick))
+    expect_identical(rowRanges(se8), rowRanges(se8quick))
+    ## in principle, there is no guarantee that the reads have to be in the 
+    ## same order (but here they are)
+    expect_identical(assay(se8, "mod_prob"), 
+                     assay(se8quick, "mod_prob"))
+    expect_identical(metadata(se8), metadata(se8quick))
+    expect_identical(colData(se8)[, c("sample", "modbase", "n_reads")],
+                     colData(se8quick)[, c("sample", "modbase", "n_reads")])
+    expect_identical(rownames(colData(se8)$readInfo$sample1),
+                     rownames(colData(se8quick)$readInfo$sample1))
 })
 
 test_that("readModBam correctly labels reads", {

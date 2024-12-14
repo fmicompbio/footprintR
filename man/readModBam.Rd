@@ -51,6 +51,9 @@ data. Supported values are:
 \describe{
 \item{"read"}{: Extracts modification probabilities for individual
 reads into an assay called \code{"mod_prob"}.}
+\item{"quickread"}{: Like "read", but runs faster, does not support
+read sampling, and does not return all annotations currently
+provided by "read".}
 \item{"summary"}{: Counts the total and modified bases for each
 position and strand and returns them in assays named
 \code{"Nvalid"} and \code{"Nmod"}, respectively.}
