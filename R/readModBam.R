@@ -339,23 +339,15 @@ readModBam <- function(bamfiles,
                 modmat[[nm]] <- namat
                 rownames(x$read_df) <- paste0(nm, "-", x$read_df$read_id)
                 x$read_df$read_id <- NULL
-                if (level == "read") {
-                    x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
-                } else {
-                    x$read_df$aligned_fraction <- NA_real_
-                }
+                x$read_df$aligned_fraction <- x$read_df$aligned_length / x$read_df$read_length
                 readdfL[[nm]] <- DataFrame(x$read_df)
             } else {
                 modmat[[nm]] <- NaArray(dim = c(length(gpos), 0), type = "double")
-                if (level == "read") {
-                    readdfL[[nm]] <- DataFrame(qscore = numeric(0),
-                                               read_length = integer(0),
-                                               aligned_length = integer(0),
-                                               variant_label = character(0),
-                                               aligned_fraction = numeric(0))   
-                } else {
-                    readdfL[[nm]] <- DataFrame(aligned_fraction = numeric(0))
-                }
+                readdfL[[nm]] <- DataFrame(qscore = numeric(0),
+                                           read_length = integer(0),
+                                           aligned_length = integer(0),
+                                           variant_label = character(0),
+                                           aligned_fraction = numeric(0))   
             }
         }
     } else {

@@ -111,26 +111,6 @@ int readdata(void *data, bam1_t *b) {
     return sam_itr_next(conf->infile, conf->iter, b);
 }
 
-//' Find unique values in a vector
-//' 
-//' @param original A string vector with possibly repeated values
-//' 
-//' @return A vector with only the unique values from 'original'
-//' 
-//' @noRd
-//' @keywords internal
-std::vector<std::string> uniquevals(const std::vector<std::string> &original) {
-    std::vector<std::string> result;
-    std::set<std::string> aux;
-    for (auto it = original.begin(); it != original.end(); ++it) {
-        if (aux.find(*it) == aux.end()) {
-            aux.insert(*it);
-            result.push_back(*it);
-        }
-    }
-    return result;
-}
-
 //' Read and pile-up base modifications from a bam file.
 //'
 //' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
@@ -220,8 +200,11 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     int strand = 0, impl = 0;
     char canonical = '0';
     Rcpp::List res;
+    uint8_t *qs_data = NULL, *qual = NULL;
+    unsigned int sum_qual = 0;
+    double qs_value = -1;
 
-    // ... return values
+    // ... return values (one per modification)
     std::vector<int> Nmod;
     std::vector<int> Nvalid;
     std::vector<double> mod_prob;
@@ -232,6 +215,13 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     std::vector<std::string> chrom;
     std::vector<int> ref_position;
     std::vector<char> ref_mod_strand;
+    
+    // ... return values (one per aligned read)
+    std::vector<std::string> df_read_id;
+    std::vector<double> df_qscore;
+    std::vector<int> df_read_length;
+    std::vector<int> df_aligned_length;
+    Rcpp::CharacterVector df_variant_label;
 
     // ... cli progress bar
     Rcpp::RObject bar;
@@ -250,7 +240,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     // open input files
     if (!(conf.infile = sam_open(conf.inname, "r"))) {
         had_error = true; // # nocov start
-        snprintf(buffer, buffer_len, "Could not open %s\n", conf.inname);
+        snprintf(buffer, buffer_len, "Could not open input file %s\n", conf.inname);
         goto end; // # nocov end
     }
 
@@ -346,6 +336,30 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             // increment curr_Nmod[curr_strand] if base is modified and has the expected base
             if (bam_mods_query_type((hts_base_mod_state*)plp[j].cd.p, 
                                     modbase, &strand, &impl, &canonical) == 0) {
+                
+                // if this is the first time the read is seen, add it to the 
+                // read df vectors
+                if (std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
+                    qs_data = bam_aux_get(plp[j].b, "qs");
+                    if (qs_data != NULL) {
+                        qs_value = bam_aux2f(qs_data);
+                    } else {
+                        // qs tag is missing
+                        //   --> calculate mean of base QUAL values
+                        qual = bam_get_qual(plp[j].b);
+                        sum_qual = 0;
+                        for (j = 0; j < plp[j].b->core.l_qseq; j++) {
+                            sum_qual += qual[j];
+                        }
+                        qs_value = ((double) sum_qual) / plp[j].b->core.l_qseq;
+                    }
+                    df_read_id.push_back(bam_get_qname(plp[j].b));
+                    df_qscore.push_back(qs_value);
+                    df_read_length.push_back(plp[j].b->core.l_qseq);
+                    df_aligned_length.push_back(calculate_aligned_bases(plp[j].b));
+                    df_variant_label.push_back(NA_STRING);
+                }
+
                 if (modlen > 0) {
                     curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
                     if (level == "summary") {
@@ -445,9 +459,13 @@ end:
                 Rcpp::_["Nmod"] = Nmod,
                 Rcpp::_["Nvalid"] = Nvalid);
         } else if (level == "read") {
-            std::vector<std::string> df_read_id = uniquevals(read_id);
             Rcpp::DataFrame df = Rcpp::DataFrame::create(
-                Rcpp::_["read_id"] = df_read_id);
+                Rcpp::_["read_id"] = df_read_id,
+                Rcpp::_["qscore"] = df_qscore,
+                Rcpp::_["read_length"] = df_read_length,
+                Rcpp::_["aligned_length"] = df_aligned_length,
+                Rcpp::_["variant_label"] = df_variant_label
+            );
             res = Rcpp::List::create(
                 Rcpp::_["chrom"] = chrom,
                 Rcpp::_["ref_position"] = ref_position,

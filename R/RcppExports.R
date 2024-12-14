@@ -127,16 +127,6 @@ NULL
 #' @keywords internal
 NULL
 
-#' Find unique values in a vector
-#' 
-#' @param original A string vector with possibly repeated values
-#' 
-#' @return A vector with only the unique values from 'original'
-#' 
-#' @noRd
-#' @keywords internal
-NULL
-
 #' Read and pile-up base modifications from a bam file.
 #'
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
