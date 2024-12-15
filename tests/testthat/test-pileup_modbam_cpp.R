@@ -32,10 +32,9 @@ test_that("pileup_modbam_cpp works", {
                  "Failed to get bam iterator")
     
     # ... too many modifications on a single base
-    # ... crashes
-    # expect_error(pileup_modbam_cpp(inname_str = bam8, regions = "chr1",
-    #                                modbase = "a", verbose = FALSE),
-    #              "More modifications than footprintR")
+    expect_error(pileup_modbam_cpp(inname_str = bam8, regions = "chr1",
+                                   modbase = "a", verbose = FALSE),
+                 "More modifications than footprintR")
     
     ## expected results --------------------------------------------------------
     # ... run pileup_modbam_cpp

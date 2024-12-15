@@ -363,7 +363,13 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                     df_variant_label.push_back(NA_STRING);
                 }
 
-                if (modlen > 0) {
+                if (modlen > (int)(sizeof(mods) / sizeof(mods[0]))) {
+                    had_error = true;
+                    snprintf(buffer, buffer_len,
+                             "More modifications than footprintR:::pileup_modbam_cpp can handle (read %s)\n",
+                             bam_get_qname(plp[j].b));
+                    goto end;
+                } else if (modlen > 0) {
                     curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
                     if (level == "summary") {
                         curr_Nvalid[curr_strand]++;
@@ -377,7 +383,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                         read_id.push_back(bam_get_qname(plp[j].b));
                         mod_prob.push_back(((double) mods[0].qual + 0.5) / 256.0);
                     }
-                } else if (impl) {
+                } else if (!modlen && impl) {
                     curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;
                     if (level == "summary") {
                         curr_Nvalid[curr_strand]++;
