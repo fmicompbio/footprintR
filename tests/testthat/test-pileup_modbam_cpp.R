@@ -59,11 +59,11 @@ test_that("pileup_modbam_cpp works", {
                               n_threads = 1, 
                               verbose = FALSE)
     # ... crashes
-    # res4 <- pileup_modbam_cpp(inname_str = bam4,
-    #                           regions = "chr1",
-    #                           modbase = "a", level = "read",
-    #                           n_threads = 1,
-    #                           verbose = FALSE)
+    res4 <- pileup_modbam_cpp(inname_str = bam4,
+                              regions = "chr1",
+                              modbase = "a", level = "read",
+                              n_threads = 1,
+                              verbose = FALSE)
     res5 <- pileup_modbam_cpp(inname_str = bam5, 
                               regions = "chr1", 
                               modbase = "a", level = "read",
@@ -94,7 +94,7 @@ test_that("pileup_modbam_cpp works", {
     expect_type(res1, "list")
     expect_type(res2, "list")
     expect_type(res3, "list")
-    # expect_type(res4, "list")
+    expect_type(res4, "list")
     expect_type(res5, "list")
     expect_type(res6a, "list")
     expect_type(res6b, "list")
@@ -104,7 +104,7 @@ test_that("pileup_modbam_cpp works", {
     expect_named(res1, expected_names)
     expect_named(res2, expected_names)
     expect_named(res3, expected_names)
-    # expect_named(res4, expected_names)
+    expect_named(res4, expected_names)
     expect_named(res5, expected_names)
     expect_named(res6a, expected_names)
     expect_named(res6b, expected_names)
@@ -116,7 +116,7 @@ test_that("pileup_modbam_cpp works", {
         expect_type(res1[[expected_names[i]]], expected_types[i])
         expect_type(res2[[expected_names[i]]], expected_types[i])
         expect_type(res3[[expected_names[i]]], expected_types[i])
-        # expect_type(res4[[expected_names[i]]], expected_types[i])
+        expect_type(res4[[expected_names[i]]], expected_types[i])
         expect_type(res5[[expected_names[i]]], expected_types[i])
         expect_type(res6a[[expected_names[i]]], expected_types[i])
         expect_type(res6b[[expected_names[i]]], expected_types[i])
@@ -125,7 +125,7 @@ test_that("pileup_modbam_cpp works", {
     expect_s3_class(res1[["read_df"]], "data.frame")
     expect_s3_class(res2[["read_df"]], "data.frame")
     expect_s3_class(res3[["read_df"]], "data.frame")
-    # expect_s3_class(res4[["read_df"]], "data.frame")
+    expect_s3_class(res4[["read_df"]], "data.frame")
     expect_s3_class(res5[["read_df"]], "data.frame")
     expect_s3_class(res6a[["read_df"]], "data.frame")
     expect_s3_class(res6b[["read_df"]], "data.frame")
@@ -134,7 +134,7 @@ test_that("pileup_modbam_cpp works", {
     expect_named(res1$read_df, expected_df_colnames)
     expect_named(res2$read_df, expected_df_colnames)
     expect_named(res3$read_df, expected_df_colnames)
-    # expect_named(res4$read_df, expected_df_colnames)
+    expect_named(res4$read_df, expected_df_colnames)
     expect_named(res5$read_df, expected_df_colnames)
     expect_named(res6a$read_df, expected_df_colnames)
     expect_named(res6b$read_df, expected_df_colnames)
@@ -205,19 +205,21 @@ test_that("pileup_modbam_cpp works", {
     expect_identical(nrow(res3$read_df), 0L)
     
     # ... content of res4
-    # expect_equal(res4, list(
-    #     read_id = rep(c("artificial-read-1", "artificial-read-2"), c(5, 3)),
-    #     ref_position = c(6940001L, 6940008L, 6940012L, 6940015L, 6940019L,
-    #                      6940004L, 6940010L, 6940017L),
-    #     chrom = rep("chr1", 8),
-    #     ref_mod_strand = rep(c("+", "-"), c(5, 3)),
-    #     mod_prob = c(0.134765625, 0.380859375, -1, 0.724609375, 0.998046875,
-    #                  0.318359375, -1, -1),
-    #     read_df = data.frame(read_id = c("artificial-read-1", "artificial-read-2"),
-    #                          qscore = c(13.4761904761905, 13.24),
-    #                          read_length = c(21L, 25L),
-    #                          aligned_length = c(19L, 23L),
-    #                          variant_label = rep(NA_character_, 2L))))
+    expect_equal(res4, list(
+        chrom = rep("chr1", 8),
+        ref_position = c(6940001L, 6940004L, 6940008L, 6940010L, 6940012L, 
+                         6940015L, 6940017L, 6940019L),
+        ref_mod_strand = c("+", "-", "+", "-", "+", "+", "-", "+"),
+        mod_prob = c(0.134765625, 0.318359375, 0.380859375, -1, -1, 
+                     0.724609375, -1, 0.998046875),
+        read_id = c("artificial-read-1", "artificial-read-2", "artificial-read-1", 
+                    "artificial-read-2", "artificial-read-1", "artificial-read-1", 
+                    "artificial-read-2", "artificial-read-1"),
+        read_df = data.frame(read_id = c("artificial-read-1", "artificial-read-2"),
+                             qscore = c(13.4761904761905, 13.24),
+                             read_length = c(21L, 25L),
+                             aligned_length = c(19L, 23L),
+                             variant_label = rep(NA_character_, 2L))))
     
     # ... content of res5
     expect_identical(res5, list(

@@ -179,12 +179,15 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                              double mod_prob_thresh = 0.5,
                              int n_threads = 2,
                              bool verbose = false) {
+    // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
+    hts_set_log_level(HTS_LOG_OFF);
+    
     // variable declarations
     bam1_t *bamdata = NULL;
     plpconf conf = {0};
     conf.inname = (char*)inname_str.c_str();
     bam_plp_t plpiter = NULL;
-    int tid = -1, depth = -1, j = 0, modlen = 0;
+    int tid = -1, depth = -1, j = 0, modlen = 0, v = 0;
     #define NMODS 5
     hts_base_mod mods[NMODS] = {{0}}; //ACGTN
     int refpos = -1;
@@ -348,8 +351,8 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                         //   --> calculate mean of base QUAL values
                         qual = bam_get_qual(plp[j].b);
                         sum_qual = 0;
-                        for (j = 0; j < plp[j].b->core.l_qseq; j++) {
-                            sum_qual += qual[j];
+                        for (v = 0; v < plp[j].b->core.l_qseq; v++) {
+                            sum_qual += qual[v];
                         }
                         qs_value = ((double) sum_qual) / plp[j].b->core.l_qseq;
                     }
