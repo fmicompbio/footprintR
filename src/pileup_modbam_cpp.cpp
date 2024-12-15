@@ -342,7 +342,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                 
                 // if this is the first time the read is seen, add it to the 
                 // read df vectors
-                if (std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
+                if (level == "read" && std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
                     qs_data = bam_aux_get(plp[j].b, "qs");
                     if (qs_data != NULL) {
                         qs_value = bam_aux2f(qs_data);
