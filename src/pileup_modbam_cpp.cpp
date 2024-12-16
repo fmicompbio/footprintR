@@ -309,6 +309,30 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         
         // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
+            // if this is the first time the read is seen, add it to the 
+            // read df vectors
+            if (level == "read" && plp[j].is_head) {
+                // if (level == "read" && std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
+                qs_data = bam_aux_get(plp[j].b, "qs");
+                if (qs_data != NULL) {
+                    qs_value = bam_aux2f(qs_data);
+                } else {
+                    // qs tag is missing
+                    //   --> calculate mean of base QUAL values
+                    qual = bam_get_qual(plp[j].b);
+                    sum_qual = 0;
+                    for (v = 0; v < plp[j].b->core.l_qseq; v++) {
+                        sum_qual += qual[v];
+                    }
+                    qs_value = ((double) sum_qual) / plp[j].b->core.l_qseq;
+                }
+                df_read_id.push_back(bam_get_qname(plp[j].b));
+                df_qscore.push_back(qs_value);
+                df_read_length.push_back(plp[j].b->core.l_qseq);
+                df_aligned_length.push_back(calculate_aligned_bases(plp[j].b));
+                df_variant_label.push_back(NA_STRING);
+            }
+            
             if (plp[j].is_del || plp[j].is_refskip ||
                 (plp[j].b->core.flag & BAM_FSECONDARY) ||
                 (plp[j].b->core.flag & BAM_FSUPPLEMENTARY)) {
@@ -339,29 +363,6 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             // increment curr_Nmod[curr_strand] if base is modified and has the expected base
             if (bam_mods_query_type((hts_base_mod_state*)plp[j].cd.p, 
                                     modbase, &strand, &impl, &canonical) == 0) {
-                
-                // if this is the first time the read is seen, add it to the 
-                // read df vectors
-                if (level == "read" && std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
-                    qs_data = bam_aux_get(plp[j].b, "qs");
-                    if (qs_data != NULL) {
-                        qs_value = bam_aux2f(qs_data);
-                    } else {
-                        // qs tag is missing
-                        //   --> calculate mean of base QUAL values
-                        qual = bam_get_qual(plp[j].b);
-                        sum_qual = 0;
-                        for (v = 0; v < plp[j].b->core.l_qseq; v++) {
-                            sum_qual += qual[v];
-                        }
-                        qs_value = ((double) sum_qual) / plp[j].b->core.l_qseq;
-                    }
-                    df_read_id.push_back(bam_get_qname(plp[j].b));
-                    df_qscore.push_back(qs_value);
-                    df_read_length.push_back(plp[j].b->core.l_qseq);
-                    df_aligned_length.push_back(calculate_aligned_bases(plp[j].b));
-                    df_variant_label.push_back(NA_STRING);
-                }
 
                 if (modlen > (int)(sizeof(mods) / sizeof(mods[0]))) {
                     had_error = true;

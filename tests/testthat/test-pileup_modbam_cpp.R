@@ -57,7 +57,6 @@ test_that("pileup_modbam_cpp works", {
                               modbase = "m", level = "read",
                               n_threads = 1, 
                               verbose = FALSE)
-    # ... crashes
     res4 <- pileup_modbam_cpp(inname_str = bam4,
                               regions = "chr1",
                               modbase = "a", level = "read",
@@ -201,7 +200,9 @@ test_that("pileup_modbam_cpp works", {
     for (nm in setdiff(expected_names, "read_df")) {
         expect_length(res3[[nm]], 0L)
     }
-    expect_identical(nrow(res3$read_df), 0L)
+    ## This will still contain all reads - will be filtered out in the 
+    ## readModBam R wrapper
+    expect_identical(nrow(res3$read_df), 10L)
     
     # ... content of res4
     expect_equal(res4, list(
