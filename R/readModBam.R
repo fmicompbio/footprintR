@@ -289,6 +289,7 @@ readModBam <- function(bamfiles,
                                           n_threads = as.integer(myncpuDecompression),
                                           verbose = myverbose)
                 resL$mod_prob[resL$mod_prob == -1] <- 0
+                resL$read_df <- resL$read_df[resL$read_df$read_id %in% resL$read_id, ]
             }
             resL
     }, BPPARAM = BPPARAM)
@@ -414,5 +415,9 @@ readModBam <- function(bamfiles,
         colnames(se) <- rownames(colData(se))
     }
 
+    # Remove reads with all NA values
+    if (level %in% c("read", "quickread")) {
+        se <- filterReads(se, readInfoCol = NULL, qcCol = NULL, prune = FALSE)
+    }
     se
 }
