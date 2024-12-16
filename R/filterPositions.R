@@ -197,6 +197,9 @@ filterPositions <- function(se,
     .assertVector(x = filters, type = "character",
                   validValues = c("sequenceContext", "coverage",
                                   "repeated.positions", "all.na"))
+    .assertScalar(x = assayNameNA, type = "character",
+                  validValues = .getReadLevelAssayNames(se),
+                  allowNULL = TRUE)
 
     for (f in filters) {
         if (f == "sequenceContext") {
@@ -220,11 +223,13 @@ filterPositions <- function(se,
     }
 
     ## Remove reads that are NA in all retained positions
-    readsToKeep <- lapply(assay(se, assayNameNA),
-                          function(x) {
-                              which(colSums(is_nonna(x)) > 0)
-                          })
-    se <- subsetReads(se, readsToKeep)
-
+    if (!is.null(assayNameNA)) {
+        readsToKeep <- lapply(assay(se, assayNameNA),
+                              function(x) {
+                                  which(colSums(is_nonna(x)) > 0)
+                              })
+        se <- subsetReads(se, readsToKeep)
+    }
+    
     se
 }
