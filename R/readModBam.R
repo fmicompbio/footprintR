@@ -30,6 +30,9 @@
 #'     \describe{
 #'         \item{"read"}{: Extracts modification probabilities for individual
 #'             reads into an assay called \code{"mod_prob"}.}
+#'         \item{"quickread"}{: Like "read", but runs faster, does not support
+#'             read sampling, and does not return all annotations currently 
+#'             provided by "read".}
 #'         \item{"summary"}{: Counts the total and modified bases for each
 #'             position and strand and returns them in assays named 
 #'             \code{"Nvalid"} and \code{"Nmod"}, respectively.}
@@ -135,7 +138,7 @@ readModBam <- function(bamfiles,
         stop("`names(bamfiles)` are not unique")
     }
     .assertScalar(x = level, type = "character", 
-                  validValues = c("read", "summary"))
+                  validValues = c("read", "summary", "quickread"))
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
         if (!("sample" %in% colnames(sampleAnnot))) {
@@ -170,8 +173,8 @@ readModBam <- function(bamfiles,
              paste(unique(modbase[i]), collapse = ", "))
     }
     .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
-    if (nAlnsToSample > 0 && level == "summary") {
-        stop("Read sampling is not supported if level is set to 'summary'")
+    if (nAlnsToSample > 0 && level %in% c("summary", "quickread")) {
+        stop("Read sampling is not supported if level is set to 'summary' or 'quickread'")
     }
     if (nAlnsToSample > 0) {
         if (length(regions) > 0) {
@@ -269,13 +272,24 @@ readModBam <- function(bamfiles,
                 # modification probabilities less than 0.05, and read_modbam_cpp returns
                 # a mod_prob of -1 for these.
                 resL$mod_prob[resL$mod_prob == -1] <- 0
-            } else {
+            } else if (mylevel == "summary") {
                 resL <- pileup_modbam_cpp(inname_str = bamf,
                                           regions = myregions_str,
                                           modbase = mymodbase,
+                                          level = "summary",
                                           mod_prob_thresh = mymodProbThreshold,
                                           n_threads = as.integer(myncpuDecompression),
                                           verbose = myverbose)
+            } else if (mylevel == "quickread") {
+                resL <- pileup_modbam_cpp(inname_str = bamf,
+                                          regions = myregions_str,
+                                          modbase = mymodbase,
+                                          level = "read",
+                                          mod_prob_thresh = mymodProbThreshold,
+                                          n_threads = as.integer(myncpuDecompression),
+                                          verbose = myverbose)
+                resL$mod_prob[resL$mod_prob == -1] <- 0
+                resL$read_df <- resL$read_df[resL$read_df$read_id %in% resL$read_id, ]
             }
             resL
     }, BPPARAM = BPPARAM)
@@ -305,7 +319,7 @@ readModBam <- function(bamfiles,
             sequenceReference = sequenceReference)
     }
 
-    if (level == "read") {
+    if (level %in% c("read", "quickread")) {
         # extract unique read names
         readL <- lapply(resLL, function(resL) resL$read_df$read_id)
         
@@ -334,7 +348,7 @@ readModBam <- function(bamfiles,
                                            read_length = integer(0),
                                            aligned_length = integer(0),
                                            variant_label = character(0),
-                                           aligned_fraction = numeric(0))
+                                           aligned_fraction = numeric(0))   
             }
         }
     } else {
@@ -357,7 +371,7 @@ readModBam <- function(bamfiles,
         sample = names(bamfiles),
         modbase = modbase[names(bamfiles)]
     )
-    if (level == "read") {
+    if (level %in% c("read", "quickread")) {
         cdata <- cbind(
             cdata, 
             DataFrame(n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
@@ -370,7 +384,7 @@ readModBam <- function(bamfiles,
                                    drop = FALSE]
         cdata <- cbind(cdata, sampleAnnot)
     }
-    if (level == "read") {
+    if (level %in% c("read", "quickread")) {
         stopifnot(names(modmat) == cdata$sample)
         se <- SummarizedExperiment(
             assays = list(mod_prob = modmat),
@@ -401,5 +415,9 @@ readModBam <- function(bamfiles,
         colnames(se) <- rownames(colData(se))
     }
 
+    # Remove reads with all NA values
+    if (level %in% c("read", "quickread")) {
+        se <- filterReads(se, readInfoCol = NULL, qcCol = NULL, prune = FALSE)
+    }
     se
 }

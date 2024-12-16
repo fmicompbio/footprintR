@@ -147,6 +147,11 @@ NULL
 #' @param modbase Character scalar defining the modified base to extract.
 #'     Only modifications corresponding to \code{modbase} and with the
 #'     corresponding expected base in the read sequence will be extracted.
+#' @param level Character scalar indicating whether to return summary-level or
+#'     read-level data. Valid values are "summary" and "read". The read-level
+#'     results from \code{pileup_modbam_cpp} correspond to those from 
+#'     \code{read_modbam_cpp}, but does not contain all annotations currently
+#'     returned by the latter. 
 #' @param mod_prob_thresh Double scalar defining the minimal mod_prob
 #'     of a base to be considered modified.
 #' @param n_threads Integer scalar defining the number of threads to
@@ -158,12 +163,17 @@ NULL
 #' @return A named list with elements \code{"chrom"} (chromosome name),
 #'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
 #'     \code{"ref_mod_strand"} (the strand relative to the reference on which
-#'     the modification was identified),  \code{"Nmod"} (number of modified
-#'     bases) and \code{"Nvalid"} (number of total bases).
+#'     the modification was identified). If \code{level} is \code{"summary"}, 
+#'     the list additionally contains slots \code{"Nmod"} (number of modified
+#'     bases) and \code{"Nvalid"} (number of total bases). If \code{level} is
+#'     \code{"read"}, it contains slots \code{"mod_prob"} and \code{"read_id"}.
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", 0.7, 1, TRUE)
+#' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "summary", 0.7, 1, TRUE)
+#' str(res)
+#' 
+#' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "read", 0.7, 1, TRUE)
 #' str(res)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
@@ -171,14 +181,14 @@ NULL
 #'     Helpful examples are available in
 #'      https://github.com/samtools/htslib/blob/develop/samples/pileup_mod.c
 #'
-#' @author Michael Stadler
+#' @author Michael Stadler, Charlotte Soneson
 #'
 #' @importFrom cli cli_progress_step cli_progress_done
 #'
 #' @noRd
 #' @keywords internal
-pileup_modbam_cpp <- function(inname_str, regions, modbase, mod_prob_thresh = 0.5, n_threads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_pileup_modbam_cpp`, inname_str, regions, modbase, mod_prob_thresh, n_threads, verbose)
+pileup_modbam_cpp <- function(inname_str, regions, modbase, level = "summary", mod_prob_thresh = 0.5, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_pileup_modbam_cpp`, inname_str, regions, modbase, level, mod_prob_thresh, n_threads, verbose)
 }
 
 #' Read base modifications from a bam file.
