@@ -1,3 +1,7 @@
+# footprintR 0.2.5
+
+* Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
+
 # footprintR 0.2.4
 
 * Speed up `plotRegion()` for data sets with many reads by replacing `do.call()` with a faster alternative
