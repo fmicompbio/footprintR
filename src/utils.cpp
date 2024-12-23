@@ -69,7 +69,14 @@ char complement(char n) {
     }
 }
 
-// calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
+//' Calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
+//'
+//' @param bamdata A \code{bam1_t*} with the alignment.
+//'
+//' @return An \code{int} giving the number of aligned bases.
+//'
+//' @noRd
+//' @keywords internal
 int calculate_aligned_bases(bam1_t *bamdata) {
     uint32_t *cigar = bam_get_cigar(bamdata);
     int aligned_bases = 0;
@@ -87,20 +94,29 @@ int calculate_aligned_bases(bam1_t *bamdata) {
     return aligned_bases;
 }
 
-// extract qscore
-double extract_qscore(bam1_t *data) {
-    uint8_t *qual = NULL, *qs_data = bam_aux_get(data, "qs");
+//' Extract quality score (qscore)
+//'
+//' @param bamdata A \code{bam1_t*} with the alignment.
+//'
+//' @return A \code{double} corresponding to the value extracted from the "qs"
+//'     tag, or in case that is missing, calculated as the mean of base quality
+//'     values.
+//'
+//' @noRd
+//' @keywords internal
+double extract_qscore(bam1_t *bamdata) {
+    uint8_t *qual = NULL, *qs_data = bam_aux_get(bamdata, "qs");
     double qs_value = 0.0, sum_qual = 0.0;
     if (qs_data != NULL) {
         qs_value = bam_aux2f(qs_data);
     } else {
         // qs tag is missing --> calculate mean of base QUAL values
-        qual = bam_get_qual(data);
+        qual = bam_get_qual(bamdata);
         sum_qual = 0;
-        for (int j = 0; j < data->core.l_qseq; j++) {
+        for (int j = 0; j < bamdata->core.l_qseq; j++) {
             sum_qual += qual[j];
         }
-        qs_value = ((double) sum_qual) / data->core.l_qseq;
+        qs_value = ((double) sum_qual) / bamdata->core.l_qseq;
     }
     return qs_value;
 }
