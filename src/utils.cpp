@@ -73,16 +73,34 @@ char complement(char n) {
 int calculate_aligned_bases(bam1_t *bamdata) {
     uint32_t *cigar = bam_get_cigar(bamdata);
     int aligned_bases = 0;
-    
+
     // loop over CIGAR operations
     for (uint32_t i = 0; i < bamdata->core.n_cigar; i++) {
         uint32_t op = bam_cigar_op(cigar[i]);
-        
+
         // only count 'M', '=', or 'X' operations
         if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
             aligned_bases += bam_cigar_oplen(cigar[i]);
         }
     }
-    
+
     return aligned_bases;
+}
+
+// extract qscore
+double extract_qscore(bam1_t *data) {
+    uint8_t *qual = NULL, *qs_data = bam_aux_get(data, "qs");
+    double qs_value = 0.0, sum_qual = 0.0;
+    if (qs_data != NULL) {
+        qs_value = bam_aux2f(qs_data);
+    } else {
+        // qs tag is missing --> calculate mean of base QUAL values
+        qual = bam_get_qual(data);
+        sum_qual = 0;
+        for (int j = 0; j < data->core.l_qseq; j++) {
+            sum_qual += qual[j];
+        }
+        qs_value = ((double) sum_qual) / data->core.l_qseq;
+    }
+    return qs_value;
 }

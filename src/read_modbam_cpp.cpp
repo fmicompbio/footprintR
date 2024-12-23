@@ -233,9 +233,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<int> &df_aligned_length,
                        Rcpp::CharacterVector &df_variant_label) {
     // allocate variable only used inside process_bam_record()
-    uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
-    unsigned int sum_qual = 0;
-    double qs_value = -1;
+    uint8_t *data = NULL;
     int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
     hts_base_mod mod[5] = {{0}};  //for ATCGN
     char canonical = '0', unmodbase = '0';
@@ -377,24 +375,9 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 
     // ... extract read-level information if the read had modified bases
     if (size_before_this_read < read_id.size()) {
-        // ... extract qscore
-        qs_data = bam_aux_get(bamdata, "qs");
-        if (qs_data != NULL) {
-            qs_value = bam_aux2f(qs_data);
-        } else {
-            // qs tag is missing
-            //   --> calculate mean of base QUAL values
-            qual = bam_get_qual(bamdata);
-            sum_qual = 0;
-            for (j = 0; j < this_read_len; j++) {
-                sum_qual += qual[j];
-            }
-            qs_value = ((double) sum_qual) / this_read_len;
-        }
-
         // ... add to read-level results
         df_read_id.push_back(bam_get_qname(bamdata));
-        df_qscore.push_back(qs_value);
+        df_qscore.push_back(extract_qscore(bamdata));
         df_read_length.push_back(this_read_len);
         df_aligned_length.push_back(calculate_aligned_bases(bamdata));
 
