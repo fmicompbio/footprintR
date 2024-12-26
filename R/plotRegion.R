@@ -1211,6 +1211,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
 #' @importFrom dplyr left_join bind_cols group_by summarise group_split filter
+#' @importFrom rlang .data
 #'
 #' @noRd
 #' @keywords internal
@@ -1235,7 +1236,7 @@ plotGenomicRegions <- function(grl,
                           levels = colnames(assaydat)),
             sample = rep(sample_ids, each = nrow(assaydat)),
             value = as.vector(assaydat)) |>
-            filter(!is.na(value))
+            filter(!is.na(.data$value))
     } else {
         i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(
