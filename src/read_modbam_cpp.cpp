@@ -233,7 +233,6 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<int> &df_aligned_length,
                        Rcpp::CharacterVector &df_variant_label) {
     // allocate variable only used inside process_bam_record()
-    uint8_t *data = NULL;
     int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
     hts_base_mod mod[5] = {{0}};  //for ATCGN
     char canonical = '0', unmodbase = '0';
@@ -251,21 +250,13 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         Rcpp::checkUserInterrupt(); // # nocov end
 
     // ... extract *forward* read sequence to char*
-    data = bam_get_seq(bamdata);
-    if (qseq_len < this_read_len) {
-        if (qseq) // # nocov start
-            free((void*) qseq); // # nocov end
-        qseq = (char*) calloc(this_read_len + 1, sizeof(char));
-        qseq_len = this_read_len;
-    }
-    if (bam_is_rev(bamdata)) {
-        for (j = 0; j < this_read_len; j++) {
-            qseq[this_read_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
-        }
-    } else {
-        for (j = 0; j < this_read_len; j++) {
-            qseq[j] = seq_nt16_str[bam_seqi(data, j)];
-        }
+    //     (populates qseq and qseq_len)
+    if (extract_forward_qseq(bamdata, qseq, qseq_len) != 0) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len,
+                 "Failed to extract forward read sequence (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -44; // # nocov end
     }
 
     // ... parse base modifications

@@ -1,6 +1,7 @@
 #include <htslib/sam.h>
 #include <string>
 #include <vector>
+#include <Rcpp.h>
 
 //' Get unmodified base corresponding to a modified base
 //'
@@ -102,6 +103,8 @@ int calculate_aligned_bases(bam1_t *bamdata) {
 //'     tag, or in case that is missing, calculated as the mean of base quality
 //'     values.
 //'
+//' @author Michael Stadler
+//'
 //' @noRd
 //' @keywords internal
 double extract_qscore(bam1_t *bamdata) {
@@ -120,3 +123,51 @@ double extract_qscore(bam1_t *bamdata) {
     }
     return qs_value;
 }
+
+//' Get the forward read sequence form an alignment
+//'
+//' Extract the read sequence from a bam1_t corresponding to the plus-strand
+//' of the read (thus reverse-complementing the read for an minus-strand
+//' alignment) and write it to the char* array at qseq, allocating memory of
+//' sufficient length if needed. The allocated space (without terminating null
+//' character) is stored in qseq_len.
+//'
+//' @param bamdata A \code{bam1_t*} with the alignment.
+//' @param qseq A \code{char**} (pointer to a character array) to which the
+//'     extracted sequence will be written.
+//' @param qseq_len A \code{int*} (pointer to int) in which the number of
+//'     allocated characters at \code{qseq} are stored (escluding the
+//'     terminating null character).
+//'
+//' @returns 0 if sucessful, -1 if memory allocation failed
+//'
+//' @author Michael Stadler
+//'
+//' @noRd
+//' @keywords internal
+int extract_forward_qseq(bam1_t *bamdata, // alignment
+                         char *&qseq,     // buffer for forward read sequence
+                         int &qseq_len) { // allocated length of qseq
+    uint8_t *data = bam_get_seq(bamdata);
+    int this_read_len = bamdata->core.l_qseq, j = 0;
+
+    if (qseq_len < this_read_len) {
+        if (qseq) // # nocov start
+            free((void*) qseq); // # nocov end
+        qseq = (char*) calloc(this_read_len + 1, sizeof(char));
+        if (qseq == NULL) // # nocov start
+            return -1; // # nocov end
+        qseq_len = this_read_len;
+    }
+    if (bam_is_rev(bamdata)) {
+        for (j = 0; j < this_read_len; j++) {
+            qseq[this_read_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
+        }
+    } else {
+        for (j = 0; j < this_read_len; j++) {
+            qseq[j] = seq_nt16_str[bam_seqi(data, j)];
+        }
+    }
+    return 0;
+}
+
