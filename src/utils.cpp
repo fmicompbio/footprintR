@@ -171,3 +171,93 @@ int extract_forward_qseq(bam1_t *bamdata, // alignment
     return 0;
 }
 
+//' Extract vector with modification probabilities from alignment
+//'
+//' Use htslib functions to parse the modification probabilities for
+//' `modbase`.
+//'
+//' @param bamdata A \code{bam1_t*} with the alignment.
+//' @param modbase A \code{char} with the modified base code for which to
+//'     extract modification probabilities.
+//' @param unmodbase A \code{char} with the unmodified base corresponding to
+//'     \code{modbase}.
+//' @param qseq A \code{char*} pointing to the forward read sequence.
+//' @param ms A \code{hts_base_mod_state*} (modification state struct) expected
+//'     to be pre-initialized.
+//'
+//' @returns
+//' Rcpp::NumericVector with modification probabilities if sucessful,
+//' otherwise an empty Rcpp::NumericVector.
+//'
+//' @author Michael Stadler
+//'
+//' @noRd
+//' @keywords internal
+Rcpp::NumericVector extract_mod_probs(bam1_t *bamdata,
+                                      char modbase,
+                                      char unmodbase,
+                                      char* qseq,
+                                      hts_base_mod_state *ms) {
+    // declare variables
+    int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
+    int this_read_len = bamdata->core.l_qseq;
+    hts_base_mod mod[5] = {{0}};  //for ATCGN
+    char canonical = '0';
+    Rcpp::NumericVector mod_probs = Rcpp::NumericVector(0);
+
+    // parse base modifications
+    if (bam_parse_basemod(bamdata, ms)) { // # nocov start
+        Rcpp::Rcerr << "Failed to parse the base mods (read " <<
+            bam_get_qname(bamdata) << ")\n";
+        return mod_probs; // # nocov end
+    }
+
+    // process read if modifications of the right type are present
+    // bam_mods_query_type:
+    // - returns 0 on success, -1 if not found
+    // - also fills out `canonical`, `strand` and `impl`
+    //   (`impl` is a boolean for whether unlisted positions should be
+    //    implicitly assumed to be unmodified, or require an explicit
+    //    score and should be considered as unknown)
+    if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
+        // ... loop over sequence positions i
+        for (i = 0; i < this_read_len; i++) {
+            // i is the position in the aligned read (possibly reverse-complemented)
+            // pos is the position in the original read (qseq)
+            if (bam_is_rev(bamdata)) {
+                pos = this_read_len - 1 - i;
+            } else{
+                pos = i;
+            }
+
+            // r: number of found modifications (>=1, 0 or -1 if failed)
+            r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
+            if (r <= -1) { // # nocov start
+                Rcpp::Rcerr << "Failed to get modifications (read " <<
+                    bam_get_qname(bamdata) << ")\n";
+                return mod_probs; // # nocov end
+            } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) { // # nocov start
+                Rcpp::Rcerr << "More modifications than footprintR:::extract_mod_probs can handle (read " <<
+                    bam_get_qname(bamdata) << ")\n";
+                return mod_probs; // # nocov end
+            } else if (!r && impl) {
+                // implied base without modification at position i
+                if (qseq[pos] == unmodbase) {
+                    // base of the right type -> add to results
+                    mod_probs.push_back(0.0);
+                }
+            }
+            // modifications
+            for (j = 0; j < r; j++) {
+                if (mod[j].modified_base == modbase) {
+                    // found modified base of the right type -> add to results
+                    // `qual` of N corresponds to call probability
+                    //     in [N/256, (N+1)/256] -> store midpoint
+                    mod_probs.push_back(((double) mod[j].qual + 0.5) / 256.0);
+                }
+            }
+        }
+    }
+
+    return mod_probs;
+}
