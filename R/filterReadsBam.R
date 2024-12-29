@@ -18,6 +18,9 @@
 #'     Needs to have the same length as \code{infiles}.
 #' @param modbase Character scalar defining the modified base to analyze
 #'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+#' @param indexOutfiles Logical scalar. If \code{TRUE} (the default) create
+#'     a bam index file (\code{.bai} file) for each of the generated
+#'     \code{outfiles}.
 #' @param minReadLength A numeric scalar representing the smallest acceptable
 #'     read length. Reads that are shorter than this value will be filtered
 #'     out.
@@ -51,7 +54,7 @@
 #'                            package = "footprintR")
 #' filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 #' res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
-#'                       modbase = "a", minReadLength = 6746,
+#'                       modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
 #'                       minAlignedLength = 6896, minAlignedFraction = 0.56,
 #'                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
 #'                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
@@ -60,13 +63,14 @@
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom BiocParallel MulticoreParam bpworkers
+#' @importFrom BiocParallel MulticoreParam bpworkers bplapply
 #' @importFrom cli cli_abort cli_alert_info
 #'
 #' @export
 filterReadsBam <- function(infiles,
                            outfiles,
                            modbase,
+                           indexOutfiles = TRUE,
                            minReadLength = 0,
                            minAlignedLength = 0,
                            minAlignedFraction = 0,
@@ -92,6 +96,7 @@ filterReadsBam <- function(infiles,
                          paste(outfiles[i], collapse = ", ")))
     }
     .assertScalar(x = modbase, type = "character")
+    .assertScalar(x = indexOutfiles, type = "logical")
     .assertScalar(x = minReadLength, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = minAlignedLength, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
@@ -123,6 +128,13 @@ filterReadsBam <- function(infiles,
         }
         return(res1)
     })))
+
+    if (indexOutfiles) {
+        .message("indexing {length(outfiles)} output file{?s}")
+        idxfiles <- bplapply(outfiles, function(fn) {
+            index_bam_cpp(infile = fn)
+        })
+    }
 
     return(res)
 }
