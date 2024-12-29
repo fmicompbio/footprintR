@@ -132,7 +132,7 @@ filterReadsBam <- function(infiles,
     if (indexOutfiles) {
         .message("indexing {length(outfiles)} output file{?s}")
         idxfiles <- bplapply(outfiles, function(fn) {
-            index_bam_cpp(infile = fn)
+            index_bam_cpp(infile = fn) # nocov
         })
     }
 
