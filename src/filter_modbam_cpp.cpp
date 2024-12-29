@@ -179,8 +179,12 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
             }
 
             // extract modification probabilities for read
-            mod_probs = extract_mod_probs(bamdata, modbase, unmodbase,
-                                          qseq, ms);
+            mod_probs = Rcpp::NumericVector(0);
+            if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs, qseq,
+                                  ms, buffer, buffer_len) < 0) {
+                had_error = true; // # nocov start
+                goto end; // # nocov end
+            }
         }
 
         // calculate filter statistics

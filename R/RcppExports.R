@@ -391,13 +391,19 @@ NULL
 #'     extract modification probabilities.
 #' @param unmodbase A \code{char} with the unmodified base corresponding to
 #'     \code{modbase}.
+#' @param mod_probs A \code{Rcpp::NumericVector*} to which the extracted
+#'     modification probabilities will be appended at the end.
 #' @param qseq A \code{char*} pointing to the forward read sequence.
 #' @param ms A \code{hts_base_mod_state*} (modification state struct) expected
 #'     to be pre-initialized.
+#' @param buffer A \code{char*} pointing to a pre-allocated character array
+#'     to which an error message is written in case of a failure.
+#' @param buffer_len An \code{int} giving the pre-allocated size of the array
+#'     at \code{buffer} (excluding the terminating null).
 #'
-#' @returns
-#' Rcpp::NumericVector with modification probabilities if sucessful,
-#' otherwise an empty Rcpp::NumericVector.
+#' @returns An \code{int}, if greater or equal to zero giving the number of
+#'     extracted probabilities, or less than zero if something failed. In
+#'     that case, the error message is giving in \code{buffer}.
 #'
 #' @author Michael Stadler
 #'

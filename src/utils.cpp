@@ -181,35 +181,43 @@ int extract_forward_qseq(bam1_t *bamdata, // alignment
 //'     extract modification probabilities.
 //' @param unmodbase A \code{char} with the unmodified base corresponding to
 //'     \code{modbase}.
+//' @param mod_probs A \code{Rcpp::NumericVector*} to which the extracted
+//'     modification probabilities will be appended at the end.
 //' @param qseq A \code{char*} pointing to the forward read sequence.
 //' @param ms A \code{hts_base_mod_state*} (modification state struct) expected
 //'     to be pre-initialized.
+//' @param buffer A \code{char*} pointing to a pre-allocated character array
+//'     to which an error message is written in case of a failure.
+//' @param buffer_len An \code{int} giving the pre-allocated size of the array
+//'     at \code{buffer} (excluding the terminating null).
 //'
-//' @returns
-//' Rcpp::NumericVector with modification probabilities if sucessful,
-//' otherwise an empty Rcpp::NumericVector.
+//' @returns An \code{int}, if greater or equal to zero giving the number of
+//'     extracted probabilities, or less than zero if something failed. In
+//'     that case, the error message is giving in \code{buffer}.
 //'
 //' @author Michael Stadler
 //'
 //' @noRd
 //' @keywords internal
-Rcpp::NumericVector extract_mod_probs(bam1_t *bamdata,
-                                      char modbase,
-                                      char unmodbase,
-                                      char* qseq,
-                                      hts_base_mod_state *ms) {
+int extract_mod_probs(bam1_t *bamdata,
+                      char modbase,
+                      char unmodbase,
+                      Rcpp::NumericVector *mod_probs,
+                      char* qseq,
+                      hts_base_mod_state *ms,
+                      char* buffer,
+                      int buffer_len) {
     // declare variables
     int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
-    int this_read_len = bamdata->core.l_qseq;
+    int this_read_len = bamdata->core.l_qseq, n_probs = 0;
     hts_base_mod mod[5] = {{0}};  //for ATCGN
     char canonical = '0';
-    Rcpp::NumericVector mod_probs = Rcpp::NumericVector(0);
 
     // parse base modifications
     if (bam_parse_basemod(bamdata, ms)) { // # nocov start
-        Rcpp::Rcerr << "Failed to parse the base mods (read " <<
-            bam_get_qname(bamdata) << ")\n";
-        return mod_probs; // # nocov end
+        snprintf(buffer, buffer_len, "Failed to parse the base mods (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -1; // # nocov end
     }
 
     // process read if modifications of the right type are present
@@ -233,18 +241,20 @@ Rcpp::NumericVector extract_mod_probs(bam1_t *bamdata,
             // r: number of found modifications (>=1, 0 or -1 if failed)
             r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
             if (r <= -1) { // # nocov start
-                Rcpp::Rcerr << "Failed to get modifications (read " <<
-                    bam_get_qname(bamdata) << ")\n";
-                return mod_probs; // # nocov end
+                snprintf(buffer, buffer_len, "Failed to get modifications (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -2; // # nocov end
             } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) { // # nocov start
-                Rcpp::Rcerr << "More modifications than footprintR:::extract_mod_probs can handle (read " <<
-                    bam_get_qname(bamdata) << ")\n";
-                return mod_probs; // # nocov end
+                snprintf(buffer, buffer_len,
+                         "More modifications than footprintR:::extract_mod_probs can handle (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -3; // # nocov end
             } else if (!r && impl) {
                 // implied base without modification at position i
                 if (qseq[pos] == unmodbase) {
                     // base of the right type -> add to results
-                    mod_probs.push_back(0.0);
+                    mod_probs->push_back(0.0);
+                    n_probs++;
                 }
             }
             // modifications
@@ -253,11 +263,12 @@ Rcpp::NumericVector extract_mod_probs(bam1_t *bamdata,
                     // found modified base of the right type -> add to results
                     // `qual` of N corresponds to call probability
                     //     in [N/256, (N+1)/256] -> store midpoint
-                    mod_probs.push_back(((double) mod[j].qual + 0.5) / 256.0);
+                    mod_probs->push_back(((double) mod[j].qual + 0.5) / 256.0);
+                    n_probs++;
                 }
             }
         }
     }
 
-    return mod_probs;
+    return n_probs;
 }
