@@ -60,6 +60,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// index_bam_cpp
+std::string index_bam_cpp(std::string infile);
+RcppExport SEXP _footprintR_index_bam_cpp(SEXP infileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type infile(infileSEXP);
+    rcpp_result_gen = Rcpp::wrap(index_bam_cpp(infile));
+    return rcpp_result_gen;
+END_RCPP
+}
 // labelDists
 Rcpp::NumericMatrix labelDists(std::vector<std::string> labels, int minOverlap);
 RcppExport SEXP _footprintR_labelDists(SEXP labelsSEXP, SEXP minOverlapSEXP) {
@@ -148,6 +159,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
     {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 12},
+    {"_footprintR_index_bam_cpp", (DL_FUNC) &_footprintR_index_bam_cpp, 1},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},

@@ -117,6 +117,26 @@ filter_modbam_cpp <- function(infile, outfile, modbase, minReadLength = 0L, minA
     .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
+#' Create an index for a given bam file
+#'
+#' The bam file is expected to be already sorted by coordinate and
+#' the index file name will be automatically determined by appending
+#' \code{.bai} to the bam file name.
+#'
+#' @param infile A \code{std::string} with the path and name to the input
+#'     bam file to be indexed.
+#'
+#' @returns A \code{std::string} with the name of the created index file.
+#'
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+index_bam_cpp <- function(infile) {
+    .Call(`_footprintR_index_bam_cpp`, infile)
+}
+
 #' @title Calculate pairwise distances between read labels
 #'
 #' @description
