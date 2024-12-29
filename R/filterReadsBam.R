@@ -133,7 +133,7 @@ filterReadsBam <- function(infiles,
         .message("indexing {length(outfiles)} output file{?s}")
         idxfiles <- bplapply(outfiles, function(fn) {
             index_bam_cpp(infile = fn) # nocov
-        })
+        }, BPPARAM = BPPARAM)
     }
 
     return(res)
