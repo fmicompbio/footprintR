@@ -23,6 +23,7 @@ test_that("filterReadsBam works", {
                                   BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
         )
     )
+    expect_true(all(file.exists(filtbamfiles)))
     expect_true(all(file.exists(paste0(filtbamfiles, ".bai"))))
     expect_s3_class(res, "data.frame")
     expect_identical(dim(res), c(2L, 11L))
@@ -53,8 +54,9 @@ test_that("filterReadsBam works", {
     # expected results (using default parameters that deactivates all filters)
     res2 <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                            modbase = "a", indexOutfiles = FALSE,
-                           BPPARAM = BiocParallel::SerialParam(),
+                           BPPARAM = BiocParallel::MulticoreParam(workers = 2L),
                            verbose = FALSE)
+    expect_true(all(file.exists(filtbamfiles)))
     expect_true(all(!file.exists(paste0(filtbamfiles, ".bai"))))
     expect_s3_class(res2, "data.frame")
     expect_identical(dim(res2), c(2L, 11L))

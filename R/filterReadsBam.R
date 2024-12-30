@@ -63,7 +63,7 @@
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom BiocParallel MulticoreParam bpnworkers bplapply
+#' @importFrom BiocParallel MulticoreParam bplapply bpnworkers bpworkers<-
 #' @importFrom cli cli_abort cli_alert_info
 #'
 #' @export
@@ -104,30 +104,64 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = maxEntropy, type = "numeric")
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
 
-    res <- data.frame(sample = names(infiles),
-                      infile = infiles,
-                      outfile = outfiles,
-                      do.call(rbind, lapply(seq_along(infiles), function(i) {
-        if (verbose) {
-            cli_alert_info("opening input file {.file {infiles[i]}} using {bpnworkers(BPPARAM)} thread{?s}")
-        }
-        res1 <- filter_modbam_cpp(infile = infiles[i],
-                                  outfile = outfiles[i],
-                                  modbase = modbase,
-                                  minReadLength = as.integer(minReadLength),
-                                  minAlignedLength = as.integer(minAlignedLength),
-                                  minAlignedFraction = minAlignedFraction,
-                                  minQscore = minQscore,
-                                  maxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
-                                  maxFracLowConf = maxFracLowConf,
-                                  nThreads = bpnworkers(BPPARAM),
-                                  verbose = verbose)
-        if (verbose) {
-            cli_alert_info(paste0("done filtering: retained {res1['retained']} ",
-                                  "of {res1['total']} records ({round(res1['retained']/res1['total']*100, 1)}%)"))
-        }
-        return(res1)
-    })))
+    # determine the number of parallel threads to be used for
+    # bam files (preferred) and decompression of bam records (if available)
+    # (accept some level of over-subscription)
+    ncpuTotal <- bpnworkers(BPPARAM)
+    if (is(BPPARAM, "MulticoreParam") || is(BPPARAM, "SnowParam")) {
+        ncpuFiles <- min(ncpuTotal, length(infiles))
+        oversubscriptionRate <- 2.0
+        ncpuDecompression <- min(8L, max(1L, as.integer(
+            floor(oversubscriptionRate * ncpuTotal / ncpuFiles))))
+        bpworkers(BPPARAM) <- ncpuFiles
+        on.exit(bpworkers(BPPARAM) <- ncpuTotal)
+    } else {
+        ncpuDecompression <- 1L
+    }
+
+    # iterate over bam files
+    res <- data.frame(
+        sample = names(infiles),
+        infile = infiles,
+        outfile = outfiles,
+        do.call(
+            rbind,
+            bplapply(seq_along(infiles),
+                     function(i,
+                              myinfile = infiles[i],
+                              myoutfile = outfiles[i],
+                              mymodbase = modbase,
+                              myMinReadLength = as.integer(minReadLength),
+                              myMinAlignedLength = as.integer(minAlignedLength),
+                              myMinAlignedFraction = minAlignedFraction,
+                              myMinQscore = minQscore,
+                              myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
+                              myMaxFracLowConf = maxFracLowConf,
+                              myNThreads = ncpuDecompression,
+                              myverbose = verbose) {
+                         if (myverbose) {
+                             cli_alert_info(
+                                 paste0("opening input file {.file {myinfile}} ",
+                                        "using {myNThreads} thread{?s}"))
+                         }
+                         res1 <- filter_modbam_cpp(infile = myinfile,
+                                                   outfile = myoutfile,
+                                                   modbase = mymodbase,
+                                                   minReadLength = myMinReadLength,
+                                                   minAlignedLength = myMinAlignedLength,
+                                                   minAlignedFraction = myMinAlignedFraction,
+                                                   minQscore = myMinQscore,
+                                                   maxEntropy = myMaxEntropy,
+                                                   maxFracLowConf = myMaxFracLowConf,
+                                                   nThreads = myNThreads,
+                                                   verbose = myverbose)
+                         if (myverbose) {
+                             cli_alert_info(
+                                 paste0("done filtering: retained {res1['retained']} ",
+                                        "of {res1['total']} records ({round(res1['retained']/res1['total']*100, 1)}%)"))
+                         }
+                         return(res1)
+                     }, BPPARAM = BPPARAM)))
 
     if (indexOutfiles) {
         .message("indexing {length(outfiles)} output file{?s}")
