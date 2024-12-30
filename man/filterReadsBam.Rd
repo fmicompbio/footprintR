@@ -8,6 +8,7 @@ filterReadsBam(
   infiles,
   outfiles,
   modbase,
+  indexOutfiles = TRUE,
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
@@ -29,6 +30,10 @@ Needs to have the same length as \code{infiles}.}
 
 \item{modbase}{Character scalar defining the modified base to analyze
 (used by \code{maxEntropy} and \code{maxFracLowConf}).}
+
+\item{indexOutfiles}{Logical scalar. If \code{TRUE} (the default) create
+a bam index file (\code{.bai} file) for each of the generated
+\code{outfiles}.}
 
 \item{minReadLength}{A numeric scalar representing the smallest acceptable
 read length. Reads that are shorter than this value will be filtered
@@ -82,7 +87,7 @@ modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"
                            package = "footprintR")
 filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
-                      modbase = "a", minReadLength = 6746,
+                      modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
                       minAlignedLength = 6896, minAlignedFraction = 0.56,
                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)

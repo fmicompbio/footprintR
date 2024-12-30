@@ -63,7 +63,7 @@
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom BiocParallel MulticoreParam bpworkers bplapply
+#' @importFrom BiocParallel MulticoreParam bpnworkers bplapply
 #' @importFrom cli cli_abort cli_alert_info
 #'
 #' @export
@@ -109,7 +109,7 @@ filterReadsBam <- function(infiles,
                       outfile = outfiles,
                       do.call(rbind, lapply(seq_along(infiles), function(i) {
         if (verbose) {
-            cli_alert_info("opening input file {.file {infiles[i]}} using {bpworkers(BPPARAM)} thread{?s}")
+            cli_alert_info("opening input file {.file {infiles[i]}} using {bpnworkers(BPPARAM)} thread{?s}")
         }
         res1 <- filter_modbam_cpp(infile = infiles[i],
                                   outfile = outfiles[i],
@@ -120,7 +120,7 @@ filterReadsBam <- function(infiles,
                                   minQscore = minQscore,
                                   maxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
                                   maxFracLowConf = maxFracLowConf,
-                                  nThreads = bpworkers(BPPARAM),
+                                  nThreads = bpnworkers(BPPARAM),
                                   verbose = verbose)
         if (verbose) {
             cli_alert_info(paste0("done filtering: retained {res1['retained']} ",
