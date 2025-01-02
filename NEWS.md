@@ -1,6 +1,7 @@
 # footprintR 0.2.5
 
 * Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
+* Add `filterReadsBam()` to filter-out reads from input bam files and write reads that pass all filters to output bam files
 
 # footprintR 0.2.4
 
