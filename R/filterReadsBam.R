@@ -44,8 +44,12 @@
 #'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A \code{data.frame} with one row per \code{infile} giving the numbers
-#'     of filtered out records per reason for exclusion.
+#' @return \code{filterReadsBam} is called for its side effect of generating
+#'     new bam files containing the subset of bam records from input bam files
+#'     that pass all filtering criteria. In addition, it returns a
+#'     \code{data.frame} with one row per \code{infiles} giving the numbers of
+#'     bam records that were read in \code{total}, that were \code{retained} in
+#'     the \code{outfiles} and that were filtered-out by reason of exclusion.
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),

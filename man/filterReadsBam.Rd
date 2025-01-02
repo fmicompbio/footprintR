@@ -66,8 +66,12 @@ in \code{filterReadsBam()}. The default value is
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
 \value{
-A \code{data.frame} with one row per \code{infile} giving the numbers
-of filtered out records per reason for exclusion.
+\code{filterReadsBam} is called for its side effect of generating
+new bam files containing the subset of bam records from input bam files
+that pass all filtering criteria. In addition, it returns a
+\code{data.frame} with one row per \code{infiles} giving the numbers of
+bam records that were read in \code{total}, that were \code{retained} in
+the \code{outfiles} and that were filtered-out by reason of exclusion.
 }
 \description{
 For each bam file in \code{infiles}, parse alignments, calculate read
