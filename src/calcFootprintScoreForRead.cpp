@@ -4,9 +4,9 @@
 //'
 //' This function calculates the footprinting scores corresponding to a
 //' footprint in the form of a weight vector \code{wgt} for an individual
-//' read. The score is based on a cross-correlation of the modification 
-//' probabilities in \code{pmod} (centered by subtracting \code{0.5}) with 
-//' \code{wgt}, weighted by the minimum of \code{minweight} and the elements 
+//' read. The score is based on a cross-correlation of the modification
+//' probabilities in \code{pmod} (centered by subtracting \code{0.5}) with
+//' \code{wgt}, weighted by the minimum of \code{minweight} and the elements
 //' of \code{pmod}.
 //'
 //' @param pos Integer vector with positions (genomic coordinates) of modified
@@ -48,7 +48,7 @@ Rcpp::DataFrame calcFootprintScoreForRead(Rcpp::IntegerVector pos,
     double currentScore = 0.0;
     double currentTotalWeight = 0.0;
     double currentWeight = 0.0;
-    for (size_t i = (wgt.size() - 1) / 2, s = 0;
+    for (size_t i = (unsigned)((wgt.size() - 1) / 2), s = 0;
          i < posall.size() - (wgt.size() / 2);
          i++, s++) {
 

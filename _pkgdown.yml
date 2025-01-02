@@ -14,6 +14,9 @@ navbar:
         href: articles/read-level-data.html
 
 reference:
+- title: Filtering BAM files
+  contents:
+  - filterReadsBam
 - title: Reading data into R
   contents:
   - readBedMethyl

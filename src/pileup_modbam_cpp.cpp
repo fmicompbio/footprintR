@@ -133,9 +133,9 @@ int readdata(void *data, bam1_t *b) {
 //'     corresponding expected base in the read sequence will be extracted.
 //' @param level Character scalar indicating whether to return summary-level or
 //'     read-level data. Valid values are "summary" and "read". The read-level
-//'     results from \code{pileup_modbam_cpp} correspond to those from 
+//'     results from \code{pileup_modbam_cpp} correspond to those from
 //'     \code{read_modbam_cpp}, but does not contain all annotations currently
-//'     returned by the latter. 
+//'     returned by the latter.
 //' @param mod_prob_thresh Double scalar defining the minimal mod_prob
 //'     of a base to be considered modified.
 //' @param n_threads Integer scalar defining the number of threads to
@@ -147,7 +147,7 @@ int readdata(void *data, bam1_t *b) {
 //' @return A named list with elements \code{"chrom"} (chromosome name),
 //'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
 //'     \code{"ref_mod_strand"} (the strand relative to the reference on which
-//'     the modification was identified). If \code{level} is \code{"summary"}, 
+//'     the modification was identified). If \code{level} is \code{"summary"},
 //'     the list additionally contains slots \code{"Nmod"} (number of modified
 //'     bases) and \code{"Nvalid"} (number of total bases). If \code{level} is
 //'     \code{"read"}, it contains slots \code{"mod_prob"} and \code{"read_id"}.
@@ -156,7 +156,7 @@ int readdata(void *data, bam1_t *b) {
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
 //' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "summary", 0.7, 1, TRUE)
 //' str(res)
-//' 
+//'
 //' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "read", 0.7, 1, TRUE)
 //' str(res)
 //'
@@ -181,13 +181,13 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                              bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
     hts_set_log_level(HTS_LOG_OFF);
-    
+
     // variable declarations
     bam1_t *bamdata = NULL;
     plpconf conf = {0};
     conf.inname = (char*)inname_str.c_str();
     bam_plp_t plpiter = NULL;
-    int tid = -1, depth = -1, j = 0, modlen = 0, v = 0;
+    int tid = -1, depth = -1, j = 0, modlen = 0;
     #define NMODS 5
     hts_base_mod mods[NMODS] = {{0}}; //ACGTN
     int refpos = -1;
@@ -203,9 +203,6 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     int strand = 0, impl = 0;
     char canonical = '0';
     Rcpp::List res;
-    uint8_t *qs_data = NULL, *qual = NULL;
-    unsigned int sum_qual = 0;
-    double qs_value = -1;
 
     // ... return values (one per modification)
     std::vector<int> Nmod;
@@ -218,7 +215,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     std::vector<std::string> chrom;
     std::vector<int> ref_position;
     std::vector<char> ref_mod_strand;
-    
+
     // ... return values (one per aligned read)
     std::vector<std::string> df_read_id;
     std::vector<double> df_qscore;
@@ -306,33 +303,19 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
         curr_Nmod[1] = 0;
         curr_Nvalid[0] = 0;
         curr_Nvalid[1] = 0;
-        
+
         // iterate over reads overlapping refpos
         for (j = 0; j < depth; ++j) {
-            // if this is the first time the read is seen, add it to the 
+            // if this is the first time the read is seen, add it to the
             // read df vectors
             if (level == "read" && plp[j].is_head) {
-                // if (level == "read" && std::find(df_read_id.begin(), df_read_id.end(), bam_get_qname(plp[j].b)) == df_read_id.end()) {
-                qs_data = bam_aux_get(plp[j].b, "qs");
-                if (qs_data != NULL) {
-                    qs_value = bam_aux2f(qs_data);
-                } else {
-                    // qs tag is missing
-                    //   --> calculate mean of base QUAL values
-                    qual = bam_get_qual(plp[j].b);
-                    sum_qual = 0;
-                    for (v = 0; v < plp[j].b->core.l_qseq; v++) {
-                        sum_qual += qual[v];
-                    }
-                    qs_value = ((double) sum_qual) / plp[j].b->core.l_qseq;
-                }
                 df_read_id.push_back(bam_get_qname(plp[j].b));
-                df_qscore.push_back(qs_value);
+                df_qscore.push_back(extract_qscore(plp[j].b));
                 df_read_length.push_back(plp[j].b->core.l_qseq);
                 df_aligned_length.push_back(calculate_aligned_bases(plp[j].b));
                 df_variant_label.push_back(NA_STRING);
             }
-            
+
             if (plp[j].is_del || plp[j].is_refskip ||
                 (plp[j].b->core.flag & BAM_FSECONDARY) ||
                 (plp[j].b->core.flag & BAM_FSUPPLEMENTARY)) {
@@ -361,7 +344,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             }
 
             // increment curr_Nmod[curr_strand] if base is modified and has the expected base
-            if (bam_mods_query_type((hts_base_mod_state*)plp[j].cd.p, 
+            if (bam_mods_query_type((hts_base_mod_state*)plp[j].cd.p,
                                     modbase, &strand, &impl, &canonical) == 0) {
 
                 if (modlen > (int)(sizeof(mods) / sizeof(mods[0]))) {
@@ -409,7 +392,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                 Nmod.push_back(curr_Nmod[0]);
                 Nvalid.push_back(curr_Nvalid[0]);
             }
-            
+
             // ... minus strand
             if (curr_Nvalid[1] > 0) {
                 chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
@@ -419,7 +402,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                 Nvalid.push_back(curr_Nvalid[1]);
             }
         }
-        
+
         refposcount++;
         if (verbose && CLI_SHOULD_TICK) {
             // # nocov start
