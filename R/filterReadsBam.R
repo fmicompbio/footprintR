@@ -1,10 +1,11 @@
-#' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
+#' Write bam records from \code{infile} to \code{outfile} if they pass filter
+#' criteria.
 #'
-#' For each file in \code{infiles}, parse alignments, calculate read statistics
-#' and write the alignment to the corresponding output file from \code{outfiles}
-#' if the read passes all criteria defined by the filtering arguments.
-#' Filters are processed hierarchically: If a read does not pass a given
-#' filter, the remaining filters will not be examined and the processing
+#' For each bam file in \code{infiles}, parse alignments, calculate read
+#' statistics and write the alignment to the corresponding output file from
+#' \code{outfiles} if the read passes all criteria defined by the filtering
+#' arguments. Filters are processed hierarchically: If a read does not pass a
+#' given filter, the remaining filters will not be examined and the processing
 #' continues with the next read.
 #' The filters are examined in this order: \code{minReadLength},
 #' \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
