@@ -11,6 +11,8 @@
 #' \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
 #' \code{maxFracLowConf}, \code{maxEntropy}.
 #'
+#' @inheritParams filterReads
+#'
 #' @param infiles Character vector with name(s) of the input bam file(s).
 #' @param outfiles Character vector with name(s) of the output bam file(s).
 #'     Needs to have the same length as \code{infiles}.
@@ -22,22 +24,6 @@
 #' @param overwriteOutfiles Logical scalar. If \code{FALSE} (the default),
 #'     existing \code{outfiles} will not be overwritten and the function will
 #'     abort with an error message.
-#' @param minReadLength A numeric scalar representing the smallest acceptable
-#'     read length. Reads that are shorter than this value will be filtered
-#'     out.
-#' @param minAlignedLength A numeric scalar representing the smallest acceptable
-#'     aligned length. Reads with aligned length shorter than this value will
-#'     be filtered out.
-#' @param minAlignedFraction A numeric scalar representing the smallest
-#'     acceptable aligned fraction of a read. Reads where the aligned fraction
-#'     is smaller than this value will be filtered out.
-#' @param minQscore A numeric scalar representing the smallest acceptable
-#'     read-level Qscore. Reads with Qscore below this value will be filtered
-#'     out.
-#' @param maxFracLowConf A numeric scalar representing the maximally acceptable
-#'     fraction of low-confidence modified base calls in a read. Reads with
-#'     a fraction of low confidence calls greater than this value will be
-#'     filtered out.
 #' @param maxEntropy A numeric scalar representing the largest acceptable
 #'     read-level entropy. Reads with entropy above this value will be filtered
 #'     out. A value of \code{Inf} deactivates the entropy filter.
