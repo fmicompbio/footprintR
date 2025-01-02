@@ -12,9 +12,6 @@
 #' \code{maxFracLowConf}, \code{maxEntropy}.
 #'
 #' @param infiles Character vector with name(s) of the input bam file(s).
-#'     If \code{infiles} is a named vector, the names are used as sample names.
-#'     Otherwise, the each file will be names as \code{s1}, ..., \code{sN},
-#'     where \code{N} is the length of \code{infiles}.
 #' @param outfiles Character vector with name(s) of the output bam file(s).
 #'     Needs to have the same length as \code{infiles}.
 #' @param modbase Character scalar defining the modified base to analyze
@@ -86,11 +83,6 @@ filterReadsBam <- function(infiles,
         cli_abort(paste0("not all `infiles` exist: ",
                          paste(infiles[i], collapse = ", ")))
     }
-    if (is.null(names(infiles))) {
-        names(infiles) <- paste0("s", seq_along(infiles))
-    } else if (any(duplicated(names(infiles)))) {
-        cli_abort("`names(infiles)` are not unique")
-    }
     .assertVector(x = outfiles, type = "character", len = length(infiles))
     if (any(i <- file.exists(outfiles))) {
         cli_abort(paste0("existing `outfiles` would be overwritten: ",
@@ -122,7 +114,7 @@ filterReadsBam <- function(infiles,
 
     # iterate over bam files
     res <- data.frame(
-        sample = names(infiles),
+        sample = if (is.null(names(infiles))) paste0("s", seq_along(infiles)) else names(infiles),
         infile = infiles,
         outfile = outfiles,
         do.call(

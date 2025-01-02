@@ -21,10 +21,7 @@ filterReadsBam(
 )
 }
 \arguments{
-\item{infiles}{Character vector with name(s) of the input bam file(s).
-If \code{infiles} is a named vector, the names are used as sample names.
-Otherwise, the each file will be names as \code{s1}, ..., \code{sN},
-where \code{N} is the length of \code{infiles}.}
+\item{infiles}{Character vector with name(s) of the input bam file(s).}
 
 \item{outfiles}{Character vector with name(s) of the output bam file(s).
 Needs to have the same length as \code{infiles}.}

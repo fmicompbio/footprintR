@@ -7,12 +7,6 @@ test_that("filterReadsBam works", {
     # non-existing input files
     expect_error(filterReadsBam(infiles = filtbamfiles, outfiles = filtbamfiles, modbase = "a"))
 
-    # non-unique input file names
-    tmp <- modbamfiles
-    names(tmp) <- c("s1", "s1")
-    expect_error(filterReadsBam(infiles = tmp, outfiles = filtbamfiles, modbase = "a"))
-    rm(tmp)
-
     # expected results (filtering out exactly one read for each filter)
     suppressMessages(
         expect_message(
