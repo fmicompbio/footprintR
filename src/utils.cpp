@@ -124,7 +124,7 @@ double extract_qscore(bam1_t *bamdata) {
     return qs_value;
 }
 
-//' Get the forward read sequence form an alignment
+//' Get the forward read sequence from an alignment
 //'
 //' Extract the read sequence from a bam1_t corresponding to the plus-strand
 //' of the read (thus reverse-complementing the read for an minus-strand
