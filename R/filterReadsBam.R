@@ -19,6 +19,9 @@
 #' @param indexOutfiles Logical scalar. If \code{TRUE} (the default) create
 #'     a bam index file (\code{.bai} file) for each of the generated
 #'     \code{outfiles}.
+#' @param overwriteOutfiles Logical scalar. If \code{FALSE} (the default),
+#'     existing \code{outfiles} will not be overwritten and the function will
+#'     abort with an error message.
 #' @param minReadLength A numeric scalar representing the smallest acceptable
 #'     read length. Reads that are shorter than this value will be filtered
 #'     out.
@@ -73,6 +76,7 @@ filterReadsBam <- function(infiles,
                            outfiles,
                            modbase,
                            indexOutfiles = TRUE,
+                           overwriteOutfiles = FALSE,
                            minReadLength = 0,
                            minAlignedLength = 0,
                            minAlignedFraction = 0,
@@ -88,7 +92,7 @@ filterReadsBam <- function(infiles,
                          paste(infiles[i], collapse = ", ")))
     }
     .assertVector(x = outfiles, type = "character", len = length(infiles))
-    if (any(i <- file.exists(outfiles))) {
+    if (!overwriteOutfiles && any(i <- file.exists(outfiles))) {
         cli_abort(paste0("existing `outfiles` would be overwritten: ",
                          paste(outfiles[i], collapse = ", ")))
     }

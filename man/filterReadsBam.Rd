@@ -10,6 +10,7 @@ filterReadsBam(
   outfiles,
   modbase,
   indexOutfiles = TRUE,
+  overwriteOutfiles = FALSE,
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
@@ -32,6 +33,10 @@ Needs to have the same length as \code{infiles}.}
 \item{indexOutfiles}{Logical scalar. If \code{TRUE} (the default) create
 a bam index file (\code{.bai} file) for each of the generated
 \code{outfiles}.}
+
+\item{overwriteOutfiles}{Logical scalar. If \code{FALSE} (the default),
+existing \code{outfiles} will not be overwritten and the function will
+abort with an error message.}
 
 \item{minReadLength}{A numeric scalar representing the smallest acceptable
 read length. Reads that are shorter than this value will be filtered

@@ -42,6 +42,15 @@ test_that("filterReadsBam works", {
 
     # pre-existing output files
     expect_error(filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles, modbase = "a"))
+
+    # pre-existing output files (overwriteOutfiles = TRUE)
+    res0 <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
+                           modbase = "a", indexOutfiles = FALSE,
+                           overwriteOutfiles = TRUE, minReadLength = 6746,
+                           minAlignedLength = 6896, minAlignedFraction = 0.56,
+                           minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
+                           BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
+    expect_identical(res, res0)
     unlink(filtbamfiles)
     unlink(paste0(filtbamfiles, ".bai"))
 
