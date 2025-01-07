@@ -1,0 +1,355 @@
+#' Generate counts for sequential windows in a single region
+#'
+#' Read modification data from \code{bamfiles} for a chunk of the genome
+#' defined by \code{region} and aggregate modified and total counts for
+#' windows.
+#'
+#' @param bamfiles Character vector with one or several modBam file names.
+#'     Note that no read-filtering will be performed on the data from
+#'     these files, so possibly the files should contain only filtered
+#'     alignments.
+#' @param region A \code{\link[GenomicRanges]{GRanges}} object specifying which
+#'     genomic region to extract the reads from. Alternatively, the regions can
+#'     be specified as a character scalar (e.g. "chr1:1200-1300") that can be
+#'     coerced into a \code{GRanges} object.
+#' @param modbase Character vector defining the modified base to extract.
+#' @param modProbThreshold A numeric scalar, indicating the modification
+#'     probability threshold to use to classify a base as 'modified' or
+#'     'unmodified'. Only used if \code{level} is \code{"summary"}.
+#' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
+#'     for the samples. It must contain at least one column, named
+#'     \code{"sample"}, which must contain all the values of
+#'     \code{names(bamfiles)}. The provided annotations will be propagated to
+#'     the returned \code{SummarizedExperiment} object.
+#' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
+#'     containing information about the set of genomic sequences (chromosomes).
+#'     Alternatively, a named numeric vector with genomic sequence names and
+#'     lengths. Useful to set the sorting order of sequence names.
+#' @param sequenceContextWidth,sequenceReference Define the sequence
+#'     context to be extracted around modified bases. By default (
+#'     \code{sequenceContextWidth = 0}), no sequence context will be
+#'     extracted, otherwise it will be returned in \code{rowData(x)$sequenceContext}.
+#'     See \code{\link{addSeqContext}} for details.
+#' @param sequenceContext A character vector with sequence contexts to
+#'     retain. To apply this filter, the arguments \code{"sequenceContextWidth"}
+#'     and \code{"sequenceReference"} must be set.
+#' @param windowMode Character scalar defining how windows in \code{region}
+#'     are define. Currently supported are:
+#'     \describe{
+#'         \item{"fixed"}{: The window is of fixed size (in number of bases),
+#'         corresponding to the \code{windowSize} argument value.}
+#'     }
+#' @param windowSize Numeric scalar defining the size of windows (see
+#'     \code{windowMode} argument).
+#' @param windowStep Numeric scalar defining the step (shift) between
+#'     start positions of consecutive windows. For non-overlapping
+#'     consecutive windows, \code{windowStep} should be equal to
+#'     \code{windowSize}.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{readModBam()}. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L, RNGseed = 42L)}).
+#'     If randomly sampling reads (\code{nAlnsToSample > 0}), make sure to set
+#'     the \code{RNGseed} argument when constructing the \code{BPPARAM} object
+#'     for reproducible results (see also
+#'     \code{vignette("Random_Numbers", package = "BiocParallel")}).
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @author Panagiotis Papasaikas, Sebastien Smallwood, Charlotte Soneson, Michael Stadler
+#'
+#' @returns A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
+#'     with columns corresponding to samples (the elements of \code{bamfiles})
+#'     and rows corresponding to windows in \code{region}. The object contains
+#'     the assays \code{"Nmod"} and \code{"Nvalid"} containing the number of
+#'     modified and total (valid) bases in each window and sample, respectively.
+#'
+#' @examples
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' gnmfasta <- system.file("extdata", "reference.fa.gz", package = "footprintR")
+#' quantifyWindowsInRegion(bamfiles = modbamfiles,
+#'                         region = "chr1:6940000-6955000",
+#'                         modbase = "a",
+#'                         sequenceContextWidth = 1,
+#'                         sequenceReference = gnmfasta,
+#'                         sequenceContext = "A")
+#' quantifyWindowsInRegion(bamfiles = modbamfiles,
+#'                         region = "chr1:6940000-6955000",
+#'                         modbase = "a")
+#'
+#' @importFrom SummarizedExperiment rowRanges colData
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges start end findOverlaps
+#' @importFrom S4Vectors queryHits subjectHits metadata
+#' @importFrom cli cli_abort
+#'
+#' @export
+quantifyWindowsInRegion <- function(bamfiles,
+                                    region,
+                                    modbase,
+                                    modProbThreshold = 0.5,
+                                    sampleAnnot = NULL,
+                                    seqinfo = NULL,
+                                    sequenceContextWidth = 0,
+                                    sequenceReference = NULL,
+                                    sequenceContext = NULL,
+                                    windowMode = "fixed",
+                                    windowSize = 24,
+                                    windowStep = round(windowSize / 2),
+                                    BPPARAM = MulticoreParam(4L, RNGseed = 42L),
+                                    verbose = FALSE) {
+    # check parameters
+    .assertScalar(x = region)
+    .assertScalar(x = modbase, type = "character")
+    .assertScalar(x = windowMode, type = "character",
+                  validValues = c("fixed"))
+    .assertScalar(x = windowSize, type = "numeric", rngIncl = c(1L, Inf))
+
+    # read summary-level data
+    se <- readModBam(bamfiles = bamfiles, regions = region, modbase = modbase,
+                     level = "summary", sampleAnnot = sampleAnnot,
+                     seqinfo = seqinfo, sequenceContextWidth = sequenceContextWidth,
+                     sequenceReference = sequenceReference,
+                     modProbThreshold = modProbThreshold, BPPARAM = BPPARAM,
+                     verbose = verbose)
+
+    # filter positions
+    if (!is.null(sequenceContext)) {
+        se <- filterPositions(se = se, filters = "sequenceContext",
+                              sequenceContext = sequenceContext,
+                              assayNameNA = NULL)
+    }
+
+    # define windows for aggregation
+    if (identical(windowMode, "fixed")) {
+        rng <- range(rowRanges(se), ignore.strand = TRUE)
+        s <- seq(start(rng), end(rng) - windowSize, by = windowStep)
+        windowgr <- GRanges(seqnames = seqnames(rng),
+                            ranges = IRanges(start = s, width = windowSize))
+    }
+    ov <- findOverlaps(query = rowRanges(se), subject = windowgr,
+                       ignore.strand = TRUE)
+
+    # aggregate counts in windows
+    mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), ],
+                    group = subjectHits(ov), reorder = TRUE)
+    mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), ],
+                      group = subjectHits(ov), reorder = TRUE)
+    rnms <- as.numeric(rownames(mNmod))
+    stopifnot(exprs = {
+        identical(rownames(mNmod), rownames(mNvalid))
+        all(diff(rnms) > 0)
+    })
+
+    # construct SummarizedExperiment
+    seNew <- SummarizedExperiment(assays = list(Nmod = mNmod,
+                                                Nvalid = mNvalid),
+                                  rowRanges = windowgr[rnms],
+                                  colData = colData(se),
+                                  metadata = metadata(se))
+    return(seNew)
+}
+
+
+#' Analyze counts for sequential windows in a single region
+#'
+#' Given a \code{SummarizedExperiment} with modified and total
+#' base counts in assays \code{"Nmod"} and \code{"Nvalid"},
+#' perform a pairwise statistical test for differential modification.
+#'
+#' @param se \code{SummarizedExperiment}, for example returned by
+#'     \code{quantifyWindowsInRegion}. It is expected to at least
+#'     contain assays for modified and total counts (given by
+#'     \code{assayNameMod} and \code{assayNameValid}) and
+#'     a \code{colData} column that defines the groups (given
+#'     by \code{groupCol}).
+#' @param assayNameMod,assayNameValid Character scalars that give
+#'     the assay names in \code{se} containing the modified and
+#'     total counts, respectively.
+#' @param groupCol Character scalar giving the column in \code{colData(se)}
+#'     that defines the groups of samples to be compared.
+#'
+#' @author Panagiotis Papasaikas, Sebastien Smallwood, Charlotte Soneson, Michael Stadler
+#'
+#' @returns The \code{\link[edgeR]{topTags}} output obtained for the statistical
+#'     analysis.
+#'
+#' @examples
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+#'                               region = "chr1:6940000-6955000", modbase = "a")
+#' getDifferentiallyModifiedWindows(se)
+#'
+#' @importFrom SummarizedExperiment assayNames colData assay ncol
+#' @importFrom stats model.matrix
+#' @importFrom cli cli_abort
+#'
+#' @export
+getDifferentiallyModifiedWindows <- function(se,
+                                             assayNameMod = "Nmod",
+                                             assayNameValid = "Nvalid",
+                                             groupCol = "group",
+                                             verbose = FALSE) {
+    # check arguments
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = assayNameMod, type = "character",
+                  validValues = assayNames(se))
+    .assertScalar(x = assayNameValid, type = "character",
+                  validValues = assayNames(se))
+    .assertScalar(x = groupCol, type = "character",
+                  validValues = colnames(colData(se)))
+    if (length(unique(colData(se)[[groupCol]])) != 2) {
+        cli_abort("The group column in colData ({groupCol}) needs to have exactly two unique values.")
+    }
+    .assertScalar(x = verbose, type = "logical")
+    .assertPackagesAvailable(pkgs = "edgeR")
+
+    # calculate library size and unmodified counts
+    .message("calculating library sizes and normalization factors")
+    libsizes <- colSums(assay(se, assayNameValid))
+    nfacts <- edgeR::normLibSizes(assay(se, assayNameValid))
+    cnt <- cbind(assay(se, assayNameMod),
+                 assay(se, assayNameValid) - assay(se, assayNameMod))
+    cd2 <- cbind(rbind(colData(se)[, c("sample", groupCol)],
+                       colData(se)[, c("sample", groupCol)]),
+                 data.frame(type = rep(c("mod", "unmod"), each = ncol(se))))
+    cd2$group <- factor(cd2$group)
+
+    # create design matrix
+    .message("creating design matrix")
+    dsgn <- model.matrix(~ 0 + sample, data = cd2)
+    for (grp in levels(cd2$group)) {
+        dsgn <- cbind(dsgn, cd2$group == grp & cd2$type == "mod")
+    }
+    colnames(dsgn)[ncol(dsgn) - c(1, 0)] <- levels(cd2$group)
+    colnames(cnt) <- rownames(dsgn) <- paste0(rep(colnames(se), 2),
+                                              rep(c(".mod", ".unmod"),
+                                                  each = ncol(se)))
+
+    # test for differential modification
+    .message("testing for differential modifications")
+    dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
+                           norm.factors = rep(nfacts, 2),
+                           genes = as.data.frame(rowRanges(se)))
+    dgeL <- edgeR::estimateDisp(y = dgeL, design = dsgn)
+    # fit <- edgeR::glmQLFit(y = dgeL, design = dsgn)
+    # tst <- edgeR::glmQLFTest(
+    #     glmfit = fit,
+    #     contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
+    #         (colnames(dsgn) == levels(cd2$group)[1]))
+    fit <- edgeR::glmFit(y = dgeL, design = dsgn)
+    tst <- edgeR::glmLRT(
+        glmfit = fit,
+        contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
+            (colnames(dsgn) == levels(cd2$group)[1]))
+
+    # return topTags
+    return(edgeR::topTags(object = tst, n = Inf, sort.by = "none"))
+}
+
+#' Identify regions of interest genome-wide.
+#'
+#' Given scores or statistical estimates for windows, identify
+#' regions of interest by fusing consistent neighboring windows
+#' along the genome.
+#'
+#' @param x \code{GRanges} object with window-based scores or estimates.
+#'     Ranges correspond to windows, and columns in \code{mcols(x)} to scores.
+#' @param scoreCol Character scalar giving the column name in \code{mcols(x)}
+#'     to use for the analysis.
+#' @param thresh A numeric scalar giving the minimal absolute window score
+#'     (after smoothing, see \code{minperiod} and \code{maxperiod} arguments)
+#'     defining a region of interest. Higher values make the region
+#'     detection more stringent.
+#' @param minperiod Numeric scalar that defines the low-pass
+#'     filter parameter used to smooth the scores for segmentation.
+#'     \code{minperiod} gives the minimal period (in number of windows) for the
+#'     critical frequency in the score signal that should be retained. The
+#'     default value is suitable to retain signals that occur in three
+#'     neighboring windows. The filtering is performed using
+#'     \code{\link[signal]{filtfilt}} and thus requires the \code{signal}
+#'     package to be installed.
+#' @param maxGap Numeric scalar giving the maximal gap between neighboring
+#'     windows, in base pairs, from the end of the first to the start of the
+#'     next, to be fused into a single region of interest.
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @author Sebastien Smallwood, Charlotte Soneson, Michael Stadler
+#'
+#' @returns A \code{\link[GenomicRanges]{GRanges}} object with identified
+#'     regions of interest.
+#'
+#' @examples
+#' # TODO
+#'
+#' @importFrom S4Vectors mcols subjectHits queryHits
+#' @importFrom dplyr mutate filter group_by ungroup group_split
+#' @importFrom IRanges reduce findOverlaps
+#' @importFrom cli cli_abort
+#'
+#' @export
+fuseWindows <- function(x,
+                        scoreCol,
+                        thresh,
+                        minperiod = 3,
+                        maxGap = 50,
+                        verbose = FALSE) {
+    # check argument values
+    .assertVector(x = x, type = "GRanges")
+    .assertScalar(x = scoreCol, type = "character", validValues = colnames(mcols(x)))
+    .assertScalar(x = thresh, type = "numeric", rngExcl = c(0, Inf))
+    .assertScalar(x = minperiod, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = maxperiod, type = "numeric", rngIncl = c(minperiod, Inf))
+    .assertScalar(x = maxGap, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(x = verbose, type = "logical")
+    .assertPackagesAvailable(pkgs = "signal")
+
+    # smooth scores
+    .message("smoothing windows")
+    xdf <- as.data.frame(x) |>
+        mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
+                                          seqnames[-1] != seqnames[-length(x)])))) |>
+        group_by(.data$chunkId) |>
+        mutate(sscore = .filterScores(.data[[scoreCol]],
+                                      minperiod = minperiod,
+                                      maxperiod = Inf,
+                                      type = "low")) |>
+        ungroup()
+
+    # threshold
+    .message("thresholding smoothed scores")
+    xdfSel <- xdf |>
+        dplyr::filter(abs(sscore) >= thresh) |>
+        mutate(direction = factor(ifelse(sign(sscore) == -1, "down", "up"),
+                                  levels = c("down", "up")))
+
+    # summarise
+    .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
+    grL <- xdfSel |>
+        group_by(direction) |>
+        group_split() |>
+        lapply(function(x) {
+            gr1 <- as(x, "GRanges") |>
+                reduce(min.gapwidth = maxGap)
+            ov1 <- findOverlaps(query = as(x, "GRanges"),
+                                subject = gr1, type = "within")
+            mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- tapply(
+                X = x$sscore[queryHits(ov1)],
+                INDEX = subjectHits(ov1),
+                FUN = mean)
+            mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
+            gr1$direction <- x$direction[1]
+            gr1
+        })
+    gr <- sort(do.call(c, grL))
+    ov <- findOverlaps(query = x, subject = gr, type = "within")
+    mcols(gr)[[scoreCol]] <- tapply(X = xdf$sscore[queryHits(ov)],
+                                    INDEX = subjectHits(ov),
+                                    FUN = mean)
+    mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
+
+    return(gr)
+}

@@ -303,10 +303,18 @@ segmentFootprintScores <- function(scoresList,
 #'
 #' @noRd
 #' @keywords internal
-.filterScores <- function(score, minperiod, maxperiod) {
+.filterScores <- function(score, minperiod, maxperiod, type = "pass") {
     .assertPackagesAvailable(pkgs = "signal")
-    Wn <- 1 / c(maxperiod, minperiod)
-    testar <- signal::butter(n = 3, W = Wn, type = "pass")
+    if (identical(type, "pass")) {
+        Wn <- 1 / c(maxperiod, minperiod)
+        testar <- signal::butter(n = 3, W = Wn, type = "pass")
+    } else if (identical(type, "low")) {
+        Wn <- 1 / minperiod
+        testar <- signal::butter(n = 3, W = Wn, type = "low")
+    } else if (identical(type, "high")) {
+        Wn <- 1 / maxperiod
+        testar <- signal::butter(n = 3, W = Wn, type = "high")
+    }
 
     nnaIndex <- which(!is.na(score))
     nnaScores <- score[nnaIndex]
