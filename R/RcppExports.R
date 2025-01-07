@@ -40,9 +40,9 @@ calcAndCountDist <- function(query, reference, cnt) {
 #'
 #' This function calculates the footprinting scores corresponding to a
 #' footprint in the form of a weight vector \code{wgt} for an individual
-#' read. The score is based on a cross-correlation of the modification 
-#' probabilities in \code{pmod} (centered by subtracting \code{0.5}) with 
-#' \code{wgt}, weighted by the minimum of \code{minweight} and the elements 
+#' read. The score is based on a cross-correlation of the modification
+#' probabilities in \code{pmod} (centered by subtracting \code{0.5}) with
+#' \code{wgt}, weighted by the minimum of \code{minweight} and the elements
 #' of \code{pmod}.
 #'
 #' @param pos Integer vector with positions (genomic coordinates) of modified
@@ -63,6 +63,78 @@ calcAndCountDist <- function(query, reference, cnt) {
 #' @keywords internal
 calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight = 0.05) {
     .Call(`_footprintR_calcFootprintScoreForRead`, pos, pmod, wgt, minconf, minweight)
+}
+
+#' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
+#'
+#' Workhorse function for filterReadsBam. Parses records from a single
+#' \code{infile}, calculate read statistics and writes the record to
+#' a single \code{outfile} if the record passes all criteria defined by
+#' the filtering arguments.
+#' Filters are processed hierarchically: If a record does not pass a given
+#' filter, the remaining filters will not be examined and the processing
+#' continues with the next record.
+#' The filter order is: minReadLength, minAlignedLength, minAlignedFraction,
+#' minQscore, maxEntropy, maxFracLowConf.
+#'
+#' @param infile Character scalar with name of the input bam file.
+#' @param outfile Character scalar with name of the output bam file.
+#' @param modbase Character scalar defining the modified base to analyze
+#'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+#' @param minReadLength A numeric scalar representing the smallest acceptable
+#'     read length. Reads that are shorter than this value will be filtered
+#'     out.
+#' @param minAlignedLength A numeric scalar representing the smallest acceptable
+#'     aligned length. Reads with aligned length shorter than this value will
+#'     be filtered out.
+#' @param minAlignedFraction A numeric scalar representing the smallest
+#'     acceptable aligned fraction of a read. Reads where the aligned fraction
+#'     is smaller than this value will be filtered out.
+#' @param minQscore A numeric scalar representing the smallest acceptable
+#'     read-level Qscore. Reads with Qscore below this value will be filtered
+#'     out.
+#' @param maxFracLowConf A numeric scalar representing the maximally acceptable
+#'     fraction of low-confidence modified base calls in a read. Reads with
+#'     a fraction of low confidence calls greater than this value will be
+#'     filtered out.
+#' @param maxEntropy A numeric scalar representing the largest acceptable
+#'     read-level entropy. Reads with entropy above this value will be filtered
+#'     out. A negative value deactivates the entropy filter.
+#' @param LowConf A numeric scalar with the minimum call confidence below which
+#'     calls are considered "low confidence".
+#' @param nThreads Numeric scalar defining the number of threads to
+#'     use for (de-)compressing bam records.
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @return A named \code{numeric} vector with the numbers of filtered out
+#'     records per reason for exclusion.
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+filter_modbam_cpp <- function(infile, outfile, modbase, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
+}
+
+#' Create an index for a given bam file
+#'
+#' The bam file is expected to be already sorted by coordinate and
+#' the index file name will be automatically determined by appending
+#' \code{.bai} to the bam file name.
+#'
+#' @param infile A \code{std::string} with the path and name to the input
+#'     bam file to be indexed.
+#'
+#' @returns A \code{std::string} with the name of the created index file.
+#'
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+index_bam_cpp <- function(infile) {
+    .Call(`_footprintR_index_bam_cpp`, infile)
 }
 
 #' @title Calculate pairwise distances between read labels
@@ -149,9 +221,9 @@ NULL
 #'     corresponding expected base in the read sequence will be extracted.
 #' @param level Character scalar indicating whether to return summary-level or
 #'     read-level data. Valid values are "summary" and "read". The read-level
-#'     results from \code{pileup_modbam_cpp} correspond to those from 
+#'     results from \code{pileup_modbam_cpp} correspond to those from
 #'     \code{read_modbam_cpp}, but does not contain all annotations currently
-#'     returned by the latter. 
+#'     returned by the latter.
 #' @param mod_prob_thresh Double scalar defining the minimal mod_prob
 #'     of a base to be considered modified.
 #' @param n_threads Integer scalar defining the number of threads to
@@ -163,7 +235,7 @@ NULL
 #' @return A named list with elements \code{"chrom"} (chromosome name),
 #'     \code{"ref_position"} (1-based coordinate on \code{"chrom"}),
 #'     \code{"ref_mod_strand"} (the strand relative to the reference on which
-#'     the modification was identified). If \code{level} is \code{"summary"}, 
+#'     the modification was identified). If \code{level} is \code{"summary"},
 #'     the list additionally contains slots \code{"Nmod"} (number of modified
 #'     bases) and \code{"Nvalid"} (number of total bases). If \code{level} is
 #'     \code{"read"}, it contains slots \code{"mod_prob"} and \code{"read_id"}.
@@ -172,7 +244,7 @@ NULL
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
 #' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "summary", 0.7, 1, TRUE)
 #' str(res)
-#' 
+#'
 #' res <- pileup_modbam_cpp(modbamfile, "chr1", "a", "read", 0.7, 1, TRUE)
 #' str(res)
 #'
@@ -281,6 +353,83 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 sampleEntropy <- function(data, m, r) {
     .Call(`_footprintR_sampleEntropy`, data, m, r)
 }
+
+#' Calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
+#'
+#' @param bamdata A \code{bam1_t*} with the alignment.
+#'
+#' @return An \code{int} giving the number of aligned bases.
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Extract quality score (qscore)
+#'
+#' @param bamdata A \code{bam1_t*} with the alignment.
+#'
+#' @return A \code{double} corresponding to the value extracted from the "qs"
+#'     tag, or in case that is missing, calculated as the mean of base quality
+#'     values.
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Get the forward read sequence from an alignment
+#'
+#' Extract the read sequence from a bam1_t corresponding to the plus-strand
+#' of the read (thus reverse-complementing the read for an minus-strand
+#' alignment) and write it to the char* array at qseq, allocating memory of
+#' sufficient length if needed. The allocated space (without terminating null
+#' character) is stored in qseq_len.
+#'
+#' @param bamdata A \code{bam1_t*} with the alignment.
+#' @param qseq A \code{char**} (pointer to a character array) to which the
+#'     extracted sequence will be written.
+#' @param qseq_len A \code{int*} (pointer to int) in which the number of
+#'     allocated characters at \code{qseq} are stored (escluding the
+#'     terminating null character).
+#'
+#' @returns 0 if sucessful, -1 if memory allocation failed
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Extract vector with modification probabilities from alignment
+#'
+#' Use htslib functions to parse the modification probabilities for
+#' `modbase`.
+#'
+#' @param bamdata A \code{bam1_t*} with the alignment.
+#' @param modbase A \code{char} with the modified base code for which to
+#'     extract modification probabilities.
+#' @param unmodbase A \code{char} with the unmodified base corresponding to
+#'     \code{modbase}.
+#' @param mod_probs A \code{Rcpp::NumericVector*} to which the extracted
+#'     modification probabilities will be appended at the end.
+#' @param qseq A \code{char*} pointing to the forward read sequence.
+#' @param ms A \code{hts_base_mod_state*} (modification state struct) expected
+#'     to be pre-initialized.
+#' @param buffer A \code{char*} pointing to a pre-allocated character array
+#'     to which an error message is written in case of a failure.
+#' @param buffer_len An \code{int} giving the pre-allocated size of the array
+#'     at \code{buffer} (excluding the terminating null).
+#'
+#' @returns An \code{int}, if greater or equal to zero giving the number of
+#'     extracted probabilities, or less than zero if something failed. In
+#'     that case, the error message is giving in \code{buffer}.
+#'
+#' @author Michael Stadler
+#'
+#' @noRd
+#' @keywords internal
+NULL
 
 #' Get unmodified base corresponding to a modified base
 #'
