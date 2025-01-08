@@ -73,10 +73,12 @@
 #'                         modbase = "a",
 #'                         sequenceContextWidth = 1,
 #'                         sequenceReference = gnmfasta,
-#'                         sequenceContext = "A")
+#'                         sequenceContext = "A",
+#'                         BPPARAM = BiocParallel::SerialParam())
 #' quantifyWindowsInRegion(bamfiles = modbamfiles,
 #'                         region = "chr1:6940000-6955000",
-#'                         modbase = "a")
+#'                         modbase = "a",
+#'                         BPPARAM = BiocParallel::SerialParam())
 #'
 #' @importFrom SummarizedExperiment rowRanges colData
 #' @importFrom GenomicRanges GRanges
