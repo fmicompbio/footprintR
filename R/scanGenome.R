@@ -180,11 +180,16 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
-#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+#'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
 #' se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
-#'                               region = "chr1:6940000-6955000", modbase = "a")
-#' getDifferentiallyModifiedWindows(se)
+#'                               region = "chr1:6940000-6955000", modbase = "a",
+#'                               BPPARAM = BiocParallel::SerialParam())
+#' se$group <- c("group1", "group1", "group2", "group2")
+#' tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+#' class(tab)
+#' head(tab)
 #'
 #' @importFrom SummarizedExperiment assayNames colData assay ncol
 #' @importFrom stats model.matrix
@@ -285,7 +290,20 @@ getDifferentiallyModifiedWindows <- function(se,
 #'     regions of interest.
 #'
 #' @examples
-#' # TODO
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+#'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+#'                               region = "chr1:6940000-6955000", modbase = "a",
+#'                               BPPARAM = BiocParallel::SerialParam())
+#' se$group <- c("group1", "group1", "group2", "group2")
+#' tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+#' gr <- as(tab$table, "GRanges")
+#' gr
+#'
+#' grFused <- fuseWindows(x = gr, scoreCol = "logFC", thresh = 5.0)
+#' grFused
 #'
 #' @importFrom S4Vectors mcols subjectHits queryHits
 #' @importFrom dplyr mutate filter group_by ungroup group_split
