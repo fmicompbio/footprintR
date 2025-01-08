@@ -14,9 +14,8 @@ Ranges correspond to windows, and columns in \code{mcols(x)} to scores.}
 to use for the analysis.}
 
 \item{thresh}{A numeric scalar giving the minimal absolute window score
-(after smoothing, see \code{minperiod} and \code{maxperiod} arguments)
-defining a region of interest. Higher values make the region
-detection more stringent.}
+(after smoothing, see \code{minperiod} argument) defining a region of
+interest. Higher values make the region detection more stringent.}
 
 \item{minperiod}{Numeric scalar that defines the low-pass
 filter parameter used to smooth the scores for segmentation.
@@ -43,7 +42,20 @@ regions of interest by fusing consistent neighboring windows
 along the genome.
 }
 \examples{
-# TODO
+modbamfiles <- system.file("extdata",
+                           c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+                             "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+                           package = "footprintR")
+se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+                              region = "chr1:6940000-6955000", modbase = "a",
+                              BPPARAM = BiocParallel::SerialParam())
+se$group <- c("group1", "group1", "group2", "group2")
+tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+gr <- as(tab$table, "GRanges")
+gr
+
+grFused <- fuseWindows(x = gr, scoreCol = "logFC", thresh = 5.0)
+grFused
 
 }
 \author{

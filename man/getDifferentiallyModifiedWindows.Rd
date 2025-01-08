@@ -26,6 +26,8 @@ total counts, respectively.}
 
 \item{groupCol}{Character scalar giving the column in \code{colData(se)}
 that defines the groups of samples to be compared.}
+
+\item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
 \value{
 The \code{\link[edgeR]{topTags}} output obtained for the statistical
@@ -38,11 +40,16 @@ perform a pairwise statistical test for differential modification.
 }
 \examples{
 modbamfiles <- system.file("extdata",
-                           c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                           c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+                             "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
 se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
-                              region = "chr1:6940000-6955000", modbase = "a")
-getDifferentiallyModifiedWindows(se)
+                              region = "chr1:6940000-6955000", modbase = "a",
+                              BPPARAM = BiocParallel::SerialParam())
+se$group <- c("group1", "group1", "group2", "group2")
+tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+class(tab)
+head(tab)
 
 }
 \author{
