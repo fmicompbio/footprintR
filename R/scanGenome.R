@@ -264,9 +264,8 @@ getDifferentiallyModifiedWindows <- function(se,
 #' @param scoreCol Character scalar giving the column name in \code{mcols(x)}
 #'     to use for the analysis.
 #' @param thresh A numeric scalar giving the minimal absolute window score
-#'     (after smoothing, see \code{minperiod} and \code{maxperiod} arguments)
-#'     defining a region of interest. Higher values make the region
-#'     detection more stringent.
+#'     (after smoothing, see \code{minperiod} argument) defining a region of
+#'     interest. Higher values make the region detection more stringent.
 #' @param minperiod Numeric scalar that defines the low-pass
 #'     filter parameter used to smooth the scores for segmentation.
 #'     \code{minperiod} gives the minimal period (in number of windows) for the
@@ -306,7 +305,6 @@ fuseWindows <- function(x,
     .assertScalar(x = scoreCol, type = "character", validValues = colnames(mcols(x)))
     .assertScalar(x = thresh, type = "numeric", rngExcl = c(0, Inf))
     .assertScalar(x = minperiod, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(x = maxperiod, type = "numeric", rngIncl = c(minperiod, Inf))
     .assertScalar(x = maxGap, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "signal")
