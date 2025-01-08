@@ -171,6 +171,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'     total counts, respectively.
 #' @param groupCol Character scalar giving the column in \code{colData(se)}
 #'     that defines the groups of samples to be compared.
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @author Panagiotis Papasaikas, Sebastien Smallwood, Charlotte Soneson, Michael Stadler
 #'
