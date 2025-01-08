@@ -292,6 +292,7 @@ getDifferentiallyModifiedWindows <- function(se,
 #' @importFrom dplyr mutate filter group_by ungroup group_split
 #' @importFrom IRanges reduce findOverlaps
 #' @importFrom cli cli_abort
+#' @importFrom rlang .data
 #'
 #' @export
 fuseWindows <- function(x,
@@ -325,14 +326,14 @@ fuseWindows <- function(x,
     # threshold
     .message("thresholding smoothed scores")
     xdfSel <- xdf |>
-        dplyr::filter(abs(sscore) >= thresh) |>
-        mutate(direction = factor(ifelse(sign(sscore) == -1, "down", "up"),
+        dplyr::filter(abs(.data$sscore) >= thresh) |>
+        mutate(direction = factor(ifelse(sign(.data$sscore) == -1, "down", "up"),
                                   levels = c("down", "up")))
 
     # summarise
     .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
     grL <- xdfSel |>
-        group_by(direction) |>
+        group_by(.data$direction) |>
         group_split() |>
         lapply(function(x) {
             gr1 <- as(x, "GRanges") |>
