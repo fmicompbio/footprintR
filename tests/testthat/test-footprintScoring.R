@@ -4,14 +4,32 @@ test_that(".filterScores works", {
     xs <- pi * seq(0, 10, length.out = 100)
     ys <- sin(xs) + sin(xs / 3) + sin(xs * 10)
 
-    res <- .filterScores(score = ys, minperiod = 2, maxperiod = 10)
-
-    expect_vector(res, numeric())
-    expect_type(res, "double")
-    expect_length(res, length(xs))
-    expect_true(cor(res, sin(xs)) > cor(res, ys))
+    # band-pass filter
+    res1 <- .filterScores(score = ys, minperiod = 2, maxperiod = 10, type = "pass")
+    expect_vector(res1, numeric())
+    expect_type(res1, "double")
+    expect_length(res1, length(xs))
+    expect_true(cor(res1, sin(xs)) > cor(res1, ys))
     # plot(xs, ys, type = "l")
-    # lines(xs, res, col = "red")
+    # lines(xs, res1, col = "red")
+
+    # low-pass filter
+    res2 <- .filterScores(score = ys, minperiod = 2, type = "low")
+    expect_vector(res2, numeric())
+    expect_type(res2, "double")
+    expect_length(res2, length(xs))
+    expect_true(cor(res2, sin(xs) + sin(xs / 3)) > cor(res2, ys))
+    # plot(xs, ys, type = "l")
+    # lines(xs, res2, col = "red")
+
+    # high-pass filter
+    res3 <- .filterScores(score = ys, maxperiod = 10, type = "high")
+    expect_vector(res3, numeric())
+    expect_type(res3, "double")
+    expect_length(res3, length(xs))
+    expect_true(cor(res3, sin(xs * 10)) > cor(res2, ys))
+    # plot(xs, ys, type = "l")
+    # lines(xs, res3, col = "red")
 })
 
 test_that("addFootprint and helper functions work", {
