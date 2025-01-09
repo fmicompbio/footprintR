@@ -17,6 +17,7 @@ filterReadsBam(
   minQscore = 0,
   maxFracLowConf = 1,
   maxEntropy = Inf,
+  LowConf = 0.7,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
@@ -62,6 +63,9 @@ filtered out.}
 \item{maxEntropy}{A numeric scalar representing the largest acceptable
 read-level entropy. Reads with entropy above this value will be filtered
 out. A value of \code{Inf} deactivates the entropy filter.}
+
+\item{LowConf}{A numeric scalar with the minimum call confidence below which
+calls are considered "low confidence".}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps

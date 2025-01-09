@@ -30,8 +30,10 @@ that defines the groups of samples to be compared.}
 \item{verbose}{Logical scalar. If \code{TRUE}, report on progress.}
 }
 \value{
-The \code{\link[edgeR]{topTags}} output obtained for the statistical
-analysis.
+The \code{\link[GenomicRanges]{GRanges}} object constructed from
+the \code{\link[edgeR]{topTags}} output obtained for the statistical
+analysis, with an additional column named "dirNegLog10PValue", calculated
+as the sign of the logFC multiplied with the -log10(PValue).
 }
 \description{
 Given a \code{SummarizedExperiment} with modified and total

@@ -4,7 +4,14 @@
 \alias{fuseWindows}
 \title{Identify regions of interest genome-wide.}
 \usage{
-fuseWindows(x, scoreCol, thresh, minperiod = 3, maxGap = 50, verbose = FALSE)
+fuseWindows(
+  x,
+  scoreCol = "dirNegLog10PValue",
+  thresh = 3,
+  minperiod = 3,
+  maxGap = 50,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{x}{\code{GRanges} object with window-based scores or estimates.
