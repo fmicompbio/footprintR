@@ -185,8 +185,10 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'
 #' @author Panagiotis Papasaikas, Sebastien Smallwood, Charlotte Soneson, Michael Stadler
 #'
-#' @returns The \code{\link[edgeR]{topTags}} output obtained for the statistical
-#'     analysis.
+#' @returns The \code{\link[GenomicRanges]{GRanges}} object constructed from
+#'     the \code{\link[edgeR]{topTags}} output obtained for the statistical
+#'     analysis, with an additional column named "dirNegLog10PValue", calculated
+#'     as the sign of the logFC multiplied with the -log10(PValue).
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
@@ -203,6 +205,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'
 #' @importFrom SummarizedExperiment assayNames colData assay ncol
 #' @importFrom stats model.matrix
+#' @importFrom methods as
 #' @importFrom cli cli_abort
 #'
 #' @export
@@ -253,19 +256,17 @@ getDifferentiallyModifiedWindows <- function(se,
                            norm.factors = rep(nfacts, 2),
                            genes = as.data.frame(rowRanges(se)))
     dgeL <- edgeR::estimateDisp(y = dgeL, design = dsgn)
-    # fit <- edgeR::glmQLFit(y = dgeL, design = dsgn)
-    # tst <- edgeR::glmQLFTest(
-    #     glmfit = fit,
-    #     contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
-    #         (colnames(dsgn) == levels(cd2$group)[1]))
     fit <- edgeR::glmFit(y = dgeL, design = dsgn)
     tst <- edgeR::glmLRT(
         glmfit = fit,
         contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
             (colnames(dsgn) == levels(cd2$group)[1]))
 
-    # return topTags
-    return(edgeR::topTags(object = tst, n = Inf, sort.by = "none"))
+    # coerce topTags to GRanges and return
+    tt <- edgeR::topTags(object = tst, n = Inf, sort.by = "none")
+    tt$table$dirNegLog10PValue <- sign(tt$table$logFC) * -log10(tt$table$PValue)
+    gr <- as(tt$table, "GRanges")
+    return(gr)
 }
 
 #' Identify regions of interest genome-wide.
