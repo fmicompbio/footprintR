@@ -27,6 +27,8 @@
 #' @param maxEntropy A numeric scalar representing the largest acceptable
 #'     read-level entropy. Reads with entropy above this value will be filtered
 #'     out. A value of \code{Inf} deactivates the entropy filter.
+#' @param LowConf A numeric scalar with the minimum call confidence below which
+#'     calls are considered "low confidence".
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
 #'     in \code{filterReadsBam()}. The default value is
@@ -69,6 +71,7 @@ filterReadsBam <- function(infiles,
                            minQscore = 0.0,
                            maxFracLowConf = 1.0,
                            maxEntropy = Inf,
+                           LowConf = 0.7,
                            BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                            verbose = FALSE) {
     # validate arguments
@@ -89,6 +92,7 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minQscore, type = "numeric")
     .assertScalar(x = maxEntropy, type = "numeric")
+    .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0.5, 1))
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
 
     # determine the number of parallel threads to be used for
@@ -122,8 +126,9 @@ filterReadsBam <- function(infiles,
                               myMinAlignedLength = as.integer(minAlignedLength),
                               myMinAlignedFraction = minAlignedFraction,
                               myMinQscore = minQscore,
-                              myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
                               myMaxFracLowConf = maxFracLowConf,
+                              myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
+                              myLowConf = LowConf,
                               myNThreads = ncpuDecompression,
                               myverbose = verbose) {
                          if (myverbose) {
@@ -138,8 +143,9 @@ filterReadsBam <- function(infiles,
                                                    minAlignedLength = myMinAlignedLength,
                                                    minAlignedFraction = myMinAlignedFraction,
                                                    minQscore = myMinQscore,
-                                                   maxEntropy = myMaxEntropy,
                                                    maxFracLowConf = myMaxFracLowConf,
+                                                   maxEntropy = myMaxEntropy,
+                                                   LowConf = myLowConf,
                                                    nThreads = myNThreads,
                                                    verbose = myverbose)
                          if (myverbose) {
