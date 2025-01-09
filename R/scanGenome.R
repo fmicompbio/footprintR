@@ -113,7 +113,8 @@ quantifyWindowsInRegion <- function(bamfiles,
                      level = "summary", sampleAnnot = sampleAnnot,
                      seqinfo = seqinfo, sequenceContextWidth = sequenceContextWidth,
                      sequenceReference = sequenceReference,
-                     modProbThreshold = modProbThreshold, BPPARAM = BPPARAM,
+                     modProbThreshold = modProbThreshold,
+                     trim = TRUE, BPPARAM = BPPARAM,
                      verbose = verbose)
 
     # filter positions
