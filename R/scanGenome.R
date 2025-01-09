@@ -199,9 +199,9 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'                               region = "chr1:6940000-6955000", modbase = "a",
 #'                               BPPARAM = BiocParallel::SerialParam())
 #' se$group <- c("group1", "group1", "group2", "group2")
-#' tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
-#' class(tab)
-#' head(tab)
+#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+#' class(gr)
+#' head(gr)
 #'
 #' @importFrom SummarizedExperiment assayNames colData assay ncol
 #' @importFrom stats model.matrix
@@ -309,8 +309,7 @@ getDifferentiallyModifiedWindows <- function(se,
 #'                               region = "chr1:6940000-6955000", modbase = "a",
 #'                               BPPARAM = BiocParallel::SerialParam())
 #' se$group <- c("group1", "group1", "group2", "group2")
-#' tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
-#' gr <- as(tab$table, "GRanges")
+#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
 #' gr
 #'
 #' grFused <- fuseWindows(x = gr, scoreCol = "logFC", thresh = 5.0)

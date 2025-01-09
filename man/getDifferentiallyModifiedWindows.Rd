@@ -49,9 +49,9 @@ se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                               region = "chr1:6940000-6955000", modbase = "a",
                               BPPARAM = BiocParallel::SerialParam())
 se$group <- c("group1", "group1", "group2", "group2")
-tab <- getDifferentiallyModifiedWindows(se, groupCol = "group")
-class(tab)
-head(tab)
+gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+class(gr)
+head(gr)
 
 }
 \author{
