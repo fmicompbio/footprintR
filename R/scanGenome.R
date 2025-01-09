@@ -324,8 +324,8 @@ getDifferentiallyModifiedWindows <- function(se,
 #'
 #' @export
 fuseWindows <- function(x,
-                        scoreCol,
-                        thresh,
+                        scoreCol = "dirNegLog10PValue",
+                        thresh = 3,
                         minperiod = 3,
                         maxGap = 50,
                         verbose = FALSE) {
