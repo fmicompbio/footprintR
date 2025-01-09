@@ -127,7 +127,7 @@ quantifyWindowsInRegion <- function(bamfiles,
     # define windows for aggregation
     if (identical(windowMode, "fixed")) {
         rng <- range(rowRanges(se), ignore.strand = TRUE)
-        s <- seq(start(rng), end(rng) - windowSize, by = windowStep)
+            s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
         windowgr <- GRanges(seqnames = seqnames(rng),
                             ranges = IRanges(start = s, width = windowSize))
     }
