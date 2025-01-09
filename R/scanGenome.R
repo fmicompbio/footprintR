@@ -81,7 +81,7 @@
 #'                         BPPARAM = BiocParallel::SerialParam())
 #'
 #' @importFrom SummarizedExperiment rowRanges colData
-#' @importFrom GenomicRanges GRanges
+#' @importFrom GenomicRanges GRanges GPos
 #' @importFrom IRanges IRanges start end findOverlaps
 #' @importFrom S4Vectors queryHits subjectHits metadata
 #' @importFrom cli cli_abort
@@ -124,6 +124,7 @@ quantifyWindowsInRegion <- function(bamfiles,
                               assayNameNA = NULL)
     }
 
+    if (nrow(se) > 0) {
     # define windows for aggregation
     if (identical(windowMode, "fixed")) {
         rng <- range(rowRanges(se), ignore.strand = TRUE)
@@ -151,6 +152,14 @@ quantifyWindowsInRegion <- function(bamfiles,
                                   rowRanges = windowgr[rnms],
                                   colData = colData(se),
                                   metadata = metadata(se))
+    } else {
+        seNew <- SummarizedExperiment(
+            assays = list(Nmod = matrix(nrow = 0, ncol = ncol(se)),
+                          Nvalid = matrix(nrow = 0, ncol = ncol(se))),
+            rowRanges = GPos(),
+            colData = colData(se),
+            metadata = metadata(se))
+    }
     return(seNew)
 }
 
