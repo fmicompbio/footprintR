@@ -1,4 +1,4 @@
-test_that("genome scanning works", {
+test_that("genome scanning works (helper functions)", {
     ## example data
     modbamfiles <- system.file("extdata",
                             c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
@@ -30,12 +30,12 @@ test_that("genome scanning works", {
     ))
     se1$group <- c("group1", "group1", "group2", "group2")
     expect_s4_class(se1, "RangedSummarizedExperiment")
-    expect_identical(dim(se1), c(1312L, 4L))
+    expect_identical(dim(se1), c(134L, 4L))
     expect_true(all(width(SummarizedExperiment::rowRanges(se1)) == 24L))
     expect_identical(SummarizedExperiment::assayNames(se1),
                      c("Nmod", "Nvalid"))
     expect_identical(colSums(SummarizedExperiment::assay(se1, "Nvalid")),
-                     c(s1 = 22587, s2 = 22587, s3 = 12878, s4 = 12878))
+                     c(s1 = 1601, s2 = 1601, s3 = 554, s4 = 554))
     ov <- findOverlaps(query = SummarizedExperiment::rowRanges(se0),
                        subject = SummarizedExperiment::rowRanges(se1))
     Nvalid <- SummarizedExperiment::assay(se0, "Nvalid")
@@ -61,7 +61,7 @@ test_that("genome scanning works", {
                                    sequenceContext = "A",
                                    BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(se2, "RangedSummarizedExperiment")
-    expect_identical(dim(se2), c(1311L, 4L))
+    expect_identical(dim(se2), c(134L, 4L))
     expect_true(all(width(SummarizedExperiment::rowRanges(se2)) == 24L))
     i <- GenomicRanges::match(SummarizedExperiment::rowRanges(se2),
                               SummarizedExperiment::rowRanges(se1))
@@ -69,7 +69,7 @@ test_that("genome scanning works", {
     expect_identical(SummarizedExperiment::assayNames(se2),
                      c("Nmod", "Nvalid"))
     expect_identical(colSums(SummarizedExperiment::assay(se2, "Nvalid")),
-                     c(s1 = 22241, s2 = 22241, s3 = 12358, s4 = 12358))
+                     c(s1 = 1581, s2 = 1581, s3 = 540, s4 = 540))
     expect_true(all(SummarizedExperiment::assay(se1, "Nmod")[i,] >= SummarizedExperiment::assay(se2, "Nmod")))
     expect_true(all(SummarizedExperiment::assay(se1, "Nvalid")[i,] >= SummarizedExperiment::assay(se2, "Nvalid")))
     expect_identical(SummarizedExperiment::colData(se1),
@@ -86,45 +86,55 @@ test_that("genome scanning works", {
     se1$group <- c("group1", "group1", "group2", "group2")
 
     suppressMessages(expect_message(
-        tab1 <- getDifferentiallyModifiedWindows(se1, groupCol = "group", verbose = TRUE)
+        gr1 <- getDifferentiallyModifiedWindows(se1, groupCol = "group", verbose = TRUE)
     ))
-    expect_s4_class(tab1, "TopTags")
-    expect_identical(dim(tab1), c(nrow(se1), 10L))
-    expect_identical(colnames(tab1),
-                     c("seqnames", "start", "end", "width", "strand", "logFC",
-                       "logCPM", "LR", "PValue", "FDR"))
-    expect_s4_class(gr1 <- as(tab1$table, "GRanges"), "GRanges")
+    expect_s4_class(gr1, "GRanges")
+    expect_length(gr1, 134L)
+    expect_identical(ncol(GenomicRanges::mcols(gr1)), 6L)
+    expect_identical(colnames(GenomicRanges::mcols(gr1)),
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
 
-    tab2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
-    expect_s4_class(tab2, "TopTags")
-    expect_identical(dim(tab2), c(nrow(se2), 10L))
-    expect_identical(colnames(tab2),
-                     c("seqnames", "start", "end", "width", "strand", "logFC",
-                       "logCPM", "LR", "PValue", "FDR"))
-    expect_s4_class(gr2 <- as(tab2$table, "GRanges"), "GRanges")
+    gr2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
+    expect_s4_class(gr2, "GRanges")
+    expect_length(gr2, 134L)
+    expect_identical(ncol(GenomicRanges::mcols(gr2)), 6L)
+    expect_identical(colnames(GenomicRanges::mcols(gr2)),
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
     i <- GenomicRanges::match(gr2, gr1)
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
 
     ## fuseWindows
     expect_error(fuseWindows(x = "error"))
-    expect_error(fuseWindows(x = gr1))
     expect_error(fuseWindows(x = gr1, scoreCol = "error"))
-    expect_error(fuseWindows(x = gr1, scoreCol = "logFC"))
 
     suppressMessages(expect_message(
         gr1Fused <- fuseWindows(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
     ))
     expect_s4_class(gr1Fused, "GRanges")
-    expect_length(gr1Fused, 33L)
+    expect_length(gr1Fused, 5L)
     expect_identical(colnames(GenomicRanges::mcols(gr1Fused)),
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
-    expect_identical(sum(width(gr1Fused)), 3024L)
+    expect_identical(sum(width(gr1Fused)), 768L)
 
     gr2Fused <- fuseWindows(x = gr2, scoreCol = "logFC", thresh = 5.0)
     expect_s4_class(gr2Fused, "GRanges")
-    expect_length(gr2Fused, 31L)
+    expect_length(gr2Fused, 5L)
     expect_identical(colnames(GenomicRanges::mcols(gr2Fused)),
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
-    expect_identical(sum(width(gr2Fused)), 2988L)
+    expect_identical(sum(width(gr2Fused)), 768L)
+})
+
+test_that("genome scanning works (wrapper function)", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+                                 "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    gr <- scanForHighScoringRegions(bamfiles = modbamfiles,
+                                    sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
+                                                             group = c("A","A","B","B")),
+                                    chromosomeLengths = c(chr1 = 6955000),
+                                    modbase = "a", BPPARAM = BiocParallel::SerialParam())
+    expect_s4_class(gr, "GRanges")
+    expect_length(gr, 38L)
 })
