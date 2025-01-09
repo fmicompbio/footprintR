@@ -1,3 +1,21 @@
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#' @keywords internal
+#' @noRd
+.tileChromosome <- function(tileSize, 
+                            windowSize, 
+                            windowStep,
+                            chromName, 
+                            chromLength) {
+    # tile a chromosome
+    nWindowsPerTile <- floor((tileSize - windowSize) / windowStep) + 1
+    tileSize <- (nWindowsPerTile * windowStep) + windowSize
+    nTiles <- ceiling(chromLength / tileSize)
+    s <- 1 + (seq.int(nTiles) - 1) * (tileSize - windowStep)
+    regs <- GRanges(chromName, IRanges(start = s, width = tileSize))
+    regs
+}
+
 #' Generate counts for sequential windows in a single region
 #'
 #' Read modification data from \code{bamfiles} for a chunk of the genome
@@ -475,12 +493,11 @@ scanForHighScoringRegions <- function(bamfiles,
 
     # loop over chromosomes
     gr <- do.call(c, lapply(names(chromosomeLengths), function(chr) {
-        # tile the chromosome
-        nWindowsPerTile <- floor((tileSize - windowSize) / windowStep) + 1
-        tileSize <- (nWindowsPerTile * windowStep) + windowSize
-        nTiles <- ceiling(chromosomeLengths[chr] / tileSize)
-        s <- 1 + (seq.int(nTiles) - 1) * (tileSize - windowStep + 1)
-        regs <- GRanges(chr, IRanges(start = s, width = tileSize))
+        regs <- .tileChromosome(tileSize = tileSize, 
+                                windowSize = windowSize, 
+                                windowStep = windowStep, 
+                                chromName = chr,
+                                chromLength = chromosomeLengths[chr])
 
         # quantify windows for each tile and merge
         tileL <- lapply(seq_along(regs), function(i) {
