@@ -126,14 +126,26 @@ test_that("genome scanning works (helper functions)", {
 })
 
 test_that("genome scanning works (wrapper function)", {
+    # example data
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
                                  "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
+    annotdf <- data.frame(sample = c("s1","s2","s3","s4"),
+                          group = c("A","A","B","B"))
+    chrlen <- c(chr1 = 6955000)
+
+    expect_error(scanForHighScoringRegions(bamfiles = modbamfiles,
+                                           sampleAnnot = annotdf,
+                                           chromosomeLengths = 1e6))
+    expect_error(scanForHighScoringRegions(bamfiles = modbamfiles,
+                                           sampleAnnot = annotdf,
+                                           chromosomeLengths = chrlen,
+                                           scoreFunction = "error"))
+
     gr <- scanForHighScoringRegions(bamfiles = modbamfiles,
-                                    sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
-                                                             group = c("A","A","B","B")),
-                                    chromosomeLengths = c(chr1 = 6955000),
+                                    sampleAnnot = annotdf,
+                                    chromosomeLengths = chrlen,
                                     modbase = "a", BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(gr, "GRanges")
     expect_length(gr, 38L)
