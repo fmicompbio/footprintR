@@ -2,10 +2,10 @@
 #' @importFrom IRanges IRanges
 #' @keywords internal
 #' @noRd
-.tileChromosome <- function(tileSize, 
-                            windowSize, 
+.tileChromosome <- function(tileSize,
+                            windowSize,
                             windowStep,
-                            chromName, 
+                            chromName,
                             chromLength) {
     # tile a chromosome
     nWindowsPerTile <- floor((tileSize - windowSize) / windowStep) + 1
@@ -264,6 +264,7 @@ getDifferentiallyModifiedWindows <- function(se,
         dsgn <- cbind(dsgn, cd2$group == grp & cd2$type == "mod")
     }
     colnames(dsgn)[ncol(dsgn) - c(1, 0)] <- levels(cd2$group)
+    rownames(cnt) <- NULL
     colnames(cnt) <- rownames(dsgn) <- paste0(rep(colnames(se), 2),
                                               rep(c(".mod", ".unmod"),
                                                   each = ncol(se)))
@@ -272,7 +273,7 @@ getDifferentiallyModifiedWindows <- function(se,
     .message("testing for differential modifications")
     dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
                            norm.factors = rep(nfacts, 2),
-                           genes = as.data.frame(rowRanges(se)))
+                           genes = as.data.frame(unname(rowRanges(se))))
     dgeL <- edgeR::estimateDisp(y = dgeL, design = dsgn)
     fit <- edgeR::glmFit(y = dgeL, design = dsgn)
     tst <- edgeR::glmLRT(
@@ -493,9 +494,9 @@ scanForHighScoringRegions <- function(bamfiles,
 
     # loop over chromosomes
     gr <- do.call(c, lapply(names(chromosomeLengths), function(chr) {
-        regs <- .tileChromosome(tileSize = tileSize, 
-                                windowSize = windowSize, 
-                                windowStep = windowStep, 
+        regs <- .tileChromosome(tileSize = tileSize,
+                                windowSize = windowSize,
+                                windowStep = windowStep,
                                 chromName = chr,
                                 chromLength = chromosomeLengths[chr])
 
