@@ -222,6 +222,8 @@ quantifyWindowsInRegion <- function(bamfiles,
 #' head(gr)
 #'
 #' @importFrom SummarizedExperiment assayNames colData assay ncol
+#' @importFrom GenomicRanges GRanges
+#' @importFrom S4Vectors mcols<- DataFrame
 #' @importFrom stats model.matrix
 #' @importFrom methods as
 #' @importFrom cli cli_abort
@@ -246,45 +248,55 @@ getDifferentiallyModifiedWindows <- function(se,
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "edgeR")
 
-    # calculate library size and unmodified counts
-    .message("calculating library sizes and normalization factors")
-    libsizes <- colSums(assay(se, assayNameValid))
-    nfacts <- edgeR::normLibSizes(assay(se, assayNameValid))
-    cnt <- cbind(assay(se, assayNameMod),
-                 assay(se, assayNameValid) - assay(se, assayNameMod))
-    cd2 <- cbind(rbind(colData(se)[, c("sample", groupCol)],
-                       colData(se)[, c("sample", groupCol)]),
-                 data.frame(type = rep(c("mod", "unmod"), each = ncol(se))))
-    cd2$group <- factor(cd2$group)
+    if (nrow(se) > 0) {
+        # calculate library size and unmodified counts
+        .message("calculating library sizes and normalization factors")
+        libsizes <- colSums(assay(se, assayNameValid))
+        nfacts <- edgeR::normLibSizes(assay(se, assayNameValid))
+        cnt <- cbind(assay(se, assayNameMod),
+                     assay(se, assayNameValid) - assay(se, assayNameMod))
+        cd2 <- cbind(rbind(colData(se)[, c("sample", groupCol)],
+                           colData(se)[, c("sample", groupCol)]),
+                     data.frame(type = rep(c("mod", "unmod"), each = ncol(se))))
+        cd2$group <- factor(cd2$group)
 
-    # create design matrix
-    .message("creating design matrix")
-    dsgn <- model.matrix(~ 0 + sample, data = cd2)
-    for (grp in levels(cd2$group)) {
-        dsgn <- cbind(dsgn, cd2$group == grp & cd2$type == "mod")
+        # create design matrix
+        .message("creating design matrix")
+        dsgn <- model.matrix(~ 0 + sample, data = cd2)
+        for (grp in levels(cd2$group)) {
+            dsgn <- cbind(dsgn, cd2$group == grp & cd2$type == "mod")
+        }
+        colnames(dsgn)[ncol(dsgn) - c(1, 0)] <- levels(cd2$group)
+        rownames(cnt) <- NULL
+        colnames(cnt) <- rownames(dsgn) <- paste0(rep(colnames(se), 2),
+                                                  rep(c(".mod", ".unmod"),
+                                                      each = ncol(se)))
+
+        # test for differential modification
+        .message("testing for differential modifications")
+        dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
+                               norm.factors = rep(nfacts, 2),
+                               genes = as.data.frame(unname(rowRanges(se))))
+        dgeL <- edgeR::estimateDisp(y = dgeL, design = dsgn)
+        fit <- edgeR::glmFit(y = dgeL, design = dsgn)
+        tst <- edgeR::glmLRT(
+            glmfit = fit,
+            contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
+                (colnames(dsgn) == levels(cd2$group)[1]))
+
+        # coerce topTags to GRanges
+        tt <- edgeR::topTags(object = tst, n = Inf, sort.by = "none")
+        tt$table$dirNegLog10PValue <- sign(tt$table$logFC) * -log10(tt$table$PValue)
+        gr <- as(tt$table, "GRanges")
+    } else {
+        gr <- GRanges()
+        mcols(gr) <- DataFrame(logFC = numeric(0),
+                               logCPM = numeric(0),
+                               LR = numeric(0),
+                               PValue = numeric(0),
+                               FDR = numeric(0),
+                               dirNegLog10PValue = numeric(0))
     }
-    colnames(dsgn)[ncol(dsgn) - c(1, 0)] <- levels(cd2$group)
-    rownames(cnt) <- NULL
-    colnames(cnt) <- rownames(dsgn) <- paste0(rep(colnames(se), 2),
-                                              rep(c(".mod", ".unmod"),
-                                                  each = ncol(se)))
-
-    # test for differential modification
-    .message("testing for differential modifications")
-    dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
-                           norm.factors = rep(nfacts, 2),
-                           genes = as.data.frame(unname(rowRanges(se))))
-    dgeL <- edgeR::estimateDisp(y = dgeL, design = dsgn)
-    fit <- edgeR::glmFit(y = dgeL, design = dsgn)
-    tst <- edgeR::glmLRT(
-        glmfit = fit,
-        contrast = (colnames(dsgn) == levels(cd2$group)[2]) -
-            (colnames(dsgn) == levels(cd2$group)[1]))
-
-    # coerce topTags to GRanges and return
-    tt <- edgeR::topTags(object = tst, n = Inf, sort.by = "none")
-    tt$table$dirNegLog10PValue <- sign(tt$table$logFC) * -log10(tt$table$PValue)
-    gr <- as(tt$table, "GRanges")
     return(gr)
 }
 
@@ -334,7 +346,8 @@ getDifferentiallyModifiedWindows <- function(se,
 #' grFused <- fuseWindows(x = gr, scoreCol = "logFC", thresh = 5.0)
 #' grFused
 #'
-#' @importFrom S4Vectors mcols subjectHits queryHits
+#' @importFrom GenomicRanges GRanges
+#' @importFrom S4Vectors mcols mcols<- subjectHits queryHits DataFrame
 #' @importFrom dplyr mutate filter group_by ungroup group_split
 #' @importFrom IRanges reduce findOverlaps
 #' @importFrom cli cli_abort
@@ -394,11 +407,22 @@ fuseWindows <- function(x,
             gr1
         })
     gr <- sort(do.call(c, grL))
-    ov <- findOverlaps(query = x, subject = gr, type = "within")
-    mcols(gr)[[scoreCol]] <- tapply(X = xdf$sscore[queryHits(ov)],
-                                    INDEX = subjectHits(ov),
-                                    FUN = mean)
-    mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
+    if (length(gr) > 0) {
+        ov <- findOverlaps(query = x, subject = gr, type = "within")
+        mcols(gr)[[scoreCol]] <- tapply(X = xdf$sscore[queryHits(ov)],
+                                        INDEX = subjectHits(ov),
+                                        FUN = mean)
+        mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
+    } else {
+        gr <- GRanges()
+        mcols(gr) <- DataFrame(thresh = numeric(0),
+                               numWindowsThresh = integer(0),
+                               direction = factor(character(0),
+                                                  levels = c("down", "up")),
+                               score = numeric(0),
+                               numWindows = numeric(0))
+        colnames(mcols(gr))[c(1,4)] <- paste0(scoreCol, c("Thresh", ""))
+    }
 
     return(gr)
 }
