@@ -12,13 +12,13 @@ test_that("genome scanning works (helper functions)", {
                       verbose = FALSE)
 
     ## .tileChromosome
-    rg <- .tileChromosome(tileSize = 40, windowSize = 12, 
+    rg <- .tileChromosome(tileSize = 40, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 37, 73))
     expect_equal(width(rg), rep(42, 3))
-    
-    rg <- .tileChromosome(tileSize = 20, windowSize = 12, 
+
+    rg <- .tileChromosome(tileSize = 20, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 19, 37, 55, 73))
@@ -31,6 +31,10 @@ test_that("genome scanning works (helper functions)", {
     expect_error(quantifyWindowsInRegion(bamfiles = modbamfiles,
                                          region = "error",
                                          modbase = "a"))
+    expect_identical(dim(quantifyWindowsInRegion(bamfiles = modbamfiles,
+                                                 region = "chr1:1-1000",
+                                                 modbase = "a")),
+                     c(0L, 4L))
 
     suppressMessages(expect_message(
         se1 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
@@ -93,6 +97,7 @@ test_that("genome scanning works (helper functions)", {
     expect_error(getDifferentiallyModifiedWindows(se = se1, assayNameMod = "error"))
     expect_error(getDifferentiallyModifiedWindows(se = se1, assayNameValid = "error"))
     expect_error(getDifferentiallyModifiedWindows(se = se1, groupCol = "error"))
+    expect_length(getDifferentiallyModifiedWindows(se = se1[numeric(0), ]), 0L)
     se1$group <- c("group1", "group2", "group3", "group4")
     expect_error(getDifferentiallyModifiedWindows(se1, groupCol = "group"))
     se1$group <- c("group1", "group1", "group2", "group2")
@@ -119,6 +124,7 @@ test_that("genome scanning works (helper functions)", {
     ## fuseWindows
     expect_error(fuseWindows(x = "error"))
     expect_error(fuseWindows(x = gr1, scoreCol = "error"))
+    expect_length(fuseWindows(x = gr1[numeric(0)]), 0L)
 
     suppressMessages(expect_message(
         gr1Fused <- fuseWindows(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
