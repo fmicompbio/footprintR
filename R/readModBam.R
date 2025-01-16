@@ -29,10 +29,13 @@
 #'     data. Supported values are:
 #'     \describe{
 #'         \item{"read"}{: Extracts modification probabilities for individual
-#'             reads into an assay called \code{"mod_prob"}.}
+#'             reads into an assay called \code{"mod_prob"}. This is the 
+#'             default if \code{nAlnsToSample} is non-zero or 
+#'             \code{variantPositions} is not \code{NULL}.}
 #'         \item{"quickread"}{: Like "read", but runs faster, does not support
 #'             read sampling, and does not return all annotations currently 
-#'             provided by "read".}
+#'             provided by "read". This is the default if \code{nAlnsToSample}
+#'             is zero and \code{variantPositions} is \code{NULL}.}
 #'         \item{"summary"}{: Counts the total and modified bases for each
 #'             position and strand and returns them in assays named 
 #'             \code{"Nvalid"} and \code{"Nmod"}, respectively.}
@@ -115,7 +118,8 @@
 readModBam <- function(bamfiles,
                        regions = NULL,
                        modbase,
-                       level = "read",
+                       level = ifelse(nAlnsToSample == 0 & is.null(variantPositions), 
+                                      "quickread", "read"),
                        sampleAnnot = NULL,
                        nAlnsToSample = 0,
                        seqnamesToSampleFrom = "chr19",
