@@ -33,7 +33,8 @@ test_that("genome scanning works (helper functions)", {
                                          modbase = "a"))
     expect_identical(dim(quantifyWindowsInRegion(bamfiles = modbamfiles,
                                                  region = "chr1:1-1000",
-                                                 modbase = "a")),
+                                                 modbase = "a", 
+                                                 BPPARAM = BiocParallel::SerialParam())),
                      c(0L, 4L))
 
     suppressMessages(expect_message(
