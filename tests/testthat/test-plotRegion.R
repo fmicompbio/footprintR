@@ -149,6 +149,20 @@ test_that("plotRegion works", {
                                             )))),
         "is not allowed if"
     )
+    expect_warning(
+        p9b <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
+                          modbaseSpace = TRUE,
+                          tracks = list(list(trackType = "GenomicRegions",
+                                             trackData = GenomicRanges::GRangesList(
+                                                 a = GenomicRanges::GRanges(
+                                                     "chr1", IRanges::IRanges(
+                                                         6935420, 6935440
+                                                     ), "+"
+                                                 )
+                                             )))),
+        "is not allowed if"
+    )
+    expect_identical(p9, p9b)
     p10 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
                       tracks = list(list(trackType = "Lollipop",
                                          trackData = "mod_prob",
