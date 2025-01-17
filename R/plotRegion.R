@@ -680,7 +680,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom dplyr group_by ungroup group_modify across all_of
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
-#' @importFrom GenomicRanges shift
+#' @importFrom GenomicRanges shift pintersect
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom BiocGenerics intersect
@@ -734,8 +734,12 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
+        highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
+                                                      ignore.strand = TRUE, 
+                                                      drop.nohit.ranges = TRUE)
+        highlightRegions <- highlightRegions[width(highlightRegions) > 0]
+        # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+        #                                             ignore.strand = TRUE)
     }
     .assertScalar(x = groupBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = colorBy, type = "character", allowNULL = TRUE)
@@ -1043,7 +1047,7 @@ plotGenomicRegions <- function(grl,
 #'
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges ranges
-#' @importFrom GenomicRanges shift
+#' @importFrom GenomicRanges shift pintersect
 #' @importFrom BiocGenerics intersect
 #' @importFrom S4Vectors endoapply
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
@@ -1086,8 +1090,12 @@ plotGenomicRegions <- function(grl,
 
     # adjust arguments if necessary
     if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
+        highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
+                                                      ignore.strand = TRUE, 
+                                                      drop.nohit.ranges = TRUE)
+        highlightRegions <- highlightRegions[width(highlightRegions) > 0]
+        # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+        #                                             ignore.strand = TRUE)
     }
     if (!is.null(footprintColors) && !is.null(footprintColumns)) {
         if (!all(footprintColumns %in% names(footprintColors))) {
@@ -1105,8 +1113,9 @@ plotGenomicRegions <- function(grl,
             structure(footprintColumns,
                       names = footprintColumns),
             function(nm) lapply(se[[nm]], function(y) {
-                endoapply(y, function(z)
-                    BiocGenerics::intersect(z, ranges(region)))
+                endoapply(y, function(z) {
+                    BiocGenerics::intersect(z, ranges(region))
+                })
             }))
     } else {
         footprints <- NULL
