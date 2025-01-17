@@ -57,7 +57,7 @@ added to the \code{mcols()}.}
 
 \item{modProbThreshold}{A numeric scalar, indicating the modification
 probability threshold to use to classify a base as 'modified' or
-'unmodified'. Only used if \code{level} is \code{"summary"}.}
+'unmodified'.}
 
 \item{tileSize}{A numeric scalar giving the approximate size of a
 genomic region for which the data is loaded at once. Chromosomes that

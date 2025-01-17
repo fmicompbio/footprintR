@@ -33,7 +33,7 @@
 #' @param modbase Character vector defining the modified base to extract.
 #' @param modProbThreshold A numeric scalar, indicating the modification
 #'     probability threshold to use to classify a base as 'modified' or
-#'     'unmodified'. Only used if \code{level} is \code{"summary"}.
+#'     'unmodified'. 
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
 #'     for the samples. It must contain at least one column, named
 #'     \code{"sample"}, which must contain all the values of
