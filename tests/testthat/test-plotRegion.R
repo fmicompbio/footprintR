@@ -539,7 +539,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL))) +
-        plot_layout(heights = c(3, 1, 3, 2))
+        plot_layout(heights = c(3, 3, 2, 1))
     expect_s3_class(p, "ggplot")
 
     ## cluster, with single read
