@@ -45,7 +45,11 @@
 #' read-level assay) or a dense matrix (otherwise), with columns representing
 #' read-anchor region (or sample-anchor region) combinations. The \code{region}
 #' column of the \code{colData} records which anchor region a given column
-#' corresponds to.
+#' corresponds to. In addition, all assays will be designated as 'read-level' 
+#' assays (each column represents a sample, which is in turn represented by 
+#' multiple columns in the actual data, corresponding to the different regions).
+#' This allows downstream analysis similar to that for read-level data, 
+#' including flattening and plotting. 
 #'
 #' @examples
 #' library(SummarizedExperiment)
@@ -236,16 +240,16 @@ getAnchorRegions <- function(se,
                              pos = seq_len(regionWidth) - floor((regionWidth + 1) / 2)),
             colData = cold,
             metadata = list(readLevelData = list(
-                assayNames = intersect(assayName, .getReadLevelAssayNames(se)),
-                colDataColumns = paste0("region_", intersect(assayName, .getReadLevelAssayNames(se)))
+                assayNames = names(assayL),
+                colDataColumns = paste0("region_", names(assayL))
             ))
         )
     })
 
     # Drop samples without reads if prune=TRUE
-    if (prune && length(metadata(seout)$readLevelData$assayNames) > 0) {
+    if (prune && length(intersect(assayName, .getReadLevelAssayNames(se))) > 0) {
         keepSamples <- c()
-        for (atp in metadata(seout)$readLevelData$assayNames) {
+        for (atp in intersect(assayName, .getReadLevelAssayNames(se))) {
             # check only read-level assays
             keepSamples <- union(
                 keepSamples,

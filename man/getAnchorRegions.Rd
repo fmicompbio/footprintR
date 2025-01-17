@@ -67,7 +67,11 @@ column of the assay is an \code{NaArray} (if \code{assayName} is a
 read-level assay) or a dense matrix (otherwise), with columns representing
 read-anchor region (or sample-anchor region) combinations. The \code{region}
 column of the \code{colData} records which anchor region a given column
-corresponds to.
+corresponds to. In addition, all assays will be designated as 'read-level'
+assays (each column represents a sample, which is in turn represented by
+multiple columns in the actual data, corresponding to the different regions).
+This allows downstream analysis similar to that for read-level data,
+including flattening and plotting.
 }
 \description{
 Extract assay values for each read (or sample) and each position in a set of
