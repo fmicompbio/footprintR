@@ -188,3 +188,61 @@ test_that(".interpolateColumns works", {
     expect_equal(res4[, "read_2"], rep(NA_real_, diff(range(pos2)) + 1))
     expect_equal(res4[, "read_3"], c(0, rep(NA_real_, length.out = diff(range(pos2)) - 1), 1))
 })
+
+
+## -------------------------------------------------------------------------- ##
+## Checks, .regionStringToGRanges
+## -------------------------------------------------------------------------- ##
+test_that(".regionStringToGRanges works", {
+    # supported formats:
+    # "REF"
+    # "REF:"
+    # "REF:START"
+    # "REF:-END"
+    # "REF:START-END"
+    # "."
+
+    expect_error(.regionStringToGRanges("chr1", "error"),
+                 "or a named numeric vector")
+    expect_error(.regionStringToGRanges(c(".")),
+                 "`seqinfo` argument is required")
+    expect_error(.regionStringToGRanges(c(".", "chr1"), c("chr1" = 100)),
+                 "can only be given as a single region")
+    expect_error(.regionStringToGRanges(c("chr1:1-10:+", "chr1:-", "")),
+                 "unrecognized format in 2 regions")
+
+    slens <- c(chr1 = 100, chr2 = 200, chr4 = 400)
+    si <- GenomeInfoDb::Seqinfo(seqnames = names(slens), seqlengths = unname(slens))
+    reg1 <- c("chr1", "chr1:", "chr1:-",
+              "chr2:10", "chr2:10-",
+              "chr3:-100",
+              "chr4:20-70")
+
+    gr1 <- .regionStringToGRanges(regions = reg1, seqinfo = slens)
+    gr2 <- .regionStringToGRanges(regions = reg1, seqinfo = si)
+    gr3 <- .regionStringToGRanges(regions = reg1, seqinfo = NULL)
+
+    intmax <- .Machine$integer.max
+
+    expect_identical(gr1, GenomicRanges::GRanges(
+        seqnames = c("chr1", "chr1", "chr1", "chr2", "chr2", "chr3", "chr4"),
+        ranges = IRanges::IRanges(start = c(1, 1, 1, 10, 10, 1, 20),
+                                  end = c(100, 100, 100, 200, 200, 100, 70)),
+        seqlengths = c(slens, c(chr3 = intmax))[paste0("chr", 1:4)]
+    ))
+    expect_identical(gr1, gr2)
+    expect_identical(gr3, GenomicRanges::GRanges(
+        seqnames = c("chr1", "chr1", "chr1", "chr2", "chr2", "chr3", "chr4"),
+        ranges = IRanges::IRanges(start = c(1, 1, 1, 10, 10, 1, 20),
+                                  end = c(intmax, intmax, intmax, intmax, intmax, 100, 70)),
+        seqlengths = structure(rep(intmax, 4), names = paste0("chr", 1:4))
+    ))
+
+    grall <- .regionStringToGRanges(regions = ".", seqinfo = slens)
+    expect_identical(grall, GenomicRanges::GRanges(
+        seqnames = c("chr1", "chr2", "chr4"),
+        ranges = IRanges::IRanges(start = c(1, 1, 1),
+                                  end = c(100, 200, 400)),
+        seqlengths = slens)
+    )
+})

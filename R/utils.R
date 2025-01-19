@@ -293,3 +293,126 @@
         }
     }
 }
+
+#' Convert character region(s) to a \code{GRanges} object
+#'
+#' This function takes a character vector with one or several strings
+#' corresponding to genomic regions and converts them to a
+#' \code{\link[GenomicRanges]{GRanges}} object. The supported forms
+#' of strings are the same as the ones supported by the \code{htslib} C API
+#' that is for example used in \code{samtools}:
+#' \describe{
+#'      \item{"REF" or "REF:"}{: All of seqname REF}
+#'      \item{"REF:START"}{: Seqname REF from START to end of REF}
+#'      \item{"REF:-END"}{: Seqname REF from 1 to END}
+#'      \item{"REF:START-END"}{: Seqname REF from START to END}
+#'      \item{"."}{: All seqnames from 1 to their ends}
+#' }
+#' Please note that the returned \code{GRanges} is generally parallel
+#' to the elements of \code{regions}, with the exception of \code{"."}:
+#' This special region is only allowed as a length-one \code{regions}
+#' argument and will possibly result several returned regions
+#' corresponding to the sequences in \code{seqinfo}.
+#'
+#' @param regions Character vector with region strings. See details for
+#'     supported forms.
+#' @param seqinfo One of \code{NULL}, an object for which a
+#'     \code{\link[GenomeInfoDb]{seqlengths}} method is available,
+#'     such as a \code{BSgenome}, \code{Seqinfo} or \code{SummarizedExperiment}
+#'     object or a named numeric vector with genomic sequence names and
+#'     lengths. If not \code{NULL}, it will be used to obtain "END" for
+#'     \code{regions} that do not specify it. Otherwise, \code{maxend} will
+#'     be used for "END".
+#' @param maxend Integer scalar giving the maximal value for END in cases
+#'     where it is not given in \code{regions} (for example "REF:START")
+#'     and was also not provided through other parameters.
+#'
+#' @author Michael Stadler
+#'
+#' @importFrom cli cli_abort
+#' @importFrom GenomeInfoDb seqlengths seqlevels
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#'
+#' @noRd
+#' @keywords internal
+.regionStringToGRanges <- function(regions,
+                                   seqinfo = NULL,
+                                   maxend = .Machine$integer.max) {
+    # check arguments
+    .assertVector(x = regions, type = "character")
+    if (is.null(seqinfo)) {
+        reflens <- FALSE
+    } else {
+        if (is.numeric(seqinfo) && !is.null(names(seqinfo))) {
+            reflens <- seqinfo
+        } else {
+            supportsSeqlengths <- tryCatch({
+                seqlengths(seqinfo)
+                TRUE
+            }, error = function(e) {
+                FALSE
+            })
+            if (supportsSeqlengths) {
+                reflens <- seqlengths(seqinfo)
+            } else {
+                cli_abort(
+                    paste0(
+                        "`seqinfo` must be `NULL`, an object supporting `seqlengths` or a",
+                        " named numeric vector with genomic sequence lengths."))
+            }
+        }
+    }
+    .assertScalar(x = maxend, type = "numeric", rngIncl = c(1, .Machine$integer.max))
+
+    # check and convert regions
+    if (any(regions == ".")) {
+        if (length(regions) != 1L) {
+            cli_abort("regions='.' can only be given as a single region")
+        } else if (!identical(reflens, FALSE)) {
+            gr <- GRanges(seqnames = names(reflens),
+                          ranges = IRanges(start = 1, width = unname(reflens)),
+                          seqlengths = reflens)
+        } else {
+            cli_abort(
+                paste0("For regions='.' a `seqinfo` argument is required",
+                       " that supports `seqlengths(seqinfo)`"))
+        }
+    } else {
+        # regions must be one of:
+        # - "REF" or "REF:"
+        # - "REF:START"
+        # - "REF:-END"
+        # - "REF:START-END"
+        pat <- "^([^:]+)(:|(:([0-9]+)?-?([0-9]+)?))?$"
+        if (any(i <- which(!grepl(pattern = pat, x = regions)))) {
+            cli_abort(
+                paste0("unrecognized format in {length(i)} region{?s}: '",
+                       paste(regions[i[seq.int(min(3, length(i)))]],
+                             collapse = "', '"), "'")
+            )
+        } else {
+            df <- strcapture(
+                pattern = pat,
+                x = regions,
+                proto = data.frame(seqnames = character(0),
+                                   null1 = character(0),
+                                   null2 = character(0),
+                                   start = integer(0),
+                                   end = integer(0)))
+            df$start[is.na(df$start)] <- 1L
+            df$end[is.na(df$end)] <- ifelse(df$seqnames[is.na(df$end)] %in% names(reflens),
+                                            reflens[df$seqnames[is.na(df$end)]],
+                                            rep(maxend, sum(is.na(df$end))))
+            gr <- GRanges(seqnames = df$seqnames,
+                          ranges = IRanges(start = df$start, end = df$end))
+            missingchrs <- setdiff(df$seqnames, names(reflens))
+            seqlengths(gr) <- c(reflens,
+                                structure(rep(maxend, length(missingchrs)),
+                                          names = missingchrs))[seqlevels(gr)]
+        }
+    }
+
+    return(gr)
+}
+
