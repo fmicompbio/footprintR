@@ -1,3 +1,9 @@
+# footprintR 0.3.0
+
+* Enable use of more flexible region specification in `readModBam()`
+* Add additional supported `statistics` in `flattenReadLevelAssay()` (`Sum` and `Mean`)
+* Various smaller improvements and bug fixes
+
 # footprintR 0.2.5
 
 * Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
