@@ -14,11 +14,17 @@
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param statistics Character vector specifying the type of statistics to be
-#'     computed. Currently supported values are "Nmod" (number of modification
-#'     probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-#'     reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
-#'     probability), "AvgConf" (average confidence of (non-)modification
-#'     probabilities).
+#'     computed. Currently supported values are "Nmod" (number of values per 
+#'     row in the \code{assayName} assay that are greater than or equal to 
+#'     \code{modProbThreshold}), "Nvalid" (number of valid/non-NA values per
+#'     row, typically the number of overlapping reads), "FracMod" (Nmod/Nvalid), 
+#'     "Pmod" (row-wise average values), "Mean" (equivalent to "Pmod"),
+#'     "Sum" (row-wise sums of non-NA values), "AvgConf" (average confidence 
+#'     of (non-)modification probabilities, more precisely the row-wise averages 
+#'     of the largest of the observed values and 1 - the observed values).
+#' @param modProbThreshold A numeric scalar, indicating the modification
+#'     probability threshold to use to classify a base as 'modified' or
+#'     'unmodified'.
 #' @param keepReads A logical scalar. If \code{TRUE} (the default), the
 #'     read-level data from \code{assayName} will be retained in an assay of
 #'     the same name.
@@ -50,13 +56,14 @@
 #'
 #' @importFrom SummarizedExperiment assays assayNames assay assays
 #' @importFrom S4Vectors endoapply metadata
-#' @importFrom SparseArray pmax nnavals nnavals<- rowSums
+#' @importFrom SparseArray pmax nnavals nnavals<- rowSums is_nonna
 #' @importFrom methods is
 #'
 #' @export
 flattenReadLevelAssay <- function(se,
                                   assayName = "mod_prob",
                                   statistics = c("Nmod", "Nvalid", "FracMod"),
+                                  modProbThreshold = 0.5,
                                   keepReads = TRUE,
                                   replaceExisting = TRUE,
                                   verbose = FALSE) {
@@ -70,7 +77,7 @@ flattenReadLevelAssay <- function(se,
                   ])
     .assertVector(x = statistics, type = "character",
                   validValues = c("Nmod", "Nvalid", "FracMod",
-                                  "Pmod", "AvgConf"))
+                                  "Pmod", "AvgConf", "Mean", "Sum"))
     .assertScalar(x = keepReads, type = "logical")
     .assertScalar(x = replaceExisting, type = "logical")
     .assertScalar(x = verbose, type = "logical")
@@ -94,6 +101,8 @@ flattenReadLevelAssay <- function(se,
                     Nvalid = character(0),
                     FracMod = c("Nmod", "Nvalid"),
                     Pmod = "Nvalid",
+                    Mean = "Nvalid",
+                    Sum = character(0),
                     AvgConf = "Nvalid")[statistics],
                use.names = FALSE))
 
@@ -112,9 +121,9 @@ flattenReadLevelAssay <- function(se,
                    function(statistic) {
         switch(statistic,
             Nmod = as.matrix(endoapply(
-                dfReads, function(y) rowSums(y >= 0.5, na.rm = TRUE))),
+                dfReads, function(y) rowSums(y >= modProbThreshold, na.rm = TRUE))),
             Nvalid = as.matrix(endoapply(
-                dfReads, function(y) rowSums(y >= 0, na.rm = TRUE))),
+                dfReads, function(y) rowSums(is_nonna(y)))),
             NULL # default value for all others
         )
     })
@@ -126,6 +135,14 @@ flattenReadLevelAssay <- function(se,
     if ("Pmod" %in% statistics) {
         assL[["Pmod"]] <- as.matrix(endoapply(
             dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
+    }
+    if ("Mean" %in% statistics) {
+        assL[["Mean"]] <- as.matrix(endoapply(
+            dfReads, rowSums, na.rm = TRUE)) / assL[["Nvalid"]]
+    }
+    if ("Sum" %in% statistics) {
+        assL[["Sum"]] <- as.matrix(endoapply(
+            dfReads, rowSums, na.rm = TRUE))
     }
     if ("AvgConf" %in% statistics) {
         # confidence: max(mod_prob, 1 - mod_prob)

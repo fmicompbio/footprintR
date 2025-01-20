@@ -149,6 +149,20 @@ test_that("plotRegion works", {
                                             )))),
         "is not allowed if"
     )
+    expect_warning(
+        p9b <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
+                          modbaseSpace = TRUE,
+                          tracks = list(list(trackType = "GenomicRegions",
+                                             trackData = GenomicRanges::GRangesList(
+                                                 a = GenomicRanges::GRanges(
+                                                     "chr1", IRanges::IRanges(
+                                                         6935420, 6935440
+                                                     ), "+"
+                                                 )
+                                             )))),
+        "is not allowed if"
+    )
+    expect_identical(p9, p9b)
     p10 <- plotRegion(se = seR2, region = "chr1:6935400-6935450",
                       tracks = list(list(trackType = "Lollipop",
                                          trackData = "mod_prob",
@@ -525,7 +539,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL))) +
-        plot_layout(heights = c(3, 1, 3, 2))
+        plot_layout(heights = c(3, 3, 2, 1))
     expect_s3_class(p, "ggplot")
 
     ## cluster, with single read

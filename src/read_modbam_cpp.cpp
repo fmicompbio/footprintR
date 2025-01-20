@@ -198,24 +198,6 @@ std::string construct_read_label(const bam1_t *aln,
     return label;
 }
 
-// calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
-int calculate_aligned_bases(bam1_t *bamdata) {
-    uint32_t *cigar = bam_get_cigar(bamdata);
-    int aligned_bases = 0;
-
-    // loop over CIGAR operations
-    for (uint32_t i = 0; i < bamdata->core.n_cigar; i++) {
-        uint32_t op = bam_cigar_op(cigar[i]);
-
-        // only count 'M', '=', or 'X' operations
-        if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
-            aligned_bases += bam_cigar_oplen(cigar[i]);
-        }
-    }
-
-    return aligned_bases;
-}
-
 // process a single bam record:
 // - increase alignment counter (passed by reference)
 // - extract information from record (qscore, modification information, etc.)
@@ -251,9 +233,6 @@ int process_bam_record(bam1_t *bamdata,        // bam record
                        std::vector<int> &df_aligned_length,
                        Rcpp::CharacterVector &df_variant_label) {
     // allocate variable only used inside process_bam_record()
-    uint8_t *data = NULL, *qs_data = NULL, *qual = NULL;
-    unsigned int sum_qual = 0;
-    double qs_value = -1;
     int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
     hts_base_mod mod[5] = {{0}};  //for ATCGN
     char canonical = '0', unmodbase = '0';
@@ -271,21 +250,13 @@ int process_bam_record(bam1_t *bamdata,        // bam record
         Rcpp::checkUserInterrupt(); // # nocov end
 
     // ... extract *forward* read sequence to char*
-    data = bam_get_seq(bamdata);
-    if (qseq_len < this_read_len) {
-        if (qseq) // # nocov start
-            free((void*) qseq); // # nocov end
-        qseq = (char*) calloc(this_read_len + 1, sizeof(char));
-        qseq_len = this_read_len;
-    }
-    if (bam_is_rev(bamdata)) {
-        for (j = 0; j < this_read_len; j++) {
-            qseq[this_read_len - 1 - j] = complement(seq_nt16_str[bam_seqi(data, j)]);
-        }
-    } else {
-        for (j = 0; j < this_read_len; j++) {
-            qseq[j] = seq_nt16_str[bam_seqi(data, j)];
-        }
+    //     (populates qseq and qseq_len)
+    if (extract_forward_qseq(bamdata, qseq, qseq_len) != 0) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len,
+                 "Failed to extract forward read sequence (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -44; // # nocov end
     }
 
     // ... parse base modifications
@@ -395,24 +366,9 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 
     // ... extract read-level information if the read had modified bases
     if (size_before_this_read < read_id.size()) {
-        // ... extract qscore
-        qs_data = bam_aux_get(bamdata, "qs");
-        if (qs_data != NULL) {
-            qs_value = bam_aux2f(qs_data);
-        } else {
-            // qs tag is missing
-            //   --> calculate mean of base QUAL values
-            qual = bam_get_qual(bamdata);
-            sum_qual = 0;
-            for (j = 0; j < this_read_len; j++) {
-                sum_qual += qual[j];
-            }
-            qs_value = ((double) sum_qual) / this_read_len;
-        }
-
         // ... add to read-level results
         df_read_id.push_back(bam_get_qname(bamdata));
-        df_qscore.push_back(qs_value);
+        df_qscore.push_back(extract_qscore(bamdata));
         df_read_length.push_back(this_read_len);
         df_aligned_length.push_back(calculate_aligned_bases(bamdata));
 
@@ -462,7 +418,8 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'     (the read identifier), \code{"qscore"} (the read quality score recorded
 //'     in the \code{qs} tag of each bam record), \code{"read_length"} (the
 //'     total read length), and \code{"aligned_length"} (the number of
-//'     aligned bases).
+//'     aligned bases), and \code{"ref_position"}, which is 0-based in
+//'     the output of \code{modkit extract}, but 1-based here.
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
@@ -832,6 +789,11 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 Rcpp::_["aligned_length"] = df_aligned_length,
                 Rcpp::_["variant_label"] = df_variant_label
             );
+
+            // convert 0-based ref_position to 1-based ref_position
+            std::for_each(ref_position.begin(),
+                          ref_position.end(),
+                          [](int &x) { x += 1; });
 
             // create return list
             Rcpp::List res = Rcpp::List::create(

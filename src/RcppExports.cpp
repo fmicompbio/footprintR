@@ -38,6 +38,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// filter_modbam_cpp
+Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
+RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type infile(infileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
+    Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
+    Rcpp::traits::input_parameter< int >::type minReadLength(minReadLengthSEXP);
+    Rcpp::traits::input_parameter< int >::type minAlignedLength(minAlignedLengthSEXP);
+    Rcpp::traits::input_parameter< double >::type minAlignedFraction(minAlignedFractionSEXP);
+    Rcpp::traits::input_parameter< double >::type minQscore(minQscoreSEXP);
+    Rcpp::traits::input_parameter< double >::type maxFracLowConf(maxFracLowConfSEXP);
+    Rcpp::traits::input_parameter< double >::type maxEntropy(maxEntropySEXP);
+    Rcpp::traits::input_parameter< double >::type LowConf(LowConfSEXP);
+    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// index_bam_cpp
+std::string index_bam_cpp(std::string infile);
+RcppExport SEXP _footprintR_index_bam_cpp(SEXP infileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type infile(infileSEXP);
+    rcpp_result_gen = Rcpp::wrap(index_bam_cpp(infile));
+    return rcpp_result_gen;
+END_RCPP
+}
 // labelDists
 Rcpp::NumericMatrix labelDists(std::vector<std::string> labels, int minOverlap);
 RcppExport SEXP _footprintR_labelDists(SEXP labelsSEXP, SEXP minOverlapSEXP) {
@@ -51,17 +84,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // pileup_modbam_cpp
-Rcpp::List pileup_modbam_cpp(std::string inname_str, char modbase, double mod_prob_thresh, int n_threads, bool verbose);
-RcppExport SEXP _footprintR_pileup_modbam_cpp(SEXP inname_strSEXP, SEXP modbaseSEXP, SEXP mod_prob_threshSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
+Rcpp::List pileup_modbam_cpp(std::string inname_str, std::vector<std::string> regions, char modbase, std::string level, double mod_prob_thresh, int n_threads, bool verbose);
+RcppExport SEXP _footprintR_pileup_modbam_cpp(SEXP inname_strSEXP, SEXP regionsSEXP, SEXP modbaseSEXP, SEXP levelSEXP, SEXP mod_prob_threshSEXP, SEXP n_threadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type inname_str(inname_strSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type regions(regionsSEXP);
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
+    Rcpp::traits::input_parameter< std::string >::type level(levelSEXP);
     Rcpp::traits::input_parameter< double >::type mod_prob_thresh(mod_prob_threshSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(pileup_modbam_cpp(inname_str, modbase, mod_prob_thresh, n_threads, verbose));
+    rcpp_result_gen = Rcpp::wrap(pileup_modbam_cpp(inname_str, regions, modbase, level, mod_prob_thresh, n_threads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -123,8 +158,10 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
+    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 12},
+    {"_footprintR_index_bam_cpp", (DL_FUNC) &_footprintR_index_bam_cpp, 1},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
-    {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 5},
+    {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},

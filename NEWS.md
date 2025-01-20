@@ -1,3 +1,15 @@
+# footprintR 0.3.0
+
+* Enable use of more flexible region specification in `readModBam()`
+* Add additional supported `statistics` in `flattenReadLevelAssay()` (`Sum` and `Mean`)
+* Various smaller improvements and bug fixes
+
+# footprintR 0.2.5
+
+* Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
+* Add `filterReadsBam()` to filter-out reads from input bam files and write reads that pass all filters to output bam files
+* Add functions to statistically identify differentially modified regions (`scanForHighScoringRegions()` and helpers)
+
 # footprintR 0.2.4
 
 * Speed up `plotRegion()` for data sets with many reads by replacing `do.call()` with a faster alternative

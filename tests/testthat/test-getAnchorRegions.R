@@ -110,6 +110,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -179,6 +181,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -250,6 +254,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -348,6 +354,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(9, 2))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -405,6 +413,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), "s1")
     expect_equal(dim(ar1), c(9, 1))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -453,6 +463,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")
@@ -507,6 +519,8 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(9, 2))
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+                 SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
     expect_s4_class(SummarizedExperiment::assay(ar1, "Nvalid"), "DataFrame")

@@ -1,9 +1,10 @@
 # global data.frame of plot types and characteristics
 plotRegionPlotTypes <- data.frame(
     name = c("Point", "Smooth", "PointSmooth",
-             "Lollipop", "Heatmap", "GenomicRegion"),
+             "Lollipop", "Heatmap", "GenomicRegion",
+             "GenomicRegions"),
     type = c("summary", "summary", "summary",
-             "reads", "reads", "annotation")
+             "reads", "reads", "annotation", "annotation")
 )
 
 defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
@@ -72,8 +73,8 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
-#'         \item{\code{"GenomicRegion"}}{: Genomic annotations (e.g.,
-#'             transcripts, peaks, CpG islands).}
+#'         \item{\code{"GenomicRegion"} or \code{"GenomicRegions"}}{: Genomic 
+#'             annotations (e.g., transcripts, peaks, CpG islands).}
 #'     }
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
 #'     shown in the space of modified bases and contain only the positions at
@@ -270,7 +271,7 @@ plotRegion <- function(
             modbaseSpace <- FALSE
         }
         if (modbaseSpace &&
-            tracks[[i]]$trackType == "GenomicRegion") {
+            tracks[[i]]$trackType %in% c("GenomicRegion", "GenomicRegions")) {
             cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
                            "GenomicRegion tracks are included.",
                            "Setting modbaseSpace=FALSE"))
@@ -340,7 +341,8 @@ plotRegion <- function(
             PointSmooth = do.call(plotSummaryPointSmooth, args),
             Lollipop = do.call(plotReadsLollipop, args),
             Heatmap = do.call(plotReadsHeatmap, args),
-            GenomicRegion = do.call(plotGenomicRegions, args)
+            GenomicRegion = do.call(plotGenomicRegions, args),
+            GenomicRegions = do.call(plotGenomicRegions, args)
         )
     }
 
@@ -678,7 +680,7 @@ plotReadsHeatmap <- function(se,
 #' @importFrom dplyr group_by ungroup group_modify across all_of
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
-#' @importFrom GenomicRanges shift
+#' @importFrom GenomicRanges shift pintersect
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom BiocGenerics intersect
@@ -732,8 +734,12 @@ plotSummaryPointSmooth <- function(se,
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
+        highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
+                                                      ignore.strand = TRUE, 
+                                                      drop.nohit.ranges = TRUE)
+        highlightRegions <- highlightRegions[width(highlightRegions) > 0]
+        # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+        #                                             ignore.strand = TRUE)
     }
     .assertScalar(x = groupBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = colorBy, type = "character", allowNULL = TRUE)
@@ -1041,7 +1047,7 @@ plotGenomicRegions <- function(grl,
 #'
 #' @importFrom SummarizedExperiment assayNames
 #' @importFrom IRanges ranges
-#' @importFrom GenomicRanges shift
+#' @importFrom GenomicRanges shift pintersect
 #' @importFrom BiocGenerics intersect
 #' @importFrom S4Vectors endoapply
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
@@ -1084,8 +1090,12 @@ plotGenomicRegions <- function(grl,
 
     # adjust arguments if necessary
     if (!is.null(highlightRegions)) {
-        highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
-                                                    ignore.strand = TRUE)
+        highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
+                                                      ignore.strand = TRUE, 
+                                                      drop.nohit.ranges = TRUE)
+        highlightRegions <- highlightRegions[width(highlightRegions) > 0]
+        # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+        #                                             ignore.strand = TRUE)
     }
     if (!is.null(footprintColors) && !is.null(footprintColumns)) {
         if (!all(footprintColumns %in% names(footprintColors))) {
@@ -1103,8 +1113,9 @@ plotGenomicRegions <- function(grl,
             structure(footprintColumns,
                       names = footprintColumns),
             function(nm) lapply(se[[nm]], function(y) {
-                endoapply(y, function(z)
-                    BiocGenerics::intersect(z, ranges(region)))
+                endoapply(y, function(z) {
+                    BiocGenerics::intersect(z, ranges(region))
+                })
             }))
     } else {
         footprints <- NULL
@@ -1211,6 +1222,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
 #' @importFrom dplyr left_join bind_cols group_by summarise group_split filter
+#' @importFrom rlang .data
 #'
 #' @noRd
 #' @keywords internal
@@ -1235,7 +1247,7 @@ plotGenomicRegions <- function(grl,
                           levels = colnames(assaydat)),
             sample = rep(sample_ids, each = nrow(assaydat)),
             value = as.vector(assaydat)) |>
-            filter(!is.na(value))
+            filter(!is.na(.data$value))
     } else {
         i <- nnawhich(assaydat, arr.ind = TRUE)
         df <- data.frame(

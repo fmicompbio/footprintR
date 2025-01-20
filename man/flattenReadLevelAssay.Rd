@@ -8,6 +8,7 @@ flattenReadLevelAssay(
   se,
   assayName = "mod_prob",
   statistics = c("Nmod", "Nvalid", "FracMod"),
+  modProbThreshold = 0.5,
   keepReads = TRUE,
   replaceExisting = TRUE,
   verbose = FALSE
@@ -23,11 +24,18 @@ containing the read-level data to be summarized. Typically, this assay
 contains modification probabilities.}
 
 \item{statistics}{Character vector specifying the type of statistics to be
-computed. Currently supported values are "Nmod" (number of modification
-probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
-probability), "AvgConf" (average confidence of (non-)modification
-probabilities).}
+computed. Currently supported values are "Nmod" (number of values per
+row in the \code{assayName} assay that are greater than or equal to
+\code{modProbThreshold}), "Nvalid" (number of valid/non-NA values per
+row, typically the number of overlapping reads), "FracMod" (Nmod/Nvalid),
+"Pmod" (row-wise average values), "Mean" (equivalent to "Pmod"),
+"Sum" (row-wise sums of non-NA values), "AvgConf" (average confidence
+of (non-)modification probabilities, more precisely the row-wise averages
+of the largest of the observed values and 1 - the observed values).}
+
+\item{modProbThreshold}{A numeric scalar, indicating the modification
+probability threshold to use to classify a base as 'modified' or
+'unmodified'.}
 
 \item{keepReads}{A logical scalar. If \code{TRUE} (the default), the
 read-level data from \code{assayName} will be retained in an assay of

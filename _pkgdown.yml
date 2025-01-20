@@ -14,6 +14,9 @@ navbar:
         href: articles/read-level-data.html
 
 reference:
+- title: Filtering BAM files
+  contents:
+  - filterReadsBam
 - title: Reading data into R
   contents:
   - readBedMethyl
@@ -32,6 +35,11 @@ reference:
   - addFootprints
   - calcFootprintScores
   - segmentFootprintScores
+- title: Score (differential) modifications genome-wide
+  contents:
+  - quantifyWindowsInRegion
+  - getDifferentiallyModifiedWindows
+  - fuseWindows
 - title: Visualization
   contents:
   - plotReadStats

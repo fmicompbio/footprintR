@@ -8,6 +8,7 @@ readModBam(
   bamfiles,
   regions = NULL,
   modbase,
+  level = ifelse(nAlnsToSample == 0 & is.null(variantPositions), "quickread", "read"),
   sampleAnnot = NULL,
   nAlnsToSample = 0,
   seqnamesToSampleFrom = "chr19",
@@ -15,6 +16,7 @@ readModBam(
   sequenceContextWidth = 0,
   sequenceReference = NULL,
   variantPositions = NULL,
+  modProbThreshold = 0.5,
   trim = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
@@ -30,12 +32,15 @@ be \code{s1}, ..., \code{sN}, where \code{N} is the length of
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
 genomic regions to extract the reads from. Alternatively, regions can be
-specified as a character vector (e.g. "chr1:1200-1300") that can be
-coerced into a \code{GRanges} object. Note that the reads are not
-trimmed to the boundaries of the specified ranges. As a result, returned
-positions will typically extend out of the specified regions.
-If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
-ignored.}
+specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+"chrM") that will be coerced into a \code{GRanges} object. If the end
+coordinate is not provided (for example in "chr1:10-", which means "to
+the end of chr1"), it will be obtained from \code{seqinfo} or default
+to a large value if \code{seqinfo} is not provided. Note that
+unless \code{trim=TRUE}, the reads are not trimmed to the boundaries of
+the specified ranges. As a result, returned positions will typically
+extend out of the specified regions. If \code{nAlnsToSample} is set to a
+non-zero value, \code{regions} is ignored.}
 
 \item{modbase}{Character vector defining the modified base for each sample.
 If \code{modbase} is a named vector, the names should correspond to
@@ -43,6 +48,22 @@ the names of \code{bamfiles}. Otherwise, it will be assumed that the
 elements are in the same order as the files in \code{bamfiles}. If
 \code{modbase} has length 1, the same modified base will be used for
 all samples.}
+
+\item{level}{Character scalar specifying the level of returned modification
+data. Supported values are:
+\describe{
+\item{"read"}{: Extracts modification probabilities for individual
+reads into an assay called \code{"mod_prob"}. This is the
+default if \code{nAlnsToSample} is non-zero or
+\code{variantPositions} is not \code{NULL}.}
+\item{"quickread"}{: Like "read", but runs faster, does not support
+read sampling, and does not return all annotations currently
+provided by "read". This is the default if \code{nAlnsToSample}
+is zero and \code{variantPositions} is \code{NULL}.}
+\item{"summary"}{: Counts the total and modified bases for each
+position and strand and returns them in assays named
+\code{"Nvalid"} and \code{"Nmod"}, respectively.}
+}}
 
 \item{sampleAnnot}{A \code{data.frame} (or \code{NULL}) providing annotations
 for the samples. It must contain at least one column, named
@@ -55,7 +76,10 @@ and approximately \code{nAlnsToSample} randomly selected alignments on
 \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
 In order to make the results reproducible, make sure to set the
 \code{RNGseed} argument in the provided \code{BPPARAM} object (see
-below).}
+below). Please note that secondary alignments in \code{bamfiles}
+contribute to the total number of alignments but will not be sampled,
+thus the number of returned alignments may be lower than
+\code{nAlnsToSample}.}
 
 \item{seqnamesToSampleFrom}{A character vector with one or several sequence
 names (chromosomes) from which to sample alignments from (only used if
@@ -76,6 +100,10 @@ See \code{\link{addSeqContext}} for details.}
 coordinates of single nucleotide variant positions, to be used to
 construct read labels for allele-specific analysis. Ignored if \code{NULL}
 or \code{nAlnsToSample > 0} (sampling-mode).}
+
+\item{modProbThreshold}{A numeric scalar, indicating the modification
+probability threshold to use to classify a base as 'modified' or
+'unmodified'. Only used if \code{level} is \code{"summary"}.}
 
 \item{trim}{A logical scalar. If \code{TRUE}, the returned
 \code{SummarizedExperiment} object will only contain the positions
