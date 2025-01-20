@@ -14,7 +14,10 @@
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
 #'     genomic regions to extract the reads from. Alternatively, regions can be
 #'     specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
-#'     "chrM") that will be coerced into a \code{GRanges} object. Note that
+#'     "chrM") that will be coerced into a \code{GRanges} object. If the end
+#'     coordinate is not provided (for example in "chr1:10-", which means "to
+#'     the end of chr1"), it will be obtained from \code{seqinfo} or default
+#'     to a large value if \code{seqinfo} is not provided. Note that
 #'     unless \code{trim=TRUE}, the reads are not trimmed to the boundaries of
 #'     the specified ranges. As a result, returned positions will typically
 #'     extend out of the specified regions. If \code{nAlnsToSample} is set to a

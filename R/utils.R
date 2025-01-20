@@ -342,7 +342,7 @@
     # check arguments
     .assertVector(x = regions, type = "character")
     if (is.null(seqinfo)) {
-        reflens <- FALSE
+        reflens <- NULL
     } else {
         if (is.numeric(seqinfo) && !is.null(names(seqinfo))) {
             reflens <- seqinfo
@@ -369,7 +369,7 @@
     if (any(regions == ".")) {
         if (length(regions) != 1L) {
             cli_abort("regions='.' can only be given as a single region")
-        } else if (!identical(reflens, FALSE)) {
+        } else if (!is.null(reflens)) {
             gr <- GRanges(seqnames = names(reflens),
                           ranges = IRanges(start = 1, width = unname(reflens)),
                           seqlengths = reflens)
