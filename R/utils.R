@@ -331,7 +331,7 @@
 #'
 #' @importFrom cli cli_abort
 #' @importFrom GenomeInfoDb seqlengths seqlevels
-#' @importFrom GenomicRanges GRanges
+#' @importFrom GenomicRanges GRanges trim
 #' @importFrom IRanges IRanges
 #'
 #' @noRd
@@ -410,6 +410,7 @@
             seqlengths(gr) <- c(reflens,
                                 structure(rep(maxend, length(missingchrs)),
                                           names = missingchrs))[seqlevels(gr)]
+            gr <- trim(gr)
         }
     }
 
