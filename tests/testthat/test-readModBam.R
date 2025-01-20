@@ -44,7 +44,7 @@ test_that("readModBam works", {
     expect_error(readModBam(bamfiles = modbamfiles, regions = "error",
                             modbase = "a", nAlnsToSample = 0,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "GRanges object must contain")
+                 "Failed to get bam iterator")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "Z", nAlnsToSample = 0,
@@ -98,7 +98,7 @@ test_that("readModBam works", {
                             modbase = "a", nAlnsToSample = 0,
                             seqnamesToSampleFrom = "chr1", seqinfo = "error",
                             BPPARAM = BiocParallel::SerialParam()),
-                 "`seqinfo` must be `NULL`, a `Seqinfo` object or")
+                 "`seqinfo` must be `NULL`")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000", modbase = "a",
                             BPPARAM = -1),
@@ -346,7 +346,7 @@ test_that("readModBam works", {
     expect_identical(colnames(se8), names(modbamfiles))
     expect_identical(colnames(se8sum), names(modbamfiles))
     expect_identical(colnames(se8quick), names(modbamfiles))
-    
+
     # ... content se1
     expect_identical(unname(se1$n_reads), c(4L, 6L))
     expect_identical(dim(se1), c(8691L, 2L))
@@ -400,16 +400,16 @@ test_that("readModBam works", {
     expect_identical(se1, se1quick)
     expect_identical(rownames(se1), rownames(se1quick))
     expect_identical(rowRanges(se1), rowRanges(se1quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se1, "mod_prob"), 
+    expect_identical(assay(se1, "mod_prob"),
                      assay(se1quick, "mod_prob"))
     expect_identical(metadata(se1), metadata(se1quick))
     expect_identical(colData(se1)[, c("sample", "modbase", "n_reads")],
                      colData(se1quick)[, c("sample", "modbase", "n_reads")])
     expect_identical(rownames(colData(se1)$readInfo$sample1),
                      rownames(colData(se1quick)$readInfo$sample1))
-    
+
     # ... content se2
     expect_identical(unname(se2$n_reads), c(3L, 2L))
     expect_identical(dim(se2), dim(se3))
@@ -435,16 +435,16 @@ test_that("readModBam works", {
     expect_identical(se2, se2quick)
     expect_identical(rownames(se2), rownames(se2quick))
     expect_identical(rowRanges(se2), rowRanges(se2quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se2, "mod_prob"), 
+    expect_identical(assay(se2, "mod_prob"),
                      assay(se2quick, "mod_prob"))
     expect_identical(metadata(se2), metadata(se2quick))
     expect_identical(colData(se2)[, c("sample", "modbase", "n_reads")],
                      colData(se2quick)[, c("sample", "modbase", "n_reads")])
     expect_identical(rownames(colData(se2)$readInfo$sample1),
                      rownames(colData(se2quick)$readInfo$sample1))
-    
+
     # ... content se3
     expect_identical(unname(se3$n_reads), c(3L, 2L))
     expect_identical(dim(se3), c(7967L, 2L))
@@ -489,16 +489,16 @@ test_that("readModBam works", {
     expect_identical(se3, se3quick)
     expect_identical(rownames(se3), rownames(se3quick))
     expect_identical(rowRanges(se3), rowRanges(se3quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se3, "mod_prob"), 
+    expect_identical(assay(se3, "mod_prob"),
                      assay(se3quick, "mod_prob"))
     expect_identical(metadata(se3), metadata(se3quick))
     expect_identical(colData(se3)[, c("sample", "modbase", "n_reads")],
                      colData(se3quick)[, c("sample", "modbase", "n_reads")])
     expect_identical(rownames(colData(se3)$readInfo$sample1),
                      rownames(colData(se3quick)$readInfo$sample1))
-    
+
     # ... content se4
     expect_identical(unname(se4$n_reads), c(3L, 0L))
     expect_identical(dim(se4), c(4772L, 2L))
@@ -532,16 +532,16 @@ test_that("readModBam works", {
     expect_identical(se4, se4quick)
     expect_identical(rownames(se4), rownames(se4quick))
     expect_identical(rowRanges(se4), rowRanges(se4quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se4, "mod_prob"), 
+    expect_identical(assay(se4, "mod_prob"),
                      assay(se4quick, "mod_prob"))
     expect_identical(metadata(se4), metadata(se4quick))
     expect_identical(colData(se4)[, c("sample", "modbase", "n_reads")],
                      colData(se4quick)[, c("sample", "modbase", "n_reads")])
     expect_identical(rownames(colData(se4)$readInfo$sample1),
                      rownames(colData(se4quick)$readInfo$sample1))
-    
+
     # ... content of se5a and se5b (se5a should be a subset of se5b)
     # ... ... check ground truth
     expect_identical(names(aln5a), names(aln5b)[1])
@@ -581,9 +581,9 @@ test_that("readModBam works", {
     expect_identical(se7, se7quick)
     expect_identical(rownames(se7), rownames(se7quick))
     expect_identical(rowRanges(se7), rowRanges(se7quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se7, "mod_prob"), 
+    expect_identical(assay(se7, "mod_prob"),
                      assay(se7quick, "mod_prob"))
     expect_identical(metadata(se7), metadata(se7quick))
     expect_identical(colData(se7)[, c("sample", "modbase", "n_reads")],
@@ -618,9 +618,9 @@ test_that("readModBam works", {
     expect_identical(se8, se8quick)
     expect_identical(rownames(se8), rownames(se8quick))
     expect_identical(rowRanges(se8), rowRanges(se8quick))
-    ## in principle, there is no guarantee that the reads have to be in the 
+    ## in principle, there is no guarantee that the reads have to be in the
     ## same order (but here they are)
-    expect_identical(assay(se8, "mod_prob"), 
+    expect_identical(assay(se8, "mod_prob"),
                      assay(se8quick, "mod_prob"))
     expect_identical(metadata(se8), metadata(se8quick))
     expect_identical(colData(se8)[, c("sample", "modbase", "n_reads")],

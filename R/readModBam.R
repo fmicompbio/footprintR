@@ -13,12 +13,12 @@
 #'     \code{bamfiles}. All \code{bamfiles} must have an index.
 #' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying which
 #'     genomic regions to extract the reads from. Alternatively, regions can be
-#'     specified as a character vector (e.g. "chr1:1200-1300") that can be
-#'     coerced into a \code{GRanges} object. Note that the reads are not
-#'     trimmed to the boundaries of the specified ranges. As a result, returned
-#'     positions will typically extend out of the specified regions.
-#'     If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
-#'     ignored.
+#'     specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+#'     "chrM") that will be coerced into a \code{GRanges} object. Note that
+#'     unless \code{trim=TRUE}, the reads are not trimmed to the boundaries of
+#'     the specified ranges. As a result, returned positions will typically
+#'     extend out of the specified regions. If \code{nAlnsToSample} is set to a
+#'     non-zero value, \code{regions} is ignored.
 #' @param modbase Character vector defining the modified base for each sample.
 #'     If \code{modbase} is a named vector, the names should correspond to
 #'     the names of \code{bamfiles}. Otherwise, it will be assumed that the
@@ -29,15 +29,15 @@
 #'     data. Supported values are:
 #'     \describe{
 #'         \item{"read"}{: Extracts modification probabilities for individual
-#'             reads into an assay called \code{"mod_prob"}. This is the 
-#'             default if \code{nAlnsToSample} is non-zero or 
+#'             reads into an assay called \code{"mod_prob"}. This is the
+#'             default if \code{nAlnsToSample} is non-zero or
 #'             \code{variantPositions} is not \code{NULL}.}
 #'         \item{"quickread"}{: Like "read", but runs faster, does not support
-#'             read sampling, and does not return all annotations currently 
+#'             read sampling, and does not return all annotations currently
 #'             provided by "read". This is the default if \code{nAlnsToSample}
 #'             is zero and \code{variantPositions} is \code{NULL}.}
 #'         \item{"summary"}{: Counts the total and modified bases for each
-#'             position and strand and returns them in assays named 
+#'             position and strand and returns them in assays named
 #'             \code{"Nvalid"} and \code{"Nmod"}, respectively.}
 #'     }
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
@@ -50,7 +50,10 @@
 #'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
 #'     In order to make the results reproducible, make sure to set the
 #'     \code{RNGseed} argument in the provided \code{BPPARAM} object (see
-#'     below).
+#'     below). Please note that secondary alignments in \code{bamfiles}
+#'     contribute to the total number of alignments but will not be sampled,
+#'     thus the number of returned alignments may be lower than
+#'     \code{nAlnsToSample}.
 #' @param seqnamesToSampleFrom A character vector with one or several sequence
 #'     names (chromosomes) from which to sample alignments from (only used if
 #'     \code{nAlnsToSample} is greater than zero).
@@ -67,8 +70,8 @@
 #'     coordinates of single nucleotide variant positions, to be used to
 #'     construct read labels for allele-specific analysis. Ignored if \code{NULL}
 #'     or \code{nAlnsToSample > 0} (sampling-mode).
-#' @param modProbThreshold A numeric scalar, indicating the modification 
-#'     probability threshold to use to classify a base as 'modified' or 
+#' @param modProbThreshold A numeric scalar, indicating the modification
+#'     probability threshold to use to classify a base as 'modified' or
 #'     'unmodified'. Only used if \code{level} is \code{"summary"}.
 #' @param trim A logical scalar. If \code{TRUE}, the returned
 #'     \code{SummarizedExperiment} object will only contain the positions
@@ -118,7 +121,7 @@
 readModBam <- function(bamfiles,
                        regions = NULL,
                        modbase,
-                       level = ifelse(nAlnsToSample == 0 & is.null(variantPositions), 
+                       level = ifelse(nAlnsToSample == 0 & is.null(variantPositions),
                                       "quickread", "read"),
                        sampleAnnot = NULL,
                        nAlnsToSample = 0,
@@ -141,7 +144,7 @@ readModBam <- function(bamfiles,
     } else if (any(duplicated(names(bamfiles)))) {
         stop("`names(bamfiles)` are not unique")
     }
-    .assertScalar(x = level, type = "character", 
+    .assertScalar(x = level, type = "character",
                   validValues = c("read", "summary", "quickread"))
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
@@ -155,7 +158,8 @@ readModBam <- function(bamfiles,
         }
     }
     if (is.character(regions)) {
-        regions <- as(regions, "GRanges")
+        regions <- .regionStringToGRanges(regions = regions,
+                                          seqinfo = seqinfo)
     }
     .assertVector(x = regions, type = "GRanges", allowNULL = TRUE)
     if (length(modbase) == 1) {
@@ -250,14 +254,14 @@ readModBam <- function(bamfiles,
                  bamf = bamfiles[nm],
                  myregions_str = regions_str,
                  mymodbase = modbase[nm],
-                 mymodProbThreshold = modProbThreshold, 
+                 mymodProbThreshold = modProbThreshold,
                  mynAlnsToSample = nAlnsToSample,
                  myseqnamesToSampleFrom = seqnamesToSampleFrom,
                  myvariantRefNames = variantRefNames,
                  myvariantRefPositions = variantRefPositions,
                  myncpuDecompression = ncpuDecompression,
                  myverbose = verbose) {
-            
+
             if (mylevel == "read") {
                 # extract modifications (returned list is similar to modkit extract
                 # output, see https://nanoporetech.github.io/modkit/intro_extract.html)
@@ -270,7 +274,7 @@ readModBam <- function(bamfiles,
                                         variantRefPositions = as.integer(myvariantRefPositions),
                                         n_threads = as.integer(myncpuDecompression),
                                         verbose = myverbose)
-                
+
                 # convert inferred `mod_prob` to zero. Inferred means that the
                 # modification was omitted from the BAM file, e.g. DORADO omits base
                 # modification probabilities less than 0.05, and read_modbam_cpp returns
@@ -326,7 +330,7 @@ readModBam <- function(bamfiles,
     if (level %in% c("read", "quickread")) {
         # extract unique read names
         readL <- lapply(resLL, function(resL) resL$read_df$read_id)
-        
+
         # modified probability
         modmat <- make_zero_col_DFrame(nrow = length(gpos))
         readdfL <- SimpleList()
@@ -352,7 +356,7 @@ readModBam <- function(bamfiles,
                                            read_length = integer(0),
                                            aligned_length = integer(0),
                                            variant_label = character(0),
-                                           aligned_fraction = numeric(0))   
+                                           aligned_fraction = numeric(0))
             }
         }
     } else {
@@ -368,7 +372,7 @@ readModBam <- function(bamfiles,
             FracMod <- Nmod / Nvalid
         }
     }
-    
+
     # create SummarizedExperiment object
     cdata <- DataFrame(
         row.names = names(bamfiles),
@@ -377,7 +381,7 @@ readModBam <- function(bamfiles,
     )
     if (level %in% c("read", "quickread")) {
         cdata <- cbind(
-            cdata, 
+            cdata,
             DataFrame(n_reads = unlist(lapply(readdfL, nrow), use.names = FALSE),
                       readInfo = readdfL)
         )

@@ -32,12 +32,12 @@ be \code{s1}, ..., \code{sN}, where \code{N} is the length of
 
 \item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying which
 genomic regions to extract the reads from. Alternatively, regions can be
-specified as a character vector (e.g. "chr1:1200-1300") that can be
-coerced into a \code{GRanges} object. Note that the reads are not
-trimmed to the boundaries of the specified ranges. As a result, returned
-positions will typically extend out of the specified regions.
-If \code{nAlnsToSample} is set to a non-zero value, \code{regions} is
-ignored.}
+specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+"chrM") that will be coerced into a \code{GRanges} object. Note that
+unless \code{trim=TRUE}, the reads are not trimmed to the boundaries of
+the specified ranges. As a result, returned positions will typically
+extend out of the specified regions. If \code{nAlnsToSample} is set to a
+non-zero value, \code{regions} is ignored.}
 
 \item{modbase}{Character vector defining the modified base for each sample.
 If \code{modbase} is a named vector, the names should correspond to
@@ -73,7 +73,10 @@ and approximately \code{nAlnsToSample} randomly selected alignments on
 \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
 In order to make the results reproducible, make sure to set the
 \code{RNGseed} argument in the provided \code{BPPARAM} object (see
-below).}
+below). Please note that secondary alignments in \code{bamfiles}
+contribute to the total number of alignments but will not be sampled,
+thus the number of returned alignments may be lower than
+\code{nAlnsToSample}.}
 
 \item{seqnamesToSampleFrom}{A character vector with one or several sequence
 names (chromosomes) from which to sample alignments from (only used if
