@@ -246,11 +246,14 @@ test_that(".regionStringToGRanges works", {
         seqlengths = slens)
     )
 
-    expect_warning(grtrim <- .regionStringToGRanges(regions = "chr1:10-101", seqinfo = slens))
+    expect_warning(grtrim <- .regionStringToGRanges(regions = c("chr1:10-101",
+                                                                "chr3:1-2",
+                                                                "chr4:300-500"),
+                                                    seqinfo = slens))
     expect_identical(grtrim, GenomicRanges::GRanges(
-        seqnames = c("chr1"),
-        ranges = IRanges::IRanges(start = c(10),
-                                  end = c(100)),
-        seqlengths = slens["chr1"])
+        seqnames = c("chr1", "chr3", "chr4"),
+        ranges = IRanges::IRanges(start = c(10, 1, 300),
+                                  end = c(100, 2, 400)),
+        seqlengths = c(chr1 = 100, chr3 = intmax, chr4 = 400))
     )
 })

@@ -329,10 +329,10 @@
 #'
 #' @author Michael Stadler
 #'
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_warn
 #' @importFrom GenomeInfoDb seqlengths seqlevels
 #' @importFrom GenomicRanges GRanges trim
-#' @importFrom IRanges IRanges
+#' @importFrom IRanges IRanges start end
 #'
 #' @noRd
 #' @keywords internal
@@ -404,13 +404,20 @@
             df$end[is.na(df$end)] <- ifelse(df$seqnames[is.na(df$end)] %in% names(reflens),
                                             reflens[df$seqnames[is.na(df$end)]],
                                             rep(maxend, sum(is.na(df$end))))
-            gr <- GRanges(seqnames = df$seqnames,
-                          ranges = IRanges(start = df$start, end = df$end))
-            missingchrs <- setdiff(df$seqnames, names(reflens))
-            seqlengths(gr) <- c(reflens,
-                                structure(rep(maxend, length(missingchrs)),
-                                          names = missingchrs))[seqlevels(gr)]
-            gr <- trim(gr)
+            ir <- IRanges(start = df$start, end = df$end)
+            suppressWarnings({ # avoid out-of-range warning (will trim anyway)
+                gr <- GRanges(seqnames = df$seqnames, ranges = ir)
+                missingchrs <- setdiff(df$seqnames, names(reflens))
+                seqlengths(gr) <- c(reflens,
+                                    structure(rep(maxend, length(missingchrs)),
+                                              names = missingchrs))[seqlevels(gr)]
+                gr <- trim(gr)
+            })
+            if (any(neq <- start(ir) != start(gr) | end(ir) != end(gr))) {
+                cli_warn(
+                    paste0("'regions' contained {sum(neq)} out-of-bound ",
+                           "range{?s} that were trimmed to the sequence bounds"))
+            }
         }
     }
 
