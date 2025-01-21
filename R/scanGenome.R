@@ -398,10 +398,10 @@ fuseWindows <- function(x,
                 reduce(min.gapwidth = maxGap)
             ov1 <- findOverlaps(query = as(x, "GRanges"),
                                 subject = gr1, type = "within")
-            mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- tapply(
-                X = x$sscore[queryHits(ov1)],
-                INDEX = subjectHits(ov1),
-                FUN = mean)
+            mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- as.vector(
+                tapply(X = x$sscore[queryHits(ov1)],
+                       INDEX = subjectHits(ov1),
+                       FUN = mean))
             mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
             gr1$direction <- x$direction[1]
             gr1
@@ -409,9 +409,10 @@ fuseWindows <- function(x,
     gr <- sort(do.call(c, grL))
     if (length(gr) > 0) {
         ov <- findOverlaps(query = x, subject = gr, type = "within")
-        mcols(gr)[[scoreCol]] <- tapply(X = xdf$sscore[queryHits(ov)],
-                                        INDEX = subjectHits(ov),
-                                        FUN = mean)
+        mcols(gr)[[scoreCol]] <- as.vector(
+            tapply(X = xdf$sscore[queryHits(ov)],
+                   INDEX = subjectHits(ov),
+                   FUN = mean))
         mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
     } else {
         gr <- GRanges()
