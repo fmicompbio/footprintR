@@ -94,8 +94,8 @@ modified and total (valid) bases in each window and sample, respectively.
 }
 \description{
 Read modification data from \code{bamfiles} for a chunk of the genome
-defined by \code{region} and aggregate modified and total counts for
-windows.
+defined by \code{region} (by calling \code{\link{readModBam}} and aggregate
+modified and total counts for windows.
 }
 \examples{
 modbamfiles <- system.file("extdata",

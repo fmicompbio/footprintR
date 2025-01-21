@@ -3,7 +3,8 @@
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
 #' section 1.7) and return a \code{\link[SummarizedExperiment]{SummarizedExperiment}}
 #' object with information on modified bases. Implicitly called bases will get
-#' a modification probability of zero.
+#' a modification probability of zero. Secondary and supplementary alignments
+#' are ignored.
 #'
 #' @param bamfiles Character vector with one or several paths of \code{modBAM}
 #'     files, containing information about base modifications in \code{MM} and
@@ -53,9 +54,9 @@
 #'     \code{seqnamesToSampleFrom} are read from each of the \code{bamfiles}.
 #'     In order to make the results reproducible, make sure to set the
 #'     \code{RNGseed} argument in the provided \code{BPPARAM} object (see
-#'     below). Please note that secondary alignments in \code{bamfiles}
-#'     contribute to the total number of alignments but will not be sampled,
-#'     thus the number of returned alignments may be lower than
+#'     below). Please note that secondary and supplementary alignments in
+#'     \code{bamfiles} contribute to the total number of alignments but will not
+#'     be sampled, thus the number of returned alignments may be lower than
 #'     \code{nAlnsToSample}.
 #' @param seqnamesToSampleFrom A character vector with one or several sequence
 #'     names (chromosomes) from which to sample alignments from (only used if

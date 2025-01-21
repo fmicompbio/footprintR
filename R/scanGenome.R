@@ -19,8 +19,8 @@
 #' Generate counts for sequential windows in a single region
 #'
 #' Read modification data from \code{bamfiles} for a chunk of the genome
-#' defined by \code{region} and aggregate modified and total counts for
-#' windows.
+#' defined by \code{region} (by calling \code{\link{readModBam}} and aggregate
+#' modified and total counts for windows.
 #'
 #' @param bamfiles Character vector with one or several modBam file names.
 #'     Note that no read-filtering will be performed on the data from
@@ -33,7 +33,7 @@
 #' @param modbase Character vector defining the modified base to extract.
 #' @param modProbThreshold A numeric scalar, indicating the modification
 #'     probability threshold to use to classify a base as 'modified' or
-#'     'unmodified'. 
+#'     'unmodified'.
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
 #'     for the samples. It must contain at least one column, named
 #'     \code{"sample"}, which must contain all the values of
