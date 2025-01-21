@@ -309,8 +309,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
             // if this is the first time the read is seen, add it to the
             // read df vectors
             if (level == "read" && plp[j].is_head &&
-                !((plp[j].b->core.flag & BAM_FSECONDARY) ||
-                  (plp[j].b->core.flag & BAM_FSUPPLEMENTARY))) {
+                !(plp[j].b->core.flag & (BAM_FSECONDARY | BAM_FSUPPLEMENTARY))) {
                 df_read_id.push_back(bam_get_qname(plp[j].b));
                 df_qscore.push_back(extract_qscore(plp[j].b));
                 df_read_length.push_back(plp[j].b->core.l_qseq);

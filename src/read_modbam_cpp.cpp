@@ -612,7 +612,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
             rand_val = R::runif(0, 1);
-            if (!(bamdata->core.flag & BAM_FUNMAP) &&
+            if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY)) &&
                 rand_val < keep_aln_fraction) {
                 success = process_bam_record(bamdata,          // bam record
                                              alncnt,           // alignment counter
@@ -685,44 +685,46 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         }
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
-            success = process_bam_record(bamdata,          // bam record
-                                         alncnt,           // alignment counter
-                                         qseq,             // buffer for forward read sequence
-                                         qseq_len,         // allocated length of qseq
-                                         ms,               // modification state struct
-                                         had_error,        // error flag
-                                         buffer,           // buffer for message
-                                         buffer_len,       // allocated length of message buffer
-                                         modbase,          // modified base to analyze
-                                         in_samhdr,        // sam file header
-                                         n_unaligned,      // number of unaligned modified bases
-                                         n_total,          // total number of modified bases
-                                         variantRefNames,  // seqnames of SNV sites
-                                         variantRefPositions, // coordinates of SNV sites
-                                         // vectors for return values (per modification)
-                                         read_id,
-                                         call_code,
-                                         canonical_base,
-                                         ref_mod_strand,
-                                         chrom,
-                                         aligned_read_position,
-                                         forward_read_position,
-                                         ref_position,
-                                         mod_prob,
-                                         // vectors for return values (per alignment)
-                                         df_read_id,
-                                         df_qscore,
-                                         df_read_length,
-                                         df_aligned_length,
-                                         df_variant_label);
-            if (verbose && CLI_SHOULD_TICK) {
-                cli_progress_set(bar, (double)alncnt);
-            }
-            if (alncnt % 100 == 0) { // # nocov start
-                R_CheckUserInterrupt();
-            } // # nocov end
-            if (success != 0) {
-                goto end;
+            if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY))) {
+                success = process_bam_record(bamdata,          // bam record
+                                             alncnt,           // alignment counter
+                                             qseq,             // buffer for forward read sequence
+                                             qseq_len,         // allocated length of qseq
+                                             ms,               // modification state struct
+                                             had_error,        // error flag
+                                             buffer,           // buffer for message
+                                             buffer_len,       // allocated length of message buffer
+                                             modbase,          // modified base to analyze
+                                             in_samhdr,        // sam file header
+                                             n_unaligned,      // number of unaligned modified bases
+                                             n_total,          // total number of modified bases
+                                             variantRefNames,  // seqnames of SNV sites
+                                             variantRefPositions, // coordinates of SNV sites
+                                             // vectors for return values (per modification)
+                                             read_id,
+                                             call_code,
+                                             canonical_base,
+                                             ref_mod_strand,
+                                             chrom,
+                                             aligned_read_position,
+                                             forward_read_position,
+                                             ref_position,
+                                             mod_prob,
+                                             // vectors for return values (per alignment)
+                                             df_read_id,
+                                             df_qscore,
+                                             df_read_length,
+                                             df_aligned_length,
+                                             df_variant_label);
+                if (verbose && CLI_SHOULD_TICK) {
+                    cli_progress_set(bar, (double)alncnt);
+                }
+                if (alncnt % 100 == 0) { // # nocov start
+                    R_CheckUserInterrupt();
+                } // # nocov end
+                if (success != 0) {
+                    goto end;
+                }
             }
         }
     }
