@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,19 @@
       <small>Source: <a href="https://github.com/fmicompbio/footprintR/blob/devel/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="footprintr-030">footprintR 0.3.0<a class="anchor" aria-label="anchor" href="#footprintr-030"></a></h2>
+<ul><li>Enable use of more flexible region specification in <code><a href="../reference/readModBam.html">readModBam()</a></code>
+</li>
+<li>Add additional supported <code>statistics</code> in <code><a href="../reference/flattenReadLevelAssay.html">flattenReadLevelAssay()</a></code> (<code>Sum</code> and <code>Mean</code>)</li>
+<li>Various smaller improvements and bug fixes</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.5" id="footprintr-025">footprintR 0.2.5<a class="anchor" aria-label="anchor" href="#footprintr-025"></a></h2>
+<ul><li>Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values</li>
+<li>Add <code><a href="../reference/filterReadsBam.html">filterReadsBam()</a></code> to filter-out reads from input bam files and write reads that pass all filters to output bam files</li>
+<li>Add functions to statistically identify differentially modified regions (<code><a href="../reference/scanForHighScoringRegions.html">scanForHighScoringRegions()</a></code> and helpers)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.4" id="footprintr-024">footprintR 0.2.4<a class="anchor" aria-label="anchor" href="#footprintr-024"></a></h2>
 <ul><li>Speed up <code><a href="../reference/plotRegion.html">plotRegion()</a></code> for data sets with many reads by replacing <code><a href="https://rdrr.io/pkg/BiocGenerics/man/do.call.html" class="external-link">do.call()</a></code> with a faster alternative</li>

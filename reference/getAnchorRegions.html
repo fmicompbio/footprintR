@@ -11,7 +11,7 @@ genomic midpoint coordinate and the width."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,7 +136,11 @@ column of the assay is an <code>NaArray</code> (if <code>assayName</code> is a
 read-level assay) or a dense matrix (otherwise), with columns representing
 read-anchor region (or sample-anchor region) combinations. The <code>region</code>
 column of the <code>colData</code> records which anchor region a given column
-corresponds to.</p>
+corresponds to. In addition, all assays will be designated as 'read-level'
+assays (each column represents a sample, which is in turn represented by
+multiple columns in the actual data, corresponding to the different regions).
+This allows downstream analysis similar to that for read-level data,
+including flattening and plotting.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

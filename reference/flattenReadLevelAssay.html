@@ -15,7 +15,7 @@ each position for each sample."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,7 @@ each position for each sample.</p>
 <span>  <span class="va">se</span>,</span>
 <span>  assayName <span class="op">=</span> <span class="st">"mod_prob"</span>,</span>
 <span>  statistics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Nmod"</span>, <span class="st">"Nvalid"</span>, <span class="st">"FracMod"</span><span class="op">)</span>,</span>
+<span>  modProbThreshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  keepReads <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  replaceExisting <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -84,11 +85,20 @@ contains modification probabilities.</p></dd>
 
 <dt id="arg-statistics">statistics<a class="anchor" aria-label="anchor" href="#arg-statistics"></a></dt>
 <dd><p>Character vector specifying the type of statistics to be
-computed. Currently supported values are "Nmod" (number of modification
-probabilities greater or equal to 0.5), "Nvalid" (number of overlapping
-reads), "FracMod" (Nmod/Nvalid fraction), "Pmod" (average modification
-probability), "AvgConf" (average confidence of (non-)modification
-probabilities).</p></dd>
+computed. Currently supported values are "Nmod" (number of values per
+row in the <code>assayName</code> assay that are greater than or equal to
+<code>modProbThreshold</code>), "Nvalid" (number of valid/non-NA values per
+row, typically the number of overlapping reads), "FracMod" (Nmod/Nvalid),
+"Pmod" (row-wise average values), "Mean" (equivalent to "Pmod"),
+"Sum" (row-wise sums of non-NA values), "AvgConf" (average confidence
+of (non-)modification probabilities, more precisely the row-wise averages
+of the largest of the observed values and 1 - the observed values).</p></dd>
+
+
+<dt id="arg-modprobthreshold">modProbThreshold<a class="anchor" aria-label="anchor" href="#arg-modprobthreshold"></a></dt>
+<dd><p>A numeric scalar, indicating the modification
+probability threshold to use to classify a base as 'modified' or
+'unmodified'.</p></dd>
 
 
 <dt id="arg-keepreads">keepReads<a class="anchor" aria-label="anchor" href="#arg-keepreads"></a></dt>

@@ -16,16 +16,21 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/extractSeqContext.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterPositions.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterReads.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/filterReadsBam.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/flattenReadLevelAssay.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/footprintScoring.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/fuseWindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/getAnchorRegions.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/getDifferentiallyModifiedWindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/index.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotModbaseSpacing.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotReadStats.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotRegion.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/quantifyWindowsInRegion.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/readBedMethyl.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/readModBam.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/readModkitExtract.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/scanForHighScoringRegions.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/subsetReads.html</loc></url>
 </urlset>
 
