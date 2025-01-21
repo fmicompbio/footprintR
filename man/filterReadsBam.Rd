@@ -11,6 +11,9 @@ filterReadsBam(
   modbase,
   indexOutfiles = TRUE,
   overwriteOutfiles = FALSE,
+  keepUnmapped = TRUE,
+  keepSecondary = TRUE,
+  keepSupplementary = TRUE,
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
@@ -38,6 +41,10 @@ a bam index file (\code{.bai} file) for each of the generated
 \item{overwriteOutfiles}{Logical scalar. If \code{FALSE} (the default),
 existing \code{outfiles} will not be overwritten and the function will
 abort with an error message.}
+
+\item{keepUnmapped, keepSecondary, keepSupplementary}{Logical scalars
+indicating whether to keep unmapped, secondary or supplementary
+alignments.}
 
 \item{minReadLength}{A numeric scalar representing the smallest acceptable
 read length. Reads that are shorter than this value will be filtered
@@ -89,7 +96,8 @@ statistics and write the alignment to the corresponding output file from
 arguments. Filters are processed hierarchically: If a read does not pass a
 given filter, the remaining filters will not be examined and the processing
 continues with the next read.
-The filters are examined in this order: \code{minReadLength},
+The filters are examined in this order: \code{keepUnmapped},
+\code{keepSecondary}, \code{keepSupplementary}, \code{minReadLength},
 \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
 \code{maxFracLowConf}, \code{maxEntropy}.
 }

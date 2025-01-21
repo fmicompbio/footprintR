@@ -17,13 +17,17 @@
 //' Filters are processed hierarchically: If a record does not pass a given
 //' filter, the remaining filters will not be examined and the processing
 //' continues with the next record.
-//' The filter order is: minReadLength, minAlignedLength, minAlignedFraction,
-//' minQscore, maxEntropy, maxFracLowConf.
+//' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
+//' minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxEntropy,
+//' maxFracLowConf.
 //'
 //' @param infile Character scalar with name of the input bam file.
 //' @param outfile Character scalar with name of the output bam file.
 //' @param modbase Character scalar defining the modified base to analyze
 //'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+//' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
+//'     indicating whether to keep unmapped, secondary or supplementary
+//'     alignments.
 //' @param minReadLength A numeric scalar representing the smallest acceptable
 //'     read length. Reads that are shorter than this value will be filtered
 //'     out.
@@ -60,6 +64,9 @@
 Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                                       std::string outfile,
                                       char modbase,
+                                      bool keepUnmapped = true,
+                                      bool keepSecondary = true,
+                                      bool keepSupplementary = true,
                                       int minReadLength = 0,
                                       int minAlignedLength = 0,
                                       double minAlignedFraction = 0,
@@ -93,7 +100,8 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     sam_hdr_t *inbamhdr = NULL;
 
     // ... return values
-    unsigned int nMinReadLength = 0, nMinAlignedLength = 0, nMinAlignedFraction = 0,
+    unsigned int nUnmapped = 0, nSecondary = 0, nSupplementary = 0,
+        nMinReadLength = 0, nMinAlignedLength = 0, nMinAlignedFraction = 0,
         nMinQscore = 0, nMaxFracLowConf = 0, nMaxEntropy = 0;
 
     // ... cli progress bar
@@ -188,6 +196,24 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         }
 
         // calculate filter statistics
+        // ... keepUnmapped
+        if (!keepUnmapped && (bamdata->core.flag & BAM_FUNMAP)) {
+            nUnmapped++;
+            continue;
+        }
+
+        // ... keepSecondary
+        if (!keepSecondary && (bamdata->core.flag & BAM_FSECONDARY)) {
+            nSecondary++;
+            continue;
+        }
+
+        // ... keepSupplementary
+        if (!keepSupplementary && (bamdata->core.flag & BAM_FSUPPLEMENTARY)) {
+            nSupplementary++;
+            continue;
+        }
+
         // ... minReadLength
         if (minReadLength > 0 && this_read_len < minReadLength) {
             nMinReadLength++;
@@ -294,6 +320,9 @@ end:
         Rcpp::NumericVector res = Rcpp::NumericVector::create(
             Rcpp::_["total"] = alncnt,
             Rcpp::_["retained"] = outcnt,
+            Rcpp::_["filtered_unmapped"] = nUnmapped,
+            Rcpp::_["filtered_secondary"] = nSecondary,
+            Rcpp::_["filtered_supplementary"] = nSupplementary,
             Rcpp::_["filtered_minReadLength"] = nMinReadLength,
             Rcpp::_["filtered_minAlignedLength"] = nMinAlignedLength,
             Rcpp::_["filtered_minAlignedFraction"] = nMinAlignedFraction,

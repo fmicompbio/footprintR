@@ -74,13 +74,17 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #' Filters are processed hierarchically: If a record does not pass a given
 #' filter, the remaining filters will not be examined and the processing
 #' continues with the next record.
-#' The filter order is: minReadLength, minAlignedLength, minAlignedFraction,
-#' minQscore, maxEntropy, maxFracLowConf.
+#' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
+#' minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxEntropy,
+#' maxFracLowConf.
 #'
 #' @param infile Character scalar with name of the input bam file.
 #' @param outfile Character scalar with name of the output bam file.
 #' @param modbase Character scalar defining the modified base to analyze
 #'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+#' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
+#'     indicating whether to keep unmapped, secondary or supplementary
+#'     alignments.
 #' @param minReadLength A numeric scalar representing the smallest acceptable
 #'     read length. Reads that are shorter than this value will be filtered
 #'     out.
@@ -113,8 +117,8 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #'
 #' @noRd
 #' @keywords internal
-filter_modbam_cpp <- function(infile, outfile, modbase, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
+filter_modbam_cpp <- function(infile, outfile, modbase, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
 #' Create an index for a given bam file

@@ -53,7 +53,7 @@ test_that("read_modbam_cpp works", {
                                package = "footprintR")
 
     bam4 <- system.file("extdata", "6mA_simple.bam", package = "footprintR")
-    bam5 <- system.file("extdata", "6mA_unaligned.bam", package = "footprintR")
+    bam5 <- system.file("extdata", "6mA_nonPrimary.bam", package = "footprintR")
     bam7 <- system.file("extdata", "6mA_mod-issue.bam", package = "footprintR")
     bam8 <- system.file("extdata", "6mA_too-many-mods.bam", package = "footprintR")
 

@@ -7,7 +7,8 @@
 #' arguments. Filters are processed hierarchically: If a read does not pass a
 #' given filter, the remaining filters will not be examined and the processing
 #' continues with the next read.
-#' The filters are examined in this order: \code{minReadLength},
+#' The filters are examined in this order: \code{keepUnmapped},
+#' \code{keepSecondary}, \code{keepSupplementary}, \code{minReadLength},
 #' \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
 #' \code{maxFracLowConf}, \code{maxEntropy}.
 #'
@@ -24,6 +25,9 @@
 #' @param overwriteOutfiles Logical scalar. If \code{FALSE} (the default),
 #'     existing \code{outfiles} will not be overwritten and the function will
 #'     abort with an error message.
+#' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
+#'     indicating whether to keep unmapped, secondary or supplementary
+#'     alignments.
 #' @param maxEntropy A numeric scalar representing the largest acceptable
 #'     read-level entropy. Reads with entropy above this value will be filtered
 #'     out. A value of \code{Inf} deactivates the entropy filter.
@@ -65,6 +69,9 @@ filterReadsBam <- function(infiles,
                            modbase,
                            indexOutfiles = TRUE,
                            overwriteOutfiles = FALSE,
+                           keepUnmapped = TRUE,
+                           keepSecondary = TRUE,
+                           keepSupplementary = TRUE,
                            minReadLength = 0,
                            minAlignedLength = 0,
                            minAlignedFraction = 0,
@@ -85,6 +92,9 @@ filterReadsBam <- function(infiles,
         cli_abort(paste0("existing `outfiles` would be overwritten: ",
                          paste(outfiles[i], collapse = ", ")))
     }
+    .assertScalar(x = keepUnmapped, type = "logical")
+    .assertScalar(x = keepSecondary, type = "logical")
+    .assertScalar(x = keepSupplementary, type = "logical")
     .assertScalar(x = modbase, type = "character")
     .assertScalar(x = indexOutfiles, type = "logical")
     .assertScalar(x = minReadLength, type = "numeric", rngIncl = c(0, Inf))
@@ -122,6 +132,9 @@ filterReadsBam <- function(infiles,
                               myinfile = infiles[i],
                               myoutfile = outfiles[i],
                               mymodbase = modbase,
+                              myKeepUnmapped = keepUnmapped,
+                              myKeepSecondary = keepSecondary,
+                              myKeepSupplementary = keepSupplementary,
                               myMinReadLength = as.integer(minReadLength),
                               myMinAlignedLength = as.integer(minAlignedLength),
                               myMinAlignedFraction = minAlignedFraction,
@@ -139,6 +152,9 @@ filterReadsBam <- function(infiles,
                          res1 <- filter_modbam_cpp(infile = myinfile,
                                                    outfile = myoutfile,
                                                    modbase = mymodbase,
+                                                   keepUnmapped = myKeepUnmapped,
+                                                   keepSecondary = myKeepSecondary,
+                                                   keepSupplementary = myKeepSupplementary,
                                                    minReadLength = myMinReadLength,
                                                    minAlignedLength = myMinAlignedLength,
                                                    minAlignedFraction = myMinAlignedFraction,
