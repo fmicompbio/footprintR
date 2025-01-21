@@ -333,6 +333,7 @@
 #' @importFrom GenomeInfoDb seqlengths seqlevels
 #' @importFrom GenomicRanges GRanges trim
 #' @importFrom IRanges IRanges start end
+#' @importFrom utils strcapture
 #'
 #' @noRd
 #' @keywords internal
