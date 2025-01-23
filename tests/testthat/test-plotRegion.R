@@ -320,7 +320,7 @@ test_that("plotRegion works - manual inspection", {
         seB, 
         wgt = rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), 
                   c(15, 140, 15)),
-        name = "nucleosome", verbose = FALSE, thresh = 0.05)
+        name = "nucleosome", verbose = FALSE, thresh = 0.01)
     seB$footprint2 <- seB$nucleosome
     metadata(seB)$readLevelData$colDataColumns <- union(
         metadata(seB)$readLevelData$colDataColumns, "footprint2"
@@ -654,8 +654,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample", 
-                           size = 2, stroke = 0.5,
-                           footprintColumns = "nucleosome"), 
+                           size = 2, stroke = 0.5), 
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
@@ -663,6 +662,28 @@ test_that("plotRegion works - manual inspection", {
                            highlightRegions = grh))) +
             plot_layout(heights = c(3, 3, 2)),
         "the standard deviation is zero")
+    expect_s3_class(p, "ggplot")
+    
+    ## modbaseSpace = TRUE, footprints -> set modbaseSpace to FALSE
+    expect_warning(expect_warning(p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "cluster", facetBy = "sample", 
+                           size = 2, stroke = 0.5, 
+                           footprintColumns = "nucleosome"), 
+                      list(trackData = "Nvalid", trackType = "PointSmooth",
+                           showLegend = FALSE, spar = 0.5,
+                           trackTitle = "Smooth",
+                           colors = c(s1 = "forestgreen", s2 = "firebrick1"),
+                           highlightRegions = grh))) +
+            plot_layout(heights = c(3, 3, 2)),
+        "Plotting in `modbaseSpace` is not allowed"), "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
 
     ## ... with only smooth
@@ -676,8 +697,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = NULL, facetBy = "modbase", 
-                           size = 2, stroke = 0.5, 
-                           footprintColumns = "nucleosome"), 
+                           size = 2, stroke = 0.5), 
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
