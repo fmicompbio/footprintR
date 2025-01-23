@@ -277,6 +277,14 @@ plotRegion <- function(
                            "Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
+        if (modbaseSpace && "footprintColumns" %in% names(tracks[[i]]) && 
+            is.character(tracks[[i]]$footprintColumns) &&
+            length(tracks[[i]]$footprintColumns) > 0) {
+            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
+                           "footprintColumns are provided (seen in 
+                           tracks[[{i}]]. Setting modbaseSpace=FALSE"))
+            modbaseSpace <- FALSE
+        }
     }
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
@@ -482,15 +490,17 @@ plotReadsLollipop <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p +
-                geom_rect(
-                    data = fp,
-                    mapping = aes(xmin = as.numeric(.data$start) - 0.0,
-                                  xmax = as.numeric(.data$end) + 0.0,
-                                  ymin = as.numeric(.data$plotRow) - 0.5,
-                                  ymax = as.numeric(.data$plotRow) + 0.5),
-                    fill = argL$footprintColors[fpc],
-                    inherit.aes = FALSE
+            p <- p + 
+                geom_tile(
+                    data = fp, 
+                    mapping = aes(x = (as.numeric(.data$start) + 
+                                           as.numeric(.data$end)) / 2,
+                                  y = .data$plotRow, 
+                                  width = abs(as.numeric(.data$end) - 
+                                                  as.numeric(.data$start)),
+                                  height = 1
+                    ), 
+                    fill = argL$footprintColors[fpc], inherit.aes = FALSE
                 )
         }
     }
@@ -609,13 +619,16 @@ plotReadsHeatmap <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p +
-                geom_rect(
-                    data = fp,
-                    mapping = aes(xmin = as.numeric(.data$start) - 0.0,
-                                  xmax = as.numeric(.data$end) + 0.0,
-                                  ymin = as.numeric(.data$read) - 0.5,
-                                  ymax = as.numeric(.data$read) + 0.5),
+            p <- p + 
+                geom_tile(
+                    data = fp, 
+                    mapping = aes(x = (as.numeric(.data$start) + 
+                                           as.numeric(.data$end)) / 2,
+                                  y = .data$plotRow, 
+                                  width = abs(as.numeric(.data$end) - 
+                                                  as.numeric(.data$start)),
+                                  height = 1
+                    ), 
                     fill = "transparent", color = argL$footprintColors[fpc],
                     linewidth = 1.5, inherit.aes = FALSE
                 )
