@@ -347,6 +347,7 @@ getDifferentiallyModifiedWindows <- function(se,
 #' grFused
 #'
 #' @importFrom GenomicRanges GRanges
+#' @importFrom BiocGenerics sort
 #' @importFrom S4Vectors mcols mcols<- subjectHits queryHits DataFrame
 #' @importFrom dplyr mutate filter group_by ungroup group_split
 #' @importFrom IRanges reduce findOverlaps
@@ -406,8 +407,8 @@ fuseWindows <- function(x,
             gr1$direction <- x$direction[1]
             gr1
         })
-    gr <- sort(do.call(c, grL))
-    if (length(gr) > 0) {
+    if (sum(lengths(grL)) > 0) {
+        gr <- sort(sort(do.call(c, grL)), ignore.strand = TRUE)
         ov <- findOverlaps(query = x, subject = gr, type = "within")
         mcols(gr)[[scoreCol]] <- as.vector(
             tapply(X = xdf$sscore[queryHits(ov)],

@@ -113,11 +113,11 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment rowRanges colData
 #' @importFrom SparseArray NaArray
-#' @importFrom GenomicRanges GPos sort match seqnames start end
+#' @importFrom GenomicRanges GPos match seqnames start end
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
-#' @importFrom BiocGenerics do.call cbind pos strand
+#' @importFrom BiocGenerics do.call cbind pos strand sort
 #' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
 #' @importFrom methods is
 #'
@@ -219,9 +219,11 @@ readModBam <- function(bamfiles,
 
     # sort and subset variantPositions
     if (length(variantPositions) > 0) {
-        variantPositions <- sort(subsetByOverlaps(x = variantPositions,
-                                                  ranges = regions,
-                                                  ignore.strand = TRUE))
+        variantPositions <- sort(
+            sort(subsetByOverlaps(x = variantPositions,
+                                  ranges = regions,
+                                  ignore.strand = TRUE)),
+            ignore.strand = TRUE)
         variantRefNames <- as.character(seqnames(variantPositions))
         # make coordinates zero-based
         variantRefPositions <- pos(variantPositions) - 1L
@@ -314,7 +316,7 @@ readModBam <- function(bamfiles,
 
     # create combined GPos, reduce to unique positions
     .message("finding unique genomic positions...")
-    gpos <- sort(unique(do.call(c, unname(gposL))))
+    gpos <- sort(sort(unique(do.call(c, unname(gposL)))), ignore.strand = TRUE)
     .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
     # if trim=TRUE, trim GPos to only the indicated region

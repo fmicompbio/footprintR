@@ -29,10 +29,10 @@
 #'     should be \code{"-"} and the value(s) in \code{modbase}.
 #' @param nrows Only read \code{nrows} rows of each input file.
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
-#'     for the samples. It must contain at least one column, named 
-#'     \code{"sample"}, which must contain all the values of 
-#'     \code{names(fnames)}. The provided annotations will be propagated to 
-#'     the returned \code{SummarizedExperiment} object. 
+#'     for the samples. It must contain at least one column, named
+#'     \code{"sample"}, which must contain all the values of
+#'     \code{names(fnames)}. The provided annotations will be propagated to
+#'     the returned \code{SummarizedExperiment} object.
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -60,10 +60,10 @@
 #' extrfile <- system.file("extdata", "modkit_extract_rc_5mC_1.tsv.gz",
 #'                         package = "footprintR")
 #' ## ... no filtering
-#' readModkitExtract(extrfile, modbase = "m", filter = NULL, 
+#' readModkitExtract(extrfile, modbase = "m", filter = NULL,
 #'                   BPPARAM = BiocParallel::SerialParam())
 #' ## ... modkit filtering
-#' readModkitExtract(extrfile, modbase = "m", filter = "modkit", 
+#' readModkitExtract(extrfile, modbase = "m", filter = "modkit",
 #'                   BPPARAM = BiocParallel::SerialParam())
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
@@ -73,10 +73,10 @@
 #' @importFrom SummarizedExperiment SummarizedExperiment colData rowRanges
 #' @importFrom data.table fread
 #' @importFrom BiocParallel bplapply MulticoreParam bpnworkers
-#' @importFrom GenomicRanges GPos sort match
+#' @importFrom GenomicRanges GPos match
 #' @importFrom S4Vectors make_zero_col_DFrame DataFrame
 #' @importFrom SparseArray NaArray
-#' @importFrom BiocGenerics pos strand do.call cbind
+#' @importFrom BiocGenerics pos strand do.call cbind sort
 #' @importFrom GenomeInfoDb seqnames
 #'
 #' @export
@@ -84,7 +84,7 @@ readModkitExtract <- function(fnames,
                               modbase,
                               filter = NULL,
                               nrows = Inf,
-                              sampleAnnot = NULL, 
+                              sampleAnnot = NULL,
                               seqinfo = NULL,
                               sequenceContextWidth = 0,
                               sequenceReference = NULL,
@@ -108,7 +108,7 @@ readModkitExtract <- function(fnames,
         }
         if (!all(names(fnames) %in% sampleAnnot$sample)) {
             stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(fnames), sampleAnnot$sample), 
+                 paste(setdiff(names(fnames), sampleAnnot$sample),
                        collapse = ", "))
         }
     }
@@ -218,7 +218,7 @@ readModkitExtract <- function(fnames,
 
     # create combined GPos, reduce to unique positions
     .message("finding unique genomic positions...")
-    gpos <- sort(unique(do.call(c, unname(gposL))))
+    gpos <- sort(sort(unique(do.call(c, unname(gposL)))), ignore.strand = TRUE)
     .message("collapsed {sum(lengths(gposL))} positions to {length(gpos)} unique ones")
 
     # add sequence context
@@ -253,8 +253,8 @@ readModkitExtract <- function(fnames,
         modbase = modbase[names(modmat)]
     )
     if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
-        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
-                                   colnames(sampleAnnot) != "sample", 
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample),
+                                   colnames(sampleAnnot) != "sample",
                                    drop = FALSE]
         cdata <- cbind(cdata, sampleAnnot)
     }

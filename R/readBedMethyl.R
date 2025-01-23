@@ -22,10 +22,10 @@
 #'     all samples.
 #' @param nrows Only read \code{nrows} rows of the input file.
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
-#'     for the samples. It must contain at least one column, named 
-#'     \code{"sample"}, which must contain all the values of 
-#'     \code{names(fnames)}. The provided annotations will be propagated to 
-#'     the returned \code{SummarizedExperiment} object. 
+#'     for the samples. It must contain at least one column, named
+#'     \code{"sample"}, which must contain all the values of
+#'     \code{names(fnames)}. The provided annotations will be propagated to
+#'     the returned \code{SummarizedExperiment} object.
 #' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
 #'     containing information about the set of genomic sequences (chromosomes).
 #'     Alternatively, a named numeric vector with genomic sequence names and
@@ -50,9 +50,9 @@
 #' @author Michael Stadler, Charlotte Soneson
 #'
 #' @examples
-#' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", 
+#' bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz",
 #'                       package = "footprintR")
-#' readBedMethyl(bmfile, modbase = "m", 
+#' readBedMethyl(bmfile, modbase = "m",
 #'               BPPARAM = BiocParallel::SerialParam())
 #'
 #' @seealso [`modkit` software](https://nanoporetech.github.io/modkit),
@@ -63,11 +63,12 @@
 #'
 #' @import SummarizedExperiment
 #' @importFrom data.table fread
-#' @importFrom GenomicRanges GPos match sort resize trim
+#' @importFrom GenomicRanges GPos match resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom S4Vectors mcols mcols<- DataFrame
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
+#' @importFrom BiocGenerics sort
 #' @importFrom methods as is
 #' @importFrom BiocParallel bplapply MulticoreParam bpnworkers
 #'
@@ -75,7 +76,7 @@
 readBedMethyl <- function(fnames,
                           modbase,
                           nrows = Inf,
-                          sampleAnnot = NULL, 
+                          sampleAnnot = NULL,
                           seqinfo = NULL,
                           sequenceContextWidth = 0,
                           sequenceReference = NULL,
@@ -96,7 +97,7 @@ readBedMethyl <- function(fnames,
         }
         if (!all(names(fnames) %in% sampleAnnot$sample)) {
             stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(fnames), sampleAnnot$sample), 
+                 paste(setdiff(names(fnames), sampleAnnot$sample),
                        collapse = ", "))
         }
     }
@@ -167,10 +168,10 @@ readBedMethyl <- function(fnames,
     # create combined GPos
     if (length(dfL) > 1) {
         .message("finding unique genomic positions...")
-        gpos <- sort(unique(do.call(c, unname(gposL))))
+        gpos <- sort(sort(unique(do.call(c, unname(gposL)))), ignore.strand = TRUE)
         .message("collapsed {sum(lengths(gposL))} position{?s} to {length(gpos)} unique one{?s}")
     } else {
-        gpos <- sort(gposL[[1]])
+        gpos <- sort(sort(gposL[[1]]), ignore.strand = TRUE)
     }
 
     # add sequence context
@@ -199,8 +200,8 @@ readBedMethyl <- function(fnames,
         modbase = modbase[nms]
     )
     if (!is.null(sampleAnnot) && any(colnames(sampleAnnot) != "sample")) {
-        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample), 
-                                   colnames(sampleAnnot) != "sample", 
+        sampleAnnot <- sampleAnnot[match(cdata$sample, sampleAnnot$sample),
+                                   colnames(sampleAnnot) != "sample",
                                    drop = FALSE]
         cdata <- cbind(cdata, sampleAnnot)
     }

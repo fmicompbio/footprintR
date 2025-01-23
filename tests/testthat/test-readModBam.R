@@ -136,7 +136,7 @@ test_that("readModBam works", {
     suppressMessages({
         expect_message(
             se1 <- readModBam(bamfiles = modbamfiles, regions = reg1,
-                              modbase = "a", nAlnsToSample = 0,
+                              modbase = "a", level = "read", nAlnsToSample = 0,
                               sequenceContextWidth = 1, sequenceReference = ref,
                               seqnamesToSampleFrom = "chr1", verbose = TRUE,
                               BPPARAM = BiocParallel::SerialParam())
@@ -683,7 +683,7 @@ test_that("readModBam correctly labels reads", {
                      "")[[1]][idx],
             collapse = "")
     }))
-    expect_identical(sort(varpos), metadata(se)$variantPositions)
+    expect_identical(sort(sort(varpos), ignore.strand = TRUE), metadata(se)$variantPositions)
     expect_identical(extractLabelParts, readLabelParts)
     expect_true(all(grepl("^-.*--$", se$readInfo$s1$variant_label))) # missed positions
 

@@ -73,9 +73,9 @@ This function will read collapsed single-molecule footprinting data
 (reads combined per genomic position) from a \code{bedMethyl} file.
 }
 \examples{
-bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz", 
+bmfile <- system.file("extdata", "modkit_pileup_1.bed.gz",
                       package = "footprintR")
-readBedMethyl(bmfile, modbase = "m", 
+readBedMethyl(bmfile, modbase = "m",
               BPPARAM = BiocParallel::SerialParam())
 
 }
