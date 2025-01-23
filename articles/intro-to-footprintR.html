@@ -154,15 +154,15 @@ here correspond to genomic positions:</p>
 <span><span class="co">#&gt; UnstitchedGPos object with 12020 positions and 1 metadata column:</span></span>
 <span><span class="co">#&gt;           seqnames       pos strand | sequenceContext</span></span>
 <span><span class="co">#&gt;              &lt;Rle&gt; &lt;integer&gt;  &lt;Rle&gt; |  &lt;DNAStringSet&gt;</span></span>
-<span><span class="co">#&gt;       [1]     chr1   6937686      + |             GCA</span></span>
-<span><span class="co">#&gt;       [2]     chr1   6937688      + |             ACT</span></span>
-<span><span class="co">#&gt;       [3]     chr1   6937689      + |             CTT</span></span>
-<span><span class="co">#&gt;       [4]     chr1   6937691      + |             TAA</span></span>
-<span><span class="co">#&gt;       [5]     chr1   6937696      + |             GCA</span></span>
+<span><span class="co">#&gt;       [1]     chr1   6937685      - |             GCT</span></span>
+<span><span class="co">#&gt;       [2]     chr1   6937686      + |             GCA</span></span>
+<span><span class="co">#&gt;       [3]     chr1   6937688      + |             ACT</span></span>
+<span><span class="co">#&gt;       [4]     chr1   6937689      + |             CTT</span></span>
+<span><span class="co">#&gt;       [5]     chr1   6937690      - |             TAA</span></span>
 <span><span class="co">#&gt;       ...      ...       ...    ... .             ...</span></span>
-<span><span class="co">#&gt;   [12016]     chr1   6957049      - |             TGG</span></span>
-<span><span class="co">#&gt;   [12017]     chr1   6957051      - |             CCT</span></span>
-<span><span class="co">#&gt;   [12018]     chr1   6957052      - |             TCC</span></span>
+<span><span class="co">#&gt;   [12016]     chr1   6957051      - |             CCT</span></span>
+<span><span class="co">#&gt;   [12017]     chr1   6957052      - |             TCC</span></span>
+<span><span class="co">#&gt;   [12018]     chr1   6957054      + |             AAA</span></span>
 <span><span class="co">#&gt;   [12019]     chr1   6957056      - |             CCT</span></span>
 <span><span class="co">#&gt;   [12020]     chr1   6957057      - |             CCC</span></span>
 <span><span class="co">#&gt;   -------</span></span>
@@ -183,19 +183,19 @@ position in each sample):</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"Nmod"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      sample1 sample2</span></span>
-<span><span class="co">#&gt; [1,]       1       5</span></span>
-<span><span class="co">#&gt; [2,]       1       0</span></span>
-<span><span class="co">#&gt; [3,]       0       0</span></span>
+<span><span class="co">#&gt; [1,]       6       0</span></span>
+<span><span class="co">#&gt; [2,]       1       5</span></span>
+<span><span class="co">#&gt; [3,]       1       0</span></span>
 <span><span class="co">#&gt; [4,]       0       0</span></span>
-<span><span class="co">#&gt; [5,]       3       3</span></span>
+<span><span class="co">#&gt; [5,]       0       0</span></span>
 <span><span class="co">#&gt; [6,]       0       0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"Nvalid"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      sample1 sample2</span></span>
-<span><span class="co">#&gt; [1,]      16      15</span></span>
+<span><span class="co">#&gt; [1,]      15       0</span></span>
 <span><span class="co">#&gt; [2,]      16      15</span></span>
-<span><span class="co">#&gt; [3,]       0       1</span></span>
-<span><span class="co">#&gt; [4,]       1       0</span></span>
-<span><span class="co">#&gt; [5,]      16      14</span></span>
+<span><span class="co">#&gt; [3,]      16      15</span></span>
+<span><span class="co">#&gt; [4,]       0       1</span></span>
+<span><span class="co">#&gt; [5,]       0       1</span></span>
 <span><span class="co">#&gt; [6,]       1       0</span></span></code></pre></div>
 <p>From these, you can easily calculate the fraction of
 modifications:</p>
@@ -203,11 +203,11 @@ modifications:</p>
 <code class="sourceCode R"><span><span class="va">fraction_modified</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"Nmod"</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">se</span>, <span class="st">"Nvalid"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fraction_modified</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      sample1   sample2</span></span>
-<span><span class="co">#&gt; [1,]  0.0625 0.3333333</span></span>
-<span><span class="co">#&gt; [2,]  0.0625 0.0000000</span></span>
-<span><span class="co">#&gt; [3,]     NaN 0.0000000</span></span>
-<span><span class="co">#&gt; [4,]  0.0000       NaN</span></span>
-<span><span class="co">#&gt; [5,]  0.1875 0.2142857</span></span>
+<span><span class="co">#&gt; [1,]  0.4000       NaN</span></span>
+<span><span class="co">#&gt; [2,]  0.0625 0.3333333</span></span>
+<span><span class="co">#&gt; [3,]  0.0625 0.0000000</span></span>
+<span><span class="co">#&gt; [4,]     NaN 0.0000000</span></span>
+<span><span class="co">#&gt; [5,]     NaN 0.0000000</span></span>
 <span><span class="co">#&gt; [6,]  0.0000       NaN</span></span></code></pre></div>
 <p>Please note that non-finite fractions result from positions that had
 zero coverage in a given sample.</p>
@@ -368,7 +368,7 @@ methylation (sequence context HCG):</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Michael B Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
+  <p>Developed by Michael Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -106,17 +106,17 @@ from <code>modBam</code> files using <a href="https://nanoporetech.github.io/mod
 <span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> extracting base modifications from modBAM files</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[41ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[48ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> collapsed 17739 positions to 7967 unique ones</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[271ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[252ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
 <span><span class="co">#&gt; dim: 7967 2 </span></span>
 <span><span class="co">#&gt; metadata(3): readLevelData variantPositions filteredOutReads</span></span>
 <span><span class="co">#&gt; assays(1): mod_prob</span></span>
-<span><span class="co">#&gt; rownames(7967): chr1:6930410:+ chr1:6930415:+ ... chr1:6941622:-</span></span>
+<span><span class="co">#&gt; rownames(7967): chr1:6925830:- chr1:6925834:- ... chr1:6941622:-</span></span>
 <span><span class="co">#&gt;   chr1:6941631:-</span></span>
 <span><span class="co">#&gt; rowData names(0):</span></span>
 <span><span class="co">#&gt; colnames(2): sample1 sample2</span></span>
@@ -129,11 +129,11 @@ with positions in rows:</p>
 <span><span class="co">#&gt; UnstitchedGPos object with 7967 positions and 0 metadata columns:</span></span>
 <span><span class="co">#&gt;                  seqnames       pos strand</span></span>
 <span><span class="co">#&gt;                     &lt;Rle&gt; &lt;integer&gt;  &lt;Rle&gt;</span></span>
-<span><span class="co">#&gt;   chr1:6930410:+     chr1   6930410      +</span></span>
-<span><span class="co">#&gt;   chr1:6930415:+     chr1   6930415      +</span></span>
-<span><span class="co">#&gt;   chr1:6930419:+     chr1   6930419      +</span></span>
-<span><span class="co">#&gt;   chr1:6930421:+     chr1   6930421      +</span></span>
-<span><span class="co">#&gt;   chr1:6930428:+     chr1   6930428      +</span></span>
+<span><span class="co">#&gt;   chr1:6925830:-     chr1   6925830      -</span></span>
+<span><span class="co">#&gt;   chr1:6925834:-     chr1   6925834      -</span></span>
+<span><span class="co">#&gt;   chr1:6925836:-     chr1   6925836      -</span></span>
+<span><span class="co">#&gt;   chr1:6925837:-     chr1   6925837      -</span></span>
+<span><span class="co">#&gt;   chr1:6925841:-     chr1   6925841      -</span></span>
 <span><span class="co">#&gt;              ...      ...       ...    ...</span></span>
 <span><span class="co">#&gt;   chr1:6941611:-     chr1   6941611      -</span></span>
 <span><span class="co">#&gt;   chr1:6941614:-     chr1   6941614      -</span></span>
@@ -202,11 +202,11 @@ with modification probabilities.</p>
 <span><span class="co">#&gt; DataFrame with 7967 rows and 2 columns</span></span>
 <span><span class="co">#&gt;                          sample1    sample2</span></span>
 <span><span class="co">#&gt;                       &lt;NaMatrix&gt; &lt;NaMatrix&gt;</span></span>
-<span><span class="co">#&gt; chr1:6930410:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930415:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930419:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930421:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930428:+          NA:NA:NA       NA:0</span></span>
+<span><span class="co">#&gt; chr1:6925830:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925834:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925836:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925837:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925841:- 0.275390625:NA:NA      NA:NA</span></span>
 <span><span class="co">#&gt; ...                          ...        ...</span></span>
 <span><span class="co">#&gt; chr1:6941611:- NA:NA:0.052734375      NA:NA</span></span>
 <span><span class="co">#&gt; chr1:6941614:- NA:NA:0.130859375      NA:NA</span></span>
@@ -222,11 +222,11 @@ package).</p>
 <code class="sourceCode R"><span><span class="va">m</span><span class="op">$</span><span class="va">sample1</span></span>
 <span><span class="co">#&gt; &lt;7967 x 3 NaMatrix&gt; of type "double" [nnacount=11300 (47%)]:</span></span>
 <span><span class="co">#&gt;         sample1-233e48a7-f379-4dcf-9270-958231125563</span></span>
-<span><span class="co">#&gt;    [1,]                                           NA</span></span>
-<span><span class="co">#&gt;    [2,]                                           NA</span></span>
-<span><span class="co">#&gt;    [3,]                                           NA</span></span>
-<span><span class="co">#&gt;    [4,]                                           NA</span></span>
-<span><span class="co">#&gt;    [5,]                                           NA</span></span>
+<span><span class="co">#&gt;    [1,]                                    0.0000000</span></span>
+<span><span class="co">#&gt;    [2,]                                    0.0000000</span></span>
+<span><span class="co">#&gt;    [3,]                                    0.0000000</span></span>
+<span><span class="co">#&gt;    [4,]                                    0.0000000</span></span>
+<span><span class="co">#&gt;    [5,]                                    0.2753906</span></span>
 <span><span class="co">#&gt;     ...                                            .</span></span>
 <span><span class="co">#&gt; [7963,]                                           NA</span></span>
 <span><span class="co">#&gt; [7964,]                                           NA</span></span>
@@ -383,11 +383,11 @@ read-level or summary-level objects remain identical:</p>
 <span><span class="co">#&gt; DataFrame with 7967 rows and 2 columns</span></span>
 <span><span class="co">#&gt;                          sample1    sample2</span></span>
 <span><span class="co">#&gt;                       &lt;NaMatrix&gt; &lt;NaMatrix&gt;</span></span>
-<span><span class="co">#&gt; chr1:6930410:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930415:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930419:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930421:+          NA:NA:NA       NA:0</span></span>
-<span><span class="co">#&gt; chr1:6930428:+          NA:NA:NA       NA:0</span></span>
+<span><span class="co">#&gt; chr1:6925830:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925834:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925836:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925837:-           0:NA:NA      NA:NA</span></span>
+<span><span class="co">#&gt; chr1:6925841:- 0.275390625:NA:NA      NA:NA</span></span>
 <span><span class="co">#&gt; ...                          ...        ...</span></span>
 <span><span class="co">#&gt; chr1:6941611:- NA:NA:0.052734375      NA:NA</span></span>
 <span><span class="co">#&gt; chr1:6941614:- NA:NA:0.130859375      NA:NA</span></span>
@@ -622,7 +622,7 @@ accurate estimates from a handful of reads:</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Michael B Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
+  <p>Developed by Michael Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
 </div>
 
 <div class="pkgdown-footer-right">

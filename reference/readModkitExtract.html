@@ -167,26 +167,26 @@ with each column (sample) corresponding to a position-by-read
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">extrfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"modkit_extract_rc_5mC_1.tsv.gz"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co">## ... no filtering</span></span></span>
-<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="cn">NULL</span>, </span></span>
+<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>                  BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> dim: 6432 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(3): modkit_threshold filter_threshold readLevelData</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): mod_prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(6432): chr1:6932662:+ chr1:6932664:+ ... chr1:6942543:-</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6942552:-</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(6432): chr1:6928983:- chr1:6928995:- ... chr1:6949455:+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6949461:+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
 <span class="r-in"><span><span class="co">## ... modkit filtering</span></span></span>
-<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="st">"modkit"</span>, </span></span>
+<span class="r-in"><span><span class="fu">readModkitExtract</span><span class="op">(</span><span class="va">extrfile</span>, modbase <span class="op">=</span> <span class="st">"m"</span>, filter <span class="op">=</span> <span class="st">"modkit"</span>,</span></span>
 <span class="r-in"><span>                  BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5893 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> metadata(3): modkit_threshold filter_threshold readLevelData</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> assays(1): mod_prob</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(5893): chr1:6932662:+ chr1:6932664:+ ... chr1:6942543:-</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6942552:-</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(5893): chr1:6928983:- chr1:6928995:- ... chr1:6949455:+</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chr1:6949461:+</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1): s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
@@ -198,7 +198,7 @@ with each column (sample) corresponding to a position-by-read
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Michael B Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
+  <p>Developed by Michael Stadler, Charlotte Soneson, Panagiotis Papasaikas, Sebastien Smallwood.</p>
 </div>
 
 <div class="pkgdown-footer-right">
