@@ -1,3 +1,7 @@
+# footprintR 0.3.1
+
+* Explicitly ignore supplementary and secondary alignments in all reading modes in `readModBam`
+
 # footprintR 0.3.0
 
 * Enable use of more flexible region specification in `readModBam()`
