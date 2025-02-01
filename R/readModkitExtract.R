@@ -78,6 +78,7 @@
 #' @importFrom SparseArray NaArray
 #' @importFrom BiocGenerics pos strand do.call cbind sort
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom cli cli_abort
 #'
 #' @export
 readModkitExtract <- function(fnames,
@@ -94,22 +95,22 @@ readModkitExtract <- function(fnames,
     # digest arguments
     .assertVector(x = fnames, type = "character")
     if (any(i <- !file.exists(fnames))) {
-        stop("not all `fnames` exist: ", paste(fnames[i], collapse = ", "))
+        cli_abort("not all {.arg fnames} exist: {.file {fnames[i]}}")
     }
     if (is.null(names(fnames))) {
         names(fnames) <- paste0("s", seq_along(fnames))
     } else if (any(duplicated(names(fnames)))) {
-        stop("`names(fnames)` are not unique")
+        cli_abort("{.code names(fnames)} are not unique")
     }
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
         if (!("sample" %in% colnames(sampleAnnot))) {
-            stop("sampleAnnot must have at least a column named 'sample'")
+            cli_abort("{.arg sampleAnnot} must have at least a column named 'sample'")
         }
         if (!all(names(fnames) %in% sampleAnnot$sample)) {
-            stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(fnames), sampleAnnot$sample),
-                       collapse = ", "))
+            cli_abort(paste0(
+                "Annotation information missing for some samples: ",
+                "{setdiff(names(fnames), sampleAnnot$sample)}"))
         }
     }
     if (length(modbase) == 1) {
@@ -120,15 +121,14 @@ readModkitExtract <- function(fnames,
         names(modbase) <- names(fnames)
     } else {
         if (!all(names(modbase) %in% names(fnames))) {
-            stop("names of `modbase` and `fnames` don't agree")
+            cli_abort("names of {.arg modbase} and {.arg fnames} don't agree")
         }
     }
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
     if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
                                  "U","a","A","o","G","n","N"))) {
-        stop("invalid `modbase` values: ",
-             paste(unique(modbase[i]), collapse = ", "))
+        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
     }
     if (!is.null(filter)) {
         if (is.character(filter)) {
@@ -136,12 +136,12 @@ readModkitExtract <- function(fnames,
         } else {
             .assertVector(x = filter, type = "numeric", rngIncl = c(0, 1))
             if (is.null(names(filter))) {
-                stop("`filter` must be a named vector")
+                cli_abort("{.arg filter} must be a named vector")
             }
             if (any(i <- !(unique(c("-", modbase))) %in% names(filter))) {
-                stop("a filter threshold needs to be supplied for all ",
-                     "modified bases, not present for: ",
-                     unique(c("-", modbase))[i])
+                cli_abort(paste0(
+                    "a filter threshold needs to be supplied for all ",
+                    "modified bases, not present for: {unique(c('-', modbase))[i]}"))
             }
         }
     }
@@ -149,8 +149,9 @@ readModkitExtract <- function(fnames,
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
             (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
-            stop("`seqinfo` must be `NULL`, a `Seqinfo` object or a named",
-                 " numeric vector with genomic sequence lengths.")
+            cli_abort(paste0(
+                "{.arg seqinfo} must be {.code NULL}, a {.cls Seqinfo} object ",
+                "or a named {.cls numeric} vector with genomic sequence lengths."))
         }
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))

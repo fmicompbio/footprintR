@@ -71,6 +71,7 @@
 #' @importFrom BiocGenerics sort
 #' @importFrom methods as is
 #' @importFrom BiocParallel bplapply MulticoreParam bpnworkers
+#' @importFrom cli cli_abort
 #'
 #' @export
 readBedMethyl <- function(fnames,
@@ -85,7 +86,7 @@ readBedMethyl <- function(fnames,
     # digest arguments
     .assertVector(x = fnames, type = "character")
     if (any(i <- !file.exists(fnames))) {
-        stop("not all `fnames` exist: ", paste(fnames[i], collapse = ", "))
+        cli_abort("not all {.arg fnames} exist: {fnames[i]}")
     }
     if (is.null(names(fnames))) {
         names(fnames) <- paste0("s", seq_along(fnames))
@@ -93,12 +94,12 @@ readBedMethyl <- function(fnames,
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
         if (!("sample" %in% colnames(sampleAnnot))) {
-            stop("sampleAnnot must have at least a column named 'sample'")
+            cli_abort("{.arg sampleAnnot} must have at least a column named 'sample'")
         }
         if (!all(names(fnames) %in% sampleAnnot$sample)) {
-            stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(fnames), sampleAnnot$sample),
-                       collapse = ", "))
+            cli_abort(paste0(
+                "Annotation information missing for some samples: ",
+                "{setdiff(names(fnames), sampleAnnot$sample)}"))
         }
     }
     if (length(modbase) == 1) {
@@ -109,25 +110,25 @@ readBedMethyl <- function(fnames,
         names(modbase) <- names(fnames)
     } else {
         if (!all(names(modbase) %in% names(fnames))) {
-            stop("names of `modbase` and `fnames` don't agree")
+            cli_abort("names of {.arg modbase} and {.arg fnames} don't agree")
         }
     }
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
     if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
                                  "U","a","A","o","G","n","N"))) {
-        stop("invalid `modbase` values: ",
-             paste(unique(modbase[i]), collapse = ", "))
+        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
     }
     if (any(lengths(lapply(split(modbase, names(modbase)), unique)) != 1L)) {
-        stop("at least one sample was defined to have more than one modbase")
+        cli_abort("at least one sample was defined to have more than one {.arg modbase}")
     }
     .assertScalar(x = nrows, type = "numeric", rngIncl = c(1, Inf))
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
             (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
-            stop("`seqinfo` must be `NULL`, a `Seqinfo` object or a named",
-                 " numeric vector with genomic sequence lengths.")
+            cli_abort(paste0(
+                "{.arg seqinfo} must be {.code NULL}, a {.cls Seqinfo} object or a named",
+                " {.cls numeric} vector with genomic sequence lengths."))
         }
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))

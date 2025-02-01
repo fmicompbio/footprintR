@@ -35,6 +35,7 @@
 #' @noRd
 #' @importFrom SummarizedExperiment rowData
 #' @importFrom Biostrings vcountPattern
+#' @importFrom cli cli_abort
 #'
 .keepPositionsBySequenceContext <- function(se, sequenceContext = NULL) {
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -42,7 +43,7 @@
 
     if (!is.null(sequenceContext)) {
         if (is.null(rowData(se)$sequenceContext)) {
-            stop("No sequence context found in `rowData(se)$sequenceContext`")
+            cli_abort("No sequence context found in {.code rowData(se)$sequenceContext}")
         }
         .assertVector(x = rowData(se)$sequenceContext,
                       type = "DNAStringSet")
@@ -175,7 +176,7 @@
 #' reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 #'
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-#'                  modbase = "a", verbose = FALSE, 
+#'                  modbase = "a", verbose = FALSE,
 #'                  BPPARAM = BiocParallel::SerialParam())
 #' se <- flattenReadLevelAssay(se)
 #' se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
@@ -230,6 +231,6 @@ filterPositions <- function(se,
                               })
         se <- subsetReads(se, readsToKeep)
     }
-    
+
     se
 }

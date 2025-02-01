@@ -55,6 +55,7 @@
 #' will be raised.
 #'
 #' @importFrom SummarizedExperiment colData assayNames assay
+#' @importFrom cli cli_abort
 .checkSEValidity <- function(se, verbose = FALSE) {
     stopifnot(is(se, "SummarizedExperiment"))
 
@@ -93,8 +94,9 @@
             .message("Comparing {refAssay} and {an}")
             for (sn in colnames(se)) {
                 if (!all(colnames(assay(se, an)[[sn]]) == refReads[[sn]])) {
-                    stop("Mismatching reads for assays ", refAssay, " and ",
-                         an, ", sample ", sn)
+                    cli_abort(paste0(
+                        "Mismatching reads for assays {refAssay} and {an}, ",
+                        "sample {sn}"))
                 }
             }
         }
@@ -102,8 +104,9 @@
             .message("Read-level column data found, checking consistency")
             for (sn in colnames(se)) {
                 if (!all(rownames(se[[cn]][[sn]]) == refReads[[sn]])) {
-                    stop("Mismatching reads for assay ", refAssay, " and ",
-                         "colData column ", cn, ", sample ", sn)
+                    cli_abort(paste0(
+                        "Mismatching reads for assay {refAssay} and ",
+                         "colData column {cn}, sample {sn}"))
                 }
             }
         }

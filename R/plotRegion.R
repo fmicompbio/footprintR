@@ -73,7 +73,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'             color representing the values in the assay).}
 #'         \item{\code{"Heatmap"}}{: Heatmap plot (tiles with the color
 #'             representing the values in the assay).}
-#'         \item{\code{"GenomicRegion"} or \code{"GenomicRegions"}}{: Genomic 
+#'         \item{\code{"GenomicRegion"} or \code{"GenomicRegions"}}{: Genomic
 #'             annotations (e.g., transcripts, peaks, CpG islands).}
 #'     }
 #' @param modbaseSpace A logical scalar. If \code{TRUE}, the x-axis will be
@@ -200,16 +200,15 @@ plotRegion <- function(
     assaysInUse <- c()
     for (i in seq_along(tracks)) {
         if (!is.list(tracks[[i]]) || length(tracks[[i]]) < 2) {
-            cli_abort("tracks[[{i}]] has to be a list of length >=2.")
+            cli_abort("{.code tracks[[{i}]]} has to be a {.cls list} of length >=2.")
         }
         if (is.null(names(tracks[[i]])) || any(names(tracks[[i]]) == "") ||
             any(!c("trackData", "trackType") %in% names(tracks[[i]]))) {
-            cli_abort(paste("tracks[[{i}]] must be a named list, and contain at",
-                            "least entries named 'trackData' and 'trackType'"))
+            cli_abort(paste("{.code tracks[[{i}]]} must be a named {.cls list}, and ",
+                            "contain at least entries named 'trackData' and 'trackType'"))
         }
         if (!tracks[[i]]$trackType %in% plotRegionPlotTypes$name) {
-            cli_abort(paste("tracks[[{i}]]$trackType must be one of: ",
-                            paste(plotRegionPlotTypes$name, collapse = ",")))
+            cli_abort("{.code tracks[[{i}]]$trackType} must be one of: {plotRegionPlotTypes$name}")
         }
         if (is.character(tracks[[i]]$trackData) &&
             length(tracks[[i]]$trackData) == 1 &&
@@ -229,18 +228,19 @@ plotRegion <- function(
             !(is.character(tracks[[i]]$trackData) &&
               length(tracks[[i]]$trackData) == 1 &&
               tracks[[i]]$trackData %in% assayNames(se))) {
-            cli_abort(paste("tracks[[{i}]]$trackData must be a character scalar",
-                            "corresponding to a name of an assay in se"))
+            cli_abort(paste("{.code tracks[[{i}]]$trackData} must be a ",
+                            "{.cls character} scalar corresponding to a name ",
+                            "of an assay in {.arg se}"))
         }
         if (type_i == "reads" &&
             !tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
-            cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
-                            "read-level assay in se"))
+            cli_abort(paste("{.code tracks[[{i}]]$trackData} must be the name ",
+                            "of a read-level assay in {.arg se}"))
         }
         if (type_i == "summary" &&
             tracks[[i]]$trackData %in% .getReadLevelAssayNames(se)) {
-            cli_abort(paste("tracks[[{i}]]$trackData must be the name of a",
-                            "summary assay in se"))
+            cli_abort(paste("{.code tracks[[{i}]]$trackData} must be the name ",
+                            "of a summary assay in {.arg se}"))
         }
         if (type_i %in% c("reads", "summary")) {
             # add assay to list of assays that are required for the plots
@@ -249,14 +249,14 @@ plotRegion <- function(
         if (type_i == "annotation" &&
             !(is(tracks[[i]]$trackData, "GRangesList") &&
               !is.null(names(tracks[[i]]$trackData)))) {
-            cli_abort(paste("tracks[[{i}]]$trackData must be a named",
-                            "GRangesList object"))
+            cli_abort(paste("{.code tracks[[{i}]]$trackData} must be a named",
+                            "{.cls GRangesList} object"))
         }
         if (type_i == "annotation" &&
             length(unlist(lapply(tracks[[i]]$trackData,
                                  function(y) unique(as.character(strand(y)))))) !=
             length(tracks[[i]]$trackData)) {
-            cli_abort(paste("There are entries in tracks[[{i}]]$trackData",
+            cli_abort(paste("There are entries in {.code tracks[[{i}]]$trackData}",
                             "with mixed strand annotations"))
         }
 
@@ -277,11 +277,11 @@ plotRegion <- function(
                            "Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
-        if (modbaseSpace && "footprintColumns" %in% names(tracks[[i]]) && 
+        if (modbaseSpace && "footprintColumns" %in% names(tracks[[i]]) &&
             is.character(tracks[[i]]$footprintColumns) &&
             length(tracks[[i]]$footprintColumns) > 0) {
             cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
-                           "footprintColumns are provided (seen in 
+                           "footprintColumns are provided (seen in
                            tracks[[{i}]]. Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
@@ -490,16 +490,16 @@ plotReadsLollipop <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p + 
+            p <- p +
                 geom_tile(
-                    data = fp, 
-                    mapping = aes(x = (as.numeric(.data$start) + 
+                    data = fp,
+                    mapping = aes(x = (as.numeric(.data$start) +
                                            as.numeric(.data$end)) / 2,
-                                  y = .data$plotRow, 
-                                  width = abs(as.numeric(.data$end) - 
+                                  y = .data$plotRow,
+                                  width = abs(as.numeric(.data$end) -
                                                   as.numeric(.data$start)),
                                   height = 1
-                    ), 
+                    ),
                     fill = argL$footprintColors[fpc], inherit.aes = FALSE
                 )
         }
@@ -619,16 +619,16 @@ plotReadsHeatmap <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p + 
+            p <- p +
                 geom_tile(
-                    data = fp, 
-                    mapping = aes(x = (as.numeric(.data$start) + 
+                    data = fp,
+                    mapping = aes(x = (as.numeric(.data$start) +
                                            as.numeric(.data$end)) / 2,
-                                  y = .data$plotRow, 
-                                  width = abs(as.numeric(.data$end) - 
+                                  y = .data$plotRow,
+                                  width = abs(as.numeric(.data$end) -
                                                   as.numeric(.data$start)),
                                   height = 1
-                    ), 
+                    ),
                     fill = "transparent", color = argL$footprintColors[fpc],
                     linewidth = 1.5, inherit.aes = FALSE
                 )
@@ -735,7 +735,7 @@ plotSummaryPointSmooth <- function(se,
     if (smoothMethod == "rollingMean") {
         .assertScalar(x = windowSize, type = "numeric")
         if (windowSize %% 2 != 1) {
-            cli_abort("windowSize must be an odd integer")
+            cli_abort("{.arg windowSize} ({windowSize}) must be an odd integer")
         }
     } else if (smoothMethod == "smoothSpline") {
         .assertScalar(x = spar, type = "numeric")
@@ -748,7 +748,7 @@ plotSummaryPointSmooth <- function(se,
                   allowNULL = TRUE)
     if (!is.null(highlightRegions)) {
         highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
-                                                      ignore.strand = TRUE, 
+                                                      ignore.strand = TRUE,
                                                       drop.nohit.ranges = TRUE)
         highlightRegions <- highlightRegions[width(highlightRegions) > 0]
         # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
@@ -914,7 +914,7 @@ plotGenomicRegions <- function(grl,
     .assertVector(x = grl, type = "GRangesList")
     .assertVector(x = names(grl), type = "character")
     if (any(is.na(names(grl)))) {
-        cli_abort("NA values are not allowed in names(grl)")
+        cli_abort("{.code NA} values are not allowed in {.code names(grl)}")
     }
     .assertScalar(x = region, type = "GRanges")
     .assertScalar(x = colorByStrand, type = "logical")
@@ -1063,6 +1063,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom GenomicRanges shift pintersect
 #' @importFrom BiocGenerics intersect
 #' @importFrom S4Vectors endoapply
+#' @importFrom cli cli_abort
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
                                      orderReads, modbaseSpace, trackTitle,
                                      legendTitle, showLegend, highlightRegions,
@@ -1104,7 +1105,7 @@ plotGenomicRegions <- function(grl,
     # adjust arguments if necessary
     if (!is.null(highlightRegions)) {
         highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
-                                                      ignore.strand = TRUE, 
+                                                      ignore.strand = TRUE,
                                                       drop.nohit.ranges = TRUE)
         highlightRegions <- highlightRegions[width(highlightRegions) > 0]
         # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
@@ -1112,7 +1113,7 @@ plotGenomicRegions <- function(grl,
     }
     if (!is.null(footprintColors) && !is.null(footprintColumns)) {
         if (!all(footprintColumns %in% names(footprintColors))) {
-            stop("footprintColors must be provided for all footprintColumns")
+            cli_abort("{.arg footprintColors} must be provided for all {.arg footprintColumns}")
         }
     } else if (!is.null(footprintColumns) && is.null(footprintColors)) {
         footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
@@ -1199,7 +1200,7 @@ plotGenomicRegions <- function(grl,
     if (length(extraColAnnots) != 0) {
         colExists <- extraColAnnots %in% colnames(colData(x))
         if (!all(colExists)) {
-            cli_abort("Some requested columns are not present in colData(x)")
+            cli_abort("Some requested columns are not present in {.code colData(x)}")
         }
         df <- df |>
             left_join(bind_cols(
@@ -1280,7 +1281,7 @@ plotGenomicRegions <- function(grl,
     if (length(extraColAnnots) != 0) {
         colExists <- extraColAnnots %in% colnames(colData(x))
         if (!all(colExists)) {
-            cli_abort("Some requested columns are not present in colData(x)")
+            cli_abort("Some requested columns are not present in {.code colData(x)}")
         }
         df <- df |>
             left_join(bind_cols(

@@ -26,7 +26,7 @@
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfiles, regions = "chr1:6940000-6955000",
-#'                  modbase = "a", verbose = TRUE, 
+#'                  modbase = "a", verbose = TRUE,
 #'                  BPPARAM = BiocParallel::SerialParam())
 #' se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' plotReadStats(se)
@@ -36,6 +36,7 @@
 #' @importFrom tibble rownames_to_column
 #' @importFrom BiocGenerics as.data.frame colnames
 #' @importFrom SummarizedExperiment colData
+#' @importFrom cli cli_abort
 #'
 #' @export
 plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
@@ -71,7 +72,7 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     }
 
     if (!all(unlist(lapply(dfL, \(x) identical(x$group_name, dfL[[1]]$group_name))))) {
-        stop("names of se$", readInfoCol, " and  se$", qcCol, " are not identical")
+        cli_abort("names of {.code se${readInfoCol}} and {.code se${qcCol}} are not identical")
     }
     df <- do.call(cbind, lapply(dfL, \(x) x[, !colnames(x) %in% c("group", "group_name")]))
     df$sample <- dfL[[1]]$group_name

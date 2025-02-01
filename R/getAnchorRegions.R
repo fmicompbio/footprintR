@@ -45,18 +45,18 @@
 #' read-level assay) or a dense matrix (otherwise), with columns representing
 #' read-anchor region (or sample-anchor region) combinations. The \code{region}
 #' column of the \code{colData} records which anchor region a given column
-#' corresponds to. In addition, all assays will be designated as 'read-level' 
-#' assays (each column represents a sample, which is in turn represented by 
+#' corresponds to. In addition, all assays will be designated as 'read-level'
+#' assays (each column represents a sample, which is in turn represented by
 #' multiple columns in the actual data, corresponding to the different regions).
-#' This allows downstream analysis similar to that for read-level data, 
-#' including flattening and plotting. 
+#' This allows downstream analysis similar to that for read-level data,
+#' including flattening and plotting.
 #'
 #' @examples
 #' library(SummarizedExperiment)
 #' modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
 #' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-#'                  modbase = "a", verbose = FALSE, 
+#'                  modbase = "a", verbose = FALSE,
 #'                  BPPARAM = BiocParallel::SerialParam())
 #' se <- flattenReadLevelAssay(se)
 #' ar <- getAnchorRegions(se, assayName = c("mod_prob", "FracMod", "Nvalid"),
@@ -79,6 +79,7 @@
 #' @importFrom methods as
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics pos strand
+#' @importFrom cli cli_abort
 #'
 #' @export
 getAnchorRegions <- function(se,
@@ -105,7 +106,7 @@ getAnchorRegions <- function(se,
     .assertScalar(x = regionWidth, type = "numeric", rngIncl = c(1, Inf))
     regionWidth <- round(regionWidth)
     if (regionWidth %% 2 == 0) {
-        stop("regionWidth must be an odd integer")
+        cli_abort("{.arg regionWidth} ({regionWidth}) must be an odd integer")
     }
     .assertScalar(x = anchorName, type = "character")
     .assertScalar(x = prune, type = "logical")
@@ -125,8 +126,9 @@ getAnchorRegions <- function(se,
         .message("Checking for positions represented by multiple rows")
         covAssays <- c("Nvalid", "Nmod", "mod_prob")
         if (!any(covAssays %in% assayNames(se))) {
-            stop("None of the preferred coverage assays ",
-                 "(Nvalid, Nmod, mod_prob) are available.")
+            cli_abort(paste0(
+                "None of the preferred coverage assays ",
+                 "(Nvalid, Nmod, mod_prob) are available."))
         }
         se <- .pruneAmbiguousStrandPositions(
             se, assayName = intersect(covAssays, assayNames(se))[1],

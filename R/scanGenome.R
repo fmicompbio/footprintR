@@ -243,7 +243,9 @@ getDifferentiallyModifiedWindows <- function(se,
     .assertScalar(x = groupCol, type = "character",
                   validValues = colnames(colData(se)))
     if (length(unique(colData(se)[[groupCol]])) != 2) {
-        cli_abort("The group column in colData ({groupCol}) needs to have exactly two unique values.")
+        cli_abort(paste0(
+            "The group column in {.code colData(se)} ({groupCol}) ",
+            "needs to have exactly two unique values."))
     }
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "edgeR")
@@ -508,11 +510,11 @@ scanForHighScoringRegions <- function(bamfiles,
     if (is.null(names(chromosomeLengths)) ||
         any(duplicated(names(chromosomeLengths))) ||
         any(names(chromosomeLengths) == "")) {
-        cli_abort("'chromosomeLengths' must be a named vector")
+        cli_abort("{.arg chromosomeLengths} must be a named vector")
     }
     .assertScalar(x = scoreFunction, type = "character")
     if (!exists(scoreFunction)) {
-        cli_abort("'scoreFunction' must be the name of an existing function")
+        cli_abort("{.arg scoreFunction} must be the name of an existing function")
     } else {
         scoreFunction <- get(scoreFunction)
     }

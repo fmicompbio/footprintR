@@ -51,6 +51,7 @@
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
 #' @importFrom methods as is
+#' @importFrom cli cli_abort cli_warn
 #'
 #' @export
 extractSeqContext <- function(x,
@@ -64,14 +65,16 @@ extractSeqContext <- function(x,
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(1, 1000))
     if (sequenceContextWidth %% 2 == 0) {
         sequenceContextWidth <- sequenceContextWidth + 1
-        warning("`sequenceContextWidth` was increased to ", sequenceContextWidth,
-                " (must be an odd number)")
+        cli_warn(paste0(
+            "`sequenceContextWidth` was increased to {sequenceContextWidth}",
+            " (must be an odd number)"))
     }
     if (!is(sequenceReference, "BSgenome") &&
         !is(sequenceReference, "DNAStringSet") &&
         !(is.character(sequenceReference) && file.exists(sequenceReference))) {
-        stop("`sequenceReference` must be either a BSgenome object, ",
-             "a DNAStringSet object, or a path to a fasta file.")
+        cli_abort(paste0(
+            "{.arg sequenceReference} must be either a {.cls BSgenome} object, ",
+            "a {.cls DNAStringSet} object, or a path to a fasta file."))
     }
 
     # resize x

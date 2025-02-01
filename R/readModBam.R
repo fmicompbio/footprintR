@@ -120,6 +120,7 @@
 #' @importFrom BiocGenerics do.call cbind pos strand sort
 #' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
 #' @importFrom methods is
+#' @importFrom cli cli_abort cli_warn
 #'
 #' @export
 readModBam <- function(bamfiles,
@@ -141,24 +142,24 @@ readModBam <- function(bamfiles,
     # digest arguments
     .assertVector(x = bamfiles, type = "character")
     if (any(i <- !file.exists(bamfiles))) {
-        stop("not all `bamfiles` exist: ", paste(bamfiles[i], collapse = ", "))
+        cli_abort("not all {.arg bamfiles} exist: {.file {bamfiles[i]}}")
     }
     if (is.null(names(bamfiles))) {
         names(bamfiles) <- paste0("s", seq_along(bamfiles))
     } else if (any(duplicated(names(bamfiles)))) {
-        stop("`names(bamfiles)` are not unique")
+        cli_abort("{.code names(bamfiles)} are not unique")
     }
     .assertScalar(x = level, type = "character",
                   validValues = c("read", "summary", "quickread"))
     .assertVector(x = sampleAnnot, type = "data.frame", allowNULL = TRUE)
     if (!is.null(sampleAnnot)) {
         if (!("sample" %in% colnames(sampleAnnot))) {
-            stop("sampleAnnot must have at least a column named 'sample'")
+            cli_abort("{.arg sampleAnnot} must have at least a column named 'sample'")
         }
         if (!all(names(bamfiles) %in% sampleAnnot$sample)) {
-            stop("Annotation information missing for some samples: ",
-                 paste(setdiff(names(bamfiles), sampleAnnot$sample),
-                       collapse = ", "))
+            cli_abort(paste0(
+                "Annotation information missing for some samples: ",
+                 "{setdiff(names(bamfiles), sampleAnnot$sample)}"))
         }
     }
     if (is.character(regions)) {
@@ -174,32 +175,32 @@ readModBam <- function(bamfiles,
         names(modbase) <- names(bamfiles)
     } else {
         if (!all(names(modbase) %in% names(bamfiles))) {
-            stop("names of `modbase` and `bamfiles` don't agree")
+            cli_abort("names of {.arg modbase} and {.arg bamfiles} don't agree")
         }
     }
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
     if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
                                  "U","a","A","o","G","n","N"))) {
-        stop("invalid `modbase` values: ",
-             paste(unique(modbase[i]), collapse = ", "))
+        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
     }
     .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
     if (nAlnsToSample > 0 && level %in% c("summary", "quickread")) {
-        stop("Read sampling is not supported if level is set to 'summary' or 'quickread'")
+        cli_abort(paste0("Read sampling is not supported if {.arg level} is set ",
+                         "to 'summary' or 'quickread'"))
     }
     if (nAlnsToSample > 0) {
         if (length(regions) > 0) {
-            warning("Ignoring `regions` because `nAlnsToSample` is greater than zero")
+            cli_warn("Ignoring {.arg regions} because {.arg nAlnsToSample} is greater than zero")
         }
         regions <- GRanges()
         if (!is.null(variantPositions)) {
-            warning("Ignoring `variantPositions` because `nAlnsToSample` is greater than zero")
+            cli_warn("Ignoring {.arg variantPositions} because {.arg nAlnsToSample} is greater than zero")
         }
         variantPositions <- NULL
     } else {
         if (length(regions) == 0) {
-            stop("`regions` must contain at least one genomic range if not in sampling mode")
+            cli_abort("{.arg regions} must contain at least one genomic range if not in sampling mode")
         }
     }
     .assertScalar(x = modProbThreshold, type = "numeric", rngIncl = c(0, 1))
@@ -207,8 +208,9 @@ readModBam <- function(bamfiles,
     if (!is.null(seqinfo)) {
         if (!is(seqinfo, "Seqinfo") &&
             (!is.numeric(seqinfo) || is.null(names(seqinfo)))) {
-            stop("`seqinfo` must be `NULL`, a `Seqinfo` object or a named",
-                 " numeric vector with genomic sequence lengths.")
+            cli_abort(paste0(
+                "{.arg seqinfo} must be {.code NULL}, a {.cls Seqinfo} object ",
+                "or a named {.cls numeric} vector with genomic sequence lengths."))
         }
     }
     .assertScalar(x = sequenceContextWidth, type = "numeric", rngIncl = c(0, 1000))

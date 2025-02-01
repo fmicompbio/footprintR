@@ -36,7 +36,7 @@
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a",
 #'                  BPPARAM = BiocParallel::SerialParam())
 #' lapply(assay(se, "mod_prob"), colnames)
 #'
@@ -51,6 +51,7 @@
 #' lapply(assay(seSub, "mod_prob"), colnames)
 #'
 #' @importFrom SummarizedExperiment assay assay<- assayNames colnames
+#' @importFrom cli cli_abort cli_warn
 #'
 #' @export
 subsetReads <- function(se,
@@ -63,7 +64,7 @@ subsetReads <- function(se,
     rlAssays <- .getReadLevelAssayNames(se)
     sampleNms <- colnames(se)
     if (length(rlAssays) == 0) {
-        warning("'se' contains no read-level assays - no subsetting done")
+        cli_warn("'se' contains no read-level assays - no subsetting done")
         return(se)
     }
     rlAssayColnames <- lapply(assay(se, rlAssays[1]), colnames)
@@ -78,9 +79,10 @@ subsetReads <- function(se,
                                  names = unlist(rlAssayColnames,
                                                 use.names = FALSE))
         if (any(i <- !reads %in% names(read2sample))) {
-            warning("'reads' contains unknown identifiers: ",
-                    paste(reads[i], collapse = ", "), 
-                    ". These will be ignored.")
+            cli_warn(paste0(
+                "'reads' contains unknown identifiers: ",
+                paste(reads[i], collapse = ", "),
+                ". These will be ignored."))
             reads <- reads[!i]
         }
         reads <- split(reads, read2sample[reads])[
@@ -90,8 +92,7 @@ subsetReads <- function(se,
 
     if (is.list(reads)) {
         if (is.null(names(reads)) || any(!names(reads) %in% sampleNms)) {
-            stop("'reads' of type list must have names in: ",
-                 paste(sampleNms, collapse = ", "))
+            cli_abort("{.arg reads} of type {.cls list} must have names in: {sampleNms}")
         }
         for (snm in sampleNms) {
             if (is.null(reads[[snm]])) {
@@ -100,31 +101,35 @@ subsetReads <- function(se,
                 valid_nms <- rlAssayColnames[[snm]]
                 if (is.character(reads[[snm]])) {
                     if (any(i <- !reads[[snm]] %in% valid_nms)) {
-                        warning("'reads' for sample '", snm, "' contains unknown read ",
-                                "names: ", paste(reads[[snm]][i], collapse = ", "), 
-                                ". These will be ignored.")
+                        cli_warn(paste0(
+                            "'reads' for sample '{snm}' contains unknown read ",
+                            "names: {paste(reads[[snm]][i], collapse = ', ')}",
+                            ". These will be ignored."))
                         reads[[snm]] <- reads[[snm]][!i]
                     }
                 } else if (is.numeric(reads[[snm]])) {
                     if (any(i <- reads[[snm]] < 1 | reads[[snm]] > length(valid_nms))) {
-                        warning("'reads' for sample '", snm, "' contains out-of-range ",
-                                "indices: ", paste(reads[[snm]][i], collapse = ", "), 
-                                ". These will be ignored.")
+                        cli_warn(paste0(
+                            "'reads' for sample '{snm}' contains out-of-range ",
+                            "indices: {paste(reads[[snm]][i], collapse = ', ')}",
+                            ". These will be ignored."))
                         reads[[snm]] <- reads[[snm]][!i]
                     }
                     reads[[snm]] <- rlAssayColnames[[snm]][reads[[snm]]]
                 } else if (is.logical(reads[[snm]])) {
                     if (length(reads[[snm]]) != length(valid_nms)) {
-                        stop("logical 'reads' for sample '", snm, "' must be of ",
-                             "length ", length(valid_nms))
+                        cli_abort(paste0(
+                            "logical {.arg reads} for sample '{snm}' must be of ",
+                             "length {length(valid_nms)}"))
                     }
                     reads[[snm]] <- rlAssayColnames[[snm]][reads[[snm]]]
                 }
             }
         }
     } else {
-        stop("'reads' must be either a character vector with reads names ",
-             "or a named list with read indices.")
+        cli_abort(paste0(
+            "{.arg reads} must be either a {.cls character} vector with reads ",
+            "names or a named {.cls list} with read indices."))
     }
 
     ## invert selection
