@@ -45,7 +45,7 @@ test_that(".assertScalar works", {
     expect_error(.assertScalar(c(1, 2), type = "numeric"))
     test <- "text"
     expect_error(.assertScalar(x = test, type = "numeric"),
-                 "'test' must be of class 'numeric")
+                 ".test. must be of class .numeric.")
     expect_error(.assertScalar(x = list(a = 1)$a, type = "logical"),
                  "list(a = 1)$a", fixed = TRUE)
     tmp <- matrix(1:4, ncol = 2)
@@ -96,7 +96,7 @@ test_that(".assertVector works", {
     expect_true(.assertVector(LETTERS[1:2], type = "character", validValues = LETTERS))
     test <- "text"
     expect_error(.assertVector(x = test, type = "numeric"),
-                 "'test' must be of class 'numeric")
+                 ".test. must be of class .numeric.")
 })
 
 ## -------------------------------------------------------------------------- ##
@@ -112,7 +112,8 @@ test_that(".assertPackagesAvailable works", {
     expect_true(testfunc("githubuser/base"))
     expect_true(testfunc(c("base", "methods")))
     expect_error(testfunc(c("error", "error2")), "BiocManager")
-    expect_error(testfunc("error1", suggestInstallation = FALSE), "installed.\n$")
+    expect_error(testfunc("error1", suggestInstallation = FALSE),
+                 "installed[.]")
     rm(testfunc)
 })
 
@@ -208,9 +209,9 @@ test_that(".regionStringToGRanges works", {
     # "."
 
     expect_error(.regionStringToGRanges("chr1", "error"),
-                 "or a named numeric vector")
+                 "or a named .numeric. vector")
     expect_error(.regionStringToGRanges(c(".")),
-                 "`seqinfo` argument is required")
+                 ".seqinfo. argument is required")
     expect_error(.regionStringToGRanges(c(".", "chr1"), c("chr1" = 100)),
                  "can only be given as a single region")
     expect_error(.regionStringToGRanges(c("chr1:1-10:+", "chr1:-", "")),

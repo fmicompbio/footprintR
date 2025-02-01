@@ -2,7 +2,7 @@ test_that(".filterPositionsByCoverage works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se, keepReads = TRUE)
 
@@ -14,25 +14,25 @@ test_that(".filterPositionsByCoverage works", {
     expect_equal(rowSums(cov_bysample), cov_total, ignore_attr = TRUE)
 
     expect_error(.filterPositionsByCoverage(se = "error"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(.filterPositionsByCoverage(se = se, assayName = "missing"),
                  "must be one of")
     expect_error(.filterPositionsByCoverage(se = se, assayName = c("Nvalid", "Nmod")),
-                 "'assayName' must have length 1")
+                 ".assayName. must have length 1")
     expect_error(.filterPositionsByCoverage(se = se, assayName = 1),
-                 "'assayName' must be of class 'character'")
+                 ".assayName. must be of class .character.")
     expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
                                             minCov = "1"),
-                 "'minCov' must be of class 'numeric'")
+                 ".minCov. must be of class .numeric.")
     expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
                                             minCov = c(1, 2)),
-                 "'minCov' must have length 1")
+                 ".minCov. must have length 1")
     expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
                                             minCov = 1, minNbrSamples = "1"),
-                 "'minNbrSamples' must be of class 'numeric'")
+                 ".minNbrSamples. must be of class .numeric.")
     expect_error(.filterPositionsByCoverage(se = se, assayName = "Nvalid",
                                             minCov = 1, minNbrSamples = c(1, 2)),
-                 "'minNbrSamples' must have length 1")
+                 ".minNbrSamples. must have length 1")
 
     se1 <- .filterPositionsByCoverage(se, assayName = "Nvalid", minCov = 10,
                                       minNbrSamples = NULL)
@@ -76,11 +76,11 @@ test_that(".keepPositionsBySequenceContext works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
 
     expect_error(.keepPositionsBySequenceContext(se = "error"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(.keepPositionsBySequenceContext(se = se,
                                                  sequenceContext = "ACT"),
                  "No sequence context found in `rowData(se)$sequenceContext`",
@@ -96,7 +96,7 @@ test_that(".keepPositionsBySequenceContext works", {
     rowData(setmp)$sequenceContext <- as.character(rowData(setmp)$sequenceContext)
     expect_error(.keepPositionsBySequenceContext(se = setmp,
                                                  sequenceContext = "ACT"),
-                 "must be of class 'DNAStringSet'")
+                 "must be of class .DNAStringSet.")
 
     se1 <- .keepPositionsBySequenceContext(se = se, sequenceContext = "TAG")
     w <- which(as.character(rowData(se)$sequenceContext) == "TAG")
@@ -140,26 +140,26 @@ test_that(".removeAllNAPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
     # Subset reads to make sure there are positions with all NAs
     se <- subsetReads(se, reads = list(s1 = c(1, 2), s2 = c(1, 3)))
 
     expect_error(.removeAllNAPositions(se = "error"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(.removeAllNAPositions(se = se,
                                        assayName = 1),
-                 "'assayName' must be of class 'character'")
+                 ".assayName. must be of class .character.")
     expect_error(.removeAllNAPositions(se = se,
                                        assayName = c("mod_prob", "mod_prob")),
-                 "'assayName' must have length 1")
+                 ".assayName. must have length 1")
     expect_error(.removeAllNAPositions(se = se,
                                        assayName = "missing"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
     expect_error(.removeAllNAPositions(se = se,
                                        assayName = "Nvalid"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
 
     se1 <- .removeAllNAPositions(se, assayName = "mod_prob")
     namat <- as.matrix(assay(se1, "mod_prob"))
@@ -178,29 +178,29 @@ test_that(".pruneAmbiguousStrandPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
 
     expect_error(.pruneAmbiguousStrandPositions(se = "error"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assayName = 1),
-                 "'assayName' must be of class 'character'")
+                 ".assayName. must be of class .character.")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assayName = "missing"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assayName = c("Nvalid", "Nmod")),
-                 "'assayName' must have length 1")
+                 ".assayName. must have length 1")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assayName = "Nvalid",
                                                 verbose = "TRUE"),
-                 "'verbose' must be of class 'logical'")
+                 ".verbose. must be of class .logical.")
     expect_error(.pruneAmbiguousStrandPositions(se = se,
                                                 assayName = "Nvalid",
                                                 verbose = c(TRUE, FALSE)),
-                 "'verbose' must have length 1")
+                 ".verbose. must have length 1")
 
     expect_equal(nrow(se), 9127L)
     expect_equal(length(unique(paste0(seqnames(rowRanges(se)),
@@ -230,15 +230,15 @@ test_that("filterPositions works", {
                                package = "footprintR")
     reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
     se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
 
     expect_error(filterPositions(se = "missing"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(filterPositions(se = se, filters = 1),
-                 "'filters' must be of class 'character'")
+                 ".filters. must be of class .character.")
     expect_error(filterPositions(se = se, filters = "error"),
                  "must be one of")
 

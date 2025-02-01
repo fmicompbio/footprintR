@@ -36,59 +36,59 @@ test_that("filterReads works", {
                        BPPARAM = BiocParallel::SerialParam())
 
     expect_error(filterReads(se = "error"),
-                 "'se' must be of class 'SummarizedExperiment'")
+                 ".se. must be of class .SummarizedExperiment.")
     expect_error(filterReads(se = se, assayName = 1),
-                 "'assayName' must be of class 'character'")
+                 ".assayName. must be of class .character.")
     expect_error(filterReads(se = se, assayName = "error"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
     expect_error(filterReads(se = se, assayName = "Nvalid"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
     expect_error(filterReads(se = se, readInfoCol = 1),
-                 "'readInfoCol' must be of class 'character'")
+                 ".readInfoCol. must be of class .character.")
     expect_error(filterReads(se = se, readInfoCol = c("qcc", "readInfo")),
-                 "'readInfoCol' must have length 1")
+                 ".readInfoCol. must have length 1")
     expect_error(filterReads(se = se, readInfoCol = "missing"),
-                 "'readInfoCol' must be one of")
+                 ".readInfoCol. must be one of")
     expect_error(filterReads(se = se, qcCol = 1),
-                 "'qcCol' must be of class 'character'")
+                 ".qcCol. must be of class .character.")
     expect_error(filterReads(se = se, qcCol = c("qcc", "readInfo")),
-                 "'qcCol' must have length 1")
+                 ".qcCol. must have length 1")
     expect_error(filterReads(se = se, qcCol = "missing"),
-                 "'qcCol' must be one of")
+                 ".qcCol. must be one of")
     expect_error(filterReads(se = se, qcCol = "qcc", minQscore = "1"),
-                 "'minQscore' must be of class 'numeric'")
+                 ".minQscore. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", minQscore = c(1, 2)),
-                 "'minQscore' must have length 1")
+                 ".minQscore. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", maxEntropy = "1"),
-                 "'maxEntropy' must be of class 'numeric'")
+                 ".maxEntropy. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", maxEntropy = c(1, 2)),
-                 "'maxEntropy' must have length 1")
+                 ".maxEntropy. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", maxFracLowConf = "1"),
-                 "'maxFracLowConf' must be of class 'numeric'")
+                 ".maxFracLowConf. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", maxFracLowConf = c(0.5, 0.7)),
-                 "'maxFracLowConf' must have length 1")
+                 ".maxFracLowConf. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", minReadLength = "1"),
-                 "'minReadLength' must be of class 'numeric'")
+                 ".minReadLength. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", minReadLength = c(1, 2)),
-                 "'minReadLength' must have length 1")
+                 ".minReadLength. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedLength = "1"),
-                 "'minAlignedLength' must be of class 'numeric'")
+                 ".minAlignedLength. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedLength = c(1, 2)),
-                 "'minAlignedLength' must have length 1")
+                 ".minAlignedLength. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedFraction = "1"),
-                 "'minAlignedFraction' must be of class 'numeric'")
+                 ".minAlignedFraction. must be of class .numeric.")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedFraction = 2),
-                 "'minAlignedFraction' must be within \\[0,1\\]")
+                 ".minAlignedFraction. must be between 0 and 1")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedFraction = c(0.5, 1)),
-                 "'minAlignedFraction' must have length 1")
+                 ".minAlignedFraction. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", prune = "1"),
-                 "'prune' must be of class 'logical'")
+                 ".prune. must be of class .logical.")
     expect_error(filterReads(se = se, qcCol = "qcc", prune = c(TRUE, FALSE)),
-                 "'prune' must have length 1")
+                 ".prune. must have length 1")
     expect_error(filterReads(se = se, qcCol = "qcc", onlyStats = "1"),
-                 "'onlyStats' must be of class 'logical'")
+                 ".onlyStats. must be of class .logical.")
     expect_error(filterReads(se = se, qcCol = "qcc", onlyStats = c(TRUE, FALSE)),
-                 "'onlyStats' must have length 1")
+                 ".onlyStats. must have length 1")
 
     ## Default arguments - no filtering
     out1 <- filterReads(se, qcCol = "qcc")

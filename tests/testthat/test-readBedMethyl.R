@@ -14,70 +14,70 @@ test_that("readBedMethyl works", {
     fname2 <- system.file("extdata", "modkit_pileup_2.bed.gz", package = "footprintR")
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     fnames <- c(sample1 = fname1, sample2 = fname2)
-    sample_annot <- data.frame(sample = c("sample1", "sample2"), 
+    sample_annot <- data.frame(sample = c("sample1", "sample2"),
                                group = c("group1", "group1"),
                                condition = c("cond2", "cond1"))
 
     # invalid arguments
-    expect_error(readBedMethyl(fnames = "error", 
+    expect_error(readBedMethyl(fnames = "error",
                                BPPARAM = BiocParallel::SerialParam()),
                  "not all `fnames` exist")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'x', 
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'x',
                                BPPARAM = BiocParallel::SerialParam()),
                  "invalid `modbase` values")
-    expect_error(readBedMethyl(fnames = fname1, modbase = c(nonexistent = 'm'), 
+    expect_error(readBedMethyl(fnames = fname1, modbase = c(nonexistent = 'm'),
                                BPPARAM = BiocParallel::SerialParam()),
                  "names of `modbase` and `fnames` don't agree")
-    expect_error(readBedMethyl(fnames = fname1, modbase = "m", nrows = -1, 
+    expect_error(readBedMethyl(fnames = fname1, modbase = "m", nrows = -1,
                                BPPARAM = BiocParallel::SerialParam()),
-                 "'nrows' must be within")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
-                               seqinfo = "error", 
+                 ".nrows. must be between 1 and Inf")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
+                               seqinfo = "error",
                                BPPARAM = BiocParallel::SerialParam()),
-                 "`seqinfo` must be")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', seqinfo = c(100), 
+                 ".seqinfo. must be")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', seqinfo = c(100),
                                BPPARAM = BiocParallel::SerialParam()),
-                 "`seqinfo` must be")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
-                               seqinfo = c(chr2 = 1000), 
+                 ".seqinfo. must be")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
+                               seqinfo = c(chr2 = 1000),
                                BPPARAM = BiocParallel::SerialParam()),
                  "contains sequence names with no entries")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
-                               sequenceContextWidth = -1, 
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
+                               sequenceContextWidth = -1,
                                BPPARAM = BiocParallel::SerialParam()),
-                 "'sequenceContextWidth' must be within")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
-                               sequenceContextWidth = 1, 
-                               sequenceReference = NULL, 
+                 ".sequenceContextWidth. must be between 0 and 1000")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
+                               sequenceContextWidth = 1,
+                               sequenceReference = NULL,
                                BPPARAM = BiocParallel::SerialParam()),
-                 "`sequenceReference` must be either")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
-                               sequenceContextWidth = 1, 
-                               sequenceReference = "error", 
+                 ".sequenceReference. must be either")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
+                               sequenceContextWidth = 1,
+                               sequenceReference = "error",
                                BPPARAM = BiocParallel::SerialParam()),
-                 "`sequenceReference` must be either")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
+                 ".sequenceReference. must be either")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
                                BPPARAM = "error"),
-                 "'BPPARAM' must be of class")
-    expect_error(readBedMethyl(fnames = fname1, modbase = 'm', 
+                 ".BPPARAM. must be of class")
+    expect_error(readBedMethyl(fnames = fname1, modbase = 'm',
                                BPPARAM = BiocParallel::SerialParam(),
                                verbose = "error"),
-                 "'verbose' must be of class 'logical'")
-    expect_error(readBedMethyl(fnames = c(a = fname1, a = fname2), 
-                               modbase = c(a = 'm', a = 'a'), 
+                 ".verbose. must be of class .logical.")
+    expect_error(readBedMethyl(fnames = c(a = fname1, a = fname2),
+                               modbase = c(a = 'm', a = 'a'),
                                BPPARAM = BiocParallel::SerialParam()),
                  "at least one sample was defined to have more than")
-    expect_error(readBedMethyl(fnames = fnames, modbase = "m", 
-                               BPPARAM = BiocParallel::SerialParam(), 
+    expect_error(readBedMethyl(fnames = fnames, modbase = "m",
+                               BPPARAM = BiocParallel::SerialParam(),
                                sampleAnnot = sample_annot[1, ]),
                  "Annotation information missing")
-    expect_error(readBedMethyl(fnames = fnames, modbase = "m", 
-                               BPPARAM = BiocParallel::SerialParam(), 
+    expect_error(readBedMethyl(fnames = fnames, modbase = "m",
+                               BPPARAM = BiocParallel::SerialParam(),
                                sampleAnnot = sample_annot[, -1, drop = FALSE]),
-                 "sampleAnnot must have at least a column")
+                 ".sampleAnnot. must have at least a column")
 
     # expected results
-    se0 <- readBedMethyl(fnames = fname1, modbase = 'a', 
+    se0 <- readBedMethyl(fnames = fname1, modbase = 'a',
                          BPPARAM = BiocParallel::SerialParam())
     suppressMessages(
         expect_message(
@@ -88,7 +88,7 @@ test_that("readBedMethyl works", {
     )
     suppressMessages(
         expect_message(
-            se2 <- readBedMethyl(fnames = c(s2 = fname2), modbase = 'm', 
+            se2 <- readBedMethyl(fnames = c(s2 = fname2), modbase = 'm',
                                  BPPARAM = BiocParallel::SerialParam(),
                                  sequenceContextWidth = 1,
                                  sequenceReference = ref, verbose = TRUE)
@@ -96,16 +96,16 @@ test_that("readBedMethyl works", {
     )
 
     se12 <- readBedMethyl(fnames = c(fname1, fname2), modbase = 'm',
-                          sequenceContextWidth = 1, sequenceReference = ref, 
+                          sequenceContextWidth = 1, sequenceReference = ref,
                           BPPARAM = BiocParallel::SerialParam())
     se12b <- readBedMethyl(fnames = fnames, modbase = 'm',
-                           sequenceContextWidth = 1, sequenceReference = ref, 
+                           sequenceContextWidth = 1, sequenceReference = ref,
                            sampleAnnot = sample_annot,
                            BPPARAM = BiocParallel::SerialParam())
     suppressMessages(
         expect_message(
             se11 <- readBedMethyl(fnames = c(s1 = fname1, s1 = fname2),
-                                  modbase = 'm', verbose = TRUE, 
+                                  modbase = 'm', verbose = TRUE,
                                   BPPARAM = BiocParallel::SerialParam())
         )
     )

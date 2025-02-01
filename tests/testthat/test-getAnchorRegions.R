@@ -3,74 +3,74 @@ test_that("getAnchorRegions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
     se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                     modbase = "a", verbose = FALSE, 
+                     modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se)
 
     # check that the function fails with the wrong input
-    expect_error(getAnchorRegions(se = "error"), "'se' must be of class")
+    expect_error(getAnchorRegions(se = "error"), ".se. must be of class")
     expect_error(getAnchorRegions(se = se, assayName = 1),
-                 "'assayName' must be of class 'character'")
+                 ".assayName. must be of class .character.")
     expect_error(getAnchorRegions(se = se, assayName = "missing"),
-                 "'assayName' must be one of")
+                 ".assayName. must be one of")
     expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = 1),
-                 "'regionMidpoints' must be of class 'GPos'")
+                 ".regionMidpoints. must be of class .GPos.")
     expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6920000-6940000"),
                  "all the ranges in the object to coerce to UnstitchedGPos")
     expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = "9"),
-                 "'regionWidth' must be of class 'numeric'")
+                 ".regionWidth. must be of class .numeric.")
     expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = c(5, 8)),
-                 "'regionWidth' must have length 1")
+                 ".regionWidth. must have length 1")
     expect_error(getAnchorRegions(se = se, assayName = c("mod_prob", "Nvalid"),
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 8),
-                 "regionWidth must be an odd integer")
+                 ".regionWidth. \\(8\\) must be an odd integer")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = "TRUE"),
-                 "'prune' must be of class 'logical'")
+                 ".prune. must be of class .logical.")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = c(TRUE, FALSE)),
-                 "'prune' must have length 1")
+                 ".prune. must have length 1")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = "FALSE"),
-                 "'ignore.strand' must be of class 'logical'")
+                 ".ignore.strand. must be of class .logical.")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = c(TRUE, FALSE)),
-                 "'ignore.strand' must have length 1")
+                 ".ignore.strand. must have length 1")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE,
                                   reverseMinusStrandRegions = "TRUE"),
-                 "'reverseMinusStrandRegions' must be of class 'logical'")
+                 ".reverseMinusStrandRegions. must be of class .logical.")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE,
                                   reverseMinusStrandRegions = c(TRUE, FALSE)),
-                 "'reverseMinusStrandRegions' must have length 1")
+                 ".reverseMinusStrandRegions. must have length 1")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE, verbose = "TRUE"),
-                 "'verbose' must be of class 'logical'")
+                 ".verbose. must be of class .logical.")
     expect_error(getAnchorRegions(se = se, assayName = "mod_prob",
                                   regionMidpoints = "chr1:6930000:-",
                                   regionWidth = 9, prune = TRUE,
                                   ignore.strand = TRUE, verbose = c(TRUE, FALSE)),
-                 "'verbose' must have length 1")
+                 ".verbose. must have length 1")
     se1 <- se
     assayNames(se1) <- paste0(assayNames(se1), "suffix")
     expect_error(getAnchorRegions(se = se1, assayName = "mod_probsuffix",
@@ -110,7 +110,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -181,7 +181,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -254,7 +254,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(5, 2))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -354,7 +354,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(9, 2))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -413,7 +413,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), "s1")
     expect_equal(dim(ar1), c(9, 1))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -463,7 +463,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), character(0))
     expect_equal(dim(ar1), c(9, 0))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")
@@ -519,7 +519,7 @@ test_that("getAnchorRegions works", {
     expect_s4_class(ar1, "SummarizedExperiment")
     expect_equal(colnames(ar1), c("s1", "s2"))
     expect_equal(dim(ar1), c(9, 2))
-    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames, 
+    expect_equal(S4Vectors::metadata(ar1)$readLevelData$assayNames,
                  SummarizedExperiment::assayNames(ar1))
     expect_equal(SummarizedExperiment::assayNames(ar1), c("mod_prob", "Nvalid"))
     expect_s4_class(SummarizedExperiment::assay(ar1, "mod_prob"), "DataFrame")

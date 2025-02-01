@@ -30,11 +30,11 @@ test_that("readModBam works", {
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 0,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "not all `bamfiles` exist")
+                 "not all .bamfiles. exist")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = NULL, modbase = "a", nAlnsToSample = 0,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "`regions` must contain at least one genomic range if not in sampling mode")
+                 ".regions. must contain at least one genomic range if not in sampling mode")
     expect_error(readModBam(bamfiles = structure(unname(modbamfiles),
                                                  names = c("s1", "s1")),
                             regions = "chr1:6940000-6955000", modbase = "a",
@@ -49,7 +49,7 @@ test_that("readModBam works", {
                             regions = "chr1:6940000-6955000",
                             modbase = "Z", nAlnsToSample = 0,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "invalid `modbase` values")
+                 "invalid .modbase. values")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = c("a", "a", "a"), nAlnsToSample = 0,
@@ -60,23 +60,23 @@ test_that("readModBam works", {
                             modbase = c(sample1 = "a", sample3 = "a"),
                             nAlnsToSample = 0,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "names of `modbase` and `bamfiles` don't agree")
+                 "names of .modbase. and .bamfiles. don't agree")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = -1,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "must be within .0,Inf.")
+                 "must be between 0 and Inf")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = "error",
                             BPPARAM = BiocParallel::SerialParam()),
-                 "must be of class 'numeric'")
+                 "must be of class .numeric.")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 0,
                             level = 1,
                             BPPARAM = BiocParallel::SerialParam()),
-                 "must be of class 'character'")
+                 "must be of class .character.")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 0,
@@ -90,7 +90,7 @@ test_that("readModBam works", {
                                       modbase = "a", nAlnsToSample = 10,
                                       seqnamesToSampleFrom = "error",
                                       BPPARAM = BiocParallel::SerialParam()),
-                           "Ignoring `regions`"),
+                           "Ignoring .regions."),
             "Ignoring unknown target name"),
         "Cannot sample 10 alignments from a total of 0")
     expect_error(readModBam(bamfiles = modbamfiles,
@@ -98,15 +98,15 @@ test_that("readModBam works", {
                             modbase = "a", nAlnsToSample = 0,
                             seqnamesToSampleFrom = "chr1", seqinfo = "error",
                             BPPARAM = BiocParallel::SerialParam()),
-                 "`seqinfo` must be `NULL`")
+                 ".seqinfo. must be .NULL.")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000", modbase = "a",
                             BPPARAM = -1),
-                 "'BPPARAM' must be of class 'BiocParallelParam'")
+                 ".BPPARAM. must be of class .BiocParallelParam.")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000", modbase = "a",
                             BPPARAM = BiocParallel::SerialParam, trim = 1),
-                 "'trim' must be of class 'logical'")
+                 ".trim. must be of class .logical.")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000", modbase = "a",
                             sampleAnnot = sample_annot[1, ],
@@ -117,7 +117,7 @@ test_that("readModBam works", {
         regions = "chr1:6940000-6955000", modbase = "a",
         sampleAnnot = sample_annot[, c("group", "condition")],
         BPPARAM = BiocParallel::SerialParam()),
-        "sampleAnnot must have at least a column")
+        ".sampleAnnot. must have at least a column")
     expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 5,
