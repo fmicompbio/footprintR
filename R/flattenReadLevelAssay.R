@@ -14,13 +14,13 @@
 #'     containing the read-level data to be summarized. Typically, this assay
 #'     contains modification probabilities.
 #' @param statistics Character vector specifying the type of statistics to be
-#'     computed. Currently supported values are "Nmod" (number of values per 
-#'     row in the \code{assayName} assay that are greater than or equal to 
+#'     computed. Currently supported values are "Nmod" (number of values per
+#'     row in the \code{assayName} assay that are greater than or equal to
 #'     \code{modProbThreshold}), "Nvalid" (number of valid/non-NA values per
-#'     row, typically the number of overlapping reads), "FracMod" (Nmod/Nvalid), 
+#'     row, typically the number of overlapping reads), "FracMod" (Nmod/Nvalid),
 #'     "Pmod" (row-wise average values), "Mean" (equivalent to "Pmod"),
-#'     "Sum" (row-wise sums of non-NA values), "AvgConf" (average confidence 
-#'     of (non-)modification probabilities, more precisely the row-wise averages 
+#'     "Sum" (row-wise sums of non-NA values), "AvgConf" (average confidence
+#'     of (non-)modification probabilities, more precisely the row-wise averages
 #'     of the largest of the observed values and 1 - the observed values).
 #' @param modProbThreshold A numeric scalar, indicating the modification
 #'     probability threshold to use to classify a base as 'modified' or
@@ -41,9 +41,9 @@
 #' @author Charlotte Soneson, Michael Stadler
 #'
 #' @examples
-#' exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", 
+#' exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
 #'                       package = "footprintR")
-#' se <- readModkitExtract(exfile, modbase = "a", 
+#' se <- readModkitExtract(exfile, modbase = "a",
 #'                         BPPARAM = BiocParallel::SerialParam())
 #' se
 #'
@@ -58,6 +58,7 @@
 #' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums is_nonna
 #' @importFrom methods is
+#' @importFrom cli cli_warn
 #'
 #' @export
 flattenReadLevelAssay <- function(se,
@@ -86,10 +87,9 @@ flattenReadLevelAssay <- function(se,
     if (!replaceExisting) {
         existing_assays <- intersect(statistics, assayNames(se))
         if (length(existing_assays) > 0) {
-            existing_assays <- paste(existing_assays, ", ")
-            warning("Assay(s) ", existing_assays,
-                    " already exist and replaceExisting is FALSE - will not ",
-                    "recalculate these assays.")
+            cli_warn(paste0(
+            "Assay(s) {existing_assays} already exist and {.arg replaceExisting}",
+            " is {.code FALSE} - will not recalculate these assays."))
             statistics <- setdiff(statistics, assayNames(se))
         }
     }

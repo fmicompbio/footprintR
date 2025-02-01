@@ -78,6 +78,7 @@
 #' @importFrom SummarizedExperiment rowRanges assayNames assay
 #' @importFrom BiocGenerics pos
 #' @importFrom GenomeInfoDb seqnames
+#' @importFrom cli cli_warn
 #'
 .pruneAmbiguousStrandPositions <- function(se, assayName = "Nvalid",
                                            verbose = FALSE) {
@@ -124,8 +125,9 @@
     if (length(unique(paste0(seqnames(rowRanges(se)), ":",
                              pos(rowRanges(se))))) != nrow(se)) {
         # nocov start
-        warning("Pruning of ambiguous positions failed - the object still ",
-                "contains positions represented by multiple rows")
+        cli_warn(paste0(
+            "Pruning of ambiguous positions failed - the object still ",
+            "contains positions represented by multiple rows"))
         # nocov end
     }
 

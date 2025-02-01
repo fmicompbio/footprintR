@@ -55,7 +55,7 @@
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a",
 #'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances
@@ -158,7 +158,7 @@ calcModbaseSpacing <- function(se,
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a",
 #'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances for each sample
@@ -175,6 +175,7 @@ calcModbaseSpacing <- function(se,
 #' @importFrom stats loess lm confint residuals predict coefficients
 #' @importFrom IRanges IRanges Views viewApply
 #' @importFrom methods as
+#' @importFrom cli cli_warn
 #'
 #' @export
 estimateNRL <- function(x,
@@ -190,7 +191,7 @@ estimateNRL <- function(x,
     .assertScalar(x = span2, type = "numeric", rngExcl = c(span1, Inf))
 
     if (all(x == 0)) {
-        warning("NRL not estimated (no non-zero distances)")
+        cli_warn("NRL not estimated (no non-zero distances)")
         return(list(nrl = NA, nrl.CI95 = NA, xs = NA, loessfit = NA, lmfit = NA,
                     peaks = NA, minDist = minDist, span1 = span1, span2 = span2,
                     usePeaks = usePeaks))
@@ -204,7 +205,7 @@ estimateNRL <- function(x,
     xposmax <- viewApply(X = Views(rx, irpos),
                          FUN = function(y) which.max(as.vector(y))) + minDist + start(irpos) - 1
     if (any(!usePeaks %in% seq_along(xposmax))) {
-        warning("less peaks detected than selected by `usePeaks`")
+        cli_warn("less peaks detected than selected by {.arg usePeaks}")
         usePeaks <- intersect(usePeaks, seq_along(xposmax))
     }
     lmfit <- lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
@@ -265,7 +266,7 @@ estimateNRL <- function(x,
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a", 
+#' se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a",
 #'                  BPPARAM = BiocParallel::SerialParam())
 #'
 #' # get distances for each sample

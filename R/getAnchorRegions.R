@@ -79,7 +79,7 @@
 #' @importFrom methods as
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics pos strand
-#' @importFrom cli cli_abort
+#' @importFrom cli cli_abort cli_warn
 #'
 #' @export
 getAnchorRegions <- function(se,
@@ -115,8 +115,8 @@ getAnchorRegions <- function(se,
     .assertScalar(x = verbose, type = "logical")
 
     if (any(strand(regionMidpoints) == "*") && !ignore.strand) {
-        warning("The strand of some region midpoints is undefined ",
-                "Setting `ignore.strand` to TRUE.")
+        cli_warn(paste0("The strand of some region midpoints is undefined. ",
+                        "Setting {.arg ignore.strand} to {.code TRUE}."))
         ignore.strand <- TRUE
     }
 
