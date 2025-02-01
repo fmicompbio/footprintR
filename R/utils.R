@@ -72,7 +72,7 @@
         identical(as.character(sc[[length(sc) - 1]])[1], ".assertScalar")) {
         mycall <- sc[[length(sc) - 1]]
     }
-    args <- lapply(mycall, as.character)[-1]
+    args <- lapply(mycall, \(x) if (is(x, "language")) deparse(x) else as.character(x))[-1]
     xname <- if ("x" %in% names(args)) args$x else "argument"
 
     ## Check arguments

@@ -46,6 +46,11 @@ test_that(".assertScalar works", {
     test <- "text"
     expect_error(.assertScalar(x = test, type = "numeric"),
                  "'test' must be of class 'numeric")
+    expect_error(.assertScalar(x = list(a = 1)$a, type = "logical"),
+                 "list(a = 1)$a", fixed = TRUE)
+    tmp <- matrix(1:4, ncol = 2)
+    expect_error(.assertScalar(x = tmp[, 1], type = "logical"),
+                 "tmp[, 1]", fixed = TRUE)
 })
 
 ## -------------------------------------------------------------------------- ##
