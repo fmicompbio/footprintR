@@ -154,6 +154,15 @@ quantifyWindowsInRegion <- function(bamfiles,
                            ignore.strand = TRUE)
 
         # aggregate counts in windows
+        ## TODO: this block needs to be modular and just produce an assayList
+        ##       (possibly with the correct, empty elements, replacing the "else"
+        ##        below, conditionally putting rowRanges = GPos() if there is no data)
+        ## needed modules (window quantification functions):
+        ## - sum Nmod and Nvalid per window (current block)
+        ## - extract FracMod vector per window and perform stft (phasing score per window)
+        ##   (this will need a new scoreFunction, which extract an assay from an SE and
+        ##    adds columns to mcols(rowRanges(SE)). this scoreFunction may be combined
+        ##    with all "per-sample" window quantification functions)
         mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), ],
                         group = subjectHits(ov), reorder = TRUE)
         mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), ],
