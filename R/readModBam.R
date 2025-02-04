@@ -33,7 +33,9 @@
 #'     data. Supported values are:
 #'     \describe{
 #'         \item{"read"}{: Extracts modification probabilities for individual
-#'             reads into an assay called \code{"mod_prob"}. This is the
+#'             reads into an assay called \code{"mod_prob"}, with each column
+#'             (sample) consisting of a position-by-read
+#'             \code{\link[SparseArray]{NaMatrix}}. This is the
 #'             default if \code{nAlnsToSample} is non-zero or
 #'             \code{variantPositions} is not \code{NULL}.}
 #'         \item{"quickread"}{: Like "read", but runs faster, does not support
@@ -42,7 +44,8 @@
 #'             is zero and \code{variantPositions} is \code{NULL}.}
 #'         \item{"summary"}{: Counts the total and modified bases for each
 #'             position and strand and returns them in assays named
-#'             \code{"Nvalid"} and \code{"Nmod"}, respectively.}
+#'             \code{"Nvalid"} and \code{"Nmod"}, respectively, as well
+#'             as the \code{Nmod/Nvalid} ratio in the assay \code{"FracMod"}.}
 #'     }
 #' @param sampleAnnot A \code{data.frame} (or \code{NULL}) providing annotations
 #'     for the samples. It must contain at least one column, named
@@ -94,10 +97,9 @@
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
 #' @return A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-#'     with genomic positions in rows and samples in columns. The assay
-#'     \code{"mod_prob"} contains per-read modification probabilities,
-#'     with each column (sample) corresponding to a position-by-read
-#'     \code{\link[SparseArray]{NaMatrix}}.
+#'     with genomic positions in rows and samples in columns. The assays
+#'     depend on the value of the \code{level} argument (see above).
+#'
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",

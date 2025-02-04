@@ -61,9 +61,9 @@ reads in each sample, for instance to generate modified and total counts at
 each position for each sample.
 }
 \examples{
-exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz", 
+exfile <- system.file("extdata", "modkit_extract_rc_6mA_1.tsv.gz",
                       package = "footprintR")
-se <- readModkitExtract(exfile, modbase = "a", 
+se <- readModkitExtract(exfile, modbase = "a",
                         BPPARAM = BiocParallel::SerialParam())
 se
 

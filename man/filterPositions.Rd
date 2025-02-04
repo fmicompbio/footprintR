@@ -64,7 +64,7 @@ modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"
 reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
 
 se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
-                 modbase = "a", verbose = FALSE, 
+                 modbase = "a", verbose = FALSE,
                  BPPARAM = BiocParallel::SerialParam())
 se <- flattenReadLevelAssay(se)
 se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = reffile)
