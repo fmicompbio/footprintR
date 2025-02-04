@@ -13,6 +13,18 @@ test_that("genome scanning works (helper functions)", {
 
     ## .tileChromosome
     rg <- .tileChromosome(tileSize = 40, windowSize = 12,
+                          windowStep = 1, chromName = "chr1", chromLength = 100)
+    expect_s4_class(rg, "GRanges")
+    expect_equal(start(rg), c(1, 41, 81))
+    expect_equal(width(rg), rep(51, 3))
+
+    rg <- .tileChromosome(tileSize = 40, windowSize = 12,
+                          windowStep = 3, chromName = "chr1", chromLength = 100)
+    expect_s4_class(rg, "GRanges")
+    expect_equal(start(rg), c(1, 40, 79))
+    expect_equal(width(rg), rep(48, 3))
+
+    rg <- .tileChromosome(tileSize = 40, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 37, 73))
@@ -21,8 +33,14 @@ test_that("genome scanning works (helper functions)", {
     rg <- .tileChromosome(tileSize = 20, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
-    expect_equal(start(rg), c(1, 19, 37, 55, 73))
-    expect_equal(width(rg), rep(24, 5))
+    expect_equal(start(rg), c(1, 19, 37, 55, 73, 91))
+    expect_equal(width(rg), rep(24, 6))
+
+    rg <- .tileChromosome(tileSize = 20, windowSize = 12,
+                          windowStep = 12, chromName = "chr1", chromLength = 100)
+    expect_s4_class(rg, "GRanges")
+    expect_equal(start(rg), c(1, 13, 25, 37, 49, 61, 73, 85, 97))
+    expect_equal(width(rg), rep(12, 9))
 
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
@@ -33,7 +51,7 @@ test_that("genome scanning works (helper functions)", {
                                          modbase = "a"))
     expect_identical(dim(quantifyWindowsInRegion(bamfiles = modbamfiles,
                                                  region = "chr1:1-1000",
-                                                 modbase = "a", 
+                                                 modbase = "a",
                                                  BPPARAM = BiocParallel::SerialParam())),
                      c(0L, 4L))
 

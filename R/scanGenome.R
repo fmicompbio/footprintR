@@ -8,10 +8,10 @@
                             chromName,
                             chromLength) {
     # tile a chromosome
-    nWindowsPerTile <- floor((tileSize - windowSize) / windowStep) + 1
-    tileSize <- (nWindowsPerTile * windowStep) + windowSize
-    nTiles <- ceiling(chromLength / tileSize)
-    s <- 1 + (seq.int(nTiles) - 1) * (tileSize - windowStep)
+    nWindowsPerTile <- floor(tileSize / windowStep)
+    tileSize <- ((nWindowsPerTile - 1) * windowStep) + windowSize
+    nTiles <- ceiling((chromLength - (windowSize - windowStep)) / (tileSize - (windowSize - windowStep)))
+    s <- 1 + (seq.int(nTiles) - 1) * (tileSize - windowSize + windowStep)
     regs <- GRanges(chromName, IRanges(start = s, width = tileSize))
     regs
 }
