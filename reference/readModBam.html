@@ -115,7 +115,9 @@ all samples.</p></dd>
 <dd><p>Character scalar specifying the level of returned modification
 data. Supported values are:</p><dl><dt>"read"</dt>
 <dd><p>: Extracts modification probabilities for individual
-reads into an assay called <code>"mod_prob"</code>. This is the
+reads into an assay called <code>"mod_prob"</code>, with each column
+(sample) consisting of a position-by-read
+<code><a href="https://rdrr.io/pkg/SparseArray/man/NaArray-class.html" class="external-link">NaMatrix</a></code>. This is the
 default if <code>nAlnsToSample</code> is non-zero or
 <code>variantPositions</code> is not <code>NULL</code>.</p></dd>
 
@@ -128,7 +130,8 @@ is zero and <code>variantPositions</code> is <code>NULL</code>.</p></dd>
 <dt>"summary"</dt>
 <dd><p>: Counts the total and modified bases for each
 position and strand and returns them in assays named
-<code>"Nvalid"</code> and <code>"Nmod"</code>, respectively.</p></dd>
+<code>"Nvalid"</code> and <code>"Nmod"</code>, respectively, as well
+as the <code>Nmod/Nvalid</code> ratio in the assay <code>"FracMod"</code>.</p></dd>
 
 
 </dl></dd>
@@ -215,10 +218,8 @@ for reproducible results (see also
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">SummarizedExperiment</a></code> object
-with genomic positions in rows and samples in columns. The assay
-<code>"mod_prob"</code> contains per-read modification probabilities,
-with each column (sample) corresponding to a position-by-read
-<code><a href="https://rdrr.io/pkg/SparseArray/man/NaArray-class.html" class="external-link">NaMatrix</a></code>.</p>
+with genomic positions in rows and samples in columns. The assays
+depend on the value of the <code>level</code> argument (see above).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -241,11 +242,11 @@ SAM ML and MM tags for base modifications.</p></div>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.002 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.002 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[18ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[16ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.002 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> collapsed 11300 positions to 4772 unique ones</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 11300 positions to 4772 unique ones <span style="color: #B2B2B2;">[110ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 11300 positions to 4772 unique ones <span style="color: #B2B2B2;">[101ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.002 Mio./s) [1ms]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>

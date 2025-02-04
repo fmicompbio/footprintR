@@ -267,11 +267,11 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> calculating footprint scores</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[34ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.5 /s) [96ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (16.6 /s) [61ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> segmenting footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[44ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[42ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.5 /s) [96ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (16.6 /s) [61ms]</span>
 <span class="r-in"><span><span class="va">se</span><span class="op">$</span><span class="va">nucl</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 3:</span>
@@ -311,7 +311,7 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> calculating footprint scores</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[30ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.5 /s) [96ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (16.6 /s) [61ms]</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">scoresList</span>, <span class="va">nrow</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 38549</span>
@@ -330,9 +330,9 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-in"><span><span class="co"># segment calculated scores</span></span></span>
 <span class="r-in"><span><span class="va">irl</span> <span class="op">&lt;-</span> <span class="fu">segmentFootprintScores</span><span class="op">(</span><span class="va">scoresList</span>, thresh <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> segmenting footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[28ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[34ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.5 /s) [96ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (16.6 /s) [61ms]</span>
 <span class="r-in"><span><span class="va">irl</span><span class="op">$</span><span class="va">s1</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 3:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-233e48a7-f379-4dcf-9270-958231125563`</span>
