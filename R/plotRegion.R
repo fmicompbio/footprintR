@@ -1298,12 +1298,12 @@ plotGenomicRegions <- function(grl,
     } else if (!is.null(orderReads) && orderReads == "squish") {
         if (!is.null(facetBy)) {
             tmp <- df |> group_by(.data[[facetBy]], .data$read) |>
-                summarise(start = min(.data$position),
-                          end = max(.data$position))
+                summarise(start = min(as.numeric(.data$position)),
+                          end = max(as.numeric(.data$position)))
         } else {
             tmp <- df |> group_by(.data$read) |>
-                summarise(start = min(.data$position),
-                          end = max(.data$position))
+                summarise(start = min(as.numeric(.data$position)),
+                          end = max(as.numeric(.data$position)))
         }
         tmp <- tmp |> group_split() |>
             lapply(function(y) sort(IRanges(start = y$start, end = y$end,
