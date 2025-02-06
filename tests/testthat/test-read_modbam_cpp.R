@@ -56,6 +56,7 @@ test_that("read_modbam_cpp works", {
     bam5 <- system.file("extdata", "6mA_nonPrimary.bam", package = "footprintR")
     bam7 <- system.file("extdata", "6mA_mod-issue.bam", package = "footprintR")
     bam8 <- system.file("extdata", "6mA_too-many-mods.bam", package = "footprintR")
+    bam9 <- system.file("extdata", "6mA_two-mods-on-same-base.bam", package = "footprintR")
 
     ## invalid arguments -------------------------------------------------------
     # ... non-existing bam file
@@ -187,6 +188,14 @@ test_that("read_modbam_cpp works", {
     suppressMessages(expect_message(
         res7c <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", character(0), integer(0), 1, TRUE)
     ))
+    res9h <- read_modbam_cpp(bam9, "chr1", "h", 0, "", character(0), integer(0), 1, FALSE)
+    res9m <- read_modbam_cpp(bam9, "chr1", "m", 0, "", character(0), integer(0), 1, FALSE)
+    expect_identical(res9h[!names(res9h) %in% c("call_code", "mod_prob")],
+                     res9m[!names(res9m) %in% c("call_code", "mod_prob")])
+    expect_identical(res9h$call_code, c("h", "h"))
+    expect_identical(res9m$call_code, c("m", "m"))
+    expect_equal(res9h$mod_prob, (c(25,10) + 0.5) / 256)
+    expect_equal(res9m$mod_prob, (c(230,245) + 0.5) / 256)
 
     # ... results structure
     expect_type(res1, "list")

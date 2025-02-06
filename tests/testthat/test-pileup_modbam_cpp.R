@@ -9,6 +9,7 @@ test_that("pileup_modbam_cpp works", {
     bam5 <- system.file("extdata", "6mA_nonPrimary.bam", package = "footprintR")
     bam7 <- system.file("extdata", "6mA_mod-issue.bam", package = "footprintR")
     bam8 <- system.file("extdata", "6mA_too-many-mods.bam", package = "footprintR")
+    bam9 <- system.file("extdata", "6mA_two-mods-on-same-base.bam", package = "footprintR")
 
     ## invalid arguments -------------------------------------------------------
     # ... non-existing bam file
@@ -87,6 +88,10 @@ test_that("pileup_modbam_cpp works", {
                                     what = "qname",
                                     which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
                                 ))
+    res9h <- pileup_modbam_cpp(inname_str = bam9, regions = "chr1", modbase = "h",
+                               level = "read", n_threads = 1, verbose = FALSE)
+    res9m <- pileup_modbam_cpp(inname_str = bam9, regions = "chr1", modbase = "m",
+                               level = "read", n_threads = 1, verbose = FALSE)
 
     # ... results structure
     expect_type(res1, "list")
@@ -96,6 +101,8 @@ test_that("pileup_modbam_cpp works", {
     expect_type(res5, "list")
     expect_type(res6a, "list")
     expect_type(res6b, "list")
+    expect_type(res9h, "list")
+    expect_type(res9m, "list")
 
     expected_names <- c(
         "chrom", "ref_position", "ref_mod_strand", "mod_prob", "read_id", "read_df")
@@ -106,6 +113,8 @@ test_that("pileup_modbam_cpp works", {
     expect_named(res5, expected_names)
     expect_named(res6a, expected_names)
     expect_named(res6b, expected_names)
+    expect_named(res9h, expected_names)
+    expect_named(res9m, expected_names)
 
     expected_types <- c(
         "character", "integer", "character", "double",
@@ -118,6 +127,8 @@ test_that("pileup_modbam_cpp works", {
         expect_type(res5[[expected_names[i]]], expected_types[i])
         expect_type(res6a[[expected_names[i]]], expected_types[i])
         expect_type(res6b[[expected_names[i]]], expected_types[i])
+        expect_type(res9h[[expected_names[i]]], expected_types[i])
+        expect_type(res9m[[expected_names[i]]], expected_types[i])
     }
 
     expect_s3_class(res1[["read_df"]], "data.frame")
@@ -127,6 +138,8 @@ test_that("pileup_modbam_cpp works", {
     expect_s3_class(res5[["read_df"]], "data.frame")
     expect_s3_class(res6a[["read_df"]], "data.frame")
     expect_s3_class(res6b[["read_df"]], "data.frame")
+    expect_s3_class(res9h[["read_df"]], "data.frame")
+    expect_s3_class(res9m[["read_df"]], "data.frame")
 
     expected_df_colnames <- c("read_id", "qscore", "read_length", "aligned_length", "variant_label")
     expect_named(res1$read_df, expected_df_colnames)
@@ -136,6 +149,8 @@ test_that("pileup_modbam_cpp works", {
     expect_named(res5$read_df, expected_df_colnames)
     expect_named(res6a$read_df, expected_df_colnames)
     expect_named(res6b$read_df, expected_df_colnames)
+    expect_named(res9h$read_df, expected_df_colnames)
+    expect_named(res9m$read_df, expected_df_colnames)
 
     # ... content res1
     expect_identical(res1$read_df$read_id,
@@ -248,6 +263,12 @@ test_that("pileup_modbam_cpp works", {
     expect_identical(res6a$mod_prob, res6b$mod_prob[idx])
     expect_equal(res6a$read_df, res6b$read_df[2, , drop = FALSE],
                  ignore_attr = TRUE)
+
+    # ... content of res9h and res9m
+    expect_identical(res9h[!names(res9h) %in% c("call_code", "mod_prob")],
+                     res9m[!names(res9m) %in% c("call_code", "mod_prob")])
+    expect_equal(res9h$mod_prob, (c(25,10) + 0.5) / 256)
+    expect_equal(res9m$mod_prob, (c(230,245) + 0.5) / 256)
 })
 
 test_that("pileup_modbam_cpp works by comparing to read_modbam_cpp", {
