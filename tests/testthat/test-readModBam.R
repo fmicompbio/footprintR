@@ -83,6 +83,11 @@ test_that("readModBam works", {
                             BPPARAM = BiocParallel::SerialParam()),
                  "must be of class .character.")
     expect_error(readModBam(bamfiles = modbamfiles,
+                            regions = as("chr1:6940000-6955000", "GRanges"),
+                            modbase = "a", seqinfo = "error",
+                            BPPARAM = BiocParallel::SerialParam()),
+                 ".seqinfo. must be .NULL., a .Seqinfo. object")
+    expect_error(readModBam(bamfiles = modbamfiles,
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 0,
                             level = "error",
@@ -234,24 +239,24 @@ test_that("readModBam works", {
         which = GRanges(reg5[1:2])
     ))
     expect_warning(
-        suppressMessages({
-            expect_message(
-                se6a  <- readModBam(bamfiles = modbamfiles[1],
-                                    regions = NULL,
-                                    modbase = "a",
-                                    nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                                    variantPositions = GPos("chr1", pos = 63000000),
-                                    BPPARAM = BiocParallel::MulticoreParam(2L, RNGseed = 55L),
-                                    verbose = TRUE)
-            )
-        })
+        se6a  <- readModBam(bamfiles = modbamfiles[1],
+                            regions = NULL,
+                            modbase = "a",
+                            nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                            variantPositions = GPos("chr1", pos = 63000000),
+                            BPPARAM = BiocParallel::MulticoreParam(2L, RNGseed = 55L),
+                            verbose = FALSE)
     )
-    se6b  <- readModBam(bamfiles = modbamfiles[1],
-                        regions = NULL,
-                        modbase = "a",
-                        nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
-                        BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
-                        verbose = FALSE)
+    suppressMessages({
+        expect_message(
+            se6b  <- readModBam(bamfiles = modbamfiles[1],
+                                regions = NULL,
+                                modbase = "a",
+                                nAlnsToSample = 5, seqnamesToSampleFrom = "chr1",
+                                BPPARAM = BiocParallel::SerialParam(RNGseed = 55L),
+                                verbose = TRUE)
+        )
+    })
     se7  <- readModBam(bamfiles = modbamfiles,
                        regions = reg5[1:2],
                        modbase = "a",

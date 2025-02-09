@@ -42,6 +42,19 @@ test_that("genome scanning works (helper functions)", {
     expect_equal(start(rg), c(1, 13, 25, 37, 49, 61, 73, 85, 97))
     expect_equal(width(rg), rep(12, 9))
 
+    ## sumNmodNvalid
+    rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
+                          windowStep = 1e6, chromName = "chr1",
+                          chromLength = 70e6)
+    se1 <- se0
+    SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
+    expect_error(sumNmodNvalid(se1, rg), ".se. must contain assays")
+    res <- sumNmodNvalid(se0, rg)
+    expect_identical(SummarizedExperiment::assay(res, "Nmod")[1, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nmod")))
+    expect_identical(SummarizedExperiment::assay(res, "Nvalid")[1, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nvalid")))
+
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
                                          region = "chr1:6940000-6955000",
@@ -49,6 +62,11 @@ test_that("genome scanning works (helper functions)", {
     expect_error(quantifyWindowsInRegion(bamfiles = modbamfiles,
                                          region = "error",
                                          modbase = "a"))
+    expect_error(quantifyWindowsInRegion(bamfiles = modbamfiles,
+                                         region = "chr1:6940000-6955000",
+                                         modbase = "a",
+                                         quantFunction = "error"),
+                 ".quantFunction. must be the name of an existing function")
     expect_identical(dim(quantifyWindowsInRegion(bamfiles = modbamfiles,
                                                  region = "chr1:1-1000",
                                                  modbase = "a",
