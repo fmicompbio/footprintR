@@ -120,8 +120,9 @@
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand sort
-#' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
-#'     bpoptions bpprogressbar
+#' @import BiocParallel
+##' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
+##'     bpoptions
 #' @importFrom methods is
 #' @importFrom cli cli_abort cli_warn
 #'
@@ -314,7 +315,8 @@ readModBam <- function(bamfiles,
                 resL$read_df <- resL$read_df[resL$read_df$read_id %in% resL$read_id, ]
             }
             resL
-    }, BPPARAM = BPPARAM, BPOPTIONS = bpoptions(progressbar = verbose && ncpuTotal > 1))
+    }, BPPARAM = BPPARAM, BPOPTIONS = bpoptions(
+        progressbar = (verbose && ncpuTotal > 1)))
 
     # create GPos objects for each input
     gposL <- bplapply(resLL, function(resL, myseqinfo = seqinfo) {

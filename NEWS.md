@@ -1,6 +1,7 @@
 # footprintR 0.3.1
 
 * Explicitly ignore supplementary and secondary alignments in all reading modes in `readModBam`
+* Various smaller improvements and bug fixes
 
 # footprintR 0.3.0
 
