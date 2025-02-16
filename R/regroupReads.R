@@ -80,6 +80,8 @@ regroupReads <- function(se, readGroups) {
                         "and will be ignored: {msng}"))
         readGroups <- lapply(readGroups, function(rg) intersect(rg, seReads))
     }
+    # exclude groups without reads
+    readGroups <- readGroups[lengths(readGroups) > 0]
 
     # generate regrouped assays
     aList <- lapply(structure(rlAssays, names = rlAssays), function(rla) {

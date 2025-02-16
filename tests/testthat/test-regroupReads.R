@@ -8,6 +8,7 @@ test_that("read regrouping works", {
                      variantPositions = GPos(seqnames = "chr1",
                                              pos = c(6940000, 6940500)),
                      BPPARAM = BiocParallel::SerialParam())
+    se <- addReadStats(se, name = "QC")
     # define read groups
     groups <- list(g1 = c("s1-233e48a7-f379-4dcf-9270-958231125563",
                           "s2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8"),
@@ -46,6 +47,14 @@ test_that("read regrouping works", {
     expect_equal(assayNames(sere), "mod_prob")
     expect_equal(unname(as.matrix(assay(sere, "mod_prob"))),
                  unname(as.matrix(assay(se, "mod_prob"))[, c(1, 5, 3, 4, 2)]))
+    tmp <- do.call(rbind, sere$readInfo)
+    rownames(tmp) <- sub("^g[0-9]-", "", rownames(tmp))
+    expect_equal(tmp,
+                 do.call(rbind, se$readInfo)[c(1, 5, 3, 4, 2), ])
+    tmp <- do.call(rbind, sere$QC)
+    rownames(tmp) <- sub("^g[0-9]-", "", rownames(tmp))
+    expect_equal(tmp,
+                 do.call(rbind, se$QC)[c(1, 5, 3, 4, 2), ])
     expect_equal(colnames(sere), names(groups))
     expect_equal(rowRanges(se), rowRanges(sere))
 
@@ -67,6 +76,12 @@ test_that("read regrouping works", {
     se2 <- flattenReadLevelAssay(se, keepReads = FALSE)
     expect_error(regroupReads(se2, readGroups = groups),
                  "does not contain any read-level assays")
+
+    # empty sample
+    expect_warning({
+        sere2 <- regroupReads(se, readGroups = c(groups, list(g4 = "missing")))
+    }, "The following reads were not found")
+    expect_identical(sere, sere2)
 
     # regroup by read annotation (variant label), across samples
     sere <- regroupReadsByColData(se, colName = "variant_label",
