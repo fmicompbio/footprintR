@@ -80,6 +80,12 @@ test_that("read regrouping works", {
     }, "The following reads were not found")
     expect_identical(sere, sere2)
 
+    # inconsistent modbase
+    se2 <- se
+    se2$modbase[2] <- "m"
+    expect_error(regroupReads(se2, readGroups = groups),
+                 "Some read groups correspond to reads with different modbases")
+
     # regroup by read annotation (variant label), across samples
     sere <- regroupReadsByColData(se, colNames = "variant_label",
                                   withinSample = FALSE)

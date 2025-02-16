@@ -69,9 +69,6 @@ regroupReads <- function(se, readGroups) {
     rlCols <- intersect(metadata(se)$readLevelData$colDataColumns,
                         colnames(colData(se)))
 
-    ## TODO: Check that the modbase is consistent for each regrouped sample
-    ## and add it to the colData below
-
     # exclude any reads that are not found in the SE
     seReads <- colnames(as.matrix(assay(se, rlAssays[1])))
     msng <- setdiff(unlist(readGroups), seReads)
@@ -82,6 +79,16 @@ regroupReads <- function(se, readGroups) {
     }
     # exclude groups without reads
     readGroups <- readGroups[lengths(readGroups) > 0]
+
+    # check that the modbase is consistent for each read group
+    mbmap <- structure(
+        rep(se$modbase, vapply(assay(se, rlAssays[1]), ncol, 0L)),
+        names = unlist(lapply(assay(se, rlAssays[1]), colnames))
+    )
+    modbase <- lapply(readGroups, function(rg) unique(mbmap[rg]))
+    if (any(lengths(modbase) > 1)) {
+        cli_abort("Some read groups correspond to reads with different modbases")
+    }
 
     # generate regrouped assays
     aList <- lapply(structure(rlAssays, names = rlAssays), function(rla) {
@@ -98,6 +105,7 @@ regroupReads <- function(se, readGroups) {
 
     # generate regrouped colData columns
     cdata <- DataFrame(sample = names(readGroups),
+                       modbase = unlist(modbase),
                        n_reads = lengths(readGroups))
     for (rlc in rlCols) {
         tmp <- do.call(rbind, colData(se)[[rlc]])
