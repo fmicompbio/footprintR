@@ -42,12 +42,12 @@
 #'
 #' # regroup by read annotation (variant label)
 #' # ... across samples
-#' sere <- regroupReadsByColData(se, colName = "variant_label",
+#' sere <- regroupReadsByColData(se, colNames = "variant_label",
 #'                               withinSample = FALSE)
 #' sere
 #' lapply(assay(sere, "mod_prob"), ncol)
 #' # ... within sample
-#' sere <- regroupReadsByColData(se, colName = "variant_label",
+#' sere <- regroupReadsByColData(se, colNames = "variant_label",
 #'                               withinSample = TRUE)
 #' sere
 #' lapply(assay(sere, "mod_prob"), ncol)
