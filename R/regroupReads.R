@@ -62,6 +62,7 @@ regroupReads <- function(se, readGroups) {
     .assertVector(x = names(readGroups), type = "character")
     .checkSEValidity(se = se, verbose = FALSE)
 
+    # list read-level assays and colData columns
     rlAssays <- intersect(metadata(se)$readLevelData$assayNames, assayNames(se))
     if (length(rlAssays) == 0) {
         cli_abort("{.arg se} does not contain any read-level assays")
