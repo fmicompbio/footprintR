@@ -7,7 +7,7 @@
 \usage{
 regroupReads(se, readGroups)
 
-regroupReadsByColData(se, colName, withinSample = FALSE)
+regroupReadsByColData(se, colNames, withinSample = FALSE)
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object,
@@ -17,9 +17,9 @@ columns samples. The object should have at least one read-level assay.}
 \item{readGroups}{A named list, where each element corresponds to a new
 group of reads (a "sample").}
 
-\item{colName}{A character scalar corresponding to the name of a column in
-\code{colData(se)$readInfo}, representing the desired grouping of the
-reads.}
+\item{colNames}{A character vector corresponding to the names of columns in
+\code{colData(se)$readInfo}, the combination of which represent the
+desired grouping of the reads.}
 
 \item{withinSample}{A logical scalar, indicating whether the regrouping
 should be done within each current sample (column of \code{se}) or not.

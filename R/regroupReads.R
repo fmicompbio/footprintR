@@ -124,9 +124,9 @@ regroupReads <- function(se, readGroups) {
 #' Regroup reads by annotation column
 #'
 #' @rdname regroupReads
-#' @param colName A character scalar corresponding to the name of a column in
-#'     \code{colData(se)$readInfo}, representing the desired grouping of the
-#'     reads.
+#' @param colNames A character vector corresponding to the names of columns in
+#'     \code{colData(se)$readInfo}, the combination of which represent the
+#'     desired grouping of the reads.
 #' @param withinSample A logical scalar, indicating whether the regrouping
 #'     should be done within each current sample (column of \code{se}) or not.
 #'     If \code{FALSE} (default), reads are pooled across samples before
@@ -136,24 +136,23 @@ regroupReads <- function(se, readGroups) {
 #' @export
 #'
 #' @importFrom SummarizedExperiment colData
-regroupReadsByColData <- function(se, colName, withinSample = FALSE) {
-    .assertScalar(x = colName, type = "character",
+regroupReadsByColData <- function(se, colNames, withinSample = FALSE) {
+    .assertVector(x = colNames, type = "character",
                   validValues = colnames(se$readInfo[[1]]))
     .assertScalar(x = withinSample, type = "logical")
 
-    ## TODO: Which columns should be allowed? Only from readInfo? Allow more than
-    ## one column?
-
-    readInfo <- cbind(sample = rep(se$sample, lengths(se$readInfo)),
+    readInfo <- cbind(sample = rep(se$sample, vapply(se$readInfo, nrow, 0L)),
                       read_id = unlist(lapply(se$readInfo, rownames)),
                       do.call(rbind, se$readInfo))
     # generate read groups
     if (withinSample) {
         readGroups <- split(x = readInfo$read_id,
-                            f = paste0(readInfo$sample, "-", readInfo[[colName]]))
+                            f = apply(readInfo[, c("sample", colNames), drop = FALSE],
+                                      1, paste, collapse = "-"))
     } else {
         readGroups <- split(x = readInfo$read_id,
-                            f = readInfo[[colName]])
+                            f = apply(readInfo[, colNames, drop = FALSE],
+                                      1, paste, collapse = "-"))
     }
     regroupReads(se = se, readGroups = readGroups)
 }

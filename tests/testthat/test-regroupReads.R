@@ -23,17 +23,14 @@ test_that("read regrouping works", {
                  "must be of class .list.")
     expect_error(regroupReads(se = se, readGroups = unname(groups)),
                  "must not be")
-    expect_error(regroupReadsByColData(se = se, colName = 1, withinSample = TRUE),
+    expect_error(regroupReadsByColData(se = se, colNames = 1, withinSample = TRUE),
                  "must be of class .character.")
-    expect_error(regroupReadsByColData(se = se, colName = "missing", withinSample = TRUE),
+    expect_error(regroupReadsByColData(se = se, colNames = "missing", withinSample = TRUE),
                  "must be one of")
-    expect_error(regroupReadsByColData(se = se, colName = c("variant_label", "read_length"),
-                                       withinSample = TRUE),
-                 "must have length 1")
-    expect_error(regroupReadsByColData(se = se, colName = "variant_label",
+    expect_error(regroupReadsByColData(se = se, colNames = "variant_label",
                                        withinSample = 1),
                  "must be of class .logical.")
-    expect_error(regroupReadsByColData(se = se, colName = "variant_label",
+    expect_error(regroupReadsByColData(se = se, colNames = "variant_label",
                                        withinSample = c(TRUE, FALSE)),
                  "must have length 1")
 
@@ -84,7 +81,7 @@ test_that("read regrouping works", {
     expect_identical(sere, sere2)
 
     # regroup by read annotation (variant label), across samples
-    sere <- regroupReadsByColData(se, colName = "variant_label",
+    sere <- regroupReadsByColData(se, colNames = "variant_label",
                                   withinSample = FALSE)
     groups2 <- split(x = rownames(do.call(rbind, se$readInfo)),
                      f = do.call(rbind, se$readInfo)$variant_label)
@@ -100,7 +97,7 @@ test_that("read regrouping works", {
     expect_equal(rowRanges(se), rowRanges(sere))
 
     # ... within sample
-    sere <- regroupReadsByColData(se, colName = "variant_label",
+    sere <- regroupReadsByColData(se, colNames = "variant_label",
                                   withinSample = TRUE)
     groups2 <- split(x = rownames(do.call(rbind, se$readInfo)),
                      f = paste0(rep(colnames(se), se$n_reads), "-",
@@ -115,4 +112,45 @@ test_that("read regrouping works", {
                  unname(as.matrix(assay(se, "mod_prob"))[, c(2, 1, 3, 4, 5)]))
     expect_equal(colnames(sere), names(groups2))
     expect_equal(rowRanges(se), rowRanges(sere))
+
+    # multiple annotation columns
+    se2 <- se
+    se2$readInfo <- lapply(se2$readInfo, function(ri) {
+        ri$label2 <- ri$variant_label
+        ri
+    })
+    # ... across samples
+    sere <- regroupReadsByColData(se2, colNames = c("variant_label", "label2"),
+                                  withinSample = FALSE)
+    groups2 <- split(x = rownames(do.call(rbind, se2$readInfo)),
+                     f = paste0(do.call(rbind, se2$readInfo)$variant_label, "-",
+                                do.call(rbind, se2$readInfo)$label2))
+    expect_equal(lapply(assay(sere, "mod_prob"), ncol),
+                 list(`G--G-` = 3, `GT-GT` = 2))
+    expect_equal(colnames(as.matrix(assay(sere, "mod_prob"))),
+                 paste0(rep(names(groups2), lengths(groups2)), "-",
+                        unlist(groups2)))
+    expect_equal(assayNames(sere), "mod_prob")
+    expect_equal(unname(as.matrix(assay(sere, "mod_prob"))),
+                 unname(as.matrix(assay(se2, "mod_prob"))[, c(2, 4, 5, 1, 3)]))
+    expect_equal(colnames(sere), names(groups2))
+    expect_equal(rowRanges(se2), rowRanges(sere))
+
+    # ... within sample
+    sere <- regroupReadsByColData(se2, colNames = c("variant_label", "label2"),
+                                  withinSample = TRUE)
+    groups2 <- split(x = rownames(do.call(rbind, se$readInfo)),
+                     f = paste0(rep(colnames(se), se2$n_reads), "-",
+                                do.call(rbind, se2$readInfo)$variant_label, "-",
+                                do.call(rbind, se2$readInfo)$label2))
+    expect_equal(lapply(assay(sere, "mod_prob"), ncol),
+                 list(`s1-G--G-` = 1, `s1-GT-GT` = 2, `s2-G--G-` = 2))
+    expect_equal(colnames(as.matrix(assay(sere, "mod_prob"))),
+                 paste0(rep(names(groups2), lengths(groups2)), "-",
+                        unlist(groups2)))
+    expect_equal(assayNames(sere), "mod_prob")
+    expect_equal(unname(as.matrix(assay(sere, "mod_prob"))),
+                 unname(as.matrix(assay(se2, "mod_prob"))[, c(2, 1, 3, 4, 5)]))
+    expect_equal(colnames(sere), names(groups2))
+    expect_equal(rowRanges(se2), rowRanges(sere))
 })
