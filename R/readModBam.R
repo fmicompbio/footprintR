@@ -331,7 +331,7 @@ readModBam <- function(bamfiles,
 
     # if trim=TRUE, trim GPos to only the indicated region
     if (trim) {
-        gpos <- subsetByOverlaps(gpos, regions)
+        gpos <- subsetByOverlaps(gpos, regions, ignore.strand = TRUE)
     }
 
     # add sequence context
