@@ -2,6 +2,7 @@
 % Please edit documentation in R/plotRegion.R
 \name{plotRegion}
 \alias{plotRegion}
+\alias{plotBigWig}
 \alias{plotReadsLollipop}
 \alias{plotReadsHeatmap}
 \alias{plotSummaryPointSmooth}
@@ -16,6 +17,19 @@ plotRegion(
   sequenceContext = NULL,
   referenceCoordinate = NULL,
   labelAccuracy = NULL
+)
+
+plotBigWig(
+  bwFiles,
+  region,
+  trackTitle = NULL,
+  legendTitle = NULL,
+  showLegend = TRUE,
+  highlightRegions = NULL,
+  colors = NULL,
+  referenceCoordinate = NULL,
+  labelAccuracy = NULL,
+  yAxisRange = NULL
 )
 
 plotReadsLollipop(
@@ -160,6 +174,32 @@ positions along the genomic axis. Will be passed to
 \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 value will be derived from \code{region}.}
 
+\item{bwFiles}{A named character vector with paths to one or more bigWig
+files to plot.}
+
+\item{trackTitle}{A character scalar or \code{NULL}, giving the title of
+the track.}
+
+\item{legendTitle}{A character scalar or \code{NULL}. If not \code{NULL},
+this will be the title of the track fill/color legend. If \code{NULL},
+the name of the assay (\code{assayName}, for heatmaps and lollipop plots)
+\code{"Sample"} (for summary plots), or \code{"strand"} (for genomic
+region plots) will be used.}
+
+\item{showLegend}{A logical scalar, indicating whether or not to display
+the legend for the track.}
+
+\item{highlightRegions}{A \code{\link[GenomicRanges]{GRanges}} object
+containing regions to highlight with a grey shading.}
+
+\item{colors}{A named character vector of colors to use for the unique
+values in the \code{colorBy} annotation column. If \code{NULL}
+(default), the default \code{ggplot2} colors will be used.}
+
+\item{yAxisRange}{Numeric vector of length 2 giving the range to zoom in
+to on the y-axis. If \code{NULL} (default), will be determined from the
+data.}
+
 \item{assayName}{A character or numerical scalar selecting the assay to plot.
 This should be an existing read-level or summary assay, as appropriate
 for the plot type. A special case is the track name \code{"FracMod"}:
@@ -184,21 +224,6 @@ the position of reads on the y-axis will be reordered using
 over windows of 25 nucleotides. If set to \code{"squish"}, the display
 will be compacted by placing multiple reads in the same row when
 possible. If \code{NULL}, no reordering is done.}
-
-\item{trackTitle}{A character scalar or \code{NULL}, giving the title of
-the track.}
-
-\item{legendTitle}{A character scalar or \code{NULL}. If not \code{NULL},
-this will be the title of the track fill/color legend. If \code{NULL},
-the name of the assay (\code{assayName}, for heatmaps and lollipop plots)
-\code{"Sample"} (for summary plots), or \code{"strand"} (for genomic
-region plots) will be used.}
-
-\item{showLegend}{A logical scalar, indicating whether or not to display
-the legend for the track.}
-
-\item{highlightRegions}{A \code{\link[GenomicRanges]{GRanges}} object
-containing regions to highlight with a grey shading.}
 
 \item{footprintColumns}{A character vector with names of columns from
 \code{colData(se)} containing footprints to display. Typically these
@@ -259,14 +284,6 @@ for example, grouping by sample and coloring by condition.}
 to color the points and smoothed lines by. By default, the points and
 lines will be colored by 'sample', corresponding to the columns of
 \code{se}.}
-
-\item{colors}{A named character vector of colors to use for the unique
-values in the \code{colorBy} annotation column. If \code{NULL}
-(default), the default \code{ggplot2} colors will be used.}
-
-\item{yAxisRange}{Numeric vector of length 2 giving the range to zoom in
-to on the y-axis. If \code{NULL} (default), will be determined from the
-data.}
 
 \item{grl}{A named \code{\link[GenomicRanges]{GRangesList}} object where each
 entry corresponds to a transcript or genomic feature.}

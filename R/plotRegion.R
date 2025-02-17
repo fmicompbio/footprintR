@@ -2,9 +2,10 @@
 plotRegionPlotTypes <- data.frame(
     name = c("Point", "Smooth", "PointSmooth",
              "Lollipop", "Heatmap", "GenomicRegion",
-             "GenomicRegions"),
+             "GenomicRegions", "BigWig"),
     type = c("summary", "summary", "summary",
-             "reads", "reads", "annotation", "annotation")
+             "reads", "reads", "annotation", "annotation",
+             "file")
 )
 
 defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
@@ -259,6 +260,12 @@ plotRegion <- function(
             cli_abort(paste("There are entries in {.code tracks[[{i}]]$trackData}",
                             "with mixed strand annotations"))
         }
+        if (type_i == "file" &&
+            !(is.character(tracks[[i]]$trackData) &&
+              !is.null(names(tracks[[i]]$trackData)))) {
+            cli_abort(paste("{.code tracks[[{i}]]$trackData} must be a named",
+                            "character vector"))
+        }
 
         if (modbaseSpace &&
             "interpolate" %in% names(tracks[[i]]) &&
@@ -283,6 +290,13 @@ plotRegion <- function(
             cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
                            "footprintColumns are provided (seen in
                            tracks[[{i}]]. Setting modbaseSpace=FALSE"))
+            modbaseSpace <- FALSE
+        }
+        if (modbaseSpace &&
+            tracks[[i]]$trackType == "BigWig") {
+            cli_warn(paste("Plotting in `modbaseSpace` is not allowed if",
+                           "BigWig tracks are included.",
+                           "Setting modbaseSpace=FALSE"))
             modbaseSpace <- FALSE
         }
     }
@@ -339,6 +353,15 @@ plotRegion <- function(
                                           "region", "referenceCoordinate",
                                           "labelAccuracy")]
             )
+        } else if (trt == "file") {
+            args <- c(
+                list(bwFiles = tr$trackData,
+                     region = region, labelAccuracy = labelAccuracy,
+                     referenceCoordinate = referenceCoordinate),
+                tr[!names(tr) %in% c("trackData", "trackType", "region",
+                                     "referenceCoordinate", "labelAccuracy",
+                                     "bwFiles")]
+            )
         }
         pL[[i]] <- switch(
             tr$trackType,
@@ -350,7 +373,8 @@ plotRegion <- function(
             Lollipop = do.call(plotReadsLollipop, args),
             Heatmap = do.call(plotReadsHeatmap, args),
             GenomicRegion = do.call(plotGenomicRegions, args),
-            GenomicRegions = do.call(plotGenomicRegions, args)
+            GenomicRegions = do.call(plotGenomicRegions, args),
+            BigWig = do.call(plotBigWig, args)
         )
     }
 
@@ -372,6 +396,122 @@ plotRegion <- function(
 
 
 ## plot* functions for plotRegion() -------------------------------------------
+
+#' @param bwFiles A named character vector with paths to one or more bigWig
+#'     files to plot.
+#'
+#' @importFrom cli cli_abort
+#' @importFrom dplyr bind_rows mutate group_by group_modify ungroup select
+#'
+#' @export
+#' @rdname plotRegion
+#'
+plotBigWig <- function(bwFiles,
+                       region,
+                       trackTitle = NULL,
+                       legendTitle = NULL,
+                       showLegend = TRUE,
+                       highlightRegions = NULL,
+                       colors = NULL,
+                       referenceCoordinate = NULL,
+                       labelAccuracy = NULL,
+                       yAxisRange = NULL) {
+
+    .assertVector(x = bwFiles, type = "character")
+    .assertVector(x = names(bwFiles), type = "character")
+    if (any(i <- !file.exists(bwFiles))) {
+        cli_abort("Not all bigWig files exist: {bwFiles[i]}")
+    }
+    .assertPackagesAvailable("BiocIO")
+    .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = showLegend, type = "logical")
+    .assertVector(x = highlightRegions, type = "GRanges",
+                  allowNULL = TRUE)
+    if (!is.null(highlightRegions)) {
+        highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
+                                                      ignore.strand = TRUE,
+                                                      drop.nohit.ranges = TRUE)
+        highlightRegions <- highlightRegions[width(highlightRegions) > 0]
+        # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
+        #                                             ignore.strand = TRUE)
+    }
+    .assertVector(x = colors, type = "character", allowNULL = TRUE)
+    if (!is.null(colors)) {
+        .assertVector(x = names(colors), type = "character")
+        if (!all(names(bwFiles) %in% names(colors))) {
+            cli_abort("Missing color specification for some values")
+        }
+    }
+    .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    .assertVector(x = yAxisRange, type = "numeric", len = 2,
+                  allowNULL = TRUE)
+
+    # Import data and convert to data frames
+    df <- do.call(
+        bind_rows,
+        lapply(structure(names(bwFiles), names = names(bwFiles)),
+               function(nm) {
+                   x <- BiocIO::import(bwFiles[nm], which = region)
+                   y <- as.data.frame(x) |>
+                       mutate(idx = seq_along(seqnames)) |>
+                       group_by(idx) |>
+                       group_modify(~ data.frame(
+                           sample = nm,
+                           chr = .x$seqnames,
+                           position = seq(.x$start, .x$end),
+                           strand = .x$strand,
+                           value = .x$score)) |>
+                       ungroup() |>
+                       select(position, sample, value)
+                   bind_rows(
+                       data.frame(position = min(y$position),
+                                  sample = nm,
+                                  value = 0),
+                       y,
+                       data.frame(position = max(y$position),
+                                  sample = nm,
+                                  value = 0)
+                   )
+               }))
+    if (!is.null(referenceCoordinate)) {
+        # shift all ranges
+        df$position <- df$position - referenceCoordinate
+        if (!is.null(highlightRegions)) {
+            highlightRegions <- shift(highlightRegions, -referenceCoordinate)
+        }
+        region <- shift(region, -referenceCoordinate)
+    }
+
+    # create base plot
+    p <- .createBaseplotSummary(df = df,
+                                region = region,
+                                trackTitle = trackTitle,
+                                legendTitle = legendTitle,
+                                showLegend = showLegend,
+                                highlightRegions = highlightRegions,
+                                groupBy = "sample",
+                                colorBy = "sample",
+                                colors = colors,
+                                referenceCoordinate = referenceCoordinate,
+                                labelAccuracy = labelAccuracy,
+                                yAxisLabel = "Score",
+                                yAxisRange = yAxisRange)
+
+    # add geom
+    p <- p + geom_polygon()
+
+    # facet (if there are more than one sample)
+    if (length(unique(df$sample)) > 1) {
+        p <- p + facet_wrap(~ sample, ncol = 1) +
+            theme(strip.background.x = element_blank(),
+                  strip.text.x = element_text(
+                      hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
+    }
+
+    p
+}
 
 #' @param assayName A character or numerical scalar selecting the assay to plot.
 #'     This should be an existing read-level or summary assay, as appropriate
@@ -1382,7 +1522,8 @@ plotGenomicRegions <- function(grl,
         mapping = aes(x = .data[["position"]],
                       y = .data[["value"]],
                       group = .data[[groupBy]],
-                      color = .data[[colorBy]])) +
+                      color = .data[[colorBy]],
+                      fill = .data[[colorBy]])) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ",
@@ -1396,6 +1537,7 @@ plotGenomicRegions <- function(grl,
                                levels(df$position)[nlevels(df$position)])),
              y = yAxisLabel,
              color = ifelse(!is.null(legendTitle), legendTitle, colorBy),
+             fill = ifelse(!is.null(legendTitle), legendTitle, colorBy),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
@@ -1413,7 +1555,8 @@ plotGenomicRegions <- function(grl,
     }
 
     if (!is.null(colors)) {
-        p0 <- p0 + scale_color_manual(values = colors)
+        p0 <- p0 + scale_color_manual(values = colors) +
+            scale_fill_manual(values = colors)
     }
 
     if (!is.null(highlightRegions)) {
