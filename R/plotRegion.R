@@ -454,7 +454,7 @@ plotBigWig <- function(bwFiles,
         lapply(structure(names(bwFiles), names = names(bwFiles)),
                function(nm) {
                    x <- BiocIO::import(bwFiles[nm], which = region)
-                   y <- as.data.frame(x) |>
+                   as.data.frame(x) |>
                        mutate(idx = seq_along(seqnames)) |>
                        group_by(idx) |>
                        group_modify(~ data.frame(
@@ -465,15 +465,6 @@ plotBigWig <- function(bwFiles,
                            value = .x$score)) |>
                        ungroup() |>
                        select(position, sample, value)
-                   bind_rows(
-                       data.frame(position = min(y$position),
-                                  sample = nm,
-                                  value = 0),
-                       y,
-                       data.frame(position = max(y$position),
-                                  sample = nm,
-                                  value = 0)
-                   )
                }))
     if (!is.null(referenceCoordinate)) {
         # shift all ranges
@@ -485,6 +476,11 @@ plotBigWig <- function(bwFiles,
     }
 
     # create base plot
+    if (is.null(yAxisRange)) {
+        yAxisRange <- c(0, NA)
+    } else {
+        yAxisRange[1] <- 0
+    }
     p <- .createBaseplotSummary(df = df,
                                 region = region,
                                 trackTitle = trackTitle,
@@ -500,7 +496,7 @@ plotBigWig <- function(bwFiles,
                                 yAxisRange = yAxisRange)
 
     # add geom
-    p <- p + geom_polygon()
+    p <- p + geom_area()
 
     # facet (if there are more than one sample)
     if (length(unique(df$sample)) > 1) {
