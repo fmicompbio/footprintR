@@ -422,6 +422,9 @@ plotBigWig <- function(bwFiles,
     if (any(i <- !file.exists(bwFiles))) {
         cli_abort("Not all bigWig files exist: {bwFiles[i]}")
     }
+    if (any(i <- duplicated(names(bwFiles)))) {
+        cli_abort("Duplicated file names: {unique(names(bwFiles)[i])}")
+    }
     .assertPackagesAvailable("BiocIO")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
