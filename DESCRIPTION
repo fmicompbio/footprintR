@@ -50,6 +50,7 @@ Imports:
 Suggests:
     BiocManager,
     ComplexUpset,
+    e1071,
     edgeR,
     knitr,
     MatrixGenerics,
