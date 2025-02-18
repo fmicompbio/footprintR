@@ -399,6 +399,8 @@ plotRegion <- function(
 
 #' @param bwFiles A named character vector with paths to one or more bigWig
 #'     files to plot.
+#' @param yAxisLabel A character scalar providing the label to use for the
+#'     y-axis.
 #'
 #' @importFrom cli cli_abort
 #' @importFrom dplyr bind_rows mutate group_by group_modify ungroup select
@@ -410,6 +412,7 @@ plotBigWig <- function(bwFiles,
                        region,
                        trackTitle = NULL,
                        legendTitle = NULL,
+                       yAxisLabel = "Score",
                        showLegend = TRUE,
                        highlightRegions = NULL,
                        colors = NULL,
@@ -428,6 +431,7 @@ plotBigWig <- function(bwFiles,
     .assertPackagesAvailable("BiocIO")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = yAxisLabel, type = "character", allowNULL = FALSE)
     .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
@@ -495,7 +499,7 @@ plotBigWig <- function(bwFiles,
                                 colors = colors,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
-                                yAxisLabel = "Score",
+                                yAxisLabel = yAxisLabel,
                                 yAxisRange = yAxisRange)
 
     # add geom
@@ -589,6 +593,7 @@ plotReadsLollipop <- function(se,
                               modbaseSpace = FALSE,
                               trackTitle = NULL,
                               legendTitle = NULL,
+                              yAxisLabel = "Reads",
                               showLegend = TRUE,
                               highlightRegions = NULL,
                               footprintColumns = NULL,
@@ -602,6 +607,7 @@ plotReadsLollipop <- function(se,
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, modbaseSpace = modbaseSpace,
         trackTitle = trackTitle, legendTitle = legendTitle,
+        yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
         footprintColumns = footprintColumns, footprintColors = footprintColors,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
@@ -620,6 +626,7 @@ plotReadsLollipop <- function(se,
                               trackTitle = trackTitle,
                               legendTitle = ifelse(!is.null(legendTitle),
                                                    legendTitle, assayName),
+                              yAxisLabel = yAxisLabel,
                               showLegend = showLegend,
                               highlightRegions = argL$highlightRegions,
                               facetBy = facetBy,
@@ -713,6 +720,7 @@ plotReadsHeatmap <- function(se,
                              interpolate = FALSE,
                              trackTitle = NULL,
                              legendTitle = NULL,
+                             yAxisLabel = "Reads",
                              showLegend = TRUE,
                              highlightRegions = NULL,
                              footprintColumns = NULL,
@@ -726,6 +734,7 @@ plotReadsHeatmap <- function(se,
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, modbaseSpace = modbaseSpace,
         trackTitle = trackTitle, legendTitle = legendTitle,
+        yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
         footprintColumns = footprintColumns, footprintColors = footprintColors,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
@@ -746,6 +755,7 @@ plotReadsHeatmap <- function(se,
                               trackTitle = trackTitle,
                               legendTitle = ifelse(!is.null(legendTitle),
                                                    legendTitle, assayName),
+                              yAxisLabel = yAxisLabel,
                               showLegend = showLegend,
                               highlightRegions = argL$highlightRegions,
                               facetBy = facetBy,
@@ -868,6 +878,7 @@ plotSummaryPointSmooth <- function(se,
                                    modbaseSpace = FALSE,
                                    trackTitle = NULL,
                                    legendTitle = NULL,
+                                   yAxisLabel = assayName,
                                    showLegend = TRUE,
                                    highlightRegions = NULL,
                                    groupBy = "sample",
@@ -898,6 +909,7 @@ plotSummaryPointSmooth <- function(se,
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = yAxisLabel, type = "character")
     .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GRanges",
                   allowNULL = TRUE)
@@ -954,7 +966,7 @@ plotSummaryPointSmooth <- function(se,
                                 colors = colors,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
-                                yAxisLabel = assayName,
+                                yAxisLabel = yAxisLabel,
                                 yAxisRange = yAxisRange)
 
     # add points
@@ -1221,7 +1233,8 @@ plotGenomicRegions <- function(grl,
 #' @importFrom cli cli_abort
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
                                      orderReads, modbaseSpace, trackTitle,
-                                     legendTitle, showLegend, highlightRegions,
+                                     legendTitle, yAxisLabel,
+                                     showLegend, highlightRegions,
                                      footprintColumns, footprintColors,
                                      facetBy, adjustFacetHeight,
                                      referenceCoordinate, labelAccuracy,
@@ -1239,6 +1252,7 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
+    .assertScalar(x = yAxisLabel, type = "character")
     .assertScalar(x = showLegend, type = "logical")
     .assertVector(x = highlightRegions, type = "GRanges", allowNULL = TRUE)
     .assertVector(x = footprintColumns, type = "character", allowNULL = TRUE,
@@ -1631,6 +1645,7 @@ plotGenomicRegions <- function(grl,
                                  region,
                                  trackTitle,
                                  legendTitle,
+                                 yAxisLabel,
                                  showLegend,
                                  highlightRegions,
                                  facetBy,
@@ -1655,7 +1670,7 @@ plotGenomicRegions <- function(grl,
                                as.character(seqnames(region)),
                                ":", levels(df$position)[1], "-",
                                levels(df$position)[nlevels(df$position)])),
-             y = "Reads",
+             y = yAxisLabel,
              fill = legendTitle,
              title = trackTitle) +
         theme_bw() +

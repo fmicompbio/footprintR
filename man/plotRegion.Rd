@@ -24,6 +24,7 @@ plotBigWig(
   region,
   trackTitle = NULL,
   legendTitle = NULL,
+  yAxisLabel = "Score",
   showLegend = TRUE,
   highlightRegions = NULL,
   colors = NULL,
@@ -43,6 +44,7 @@ plotReadsLollipop(
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
+  yAxisLabel = "Reads",
   showLegend = TRUE,
   highlightRegions = NULL,
   footprintColumns = NULL,
@@ -64,6 +66,7 @@ plotReadsHeatmap(
   interpolate = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
+  yAxisLabel = "Reads",
   showLegend = TRUE,
   highlightRegions = NULL,
   footprintColumns = NULL,
@@ -88,6 +91,7 @@ plotSummaryPointSmooth(
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
+  yAxisLabel = assayName,
   showLegend = TRUE,
   highlightRegions = NULL,
   groupBy = "sample",
@@ -185,6 +189,9 @@ this will be the title of the track fill/color legend. If \code{NULL},
 the name of the assay (\code{assayName}, for heatmaps and lollipop plots)
 \code{"Sample"} (for summary plots), or \code{"strand"} (for genomic
 region plots) will be used.}
+
+\item{yAxisLabel}{A character scalar providing the label to use for the
+y-axis.}
 
 \item{showLegend}{A logical scalar, indicating whether or not to display
 the legend for the track.}

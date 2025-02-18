@@ -714,15 +714,15 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
-                           linewidthTiles = 0.25),
+                           linewidthTiles = 0.25, yAxisLabel = "MyAxis"),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = NULL, facetBy = "modbase",
-                           size = 2, stroke = 0.5),
+                           size = 2, stroke = 0.5, yAxisLabel = "Axis2"),
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
-                           highlightRegions = grh,
+                           highlightRegions = grh, yAxisLabel = "Smooth",
                            arglistSmooth = list(linewidth = 2)))) +
         plot_layout(heights = c(3, 3, 2))
     expect_s3_class(p, "ggplot")
