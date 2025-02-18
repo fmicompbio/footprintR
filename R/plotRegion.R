@@ -506,7 +506,9 @@ plotBigWig <- function(bwFiles,
                       hjust = 0, margin = margin(t = 0, r = 0, b = 2, l = 0)))
     }
 
-    p
+    # Remove top/right axes/boundaries
+    p + theme(panel.border = element_blank(),
+              axis.line = element_line(lineend = "square"))
 }
 
 #' @param assayName A character or numerical scalar selecting the assay to plot.
