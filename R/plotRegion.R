@@ -101,6 +101,8 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'     positions along the genomic axis. Will be passed to
 #'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
+#' @param suppressTickLabels Logical scalar. If \code{TRUE}, suppress x-axis
+#'     tick labels for all but the last panel.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
@@ -183,7 +185,8 @@ plotRegion <- function(
         modbaseSpace = FALSE,
         sequenceContext = NULL,
         referenceCoordinate = NULL,
-        labelAccuracy = NULL) {
+        labelAccuracy = NULL,
+        suppressTickLabels = FALSE) {
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
@@ -382,6 +385,9 @@ plotRegion <- function(
     if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
         for (i in seq.int(length(pL) - 1L)) {
             pL[[i]] <- pL[[i]] + labs(x = element_blank())
+            if (suppressTickLabels) {
+                pL[[i]] <- pL[[i]] + theme(axis.text.x = element_blank())
+            }
         }
     }
     p <- wrap_plots(pL, ncol = 1)

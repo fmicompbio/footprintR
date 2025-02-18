@@ -16,7 +16,8 @@ plotRegion(
   modbaseSpace = FALSE,
   sequenceContext = NULL,
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  suppressTickLabels = FALSE
 )
 
 plotBigWig(
@@ -177,6 +178,9 @@ genomic positions are used. Ignored if \code{modbaseSpace} is
 positions along the genomic axis. Will be passed to
 \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 value will be derived from \code{region}.}
+
+\item{suppressTickLabels}{Logical scalar. If \code{TRUE}, suppress x-axis
+tick labels for all but the last panel.}
 
 \item{bwFiles}{A named character vector with paths to one or more bigWig
 files to plot.}
