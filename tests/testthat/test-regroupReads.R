@@ -9,6 +9,8 @@ test_that("read regrouping works", {
                                              pos = c(6940000, 6940500)),
                      BPPARAM = BiocParallel::SerialParam())
     se <- addReadStats(se, name = "QC")
+    wgt <- rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), c(15, 140, 15))
+    se <- addFootprints(se, wgt, thresh = 0.05, name = "nucl")
     # define read groups
     groups <- list(g1 = c("s1-233e48a7-f379-4dcf-9270-958231125563",
                           "s2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8"),
