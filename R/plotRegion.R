@@ -318,7 +318,7 @@ plotRegion <- function(
         assays(se) <- assays(se)[assaysInUse]
     )
 
-    # subset se
+    # subset positions in SE (respecting the strand of the region)
     se <- subsetByOverlaps(x = se, ranges = region)
     se <- .keepPositionsBySequenceContext(
         se = se, sequenceContext = sequenceContext)
@@ -577,6 +577,7 @@ plotBigWig <- function(bwFiles,
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
+#' @importFrom dplyr filter
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -626,6 +627,19 @@ plotReadsLollipop <- function(se,
                               referenceCoordinate = argL$referenceCoordinate,
                               labelAccuracy = labelAccuracy)
 
+    # add segments (round 1) - need to keep this before the footprints to
+    # make sure that the read ordering is respected
+    if (drawRead) {
+        dfRead <- .summarizePlotdataPerRead(
+            df, groupVars = union(facetBy, "sample"))
+        p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
+                              mapping = aes(
+                                  x = .data[["start"]],
+                                  y = .data[["plotRow"]],
+                                  xend = .data[["end"]]
+                              ), color = "transparent")
+    }
+
     # add footprints
     for (fpc in footprintColumns) {
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
@@ -633,7 +647,7 @@ plotReadsLollipop <- function(se,
         if (nrow(fp) > 0) {
             p <- p +
                 geom_tile(
-                    data = fp,
+                    data = fp |> dplyr::filter(!is.na(.data$plotRow)),
                     mapping = aes(x = (as.numeric(.data$start) +
                                            as.numeric(.data$end)) / 2,
                                   y = .data$plotRow,
@@ -646,10 +660,9 @@ plotReadsLollipop <- function(se,
         }
     }
 
-    # add segments
+    # add segments (round 2) - same data as above, just make sure that it
+    # ends up on top of the footprints
     if (drawRead) {
-        dfRead <- .summarizePlotdataPerRead(
-            df, groupVars = union(facetBy, "sample"))
         p <- p + geom_segment(data = dfRead, inherit.aes = FALSE,
                               mapping = aes(
                                   x = .data[["start"]],
@@ -688,6 +701,7 @@ plotReadsLollipop <- function(se,
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
+#' @importFrom dplyr filter
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -762,7 +776,7 @@ plotReadsHeatmap <- function(se,
         if (nrow(fp) > 0) {
             p <- p +
                 geom_tile(
-                    data = fp,
+                    data = fp |> dplyr::filter(!is.na(.data$plotRow)),
                     mapping = aes(x = (as.numeric(.data$start) +
                                            as.numeric(.data$end)) / 2,
                                   y = .data$plotRow,

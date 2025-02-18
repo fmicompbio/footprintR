@@ -392,6 +392,27 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 3, 1, 2))
     expect_s3_class(p, "ggplot")
 
+    ## ... define the region including strand
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900:-", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA",
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, footprintColumns = "nucleosome"),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA",
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, footprintColumns = "nucleosome",
+                           footprintColors = c(nucleosome = "cyan")),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = FALSE, labelSize = 3,
+                           labelPosition = "above", legendTitle = NULL),
+                      list(trackData = "Nvalid", trackType = "Smooth",
+                           showLegend = FALSE,
+                           highlightRegions = grh))) +
+        plot_layout(heights = c(3, 3, 1, 2))
+    expect_s3_class(p, "ggplot")
+
     ## ... interpolate
     p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
