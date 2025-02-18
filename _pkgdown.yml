@@ -30,6 +30,8 @@ reference:
   - filterPositions
   - filterReads
   - subsetReads
+  - regroupReads
+  - regroupReadsByColData
 - title: Footprint identification
   contents:
   - addFootprints
@@ -38,6 +40,8 @@ reference:
 - title: Score (differential) modifications genome-wide
   contents:
   - quantifyWindowsInRegion
+  - sumNmodNvalid
+  - phasingScoreFourier
   - getDifferentiallyModifiedWindows
   - fuseWindows
   - scanForHighScoringRegions
