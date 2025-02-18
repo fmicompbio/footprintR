@@ -51,6 +51,7 @@ Suggests:
     BiocIO,
     BiocManager,
     ComplexUpset,
+    e1071,
     edgeR,
     knitr,
     MatrixGenerics,
