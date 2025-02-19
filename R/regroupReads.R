@@ -109,13 +109,24 @@ regroupReads <- function(se, readGroups) {
                        modbase = unlist(modbase),
                        n_reads = lengths(readGroups))
     for (rlc in rlCols) {
-        tmp <- do.call(rbind, colData(se)[[rlc]])
-        cdata[[rlc]] <- lapply(structure(names(readGroups), names = names(readGroups)),
-                               function(nm) {
-                                   tmp2 <- tmp[readGroups[[nm]], ]
-                                   rownames(tmp2) <- paste0(nm, "-", rownames(tmp2))
-                                   tmp2
-                               })
+        if (is(colData(se)[[rlc]][[1]], "data.frame") ||
+            is(colData(se)[[rlc]][[1]], "DataFrame")) {
+            tmp <- do.call(rbind, colData(se)[[rlc]])
+            cdata[[rlc]] <- S4Vectors::SimpleList(lapply(structure(names(readGroups), names = names(readGroups)),
+                                   function(nm) {
+                                       tmp2 <- tmp[readGroups[[nm]], , drop = FALSE]
+                                       rownames(tmp2) <- paste0(nm, "-", rownames(tmp2))
+                                       tmp2
+                                   }))
+        } else if (is(colData(se)[[rlc]][[1]], "IRangesList")) {
+            irl <- do.call(c, unname(colData(se)[[rlc]]))
+            cdata[[rlc]] <- lapply(structure(names(readGroups), names = names(readGroups)),
+                                   function(nm) {
+                                       tmp2 <- irl[readGroups[[nm]]]
+                                       names(tmp2) <- paste0(nm, "-", names(tmp2))
+                                       tmp2
+                                   })
+        }
     }
 
     # generate SummarizedExperiment object

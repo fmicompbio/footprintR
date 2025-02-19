@@ -349,11 +349,37 @@ test_that("plotRegion works - manual inspection", {
                    ranges = IRanges(start = c(6935830, 6935700, 6935870),
                                     end = c(6935850, 6935820, 6935890)))
 
+    ## bigWig files
+    bwfiles <- c(s1 = system.file("extdata", "ctcf_chip.bw", package = "footprintR"),
+                 s2 = system.file("extdata", "ctcf_chip.bw", package = "footprintR"))
+
     ## NA in grl name
     expect_error(plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = grlNAname, trackType = "GenomicRegion",
                            colorByStrand = TRUE))))
+
+    ## Repeated names in bwfiles
+    expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
+                            tracks = list(list(trackData = bwfiles |> setNames(c("s1", "s1")),
+                                               trackType = "BigWig"))),
+                 "Duplicated file names")
+    ## No names for bwfiles
+    expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
+                            tracks = list(list(trackData = bwfiles |> setNames(NULL),
+                                               trackType = "BigWig"))),
+                 "must be a named character vector")
+    ## Non-existing bwfiles
+    expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
+                            tracks = list(list(trackData = c(s1 = "missing"),
+                                               trackType = "BigWig"))),
+                 "Not all bigWig files exist")
+    ## Missing colors
+    expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
+                            tracks = list(list(trackData = bwfiles,
+                                               trackType = "BigWig",
+                                               colors = c(s1 = "blue")))),
+                 "Missing color specification")
 
     ## Absolute base space, no reference coordinate
     expect_warning(p <- plotRegion(
@@ -392,7 +418,28 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 3, 1, 2))
     expect_s3_class(p, "ggplot")
 
-    ## ... interpolate
+    ## ... define the region including strand
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900:-", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA",
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, footprintColumns = "nucleosome"),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA",
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, footprintColumns = "nucleosome",
+                           footprintColors = c(nucleosome = "cyan")),
+                      list(trackData = grl, trackType = "GenomicRegion",
+                           colorByStrand = FALSE, labelSize = 3,
+                           labelPosition = "above", legendTitle = NULL),
+                      list(trackData = "Nvalid", trackType = "Smooth",
+                           showLegend = FALSE,
+                           highlightRegions = grh))) +
+        plot_layout(heights = c(3, 3, 1, 2))
+    expect_s3_class(p, "ggplot")
+
+    ## ... interpolate, add bigwig tracks
     p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
@@ -404,17 +451,21 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = FALSE, labelSize = 3,
                            labelPosition = "above", legendTitle = NULL),
+                      list(trackData = bwfiles[1], trackType = "BigWig",
+                           highlightRegions = grh, colors = c(s1 = "green")),
+                      list(trackData = bwfiles, trackType = "BigWig",
+                           yAxisRange = c(0, 10), yAxisLabel = "Score2"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
-        plot_layout(heights = c(3, 1, 2))
+        plot_layout(heights = c(3, 1, 2, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## referenceCoordinate = left border of plot, squish+interpolate heatmap
     expect_warning(p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
-        referenceCoordinate = 6935800,
+        seB, region = "chr1:6929237-6929337", modbaseSpace = FALSE,
+        referenceCoordinate = 6929237,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "squish", trackTitle = "Heatmap",
@@ -423,6 +474,8 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL),
+                      list(trackData = bwfiles[1], trackType = "BigWig",
+                           highlightRegions = grh),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample",
@@ -432,7 +485,7 @@ test_that("plotRegion works - manual inspection", {
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
-            plot_layout(heights = c(3, 1, 3, 2)),
+            plot_layout(heights = c(3, 1, 2, 3, 2)),
         "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
 
@@ -686,22 +739,36 @@ test_that("plotRegion works - manual inspection", {
         "Plotting in `modbaseSpace` is not allowed"), "the standard deviation is zero")
     expect_s3_class(p, "ggplot")
 
-    ## ... with only smooth
-    p <- plotRegion(
+    ## modbaseSpace = TRUE, bigwig -> set modbaseSpace to FALSE
+    expect_warning(p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
+                      list(trackData = bwfiles, trackType = "BigWig"))) +
+            plot_layout(heights = c(3, 3)),
+        "Plotting in `modbaseSpace` is not allowed if BigWig")
+    expect_s3_class(p, "ggplot")
+
+    ## ... with only smooth, suppressTickLabels = TRUE
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        suppressTickLabels = TRUE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = NULL, trackTitle = "Heatmap",
+                           facetBy = NULL, interpolate = FALSE,
+                           linewidthTiles = 0.25, yAxisLabel = "MyAxis"),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = NULL, facetBy = "modbase",
-                           size = 2, stroke = 0.5),
+                           size = 2, stroke = 0.5, yAxisLabel = "Axis2"),
                       list(trackData = "Nvalid", trackType = "Smooth",
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
-                           highlightRegions = grh,
+                           highlightRegions = grh, yAxisLabel = "Smooth",
                            arglistSmooth = list(linewidth = 2)))) +
         plot_layout(heights = c(3, 3, 2))
     expect_s3_class(p, "ggplot")
