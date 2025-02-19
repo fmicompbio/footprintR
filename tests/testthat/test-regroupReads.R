@@ -8,9 +8,9 @@ test_that("read regrouping works", {
                      variantPositions = GPos(seqnames = "chr1",
                                              pos = c(6940000, 6940500)),
                      BPPARAM = BiocParallel::SerialParam())
-    se <- addReadStats(se, name = "QC")
+    se <- addReadStats(se, name = "QC", BPPARAM = BiocParallel::SerialParam())
     wgt <- rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), c(15, 140, 15))
-    se <- addFootprints(se, wgt, thresh = 0.05, name = "nucl")
+    se <- addFootprints(se, wgt, thresh = 0.05, name = "nucl", verbose = FALSE)
     # define read groups
     groups <- list(g1 = c("s1-233e48a7-f379-4dcf-9270-958231125563",
                           "s2-d03efe3b-a45b-430b-9cb6-7e5882e4faf8"),
@@ -56,6 +56,10 @@ test_that("read regrouping works", {
                  do.call(rbind, se$QC)[c(1, 5, 3, 4, 2), ])
     expect_equal(colnames(sere), names(groups))
     expect_equal(rowRanges(se), rowRanges(sere))
+    tmp <- do.call(c, unname(se$nucl))[c(1, 5, 3, 4, 2)]
+    names(tmp) <- paste0("g", c(1, 1, 2, 3, 3), "-", names(tmp))
+    expect_equal(tmp, do.call(c, unname(sere$nucl)))
+    expect_equal(lengths(sere$nucl), c(g1 = 2, g2 = 1, g3 = 2))
 
     # ... identical results (with warning) if nonexistent reads are provided
     groups2 <- groups
