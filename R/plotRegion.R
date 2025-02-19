@@ -410,6 +410,7 @@ plotRegion <- function(
 #'
 #' @importFrom cli cli_abort
 #' @importFrom dplyr bind_rows mutate group_by group_modify ungroup select
+#' @importFrom BiocGenerics setdiff
 #'
 #' @export
 #' @rdname plotRegion
@@ -467,9 +468,12 @@ plotBigWig <- function(bwFiles,
         lapply(structure(names(bwFiles), names = names(bwFiles)),
                function(nm) {
                    x <- BiocIO::import(bwFiles[nm], which = region)
+                   y <- BiocGenerics::setdiff(region, x)
+                   mcols(y)$score <- rep(0, length(y))
+                   x <- sort(c(x, y))
                    as.data.frame(x) |>
-                       mutate(idx = seq_along(seqnames)) |>
-                       group_by(idx) |>
+                       mutate(idx = seq_along(.data$seqnames)) |>
+                       group_by(.data$idx) |>
                        group_modify(~ data.frame(
                            sample = nm,
                            chr = .x$seqnames,
@@ -477,7 +481,7 @@ plotBigWig <- function(bwFiles,
                            strand = .x$strand,
                            value = .x$score)) |>
                        ungroup() |>
-                       select(position, sample, value)
+                       select(c("position", "sample", "value"))
                }))
     if (!is.null(referenceCoordinate)) {
         # shift all ranges
