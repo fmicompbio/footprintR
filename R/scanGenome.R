@@ -492,9 +492,59 @@ getDifferentiallyModifiedWindows <- function(se,
     return(gr)
 }
 
-#' Identify regions of interest genome-wide.
+#' Create a \code{GRanges} from a \code{SummarizedExperiment}.
 #'
-#' Given scores or statistical estimates for windows, identify
+#' Create a \code{GRanges} object from \code{rowRanges} and \code{assay} of
+#' a \code{SummarizedExperiment} object.
+#'
+#' @param se \code{RangedSummarizedExperiment} object, for example returned by
+#'     \code{quantifyWindowsInRegion}.
+#' @param assayName Character scalar defining the assay to be extracted from
+#'     \code{se} and set as \code{mcols(...)} of the return value. Thus, each
+#'     column of the assay will become a column in \code{mcols(...)}.
+#'     If missing, the first assay from \code{se} will be used.
+#'
+#' @author Charlotte Soneson, Michael Stadler
+#'
+#' @returns A \code{\link[GenomicRanges]{GRanges}} object, with the selected
+#'     assay in its metadata columns.
+#'
+#' @examples
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+#'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+#'                               region = "chr1:6940000-6955000", modbase = "a",
+#'                               BPPARAM = BiocParallel::SerialParam())
+#' gr <- getRangesWithAssayValues(se, assayName = "Nmod")
+#' gr
+#'
+#' @importFrom SummarizedExperiment rowRanges assay assayNames colnames
+#' @importFrom S4Vectors mcols<-
+#' @importFrom stats setNames
+#'
+#' @export
+getRangesWithAssayValues <- function(se, assayName) {
+    .assertVector(x = se, type = "RangesSummarizedExperiment")
+    if (missing(assayName)) {
+        assayName <- assayNames(se)[1]
+    }
+    .assertScalar(x = assayName, type = "character",
+                  validValues = assayNames(se))
+
+    gr <- rowRanges(se)
+    mcols(gr) <- setNames(assay(se, assayName),
+                          paste0(assayName, ".", colnames(se)))
+
+    return(gr)
+}
+
+#' Process scores of sequential genomic windows.
+#'
+#' Given scores or statistical estimates for sequential windows,
+#' process them according to the \code{scoreAction} argument.
+#' Typical actions are to smooth the scores and possibly identify
 #' regions of interest by fusing consistent neighboring windows
 #' along the genome.
 #'
@@ -502,9 +552,16 @@ getDifferentiallyModifiedWindows <- function(se,
 #'     Ranges correspond to windows, and columns in \code{mcols(x)} to scores.
 #' @param scoreCol Character scalar giving the column name in \code{mcols(x)}
 #'     to use for the analysis.
-#' @param thresh A numeric scalar giving the minimal absolute window score
-#'     (after smoothing, see \code{minperiod} argument) defining a region of
-#'     interest. Higher values make the region detection more stringent.
+#' @param scoreAction A character scalar indicating how to process the
+#'     scores. Currently supported values are:
+#'     \describe{
+#'         \item{pass}{: Do not modify window scores (pass-through).}
+#'         \item{smooth}{: Smooth window scores (\code{minperiod} argument).}
+#'         \item{smoothFuse (default)}{: Smooth window scores, identify high
+#'             scoring elements (\code{thresh} argument) and fuse nearby
+#'             high-scoring elements (\code{maxGap} argument).
+#'         }
+#'     }
 #' @param minperiod Numeric scalar that defines the low-pass
 #'     filter parameter used to smooth the scores for segmentation.
 #'     \code{minperiod} gives the minimal period (in number of windows) for the
@@ -513,6 +570,9 @@ getDifferentiallyModifiedWindows <- function(se,
 #'     neighboring windows. The filtering is performed using
 #'     \code{\link[signal]{filtfilt}} and thus requires the \code{signal}
 #'     package to be installed.
+#' @param thresh A numeric scalar giving the minimal absolute window score
+#'     (after smoothing, see \code{minperiod} argument) defining a region of
+#'     interest. Higher values make the region detection more stringent.
 #' @param maxGap Numeric scalar giving the maximal gap between neighboring
 #'     windows, in base pairs, from the end of the first to the start of the
 #'     next, to be fused into a single region of interest.
@@ -520,8 +580,10 @@ getDifferentiallyModifiedWindows <- function(se,
 #'
 #' @author Sebastien Smallwood, Charlotte Soneson, Michael Stadler
 #'
-#' @returns A \code{\link[GenomicRanges]{GRanges}} object with identified
-#'     regions of interest.
+#' @returns A \code{\link[GenomicRanges]{GRanges}} object. For \code{scoreAction}
+#'     equal to \code{"pass"} or \code{"smooth"}, the returned object has the same
+#'     dimensions as the input object \code{x}. For \code{scoreAction="smoothFuse"},
+#'     the returned object will only contain thresholded, fused regions.
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
@@ -535,7 +597,7 @@ getDifferentiallyModifiedWindows <- function(se,
 #' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
 #' gr
 #'
-#' grFused <- fuseWindows(x = gr, scoreCol = "logFC", thresh = 5.0)
+#' grFused <- processWindowScores(x = gr, scoreCol = "logFC", thresh = 5.0)
 #' grFused
 #'
 #' @importFrom GenomicRanges GRanges
@@ -547,75 +609,92 @@ getDifferentiallyModifiedWindows <- function(se,
 #' @importFrom rlang .data
 #'
 #' @export
-fuseWindows <- function(x,
-                        scoreCol = "dirNegLog10PValue",
-                        thresh = 3,
-                        minperiod = 3,
-                        maxGap = 50,
-                        verbose = FALSE) {
+processWindowScores <- function(
+        x,
+        scoreCol = "dirNegLog10PValue",
+        scoreAction = c("smoothFuse", "smooth", "pass"),
+        minperiod = 3,
+        thresh = 3,
+        maxGap = 50,
+        verbose = FALSE) {
     # check argument values
     .assertVector(x = x, type = "GRanges")
     .assertScalar(x = scoreCol, type = "character", validValues = colnames(mcols(x)))
+    scoreAction <- match.arg(scoreAction)
     .assertScalar(x = thresh, type = "numeric", rngExcl = c(0, Inf))
     .assertScalar(x = minperiod, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = maxGap, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "signal")
 
-    # smooth scores
-    .message("smoothing windows")
-    xdf <- as.data.frame(x) |>
-        mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
-                                          seqnames[-1] != seqnames[-length(x)])))) |>
-        group_by(.data$chunkId) |>
-        mutate(sscore = .filterScores(.data[[scoreCol]],
-                                      minperiod = minperiod,
-                                      maxperiod = Inf,
-                                      type = "low")) |>
-        ungroup()
+    # do we just pass-through the input?
+    if (identical(scoreAction, "pass")) {
+        .message("passing-through window scores")
+        gr <- x
 
-    # threshold
-    .message("thresholding smoothed scores")
-    xdfSel <- xdf |>
-        dplyr::filter(abs(.data$sscore) >= thresh) |>
-        mutate(direction = factor(ifelse(sign(.data$sscore) == -1, "down", "up"),
-                                  levels = c("down", "up")))
-
-    # summarise
-    .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
-    grL <- xdfSel |>
-        group_by(.data$direction) |>
-        group_split() |>
-        lapply(function(x) {
-            gr1 <- as(x, "GRanges") |>
-                reduce(min.gapwidth = maxGap)
-            ov1 <- findOverlaps(query = as(x, "GRanges"),
-                                subject = gr1, type = "within")
-            mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- as.vector(
-                tapply(X = x$sscore[queryHits(ov1)],
-                       INDEX = subjectHits(ov1),
-                       FUN = mean))
-            mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
-            gr1$direction <- x$direction[1]
-            gr1
-        })
-    if (sum(lengths(grL)) > 0) {
-        gr <- sort(sort(do.call(c, grL)), ignore.strand = TRUE)
-        ov <- findOverlaps(query = x, subject = gr, type = "within")
-        mcols(gr)[[scoreCol]] <- as.vector(
-            tapply(X = xdf$sscore[queryHits(ov)],
-                   INDEX = subjectHits(ov),
-                   FUN = mean))
-        mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
     } else {
-        gr <- GRanges()
-        mcols(gr) <- DataFrame(thresh = numeric(0),
-                               numWindowsThresh = integer(0),
-                               direction = factor(character(0),
-                                                  levels = c("down", "up")),
-                               score = numeric(0),
-                               numWindows = numeric(0))
-        colnames(mcols(gr))[c(1,4)] <- paste0(scoreCol, c("Thresh", ""))
+        # smooth scores
+        .message("smoothing windows")
+        xdf <- as.data.frame(x) |>
+            mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
+                                              seqnames[-1] != seqnames[-length(x)])))) |>
+            group_by(.data$chunkId) |>
+            mutate(sscore = .filterScores(.data[[scoreCol]],
+                                          minperiod = minperiod,
+                                          maxperiod = Inf,
+                                          type = "low")) |>
+            ungroup()
+
+        if (identical(scoreAction, "smooth")) {
+            gr <- x
+            mcols(gr)[[scoreCol]] <- xdf$sscore
+
+        } else if (identical(scoreAction, "smoothFuse")) {
+            # threshold
+            .message("thresholding smoothed scores")
+            xdfSel <- xdf |>
+                dplyr::filter(abs(.data$sscore) >= thresh) |>
+                mutate(direction = factor(ifelse(sign(.data$sscore) == -1,
+                                                 "negative", "positive"),
+                                          levels = c("negative", "positive")))
+
+            # summarise
+            .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
+            grL <- xdfSel |>
+                group_by(.data$direction) |>
+                group_split() |>
+                lapply(function(x) {
+                    gr1 <- as(x, "GRanges") |>
+                        reduce(min.gapwidth = maxGap)
+                    ov1 <- findOverlaps(query = as(x, "GRanges"),
+                                        subject = gr1, type = "within")
+                    mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- as.vector(
+                        tapply(X = x$sscore[queryHits(ov1)],
+                               INDEX = subjectHits(ov1),
+                               FUN = mean))
+                    mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
+                    gr1$direction <- x$direction[1]
+                    gr1
+                })
+            if (sum(lengths(grL)) > 0) {
+                gr <- sort(sort(do.call(c, grL)), ignore.strand = TRUE)
+                ov <- findOverlaps(query = x, subject = gr, type = "within")
+                mcols(gr)[[scoreCol]] <- as.vector(
+                    tapply(X = xdf$sscore[queryHits(ov)],
+                           INDEX = subjectHits(ov),
+                           FUN = mean))
+                mcols(gr)[["numWindows"]] <- tabulate(subjectHits(ov))
+            } else {
+                gr <- GRanges()
+                mcols(gr) <- DataFrame(thresh = numeric(0),
+                                       numWindowsThresh = integer(0),
+                                       direction = factor(character(0),
+                                                          levels = c("negative", "positive")),
+                                       score = numeric(0),
+                                       numWindows = numeric(0))
+                colnames(mcols(gr))[c(1,4)] <- paste0(scoreCol, c("Thresh", ""))
+            }
+        }
     }
 
     return(gr)
@@ -636,7 +715,7 @@ fuseWindows <- function(x,
 #' the latter consumes the output of the former.
 #'
 #' @inheritParams quantifyWindowsInRegion
-#' @inheritParams fuseWindows
+#' @inheritParams processWindowScores
 #'
 #' @param chromosomeLengths A named character vector with lengths of
 #'     chromosomes to be analyzed, for example the return value of
@@ -697,8 +776,9 @@ scanForHighScoringRegions <- function(bamfiles,
                                       windowSize = 24,
                                       windowStep = round(windowSize/2),
                                       scoreCol = "dirNegLog10PValue",
-                                      thresh = 3,
+                                      scoreAction = "smoothFuse",
                                       minperiod = 3,
+                                      thresh = 3,
                                       maxGap = 50,
                                       BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                                       verbose = FALSE) {
@@ -748,12 +828,13 @@ scanForHighScoringRegions <- function(bamfiles,
         grScores <- do.call(scoreFunction, c(list(quote(se)), scoreFunctionArgs))
 
         # fuse windows
-        grScoresFused <- fuseWindows(x = grScores,
-                                     scoreCol = scoreCol,
-                                     thresh = thresh,
-                                     minperiod = minperiod,
-                                     maxGap = maxGap,
-                                     verbose = verbose)
+        grScoresFused <- processWindowScores(x = grScores,
+                                             scoreCol = scoreCol,
+                                             scoreAction = scoreAction,
+                                             minperiod = minperiod,
+                                             thresh = thresh,
+                                             maxGap = maxGap,
+                                             verbose = verbose)
 
         # return fused windows
         return(grScoresFused)

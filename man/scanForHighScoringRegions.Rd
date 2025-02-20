@@ -23,8 +23,9 @@ scanForHighScoringRegions(
   windowSize = 24,
   windowStep = round(windowSize/2),
   scoreCol = "dirNegLog10PValue",
-  thresh = 3,
+  scoreAction = "smoothFuse",
   minperiod = 3,
+  thresh = 3,
   maxGap = 50,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
@@ -115,9 +116,16 @@ consecutive windows, \code{windowStep} should be equal to
 \item{scoreCol}{Character scalar giving the column name in \code{mcols(x)}
 to use for the analysis.}
 
-\item{thresh}{A numeric scalar giving the minimal absolute window score
-(after smoothing, see \code{minperiod} argument) defining a region of
-interest. Higher values make the region detection more stringent.}
+\item{scoreAction}{A character scalar indicating how to process the
+scores. Currently supported values are:
+\describe{
+\item{pass}{: Do not modify window scores (pass-through).}
+\item{smooth}{: Smooth window scores (\code{minperiod} argument).}
+\item{smoothFuse (default)}{: Smooth window scores, identify high
+scoring elements (\code{thresh} argument) and fuse nearby
+high-scoring elements (\code{maxGap} argument).
+}
+}}
 
 \item{minperiod}{Numeric scalar that defines the low-pass
 filter parameter used to smooth the scores for segmentation.
@@ -127,6 +135,10 @@ default value is suitable to retain signals that occur in three
 neighboring windows. The filtering is performed using
 \code{\link[signal]{filtfilt}} and thus requires the \code{signal}
 package to be installed.}
+
+\item{thresh}{A numeric scalar giving the minimal absolute window score
+(after smoothing, see \code{minperiod} argument) defining a region of
+interest. Higher values make the region detection more stringent.}
 
 \item{maxGap}{Numeric scalar giving the maximal gap between neighboring
 windows, in base pairs, from the end of the first to the start of the

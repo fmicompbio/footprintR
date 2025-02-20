@@ -158,13 +158,13 @@ test_that("genome scanning works (helper functions)", {
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
 
-    ## fuseWindows
-    expect_error(fuseWindows(x = "error"))
-    expect_error(fuseWindows(x = gr1, scoreCol = "error"))
-    expect_length(fuseWindows(x = gr1[numeric(0)]), 0L)
+    ## processWindowScores
+    expect_error(processWindowScores(x = "error"))
+    expect_error(processWindowScores(x = gr1, scoreCol = "error"))
+    expect_length(processWindowScores(x = gr1[numeric(0)]), 0L)
 
     suppressMessages(expect_message(
-        gr1Fused <- fuseWindows(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
+        gr1Fused <- processWindowScores(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
     ))
     expect_s4_class(gr1Fused, "GRanges")
     expect_length(gr1Fused, 5L)
@@ -172,7 +172,7 @@ test_that("genome scanning works (helper functions)", {
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
     expect_identical(sum(width(gr1Fused)), 768L)
 
-    gr2Fused <- fuseWindows(x = gr2, scoreCol = "logFC", thresh = 5.0)
+    gr2Fused <- processWindowScores(x = gr2, scoreCol = "logFC", thresh = 5.0)
     expect_s4_class(gr2Fused, "GRanges")
     expect_length(gr2Fused, 5L)
     expect_identical(colnames(GenomicRanges::mcols(gr2Fused)),

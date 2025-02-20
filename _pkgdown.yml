@@ -43,7 +43,8 @@ reference:
   - sumNmodNvalid
   - phasingScoreFourier
   - getDifferentiallyModifiedWindows
-  - fuseWindows
+  - getRangesWithAssayValues
+  - processWindowScores
   - scanForHighScoringRegions
 - title: Visualization
   contents:
