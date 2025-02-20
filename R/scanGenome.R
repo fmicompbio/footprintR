@@ -526,7 +526,7 @@ getDifferentiallyModifiedWindows <- function(se,
 #'
 #' @export
 getRangesWithAssayValues <- function(se, assayName) {
-    .assertVector(x = se, type = "RangesSummarizedExperiment")
+    .assertVector(x = se, type = "RangedSummarizedExperiment")
     if (missing(assayName)) {
         assayName <- assayNames(se)[1]
     }
