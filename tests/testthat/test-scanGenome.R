@@ -55,6 +55,50 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::assay(res, "Nvalid")[1, ],
                      colSums(SummarizedExperiment::assay(se0, "Nvalid")))
 
+    ## phasingScoreFourier
+    rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
+                          windowStep = 1e6, chromName = "chr1",
+                          chromLength = 70e6)
+    se1 <- se0
+    SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
+    expect_error(phasingScoreFourier(se1, rg), ".se. must contain assays")
+    expect_error(phasingScoreFourier(
+        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 3:4))),
+        "have the same width")
+    expect_error(phasingScoreFourier(
+        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 6)),
+        numCoef = 5),
+        "is not divisible")
+    expect_error(phasingScoreFourier(se0, rg[c(1, 3, 4)]),
+                 "need to be regularly spaced")
+    windowgr <- GenomicRanges::GRanges(
+        seqnames = "chr1",
+        ranges = IRanges::IRanges(start = seq(0, 11) * 183 + 6930001,
+                                  width = 4 * 183))
+    res0 <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
+    res1 <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr),
+                                gr = windowgr, numCoef = 5)
+    expect_identical(dim(res0), c(0L, BiocGenerics::ncol(se0)))
+    expect_identical(dim(res1), c(length(windowgr), BiocGenerics::ncol(se0)))
+    expect_identical(SummarizedExperiment::assayNames(res0),
+                     c("phasingScoreAbs", "phasingScoreRel"))
+    expect_identical(SummarizedExperiment::assayNames(res1),
+                     c("phasingScoreAbs", "phasingScoreRel"))
+    expect_identical(SummarizedExperiment::rowRanges(res1), windowgr)
+    ass1 <- SummarizedExperiment::assay(res1, "phasingScoreAbs")
+    ass2 <- SummarizedExperiment::assay(res1, "phasingScoreRel")
+    expect_type(ass1, "double")
+    expect_identical(ass1[, 1], ass1[, 2])
+    expect_identical(ass1[, 3], ass1[, 4])
+    expect_true(all(ass1 >= 0))
+    expect_type(ass2, "double")
+    expect_identical(ass2[, 1], ass2[, 2])
+    expect_identical(ass2[, 3], ass2[, 4])
+    expect_true(all(ass2 >= 0 & ass2 <= 1.0))
+    corr1 <- cor(ass1[, c(1, 3)], ass2[, c(1, 3)])
+    expect_equal(which.max(corr1[, 1]), 1L, ignore_attr = TRUE)
+    expect_equal(which.max(corr1[, 2]), 2L, ignore_attr = TRUE)
+
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
                                          region = "chr1:6940000-6955000",
@@ -158,10 +202,34 @@ test_that("genome scanning works (helper functions)", {
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
 
+    ## getRangesWithAssayValues
+    resL <- list(getRangesWithAssayValues(se0),
+                 getRangesWithAssayValues(se0, "Nmod"),
+                 getRangesWithAssayValues(se0, "FracMod"))
+    tst <- lapply(resL, \(x) expect_s4_class(x, class = "GRanges"))
+    tst <- lapply(resL, \(x) expect_length(x, nrow(se0)))
+    tst <- lapply(resL, \(x) {
+        xx <- x
+        GenomicRanges::mcols(xx) <- NULL
+        expect_identical(xx, SummarizedExperiment::rowRanges(se0))
+    })
+    expect_identical(as.matrix(GenomicRanges::mcols(resL[[1]])),
+                     SummarizedExperiment::assay(se0, "Nmod"))
+    expect_identical(as.matrix(GenomicRanges::mcols(resL[[2]])),
+                     SummarizedExperiment::assay(se0, "Nmod"))
+    expect_identical(as.matrix(GenomicRanges::mcols(resL[[3]])),
+                     SummarizedExperiment::assay(se0, "FracMod"))
+
     ## processWindowScores
     expect_error(processWindowScores(x = "error"))
     expect_error(processWindowScores(x = gr1, scoreCol = "error"))
     expect_length(processWindowScores(x = gr1[numeric(0)]), 0L)
+
+    expect_identical(processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "pass"), gr1)
+    gr1smooth <- processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "smooth")
+    expect_identical(IRanges::ranges(gr1), IRanges::ranges(gr1smooth))
+    expect_identical(GenomicRanges::mcols(gr1)[, -1], GenomicRanges::mcols(gr1smooth)[, -1])
+    expect_true(cor(GenomicRanges::mcols(gr1)[, 1], GenomicRanges::mcols(gr1smooth)[, 1]) > 0.9)
 
     suppressMessages(expect_message(
         gr1Fused <- processWindowScores(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
