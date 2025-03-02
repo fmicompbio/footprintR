@@ -130,7 +130,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(dim(se1), c(134L, 4L))
     expect_true(all(width(SummarizedExperiment::rowRanges(se1)) == 24L))
     expect_identical(SummarizedExperiment::assayNames(se1),
-                     c("Nmod", "Nvalid"))
+                     c("Nmod", "Nvalid", "FracMod"))
     expect_identical(colSums(SummarizedExperiment::assay(se1, "Nvalid")),
                      c(s1 = 1601, s2 = 1601, s3 = 554, s4 = 554))
     ov <- findOverlaps(query = SummarizedExperiment::rowRanges(se0),
@@ -164,7 +164,7 @@ test_that("genome scanning works (helper functions)", {
                               SummarizedExperiment::rowRanges(se1))
     expect_true(!any(is.na(i)))
     expect_identical(SummarizedExperiment::assayNames(se2),
-                     c("Nmod", "Nvalid"))
+                     c("Nmod", "Nvalid", "FracMod"))
     expect_identical(colSums(SummarizedExperiment::assay(se2, "Nvalid")),
                      c(s1 = 1581, s2 = 1581, s3 = 540, s4 = 540))
     expect_true(all(SummarizedExperiment::assay(se1, "Nmod")[i,] >= SummarizedExperiment::assay(se2, "Nmod")))
@@ -213,12 +213,16 @@ test_that("genome scanning works (helper functions)", {
         GenomicRanges::mcols(xx) <- NULL
         expect_identical(xx, SummarizedExperiment::rowRanges(se0))
     })
+    tmpNmod <- SummarizedExperiment::assay(se0, "Nmod")
+    colnames(tmpNmod) <- paste0("Nmod.", colnames(tmpNmod))
     expect_identical(as.matrix(GenomicRanges::mcols(resL[[1]])),
-                     SummarizedExperiment::assay(se0, "Nmod"))
+                     tmpNmod)
     expect_identical(as.matrix(GenomicRanges::mcols(resL[[2]])),
-                     SummarizedExperiment::assay(se0, "Nmod"))
+                     tmpNmod)
+    tmpFracMod <- SummarizedExperiment::assay(se0, "FracMod")
+    colnames(tmpFracMod) <- paste0("FracMod.", colnames(tmpFracMod))
     expect_identical(as.matrix(GenomicRanges::mcols(resL[[3]])),
-                     SummarizedExperiment::assay(se0, "FracMod"))
+                     tmpFracMod)
 
     ## processWindowScores
     expect_error(processWindowScores(x = "error"))
