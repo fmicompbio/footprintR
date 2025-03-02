@@ -19,7 +19,9 @@ processWindowScores(
 Ranges correspond to windows, and columns in \code{mcols(x)} to scores.}
 
 \item{scoreCol}{Character scalar giving the column name in \code{mcols(x)}
-to use for the analysis.}
+to use for the analysis. For \code{scanForHighScoringRegions}, it can
+be a vector, in which case \code{processWindowScores} will be run for
+each of them and the results will be returned as a list.}
 
 \item{scoreAction}{A character scalar indicating how to process the
 scores. Currently supported values are:

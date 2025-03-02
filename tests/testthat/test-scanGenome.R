@@ -285,4 +285,13 @@ test_that("genome scanning works (wrapper function)", {
                                     modbase = "a", BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(gr, "GRanges")
     expect_length(gr, 38L)
+
+    gr2 <- scanForHighScoringRegions(bamfiles = modbamfiles,
+                                     sampleAnnot = annotdf,
+                                     chromosomeLengths = chrlen,
+                                     scoreCol = c("dirNegLog10PValue", "logFC"),
+                                     modbase = "a", BPPARAM = BiocParallel::SerialParam())
+    expect_s4_class(gr2$dirNegLog10PValue, "GRanges")
+    expect_length(gr2$dirNegLog10PValue, 38L)
+    expect_identical(gr, gr2$dirNegLog10PValue)
 })

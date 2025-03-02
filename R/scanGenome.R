@@ -554,7 +554,9 @@ getRangesWithAssayValues <- function(se, assayName) {
 #' @param x \code{GRanges} object with window-based scores or estimates.
 #'     Ranges correspond to windows, and columns in \code{mcols(x)} to scores.
 #' @param scoreCol Character scalar giving the column name in \code{mcols(x)}
-#'     to use for the analysis.
+#'     to use for the analysis. For \code{scanForHighScoringRegions}, it can
+#'     be a vector, in which case \code{processWindowScores} will be run for
+#'     each of them and the results will be returned as a list.
 #' @param scoreAction A character scalar indicating how to process the
 #'     scores. Currently supported values are:
 #'     \describe{
@@ -752,7 +754,8 @@ processWindowScores <- function(
 #' @author Charlotte Soneson, Michael Stadler
 #'
 #' @returns A \code{\link[GenomicRanges]{GRanges}} object with identified
-#'     regions of interest.
+#'     regions of interest, or a named list of such objects if
+#'     \code{scoreCol} is a vector of length >1.
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
@@ -812,7 +815,7 @@ scanForHighScoringRegions <- function(
     .assertScalar(x = tileSize, type = "numeric", rngExcl = c(0, Inf))
 
     # loop over chromosomes
-    gr <- do.call(c, lapply(names(chromosomeLengths), function(chr) {
+    grL <- lapply(names(chromosomeLengths), function(chr) {
         regs <- .tileChromosome(tileSize = tileSize,
                                 windowSize = windowSize,
                                 windowStep = windowStep,
@@ -844,17 +847,25 @@ scanForHighScoringRegions <- function(
         grScores <- do.call(scoreFunction, c(list(quote(se)), scoreFunctionArgs))
 
         # fuse windows
-        grScoresFused <- processWindowScores(x = grScores,
-                                             scoreCol = scoreCol,
-                                             scoreAction = scoreAction,
-                                             minperiod = minperiod,
-                                             thresh = thresh,
-                                             maxGap = maxGap,
-                                             verbose = verbose)
+        grScoresFused <- lapply(setNames(scoreCol, scoreCol), function(sc) {
+            processWindowScores(x = grScores,
+                                scoreCol = sc,
+                                scoreAction = scoreAction,
+                                minperiod = minperiod,
+                                thresh = thresh,
+                                maxGap = maxGap,
+                                verbose = verbose)
+        })
 
         # return fused windows
         return(grScoresFused)
-    }))
+    })
+    gr <- lapply(setNames(scoreCol, scoreCol), function(sc) {
+        do.call(c, lapply(grL, "[[", sc))
+    })
+    if (length(scoreCol) == 1) {
+        gr <- gr[[1]]
+    }
 
     return(gr)
 }

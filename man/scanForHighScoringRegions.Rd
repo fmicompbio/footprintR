@@ -114,7 +114,9 @@ consecutive windows, \code{windowStep} should be equal to
 \code{windowSize}.}
 
 \item{scoreCol}{Character scalar giving the column name in \code{mcols(x)}
-to use for the analysis.}
+to use for the analysis. For \code{scanForHighScoringRegions}, it can
+be a vector, in which case \code{processWindowScores} will be run for
+each of them and the results will be returned as a list.}
 
 \item{scoreAction}{A character scalar indicating how to process the
 scores. Currently supported values are:
@@ -161,7 +163,8 @@ for reproducible results (see also
 }
 \value{
 A \code{\link[GenomicRanges]{GRanges}} object with identified
-regions of interest.
+regions of interest, or a named list of such objects if
+\code{scoreCol} is a vector of length >1.
 }
 \description{
 Given one or several modBam files and a vector with chromosome lengths,
