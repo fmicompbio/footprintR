@@ -774,6 +774,7 @@ processWindowScores <- function(
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom cli cli_abort
+#' @importFrom stats setNames
 #'
 #' @export
 scanForHighScoringRegions <- function(
