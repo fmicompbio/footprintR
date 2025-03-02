@@ -229,12 +229,21 @@ test_that("genome scanning works (helper functions)", {
     expect_error(processWindowScores(x = gr1, scoreCol = "error"))
     expect_length(processWindowScores(x = gr1[numeric(0)]), 0L)
 
+    # ... pass
     expect_identical(processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "pass"), gr1)
+
+    # ... select
+    grs <- processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "select")
+    expect_identical(gr1$logFC, grs$logFC)
+    expect_identical(colnames(mcols(grs)), "logFC")
+
+    # ... smooth
     gr1smooth <- processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "smooth")
     expect_identical(IRanges::ranges(gr1), IRanges::ranges(gr1smooth))
     expect_identical(GenomicRanges::mcols(gr1)[, -1], GenomicRanges::mcols(gr1smooth)[, -1])
     expect_true(cor(GenomicRanges::mcols(gr1)[, 1], GenomicRanges::mcols(gr1smooth)[, 1]) > 0.9)
 
+    # ... smoothFuse
     suppressMessages(expect_message(
         gr1Fused <- processWindowScores(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
     ))

@@ -119,7 +119,11 @@ to use for the analysis.}
 \item{scoreAction}{A character scalar indicating how to process the
 scores. Currently supported values are:
 \describe{
-\item{pass}{: Do not modify window scores (pass-through).}
+\item{pass}{: Do not modify window scores (pass-through). Note that
+if \code{mcols(x)} has multiple columns, they will all be
+passed through (i.e., \code{scoreCol} is ignored). To return
+only \code{scoreCol}, use \code{select}.}
+\item{select}{: Pass through only \code{scoreCol}.}
 \item{smooth}{: Smooth window scores (\code{minperiod} argument).}
 \item{smoothFuse (default)}{: Smooth window scores, identify high
 scoring elements (\code{thresh} argument) and fuse nearby
