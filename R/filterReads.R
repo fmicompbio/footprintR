@@ -81,6 +81,9 @@
 #'     \code{SummarizedExperiment} object will be filtered according to the
 #'     provided thresholds. If \code{TRUE}, the filter statistics are calculated
 #'     and returned, but the object is not subset.
+#' @param removeAllNApos A logical scalar. If \code{TRUE}, remove all positions
+#'     for which all values in \code{assayName} are \code{NA} after the read
+#'     filtering.
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #' @export
@@ -123,7 +126,8 @@ filterReads <- function(se, assayName = "mod_prob",
                         minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
-                        prune = TRUE, onlyStats = FALSE) {
+                        prune = TRUE, onlyStats = FALSE,
+                        removeAllNApos = TRUE) {
     ## Input checks
     .assertVector(x = se, type = "SummarizedExperiment")
     .checkSEValidity(se)
@@ -141,6 +145,7 @@ filterReads <- function(se, assayName = "mod_prob",
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = onlyStats, type = "logical")
+    .assertScalar(x = removeAllNApos, type = "logical")
 
     ## Initialize sparse logical array for each sample, which will be TRUE
     ## for reads that are filtered out with respect to the different criteria
@@ -225,11 +230,11 @@ filterReads <- function(se, assayName = "mod_prob",
         return(readsToRemove)
     } else {
         sesub <- subsetReads(se = se, reads = lapply(readsToRemove, rownames),
-                             prune = prune, invert = TRUE)
+                             prune = prune, invert = TRUE,
+                             removeAllNApos = removeAllNApos,
+                             assayNameNA = assayName)
         metadata(sesub)$filteredOutReads <- readsToRemove
 
-        ## Remove any positions with all NA values
-        sesub <- .removeAllNAPositions(sesub, assayName = assayName)
         return(sesub)
     }
 }

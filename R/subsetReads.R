@@ -25,11 +25,16 @@
 #' @param invert A logical scalar. If \code{FALSE} (the default), only the reads
 #'     defined by \code{reads} are retained. If \code{invert=TRUE}, all reads
 #'     except the ones in \code{reads} are retained.
+#' @param removeAllNApos A logical scalar. If \code{TRUE}, remove all positions
+#'     for which all values in \code{assayNameNA} are \code{NA} after the read
+#'     subsetting.
+#' @param assayNameNA A character scalar corresponding to the name of a
+#'     read-level assay (if \code{removeAllNApos} is \code{TRUE}).
 #'
 #' @return A subset \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 #'     object.
 #'
-#' @author Michael Stadler
+#' @author Michael Stadler, Charlotte Soneson
 #'
 #' @examples
 #' library(SummarizedExperiment)
@@ -57,7 +62,9 @@
 subsetReads <- function(se,
                         reads,
                         prune = TRUE,
-                        invert = FALSE) {
+                        invert = FALSE,
+                        removeAllNApos = FALSE,
+                        assayNameNA = "mod_prob") {
     # digest arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .checkSEValidity(se, verbose = FALSE)
@@ -69,6 +76,11 @@ subsetReads <- function(se,
     }
     rlAssayColnames <- lapply(assay(se, rlAssays[1]), colnames)
     .assertScalar(x = prune, type = "logical")
+    .assertScalar(x = removeAllNApos, type = "logical")
+    if (removeAllNApos) {
+        .assertScalar(x = assayNameNA, type = "character",
+                      validValues = rlAssays)
+    }
 
     ## make sure that 'reads' is a named list with all samples and
     ## (possibly zero-length) character elements with read identifiers
@@ -164,6 +176,11 @@ subsetReads <- function(se,
         if (!all(keepSamples)) {
             se <- se[, keepSamples]
         }
+    }
+
+    ## remove all-NA positions
+    if (removeAllNApos) {
+        se <- .removeAllNAPositions(se, assayName = assayNameNA)
     }
 
     .checkSEValidity(se, verbose = FALSE)
