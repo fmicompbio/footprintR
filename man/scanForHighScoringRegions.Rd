@@ -181,11 +181,12 @@ modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
-gr <- scanForHighScoringRegions(bamfiles = modbamfiles,
-                                sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
-                                                         group = c("A","A","B","B")),
-                                chromosomeLengths = c(chr1 = 6955000),
-                                modbase = "a", BPPARAM = BiocParallel::SerialParam())
+gr <- scanForHighScoringRegions(
+    bamfiles = modbamfiles,
+    sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
+                             group = c("A","A","B","B")),
+    chromosomeLengths = c(chr1 = 6955000),
+    modbase = "a", BPPARAM = BiocParallel::SerialParam())
 gr
 
 }

@@ -702,7 +702,8 @@ processWindowScores <- function(
                 mcols(gr) <- DataFrame(thresh = numeric(0),
                                        numWindowsThresh = integer(0),
                                        direction = factor(character(0),
-                                                          levels = c("negative", "positive")),
+                                                          levels = c("negative",
+                                                                     "positive")),
                                        score = numeric(0),
                                        numWindows = numeric(0))
                 colnames(mcols(gr))[c(1,4)] <- paste0(scoreCol, c("Thresh", ""))
@@ -758,11 +759,12 @@ processWindowScores <- function(
 #'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
 #'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
-#' gr <- scanForHighScoringRegions(bamfiles = modbamfiles,
-#'                                 sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
-#'                                                          group = c("A","A","B","B")),
-#'                                 chromosomeLengths = c(chr1 = 6955000),
-#'                                 modbase = "a", BPPARAM = BiocParallel::SerialParam())
+#' gr <- scanForHighScoringRegions(
+#'     bamfiles = modbamfiles,
+#'     sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
+#'                              group = c("A","A","B","B")),
+#'     chromosomeLengths = c(chr1 = 6955000),
+#'     modbase = "a", BPPARAM = BiocParallel::SerialParam())
 #' gr
 #'
 #' @importFrom BiocParallel MulticoreParam
@@ -771,30 +773,31 @@ processWindowScores <- function(
 #' @importFrom cli cli_abort
 #'
 #' @export
-scanForHighScoringRegions <- function(bamfiles,
-                                      sampleAnnot,
-                                      chromosomeLengths,
-                                      quantFunction = "sumNmodNvalid",
-                                      quantFunctionArgs = list(),
-                                      scoreFunction = "getDifferentiallyModifiedWindows",
-                                      scoreFunctionArgs = list(),
-                                      modbase,
-                                      modProbThreshold = 0.5,
-                                      tileSize = 1e6,
-                                      seqinfo = NULL,
-                                      sequenceContextWidth = 0,
-                                      sequenceReference = NULL,
-                                      sequenceContext = NULL,
-                                      windowMode = "fixed",
-                                      windowSize = 24,
-                                      windowStep = round(windowSize/2),
-                                      scoreCol = "dirNegLog10PValue",
-                                      scoreAction = "smoothFuse",
-                                      minperiod = 3,
-                                      thresh = 3,
-                                      maxGap = 50,
-                                      BPPARAM = MulticoreParam(4L, RNGseed = 42L),
-                                      verbose = FALSE) {
+scanForHighScoringRegions <- function(
+        bamfiles,
+        sampleAnnot,
+        chromosomeLengths,
+        quantFunction = "sumNmodNvalid",
+        quantFunctionArgs = list(),
+        scoreFunction = "getDifferentiallyModifiedWindows",
+        scoreFunctionArgs = list(),
+        modbase,
+        modProbThreshold = 0.5,
+        tileSize = 1e6,
+        seqinfo = NULL,
+        sequenceContextWidth = 0,
+        sequenceReference = NULL,
+        sequenceContext = NULL,
+        windowMode = "fixed",
+        windowSize = 24,
+        windowStep = round(windowSize/2),
+        scoreCol = "dirNegLog10PValue",
+        scoreAction = "smoothFuse",
+        minperiod = 3,
+        thresh = 3,
+        maxGap = 50,
+        BPPARAM = MulticoreParam(4L, RNGseed = 42L),
+        verbose = FALSE) {
     # check parameters
     .assertVector(x = chromosomeLengths, type = "numeric")
     if (is.null(names(chromosomeLengths)) ||
