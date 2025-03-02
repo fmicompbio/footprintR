@@ -525,7 +525,6 @@ getDifferentiallyModifiedWindows <- function(se,
 #'
 #' @importFrom SummarizedExperiment rowRanges assay assayNames colnames
 #' @importFrom S4Vectors mcols<-
-#' @importFrom stats setNames
 #'
 #' @export
 getRangesWithAssayValues <- function(se, assayName) {
@@ -537,8 +536,9 @@ getRangesWithAssayValues <- function(se, assayName) {
                   validValues = assayNames(se))
 
     gr <- rowRanges(se)
-    mcols(gr) <- setNames(assay(se, assayName),
-                          paste0(assayName, ".", colnames(se)))
+    tmp <- assay(se, assayName)
+    colnames(tmp) <- paste0(assayName, ".", colnames(se))
+    mcols(gr) <- tmp
 
     return(gr)
 }

@@ -361,12 +361,12 @@ test_that("plotRegion works - manual inspection", {
 
     ## Repeated names in bwfiles
     expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
-                            tracks = list(list(trackData = bwfiles |> setNames(c("s1", "s1")),
+                            tracks = list(list(trackData = bwfiles |> stats::setNames(c("s1", "s1")),
                                                trackType = "BigWig"))),
                  "Duplicated file names")
     ## No names for bwfiles
     expect_error(plotRegion(seB, region = "chr1:6935800-6935900",
-                            tracks = list(list(trackData = bwfiles |> setNames(NULL),
+                            tracks = list(list(trackData = bwfiles |> stats::setNames(NULL),
                                                trackType = "BigWig"))),
                  "must be a named character vector")
     ## Non-existing bwfiles
