@@ -18,13 +18,14 @@ to quantify.}
 \value{
 A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
 object with one row per window defined by \code{gr} and the window
-quantifications contained in the assays \code{"Nmod"} and \code{"Nvalid"}.
-This object is suitable for differential analysis by
-\code{getDifferentiallyModifiedWindows}.
+quantifications contained in the assays \code{"Nmod"}, \code{"Nvalid"}
+and \code{"FracMod"}. This object is suitable for differential analysis
+by \code{getDifferentiallyModifiedWindows}.
 }
 \description{
 Calculate sums of per-position \code{Nmod} and \code{Nvalid} counts for
-positions that overlap windows in \code{gr}.
+positions that overlap windows in \code{gr}, and calculate \code{FracMod}
+as the ratio between the two.
 }
 \examples{
 # TODO
