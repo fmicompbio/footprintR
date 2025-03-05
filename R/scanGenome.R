@@ -850,15 +850,28 @@ scanForHighScoringRegions <- function(
         grScores <- do.call(scoreFunction, c(list(quote(se)), scoreFunctionArgs))
 
         # fuse windows
-        grScoresFused <- lapply(setNames(scoreCol, scoreCol), function(sc) {
-            processWindowScores(x = grScores,
-                                scoreCol = sc,
-                                scoreAction = scoreAction,
-                                minperiod = minperiod,
-                                thresh = thresh,
-                                maxGap = maxGap,
-                                verbose = verbose)
-        })
+        if (scoreAction == "pass") {
+            # scoreCol is ignored anyway - only run once
+            grScoresFused <- lapply(setNames(scoreCol[1], scoreCol[1]), function(sc) {
+                processWindowScores(x = grScores,
+                                    scoreCol = sc,
+                                    scoreAction = scoreAction,
+                                    minperiod = minperiod,
+                                    thresh = thresh,
+                                    maxGap = maxGap,
+                                    verbose = verbose)
+            })
+        } else {
+            grScoresFused <- lapply(setNames(scoreCol, scoreCol), function(sc) {
+                processWindowScores(x = grScores,
+                                    scoreCol = sc,
+                                    scoreAction = scoreAction,
+                                    minperiod = minperiod,
+                                    thresh = thresh,
+                                    maxGap = maxGap,
+                                    verbose = verbose)
+            })
+        }
 
         # return fused windows
         return(grScoresFused)
