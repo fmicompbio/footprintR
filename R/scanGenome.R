@@ -532,13 +532,15 @@ getRangesWithAssayValues <- function(se, assayName) {
     if (missing(assayName)) {
         assayName <- assayNames(se)[1]
     }
-    .assertScalar(x = assayName, type = "character",
+    .assertVector(x = assayName, type = "character",
                   validValues = assayNames(se))
 
     gr <- rowRanges(se)
-    tmp <- assay(se, assayName)
-    colnames(tmp) <- paste0(assayName, ".", colnames(se))
-    mcols(gr) <- tmp
+    for (an in assayName) {
+        tmp <- assay(se, an)
+        colnames(tmp) <- paste0(an, ".", colnames(se))
+        mcols(gr) <- cbind(mcols(gr), tmp)
+    }
 
     return(gr)
 }
