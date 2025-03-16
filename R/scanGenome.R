@@ -740,7 +740,7 @@ processWindowScores <- function(
     } else {
         # smooth scores
         .message("smoothing windows")
-        xdf <- as.data.frame(x) |>
+        xdf <- data.frame(unname(x), check.names = FALSE) |>
             mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
                                               seqnames[-1] != seqnames[-length(x)])))) |>
             group_by(.data$chunkId) |>
