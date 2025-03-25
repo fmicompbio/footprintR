@@ -103,6 +103,8 @@ are define. Currently supported are:
 \describe{
 \item{"fixed"}{: The window is of fixed size (in number of bases),
 corresponding to the \code{windowSize} argument value.}
+\item{"predefined"}{: The windows are provided by the user, as
+a \code{\link[GenomicRanges]{GRanges}} object.}
 }}
 
 \item{windowSize}{Numeric scalar defining the size of windows (see

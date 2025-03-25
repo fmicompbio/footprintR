@@ -384,6 +384,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'     \describe{
 #'         \item{"fixed"}{: The window is of fixed size (in number of bases),
 #'         corresponding to the \code{windowSize} argument value.}
+#'         \item{"predefined"}{: The windows are provided by the user, as
+#'         a \code{\link[GenomicRanges]{GRanges}} object.}
 #'     }
 #' @param windowSize Numeric scalar defining the size of windows (see
 #'     \code{windowMode} argument).
@@ -391,6 +393,9 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'     start positions of consecutive windows. For non-overlapping
 #'     consecutive windows, \code{windowStep} should be equal to
 #'     \code{windowSize}.
+#' @param windows \code{\link[GenomicRanges]{GRanges}} object with pre-defined
+#'     windows (if \code{windowMode = "predefined"}). Only windows where the
+#'     midpoint overlaps \code{region} will be considered.
 #' @param quantFunction A character scalar giving the name of the window
 #'     quantification function. This function should take as a first argument a
 #'     \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}} object, as
@@ -437,9 +442,9 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'                         modbase = "a",
 #'                         BPPARAM = BiocParallel::SerialParam())
 #'
-#' @importFrom SummarizedExperiment rowRanges colData
+#' @importFrom SummarizedExperiment colData
 #' @importFrom GenomicRanges GRanges GPos
-#' @importFrom IRanges IRanges start end findOverlaps
+#' @importFrom IRanges IRanges start end findOverlaps overlapsAny
 #' @importFrom S4Vectors queryHits subjectHits metadata
 #' @importFrom cli cli_abort
 #'
@@ -456,16 +461,29 @@ quantifyWindowsInRegion <- function(bamfiles,
                                     windowMode = "fixed",
                                     windowSize = 24,
                                     windowStep = round(windowSize / 2),
+                                    windows = NULL,
                                     quantFunction = "sumNmodNvalid",
                                     quantFunctionArgs = list(),
                                     BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                                     verbose = FALSE) {
     # check parameters
-    .assertScalar(x = region)
+    if (is.character(region)) {
+        region <- .regionStringToGRanges(region, seqinfo = seqinfo)
+    }
+    if (windowMode == "predefined") {
+        .assertVector(x = region, type = "GRanges")
+    } else {
+        .assertScalar(x = region, type = "GRanges")
+    }
     .assertScalar(x = modbase, type = "character")
     .assertScalar(x = windowMode, type = "character",
-                  validValues = c("fixed"))
+                  validValues = c("fixed", "predefined"))
+    if (windowMode == "fixed") {
         .assertScalar(x = windowSize, type = "numeric", rngIncl = c(1L, Inf))
+        .assertScalar(x = windowStep, type = "numeric", rngIncl = c(1L, Inf))
+    } else if (windowMode == "predefined") {
+        .assertVector(x = windows, type = "GRanges")
+    }
     .assertScalar(x = quantFunction, type = "character")
     if (!exists(quantFunction)) {
         cli_abort("{.arg quantFunction} must be the name of an existing function")
@@ -474,7 +492,8 @@ quantifyWindowsInRegion <- function(bamfiles,
     # read summary-level data
     se <- readModBam(bamfiles = bamfiles, regions = region, modbase = modbase,
                      level = "summary", sampleAnnot = sampleAnnot,
-                     seqinfo = seqinfo, sequenceContextWidth = sequenceContextWidth,
+                     seqinfo = seqinfo,
+                     sequenceContextWidth = sequenceContextWidth,
                      sequenceReference = sequenceReference,
                      modProbThreshold = modProbThreshold,
                      trim = TRUE, BPPARAM = BPPARAM,
@@ -490,10 +509,15 @@ quantifyWindowsInRegion <- function(bamfiles,
     # define windows for aggregation
     if (nrow(se) > 0) {
         if (identical(windowMode, "fixed")) {
-            rng <- range(rowRanges(se), ignore.strand = TRUE)
-            s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
-            windowgr <- GRanges(seqnames = seqnames(rng),
-                                ranges = IRanges(start = s, width = windowSize))
+            s <- seq(start(region), end(region) - windowSize + 1,
+                     by = windowStep)
+            windowgr <- GRanges(seqnames = seqnames(region),
+                                ranges = IRanges(start = s,
+                                                 width = windowSize))
+        } else if (identical(windowMode, "predefined")) {
+            windowgr <- windows[overlapsAny(
+                resize(windows, width = 1, fix = "center"),
+                region, ignore.strand = TRUE)]
         }
     } else {
         windowgr <- GRanges()
