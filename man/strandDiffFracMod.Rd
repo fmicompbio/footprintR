@@ -5,7 +5,7 @@
 \title{Quantify windows by calculating the difference between modification
 fractions for the positive and negative strand}
 \usage{
-strandDiffFracMod(se, gr, pseudocount = 4)
+strandDiffFracMod(se, gr, pseudocount = 0)
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
