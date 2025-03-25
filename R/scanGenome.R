@@ -16,6 +16,23 @@
     regs
 }
 
+#' Calculate directed p-value from chi-square test
+#'
+#' @keywords internal
+#' @noRd
+#' @importFrom stats chisq.test
+.calcDirChiSqP <- function(Nmodpos, Nmodneg, Nvalidpos, Nvalidneg) {
+    if (Nvalidpos + Nvalidneg == 0) {
+        return(NaN)
+    } else {
+        suppressWarnings({
+            res <- chisq.test(matrix(c(Nmodpos, Nmodneg, Nvalidpos - Nmodpos,
+                                       Nvalidneg - Nmodneg), nrow = 2))
+        })
+        return(sign(res$residuals[1, 1]) * (-log10(res$p.value)))
+    }
+}
+
 #' Quantify windows by calculating the difference between modification
 #'     fractions for the positive and negative strand
 #'
@@ -29,6 +46,9 @@
 #'     (i.e. with the assays \code{"Nmod"} and \code{"Nvalid"}).
 #' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
 #'     to quantify.
+#' @param pseudocount A numeric scalar with a pseudocount that will be added
+#'     to the \code{"Nmod"} and \code{"Nvalid"} before calculating the
+#'     modification fraction.
 #'
 #' @author Charlotte Soneson
 #'
@@ -44,9 +64,10 @@
 #' @importFrom cli cli_abort
 #'
 #' @export
-strandDiffFracMod <- function(se, gr) {
+strandDiffFracMod <- function(se, gr, pseudocount = 0) {
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertVector(x = gr, type = "GRanges")
+    .assertScalar(x = pseudocount, type = "numeric", rngIncl = c(0, Inf))
     if (!all(c("Nmod", "Nvalid") %in% assayNames(se))) {
         cli_abort("{.arg se} must contain assays Nvalid and Nmod")
     }
@@ -62,23 +83,29 @@ strandDiffFracMod <- function(se, gr) {
         ovneg <- findOverlaps(query = rowRanges(se), subject = grneg,
                               ignore.strand = FALSE)
         mNmodpos <- rowsum(x = assay(se, "Nmod")[queryHits(ovpos), ],
-                           group = subjectHits(ovpos), reorder = TRUE)
+                           group = subjectHits(ovpos))
         mNmodneg <- rowsum(x = assay(se, "Nmod")[queryHits(ovneg), ],
-                           group = subjectHits(ovneg), reorder = TRUE)
+                           group = subjectHits(ovneg))
         mNvalidpos <- rowsum(x = assay(se, "Nvalid")[queryHits(ovpos), ],
-                             group = subjectHits(ovpos), reorder = TRUE)
+                             group = subjectHits(ovpos))
         mNvalidneg <- rowsum(x = assay(se, "Nvalid")[queryHits(ovneg), ],
-                             group = subjectHits(ovneg), reorder = TRUE)
-        rnms <- sort(unique(c(as.numeric(rownames(mNmodpos)),
-                              as.numeric(rownames(mNmodneg)),
-                              as.numeric(rownames(mNvalidpos)),
-                              as.numeric(rownames(mNvalidneg)))))
-        mNmodpos <- mNmodpos[match(as.character(rnms), rownames(mNmodpos)), ]
-        mNmodneg <- mNmodneg[match(as.character(rnms), rownames(mNmodneg)), ]
-        mNvalidpos <- mNvalidpos[match(as.character(rnms), rownames(mNvalidpos)), ]
-        mNvalidneg <- mNvalidneg[match(as.character(rnms), rownames(mNvalidneg)), ]
-        rownames(mNmodpos) <- rownames(mNmodneg) <- rownames(mNvalidpos) <-
-            rownames(mNvalidneg) <- rnms
+                             group = subjectHits(ovneg))
+        rnms <- seq_along(gr)
+        mNmodpos <- mNmodpos[match(as.character(rnms), rownames(mNmodpos)), , drop = FALSE]
+        mNmodneg <- mNmodneg[match(as.character(rnms), rownames(mNmodneg)), , drop = FALSE]
+        mNvalidpos <- mNvalidpos[match(as.character(rnms), rownames(mNvalidpos)), , drop = FALSE]
+        mNvalidneg <- mNvalidneg[match(as.character(rnms), rownames(mNvalidneg)), , drop = FALSE]
+        if (!is.null(names(gr))) {
+            rownames(mNmodpos) <- rownames(mNmodneg) <- rownames(mNvalidpos) <-
+                rownames(mNvalidneg) <- names(gr)[as.numeric(rnms)]
+        } else {
+            rownames(mNmodpos) <- rownames(mNmodneg) <- rownames(mNvalidpos) <-
+                rownames(mNvalidneg) <- rnms
+        }
+        mNmodpos[is.na(mNmodpos)] <- 0
+        mNmodneg[is.na(mNmodneg)] <- 0
+        mNvalidpos[is.na(mNvalidpos)] <- 0
+        mNvalidneg[is.na(mNvalidneg)] <- 0
 
         stopifnot(exprs = {
             identical(rownames(mNmodpos), rownames(mNvalidpos))
@@ -87,16 +114,33 @@ strandDiffFracMod <- function(se, gr) {
             all(diff(rnms) > 0)
         })
 
+        # calculate p-values from chi-square test for each row/column
+        negLog10P <- matrix(unlist(
+            .mapply(.calcDirChiSqP,
+                    list(mNmodpos, mNmodneg, mNvalidpos, mNvalidneg),
+                    MoreArgs = list())
+        ), nrow = nrow(mNmodpos))
+
         # construct SummarizedExperiment
         seNew <- SummarizedExperiment(
-            assays = list(FracModDiff = (mNmodpos / mNvalidpos) -
-                              (mNmodneg / mNvalidneg)),
+            assays = list(Nmodpos = mNmodpos,
+                          Nmodneg = mNmodneg,
+                          Nvalidpos = mNvalidpos,
+                          Nvalidneg = mNvalidneg,
+                          dirNegLog10PValue = negLog10P,
+                          FracModDiff = ((mNmodpos + pseudocount) / (mNvalidpos + pseudocount)) -
+                              ((mNmodneg + pseudocount) / (mNvalidneg + pseudocount))),
             rowRanges = gr[rnms],
             colData = colData(se),
             metadata = metadata(se))
     } else {
         seNew <- SummarizedExperiment(
-            assays = list(FracModDiff = matrix(nrow = 0, ncol = ncol(se))),
+            assays = list(Nmodpos = matrix(nrow = 0, ncol = ncol(se)),
+                          Nmodneg = matrix(nrow = 0, ncol = ncol(se)),
+                          Nvalidpos = matrix(nrow = 0, ncol = ncol(se)),
+                          Nvalidneg = matrix(nrow = 0, ncol = ncol(se)),
+                          dirNegLog10PValue = matrix(nrow = 0, ncol = ncol(se)),
+                          FracModDiff = matrix(nrow = 0, ncol = ncol(se))),
             rowRanges = GRanges(),
             colData = colData(se),
             metadata = metadata(se))
@@ -421,7 +465,7 @@ quantifyWindowsInRegion <- function(bamfiles,
     .assertScalar(x = modbase, type = "character")
     .assertScalar(x = windowMode, type = "character",
                   validValues = c("fixed"))
-    .assertScalar(x = windowSize, type = "numeric", rngIncl = c(1L, Inf))
+        .assertScalar(x = windowSize, type = "numeric", rngIncl = c(1L, Inf))
     .assertScalar(x = quantFunction, type = "character")
     if (!exists(quantFunction)) {
         cli_abort("{.arg quantFunction} must be the name of an existing function")
