@@ -21,7 +21,7 @@ and typically do not need to be directly called by the user."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,22 @@ and typically do not need to be directly called by the user.</p>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sequenceContext <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  suppressTickLabels <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">plotBigWig</span><span class="op">(</span></span>
+<span>  <span class="va">bwFiles</span>,</span>
+<span>  <span class="va">region</span>,</span>
+<span>  trackTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisLabel <span class="op">=</span> <span class="st">"Score"</span>,</span>
+<span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  labelAccuracy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisRange <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">plotReadsLollipop</span><span class="op">(</span></span>
@@ -86,6 +101,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  trackTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisLabel <span class="op">=</span> <span class="st">"Reads"</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  footprintColumns <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -107,6 +123,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  interpolate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  trackTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisLabel <span class="op">=</span> <span class="st">"Reads"</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  footprintColumns <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -131,6 +148,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  trackTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  legendTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisLabel <span class="op">=</span> <span class="va">assayName</span>,</span>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  groupBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
@@ -246,6 +264,56 @@ positions along the genomic axis. Will be passed to
 value will be derived from <code>region</code>.</p></dd>
 
 
+<dt id="arg-suppressticklabels">suppressTickLabels<a class="anchor" aria-label="anchor" href="#arg-suppressticklabels"></a></dt>
+<dd><p>Logical scalar. If <code>TRUE</code>, suppress x-axis
+tick labels for all but the last panel.</p></dd>
+
+
+<dt id="arg-bwfiles">bwFiles<a class="anchor" aria-label="anchor" href="#arg-bwfiles"></a></dt>
+<dd><p>A named character vector with paths to one or more bigWig
+files to plot.</p></dd>
+
+
+<dt id="arg-tracktitle">trackTitle<a class="anchor" aria-label="anchor" href="#arg-tracktitle"></a></dt>
+<dd><p>A character scalar or <code>NULL</code>, giving the title of
+the track.</p></dd>
+
+
+<dt id="arg-legendtitle">legendTitle<a class="anchor" aria-label="anchor" href="#arg-legendtitle"></a></dt>
+<dd><p>A character scalar or <code>NULL</code>. If not <code>NULL</code>,
+this will be the title of the track fill/color legend. If <code>NULL</code>,
+the name of the assay (<code>assayName</code>, for heatmaps and lollipop plots)
+<code>"Sample"</code> (for summary plots), or <code>"strand"</code> (for genomic
+region plots) will be used.</p></dd>
+
+
+<dt id="arg-yaxislabel">yAxisLabel<a class="anchor" aria-label="anchor" href="#arg-yaxislabel"></a></dt>
+<dd><p>A character scalar providing the label to use for the
+y-axis.</p></dd>
+
+
+<dt id="arg-showlegend">showLegend<a class="anchor" aria-label="anchor" href="#arg-showlegend"></a></dt>
+<dd><p>A logical scalar, indicating whether or not to display
+the legend for the track.</p></dd>
+
+
+<dt id="arg-highlightregions">highlightRegions<a class="anchor" aria-label="anchor" href="#arg-highlightregions"></a></dt>
+<dd><p>A <code><a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GRanges</a></code> object
+containing regions to highlight with a grey shading.</p></dd>
+
+
+<dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
+<dd><p>A named character vector of colors to use for the unique
+values in the <code>colorBy</code> annotation column. If <code>NULL</code>
+(default), the default <code>ggplot2</code> colors will be used.</p></dd>
+
+
+<dt id="arg-yaxisrange">yAxisRange<a class="anchor" aria-label="anchor" href="#arg-yaxisrange"></a></dt>
+<dd><p>Numeric vector of length 2 giving the range to zoom in
+to on the y-axis. If <code>NULL</code> (default), will be determined from the
+data.</p></dd>
+
+
 <dt id="arg-assayname">assayName<a class="anchor" aria-label="anchor" href="#arg-assayname"></a></dt>
 <dd><p>A character or numerical scalar selecting the assay to plot.
 This should be an existing read-level or summary assay, as appropriate
@@ -279,29 +347,6 @@ the position of reads on the y-axis will be reordered using
 over windows of 25 nucleotides. If set to <code>"squish"</code>, the display
 will be compacted by placing multiple reads in the same row when
 possible. If <code>NULL</code>, no reordering is done.</p></dd>
-
-
-<dt id="arg-tracktitle">trackTitle<a class="anchor" aria-label="anchor" href="#arg-tracktitle"></a></dt>
-<dd><p>A character scalar or <code>NULL</code>, giving the title of
-the track.</p></dd>
-
-
-<dt id="arg-legendtitle">legendTitle<a class="anchor" aria-label="anchor" href="#arg-legendtitle"></a></dt>
-<dd><p>A character scalar or <code>NULL</code>. If not <code>NULL</code>,
-this will be the title of the track fill/color legend. If <code>NULL</code>,
-the name of the assay (<code>assayName</code>, for heatmaps and lollipop plots)
-<code>"Sample"</code> (for summary plots), or <code>"strand"</code> (for genomic
-region plots) will be used.</p></dd>
-
-
-<dt id="arg-showlegend">showLegend<a class="anchor" aria-label="anchor" href="#arg-showlegend"></a></dt>
-<dd><p>A logical scalar, indicating whether or not to display
-the legend for the track.</p></dd>
-
-
-<dt id="arg-highlightregions">highlightRegions<a class="anchor" aria-label="anchor" href="#arg-highlightregions"></a></dt>
-<dd><p>A <code><a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GRanges</a></code> object
-containing regions to highlight with a grey shading.</p></dd>
 
 
 <dt id="arg-footprintcolumns">footprintColumns<a class="anchor" aria-label="anchor" href="#arg-footprintcolumns"></a></dt>
@@ -392,18 +437,6 @@ for example, grouping by sample and coloring by condition.</p></dd>
 to color the points and smoothed lines by. By default, the points and
 lines will be colored by 'sample', corresponding to the columns of
 <code>se</code>.</p></dd>
-
-
-<dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
-<dd><p>A named character vector of colors to use for the unique
-values in the <code>colorBy</code> annotation column. If <code>NULL</code>
-(default), the default <code>ggplot2</code> colors will be used.</p></dd>
-
-
-<dt id="arg-yaxisrange">yAxisRange<a class="anchor" aria-label="anchor" href="#arg-yaxisrange"></a></dt>
-<dd><p>Numeric vector of length 2 giving the range to zoom in
-to on the y-axis. If <code>NULL</code> (default), will be determined from the
-data.</p></dd>
 
 
 <dt id="arg-grl">grl<a class="anchor" aria-label="anchor" href="#arg-grl"></a></dt>
