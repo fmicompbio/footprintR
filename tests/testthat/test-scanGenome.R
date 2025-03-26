@@ -1,3 +1,9 @@
+test_that(".calcDirChiSqP works", {
+    expect_equal(.calcDirChiSqP(0, 0, 0, 0), NaN)
+    expect_equal(.calcDirChiSqP(15, 20, 125, 107), -0.6643047)
+    expect_error(.calcDirChiSqP(15, 20, 7, 12), "must be nonnegative")
+})
+
 test_that("genome scanning works (helper functions)", {
     ## example data
     modbamfiles <- system.file("extdata",
@@ -127,12 +133,12 @@ test_that("genome scanning works (helper functions)", {
     ))
     se1$group <- c("group1", "group1", "group2", "group2")
     expect_s4_class(se1, "RangedSummarizedExperiment")
-    expect_identical(dim(se1), c(134L, 4L))
+    expect_identical(dim(se1), c(136L, 4L))
     expect_true(all(width(SummarizedExperiment::rowRanges(se1)) == 24L))
     expect_identical(SummarizedExperiment::assayNames(se1),
                      c("Nmod", "Nvalid", "FracMod"))
     expect_identical(colSums(SummarizedExperiment::assay(se1, "Nvalid")),
-                     c(s1 = 1601, s2 = 1601, s3 = 554, s4 = 554))
+                     c(s1 = 1610, s2 = 1610, s3 = 554, s4 = 554))
     ov <- findOverlaps(query = SummarizedExperiment::rowRanges(se0),
                        subject = SummarizedExperiment::rowRanges(se1))
     Nvalid <- SummarizedExperiment::assay(se0, "Nvalid")
@@ -158,7 +164,7 @@ test_that("genome scanning works (helper functions)", {
                                    sequenceContext = "A",
                                    BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(se2, "RangedSummarizedExperiment")
-    expect_identical(dim(se2), c(134L, 4L))
+    expect_identical(dim(se2), c(136L, 4L))
     expect_true(all(width(SummarizedExperiment::rowRanges(se2)) == 24L))
     i <- GenomicRanges::match(SummarizedExperiment::rowRanges(se2),
                               SummarizedExperiment::rowRanges(se1))
@@ -166,7 +172,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::assayNames(se2),
                      c("Nmod", "Nvalid", "FracMod"))
     expect_identical(colSums(SummarizedExperiment::assay(se2, "Nvalid")),
-                     c(s1 = 1581, s2 = 1581, s3 = 540, s4 = 540))
+                     c(s1 = 1590, s2 = 1590, s3 = 540, s4 = 540))
     expect_true(all(SummarizedExperiment::assay(se1, "Nmod")[i,] >= SummarizedExperiment::assay(se2, "Nmod")))
     expect_true(all(SummarizedExperiment::assay(se1, "Nvalid")[i,] >= SummarizedExperiment::assay(se2, "Nvalid")))
     expect_identical(SummarizedExperiment::colData(se1),
@@ -187,14 +193,14 @@ test_that("genome scanning works (helper functions)", {
         gr1 <- getDifferentiallyModifiedWindows(se1, groupCol = "group", verbose = TRUE)
     ))
     expect_s4_class(gr1, "GRanges")
-    expect_length(gr1, 134L)
+    expect_length(gr1, 136L)
     expect_identical(ncol(GenomicRanges::mcols(gr1)), 6L)
     expect_identical(colnames(GenomicRanges::mcols(gr1)),
                      c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
 
     gr2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
     expect_s4_class(gr2, "GRanges")
-    expect_length(gr2, 134L)
+    expect_length(gr2, 136L)
     expect_identical(ncol(GenomicRanges::mcols(gr2)), 6L)
     expect_identical(colnames(GenomicRanges::mcols(gr2)),
                      c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
@@ -251,14 +257,14 @@ test_that("genome scanning works (helper functions)", {
     expect_length(gr1Fused, 5L)
     expect_identical(colnames(GenomicRanges::mcols(gr1Fused)),
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
-    expect_identical(sum(width(gr1Fused)), 768L)
+    expect_identical(sum(width(gr1Fused)), 732L)
 
     gr2Fused <- processWindowScores(x = gr2, scoreCol = "logFC", thresh = 5.0)
     expect_s4_class(gr2Fused, "GRanges")
     expect_length(gr2Fused, 5L)
     expect_identical(colnames(GenomicRanges::mcols(gr2Fused)),
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
-    expect_identical(sum(width(gr2Fused)), 768L)
+    expect_identical(sum(width(gr2Fused)), 732L)
 })
 
 test_that("genome scanning works (wrapper function)", {

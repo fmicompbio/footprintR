@@ -17,6 +17,7 @@ quantifyWindowsInRegion(
   windowMode = "fixed",
   windowSize = 24,
   windowStep = round(windowSize/2),
+  windows = NULL,
   quantFunction = "sumNmodNvalid",
   quantFunctionArgs = list(),
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
@@ -66,6 +67,8 @@ are define. Currently supported are:
 \describe{
 \item{"fixed"}{: The window is of fixed size (in number of bases),
 corresponding to the \code{windowSize} argument value.}
+\item{"predefined"}{: The windows are provided by the user, as
+a \code{\link[GenomicRanges]{GRanges}} object.}
 }}
 
 \item{windowSize}{Numeric scalar defining the size of windows (see
@@ -75,6 +78,10 @@ corresponding to the \code{windowSize} argument value.}
 start positions of consecutive windows. For non-overlapping
 consecutive windows, \code{windowStep} should be equal to
 \code{windowSize}.}
+
+\item{windows}{\code{\link[GenomicRanges]{GRanges}} object with pre-defined
+windows (if \code{windowMode = "predefined"}). Only windows where the
+midpoint overlaps \code{region} will be considered.}
 
 \item{quantFunction}{A character scalar giving the name of the window
 quantification function. This function should take as a first argument a
