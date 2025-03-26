@@ -41,6 +41,7 @@ reference:
   contents:
   - quantifyWindowsInRegion
   - sumNmodNvalid
+  - strandDiffFracMod
   - phasingScoreFourier
   - getDifferentiallyModifiedWindows
   - getRangesWithAssayValues
