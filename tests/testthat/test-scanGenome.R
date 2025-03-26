@@ -1,3 +1,9 @@
+test_that(".calcDirChiSqP works", {
+    expect_equal(.calcDirChiSqP(0, 0, 0, 0), NaN)
+    expect_equal(.calcDirChiSqP(15, 20, 125, 107), -0.6643047)
+    expect_error(.calcDirChiSqP(15, 20, 7, 12), "must be nonnegative")
+})
+
 test_that("genome scanning works (helper functions)", {
     ## example data
     modbamfiles <- system.file("extdata",
