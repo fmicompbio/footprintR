@@ -4,7 +4,14 @@
 \alias{subsetReads}
 \title{Subset the reads from read-level assays}
 \usage{
-subsetReads(se, reads, prune = TRUE, invert = FALSE)
+subsetReads(
+  se,
+  reads,
+  prune = TRUE,
+  invert = FALSE,
+  removeAllNApos = FALSE,
+  assayNameNA = "mod_prob"
+)
 }
 \arguments{
 \item{se}{A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}},
@@ -27,6 +34,13 @@ zero-column \code{SparseMatrix}).}
 \item{invert}{A logical scalar. If \code{FALSE} (the default), only the reads
 defined by \code{reads} are retained. If \code{invert=TRUE}, all reads
 except the ones in \code{reads} are retained.}
+
+\item{removeAllNApos}{A logical scalar. If \code{TRUE}, remove all positions
+for which all values in \code{assayNameNA} are \code{NA} after the read
+subsetting.}
+
+\item{assayNameNA}{A character scalar corresponding to the name of a
+read-level assay (if \code{removeAllNApos} is \code{TRUE}).}
 }
 \value{
 A subset \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
@@ -61,5 +75,5 @@ lapply(assay(seSub, "mod_prob"), colnames)
 
 }
 \author{
-Michael Stadler
+Michael Stadler, Charlotte Soneson
 }

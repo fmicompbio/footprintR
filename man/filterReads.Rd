@@ -16,7 +16,8 @@ filterReads(
   minAlignedLength = 0,
   minAlignedFraction = 0,
   prune = TRUE,
-  onlyStats = FALSE
+  onlyStats = FALSE,
+  removeAllNApos = TRUE
 )
 }
 \arguments{
@@ -71,6 +72,10 @@ zero-column \code{SparseMatrix}).}
 \code{SummarizedExperiment} object will be filtered according to the
 provided thresholds. If \code{TRUE}, the filter statistics are calculated
 and returned, but the object is not subset.}
+
+\item{removeAllNApos}{A logical scalar. If \code{TRUE}, remove all positions
+for which all values in \code{assayName} are \code{NA} after the read
+filtering.}
 }
 \value{
 If \code{onlyStats} is \code{FALSE}, a filtered

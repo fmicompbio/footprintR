@@ -1,6 +1,6 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.3.1
+Version: 0.3.2
 Authors@R: c(
     person("Michael", "Stadler", , "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
@@ -21,9 +21,10 @@ License: MIT + file LICENSE
 URL: https://github.com/fmicompbio/footprintR,
     https://fmicompbio.github.io/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
+Depends:
+    BiocParallel
 Imports:
     BiocGenerics,
-    BiocParallel,
     Biostrings,
     BSgenome,
     cli,
@@ -47,8 +48,10 @@ Imports:
     utils,
     zoo
 Suggests:
+    BiocIO,
     BiocManager,
     ComplexUpset,
+    e1071,
     edgeR,
     knitr,
     MatrixGenerics,

@@ -1,6 +1,14 @@
+# footprintR 0.3.2
+
+* Add removeAllNApos argument to filterReads and subsetReads
+* Add BigWig plot panel
+* Add regroupReads function to regroup reads by an annotation
+* Rewrite and expand genome scanning framework
+
 # footprintR 0.3.1
 
 * Explicitly ignore supplementary and secondary alignments in all reading modes in `readModBam`
+* Various smaller improvements and bug fixes
 
 # footprintR 0.3.0
 

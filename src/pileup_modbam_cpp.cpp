@@ -187,7 +187,7 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
     plpconf conf = {0};
     conf.inname = (char*)inname_str.c_str();
     bam_plp_t plpiter = NULL;
-    int tid = -1, depth = -1, j = 0, modlen = 0;
+    int tid = -1, depth = -1, j = 0, k = 0, modlen = 0;
     #define NMODS 5
     hts_base_mod mods[NMODS] = {{0}}; //ACGTN
     int refpos = -1;
@@ -355,18 +355,23 @@ Rcpp::List pileup_modbam_cpp(std::string inname_str,
                              bam_get_qname(plp[j].b));
                     goto end;
                 } else if (modlen > 0) {
-                    curr_strand = bam_is_rev(plp[j].b) == mods[0].strand ? 0 : 1;
-                    if (level == "summary") {
-                        curr_Nvalid[curr_strand]++;
-                        if ((((double) mods[0].qual + 0.5) / 256.0) >= mod_prob_thresh) {
-                            curr_Nmod[curr_strand]++;
+                    for (k = 0; k < modlen; k++) {
+                        if (mods[k].modified_base == modbase) {
+                            // found modified base of the right type -> add to results
+                            curr_strand = bam_is_rev(plp[j].b) == mods[k].strand ? 0 : 1;
+                            if (level == "summary") {
+                                curr_Nvalid[curr_strand]++;
+                                if ((((double) mods[k].qual + 0.5) / 256.0) >= mod_prob_thresh) {
+                                    curr_Nmod[curr_strand]++;
+                                }
+                            } else if (level == "read") {
+                                chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
+                                ref_position.push_back(refpos + 1);
+                                ref_mod_strand.push_back(curr_strand == 0 ? '+' : '-');
+                                read_id.push_back(bam_get_qname(plp[j].b));
+                                mod_prob.push_back(((double) mods[k].qual + 0.5) / 256.0);
+                            }
                         }
-                    } else if (level == "read") {
-                        chrom.push_back(sam_hdr_tid2name(conf.in_samhdr, tid));
-                        ref_position.push_back(refpos + 1);
-                        ref_mod_strand.push_back(curr_strand == 0 ? '+' : '-');
-                        read_id.push_back(bam_get_qname(plp[j].b));
-                        mod_prob.push_back(((double) mods[0].qual + 0.5) / 256.0);
                     }
                 } else if (!modlen && impl) {
                     curr_strand = bam_is_rev(plp[j].b) ? 1 : 0;

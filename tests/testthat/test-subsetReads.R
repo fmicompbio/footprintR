@@ -116,4 +116,13 @@ test_that("subsetReads works", {
                               invert = TRUE),
         "These will be ignored"), "These will be ignored")
     expect_identical(seSub, seSub3)
+
+    # ... remove all-NA positions
+    seSub <- subsetReads(se, list(s1 = 2, s2 = 2))
+    seSub2 <- subsetReads(se, list(s1 = 2, s2 = 2), removeAllNApos = TRUE,
+                          assayNameNA = "mod_prob")
+    expect_lt(nrow(seSub2), nrow(seSub))
+    expect_equal(nrow(seSub2), 6364L)
+    expect_equal(nrow(seSub2),
+                 sum(rowSums(is_nonna(as.matrix(assay(seSub, "mod_prob")))) > 0))
 })

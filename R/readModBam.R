@@ -120,7 +120,9 @@
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand sort
-#' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
+#' @import BiocParallel
+##' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
+##'     bpoptions
 #' @importFrom methods is
 #' @importFrom cli cli_abort cli_warn
 #'
@@ -273,7 +275,7 @@ readModBam <- function(bamfiles,
                  myvariantRefNames = variantRefNames,
                  myvariantRefPositions = variantRefPositions,
                  myncpuDecompression = ncpuDecompression,
-                 myverbose = verbose) {
+                 myverbose = if (ncpuTotal > 1) FALSE else verbose) {
 
             if (mylevel == "read") {
                 # extract modifications (returned list is similar to modkit extract
@@ -313,7 +315,8 @@ readModBam <- function(bamfiles,
                 resL$read_df <- resL$read_df[resL$read_df$read_id %in% resL$read_id, ]
             }
             resL
-    }, BPPARAM = BPPARAM)
+    }, BPPARAM = BPPARAM, BPOPTIONS = bpoptions(
+        progressbar = (verbose && ncpuTotal > 1)))
 
     # create GPos objects for each input
     gposL <- bplapply(resLL, function(resL, myseqinfo = seqinfo) {
@@ -328,7 +331,7 @@ readModBam <- function(bamfiles,
 
     # if trim=TRUE, trim GPos to only the indicated region
     if (trim) {
-        gpos <- subsetByOverlaps(gpos, regions)
+        gpos <- subsetByOverlaps(gpos, regions, ignore.strand = TRUE)
     }
 
     # add sequence context

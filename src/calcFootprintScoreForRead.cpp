@@ -45,26 +45,29 @@ Rcpp::DataFrame calcFootprintScoreForRead(Rcpp::IntegerVector pos,
 
     // calculate scores
     Rcpp::NumericVector scores = Rcpp::rep(NA_REAL, posall.size());
-    double currentScore = 0.0;
-    double currentTotalWeight = 0.0;
-    double currentWeight = 0.0;
-    for (size_t i = (unsigned)((wgt.size() - 1) / 2), s = 0;
-         i < posall.size() - (wgt.size() / 2);
-         i++, s++) {
 
-        currentScore = 0.0;
-        currentTotalWeight = 0.0;
-        currentWeight = 0.0;
-        for (size_t j = s; j < s + wgt.size(); j++) {
-            if (hasNA[j] == false) {
-                currentWeight = (pmodall[j] + 0.5 > minweight ?
-                                     pmodall[j] + 0.5 :
-                                     minweight);
-                currentScore += pmodall[j] * wgt[j - s] * currentWeight;
-                currentTotalWeight += currentWeight;
+    if (posall.size() >= wgt.size()) {
+        double currentScore = 0.0;
+        double currentTotalWeight = 0.0;
+        double currentWeight = 0.0;
+        for (size_t i = (unsigned)((wgt.size() - 1) / 2), s = 0;
+             i < posall.size() - (wgt.size() / 2);
+             i++, s++) {
+
+            currentScore = 0.0;
+            currentTotalWeight = 0.0;
+            currentWeight = 0.0;
+            for (size_t j = s; j < s + wgt.size(); j++) {
+                if (hasNA[j] == false) {
+                    currentWeight = (pmodall[j] + 0.5 > minweight ?
+                                         pmodall[j] + 0.5 :
+                                         minweight);
+                    currentScore += pmodall[j] * wgt[j - s] * currentWeight;
+                    currentTotalWeight += currentWeight;
+                }
             }
+            scores[i] = (currentTotalWeight == 0.0 ? NA_REAL : currentScore / currentTotalWeight);
         }
-        scores[i] = (currentTotalWeight == 0.0 ? NA_REAL : currentScore / currentTotalWeight);
     }
 
     // create return value
