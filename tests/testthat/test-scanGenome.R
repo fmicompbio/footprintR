@@ -178,6 +178,20 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::colData(se1),
                      SummarizedExperiment::colData(se2))
 
+    set.seed(1L)
+    selwindows <- sort(sample(nrow(se2), 40))
+    se3 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+                                   region = "chr1:6940000-6955000", modbase = "a",
+                                   sampleAnnot = data.frame(sample = paste0("s", 1:4),
+                                                            group = se1$group),
+                                   windowMode = "predefined",
+                                   windows = SummarizedExperiment::rowRanges(se2)[selwindows],
+                                   sequenceContextWidth = 1,
+                                   sequenceReference = gnmfasta,
+                                   sequenceContext = "A",
+                                   BPPARAM = BiocParallel::SerialParam())
+    expect_identical(se2[selwindows,], se3)
+
 
     ## getDifferentiallyModifiedWindows
     expect_error(getDifferentiallyModifiedWindows(se = "error"))
