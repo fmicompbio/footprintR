@@ -48,6 +48,36 @@ test_that("genome scanning works (helper functions)", {
     expect_equal(start(rg), c(1, 13, 25, 37, 49, 61, 73, 85, 97))
     expect_equal(width(rg), rep(12, 9))
 
+    ## strandDiffFracMod
+    se1 <- se0
+    SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
+    expect_error(strandDiffFracMod(se1, rg), ".se. must contain assays")
+    rg <- GenomicRanges::GRanges(
+        seqnames = "chr1",
+        ranges = IRanges::IRanges(
+            start = seq(6930000, 6941000, by = 1000),
+            width = 1000,
+            names = letters[seq.int(12)]))
+    res <- strandDiffFracMod(se0, rg)
+    expect_s4_class(res, "RangedSummarizedExperiment")
+    expect_identical(dim(res), c(length(rg), ncol(se0)))
+    expect_identical(SummarizedExperiment::rowRanges(res), rg)
+    expect_identical(SummarizedExperiment::assayNames(res),
+                     c("Nmodpos", "Nmodneg", "Nvalidpos", "Nvalidneg",
+                       "dirNegLog10PValue", "FracModDiff"))
+    sel <- IRanges::overlapsAny(SummarizedExperiment::rowRanges(se0), rg)
+    cnt0 <- vapply(SummarizedExperiment::assays(se0)[c("Nmod", "Nvalid")],
+                   function(a) sum(a[sel,]), 0.0)
+    cnt1 <- vapply(SummarizedExperiment::assays(res)[c("Nmodpos", "Nmodneg", "Nvalidpos", "Nvalidneg")],
+                   function(a) sum(a), 0.0)
+    expect_identical(cnt0[["Nmod"]], cnt1[["Nmodpos"]] + cnt1[["Nmodneg"]])
+    expect_identical(cnt0[["Nvalid"]], cnt1[["Nvalidpos"]] + cnt1[["Nvalidneg"]])
+    res <- strandDiffFracMod(se0, unname(rg))
+    expect_identical(rownames(res), as.character(seq_along(rg)))
+    res <- strandDiffFracMod(se0[numeric(0), ], rg)
+    expect_s4_class(res, "RangedSummarizedExperiment")
+    expect_identical(dim(res), c(0L, ncol(se0)))
+
     ## sumNmodNvalid
     rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
                           windowStep = 1e6, chromName = "chr1",
