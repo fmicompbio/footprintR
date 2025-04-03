@@ -88,6 +88,49 @@ quantification contained in the assay <code>"FracModDiff"</code>.</p>
     <p>Charlotte Soneson</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/GenomicRanges" class="external-link">GenomicRanges</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/SummarizedExperiment" class="external-link">SummarizedExperiment</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">modbamfiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span></span>
+<span class="r-in"><span>                           <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"6mA_1_10reads.bam"</span>, <span class="st">"6mA_2_10reads.bam"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span>bamfiles <span class="op">=</span> <span class="va">modbamfiles</span>, regions <span class="op">=</span> <span class="st">"chr1:6940000-6940500"</span>,</span></span>
+<span class="r-in"><span>                 level <span class="op">=</span> <span class="st">"summary"</span>, modbase <span class="op">=</span> <span class="st">"a"</span>, trim <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">6940000</span>, <span class="fl">6940400</span>, by <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">windowgr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GRanges</a></span><span class="op">(</span>seqnames <span class="op">=</span> <span class="st">"chr1"</span>,</span></span>
+<span class="r-in"><span>                    ranges <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/IRanges/man/IRanges-constructor.html" class="external-link">IRanges</a></span><span class="op">(</span>start <span class="op">=</span> <span class="va">s</span>, width <span class="op">=</span> <span class="fl">100</span>, names <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">seStrandDiff</span> <span class="op">&lt;-</span> <span class="fu">strandDiffFracMod</span><span class="op">(</span>se <span class="op">=</span> <span class="va">se</span>, gr <span class="op">=</span> <span class="va">windowgr</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">seStrandDiff</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> class: RangedSummarizedExperiment </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 5 2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(1): readLevelData</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> assays(6): Nmodpos Nmodneg ... dirNegLog10PValue FracModDiff</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(5): a b c d e</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(2): s1 s2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(2): sample modbase</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assayNames</a></span><span class="op">(</span><span class="va">seStrandDiff</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Nmodpos"           "Nmodneg"           "Nvalidpos"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4] "Nvalidneg"         "dirNegLog10PValue" "FracModDiff"      </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seStrandDiff</span>, <span class="st">"Nvalidpos"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   s1 s2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> a  0 23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b  0 26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c  0 27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> d  0 28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> e  0 18</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seStrandDiff</span>, <span class="st">"Nvalidneg"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   s1 s2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> a 99 32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> b 91 37</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> c 51 25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> d 82 40</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> e 76 23</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
