@@ -202,6 +202,8 @@ sumNmodNvalid <- function(se, gr) {
         })
         if (!is.null(names(gr))) {
             rownames(mNmod) <- rownames(mNvalid) <- names(gr)[rnms]
+        } else {
+            rownames(mNmod) <- rownames(mNvalid) <- as.character(rnms)
         }
 
         # construct SummarizedExperiment
