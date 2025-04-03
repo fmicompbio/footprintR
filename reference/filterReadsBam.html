@@ -87,7 +87,7 @@ The filters are examined in this order: <code>keepUnmapped</code>,
 <span>  maxFracLowConf <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxEntropy <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  LowConf <span class="op">=</span> <span class="fl">0.7</span>,</span>
-<span>  BPPARAM <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/MulticoreParam-class.html" class="external-link">MulticoreParam</a></span><span class="op">(</span><span class="fl">4L</span>, RNGseed <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">MulticoreParam</span><span class="op">(</span><span class="fl">4L</span>, RNGseed <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -206,20 +206,20 @@ the <code>outfiles</code> and that were filtered-out by reason of exclusion.</p>
 <span class="r-in"><span>                      minQscore <span class="op">=</span> <span class="fl">9.7</span>, maxFracLowConf <span class="op">=</span> <span class="fl">0.11</span>, maxEntropy <span class="op">=</span> <span class="fl">0.29</span>,</span></span>
 <span class="r-in"><span>                      BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span> using 1 thread</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (9.5 /s) [106ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> done filtering: retained 7 of 10 records (70%)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (9.5 /s) [106ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> opening input file <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam</span> using 1 thread</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (9.5 /s) [106ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> done filtering: retained 7 of 10 records (70%)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (9.5 /s) [106ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
 <span class="r-in"><span><span class="va">res</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sample                                                                infile</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1     s1 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     s2 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                             outfile</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /var/folders/bz/h4njq8yd7td8qk42rt_9f0p00000gn/T//RtmpnkSxze/file48a039f4f193.bam</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   /var/folders/bz/h4njq8yd7td8qk42rt_9f0p00000gn/T//RtmpnkSxze/file48a020079f.bam</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /var/folders/qn/7t0vq3ts721cmgt0tgrtgzl80000gn/T//RtmpYBLNtC/file3510191900ef.bam</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 /var/folders/qn/7t0vq3ts721cmgt0tgrtgzl80000gn/T//RtmpYBLNtC/file3510388c57c8.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   total retained filtered_unmapped filtered_secondary filtered_supplementary</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    10        7                 0                  0                      0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2    10        7                 0                  0                      0</span>
