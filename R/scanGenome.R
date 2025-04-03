@@ -200,6 +200,9 @@ sumNmodNvalid <- function(se, gr) {
             identical(rownames(mNmod), rownames(mNvalid))
             all(diff(rnms) > 0)
         })
+        if (!is.null(names(gr))) {
+            rownames(mNmod) <- rownames(mNvalid) <- names(gr)[rnms]
+        }
 
         # construct SummarizedExperiment
         seNew <- SummarizedExperiment(assays = list(Nmod = mNmod,
