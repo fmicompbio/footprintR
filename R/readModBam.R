@@ -120,9 +120,8 @@
 #' @importFrom S4Vectors DataFrame SimpleList
 #' @importFrom GenomeInfoDb seqnames
 #' @importFrom BiocGenerics do.call cbind pos strand sort
-#' @import BiocParallel
-##' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
-##'     bpoptions
+#' @importFrom BiocParallel bplapply MulticoreParam bpnworkers bpworkers<-
+#'     bpoptions
 #' @importFrom methods is
 #' @importFrom cli cli_abort cli_warn
 #'
