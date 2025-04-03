@@ -56,6 +56,24 @@
 #'     object with one row per window defined by \code{gr} and the window
 #'     quantification contained in the assay \code{"FracModDiff"}.
 #'
+#' @examples
+#' library(GenomicRanges)
+#' library(SummarizedExperiment)
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6940000-6940500",
+#'                  level = "summary", modbase = "a", trim = TRUE,
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' s <- seq(6940000, 6940400, by = 100)
+#' windowgr <- GRanges(seqnames = "chr1",
+#'                     ranges = IRanges(start = s, width = 100, names = letters[1:5]))
+#' seStrandDiff <- strandDiffFracMod(se = se, gr = windowgr)
+#' seStrandDiff
+#' assayNames(seStrandDiff)
+#' assay(seStrandDiff, "Nvalidpos")
+#' assay(seStrandDiff, "Nvalidneg")
+#'
 #' @importFrom SummarizedExperiment rowRanges colData assay assayNames
 #' @importFrom BiocGenerics strand
 #' @importFrom GenomicRanges GRanges
@@ -171,7 +189,20 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
 #'     by \code{getDifferentiallyModifiedWindows}.
 #'
 #' @examples
-#' # TODO
+#' library(GenomicRanges)
+#' library(SummarizedExperiment)
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6940000-6940500",
+#'                  level = "summary", modbase = "a", trim = TRUE,
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' s <- seq(6940000, 6940400, by = 100)
+#' windowgr <- GRanges(seqnames = "chr1",
+#'                     ranges = IRanges(start = s, width = 100, names = letters[1:5]))
+#' seSum <- sumNmodNvalid(se = se, gr = windowgr)
+#' seSum
+#' assay(seSum, "Nvalid")
 #'
 #' @importFrom SummarizedExperiment rowRanges colData assay assayNames
 #' @importFrom GenomicRanges GRanges

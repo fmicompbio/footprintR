@@ -30,6 +30,25 @@ positions that overlap windows in \code{gr}, in a strand-specific manner,
 and calculate \code{FracMod} as the ratio between the two. Then calculate
 the difference between the \code{FracMod} for the + and - strand.
 }
+\examples{
+library(GenomicRanges)
+library(SummarizedExperiment)
+modbamfiles <- system.file("extdata",
+                           c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                           package = "footprintR")
+se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6940000-6940500",
+                 level = "summary", modbase = "a", trim = TRUE,
+                 BPPARAM = BiocParallel::SerialParam())
+s <- seq(6940000, 6940400, by = 100)
+windowgr <- GRanges(seqnames = "chr1",
+                    ranges = IRanges(start = s, width = 100, names = letters[1:5]))
+seStrandDiff <- strandDiffFracMod(se = se, gr = windowgr)
+seStrandDiff
+assayNames(seStrandDiff)
+assay(seStrandDiff, "Nvalidpos")
+assay(seStrandDiff, "Nvalidneg")
+
+}
 \author{
 Charlotte Soneson
 }
