@@ -21,6 +21,8 @@ License: MIT + file LICENSE
 URL: https://github.com/fmicompbio/footprintR,
     https://fmicompbio.github.io/footprintR
 BugReports: https://github.com/fmicompbio/footprintR/issues
+Depends:
+    R (>= 4.1.0)
 Imports:
     BiocGenerics,
     BiocParallel,
