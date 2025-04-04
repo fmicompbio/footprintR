@@ -105,7 +105,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  footprintColumns <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  footprintColors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  arglistFootprints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  facetBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>  adjustFacetHeight <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -127,7 +127,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  showLegend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  highlightRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  footprintColumns <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  footprintColors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  arglistFootprints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  facetBy <span class="op">=</span> <span class="st">"sample"</span>,</span>
 <span>  adjustFacetHeight <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  referenceCoordinate <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -356,10 +356,14 @@ columns are generated using <code>addFootprints</code>. If <code>NULL</code>, no
 footprints are displayed.</p></dd>
 
 
-<dt id="arg-footprintcolors">footprintColors<a class="anchor" aria-label="anchor" href="#arg-footprintcolors"></a></dt>
-<dd><p>A named character vector with colors to use for
-footprint indications in the plot. The names must correspond to the
-values of <code>footprintColumns</code>.</p></dd>
+<dt id="arg-arglistfootprints">arglistFootprints<a class="anchor" aria-label="anchor" href="#arg-arglistfootprints"></a></dt>
+<dd><p>A named list with arguments to be passed to
+<code><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></code>, in addition to the <code>data</code>,
+<code>mapping</code>, and <code>inherit.aes</code> arguments, which are set
+automatically. <code>arglistFootprints</code> can be either a single
+list of such arguments (in which case the same arguments will be used
+for all plotted footprint columns), or a named list with one entry per
+value in <code>footprintColumns</code>.</p></dd>
 
 
 <dt id="arg-facetby">facetBy<a class="anchor" aria-label="anchor" href="#arg-facetby"></a></dt>

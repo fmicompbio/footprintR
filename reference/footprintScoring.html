@@ -251,7 +251,7 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># load example data</span></span></span>
 <span class="r-in"><span><span class="va">modbamfile</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"6mA_1_10reads.bam"</span>,</span></span>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span>bamfiles <span class="op">=</span> <span class="va">modbamfile</span>, regions <span class="op">=</span> <span class="st">"chr1:6940000-6955000"</span>,</span></span>
+<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="readModBam.html">readModBam</a></span><span class="op">(</span>bamfiles <span class="op">=</span> <span class="va">modbamfile</span>, regions <span class="op">=</span> <span class="st">"chr1:6935400-6936300"</span>,</span></span>
 <span class="r-in"><span>                 modbase <span class="op">=</span> <span class="st">"a"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -263,58 +263,63 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-in"><span><span class="co"># - weights are repeated for bases in the (un)modified parts (15 bases in</span></span></span>
 <span class="r-in"><span><span class="co">#   flanks and 140 bases protected by the nucleosome)</span></span></span>
 <span class="r-in"><span><span class="va">wgt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="op">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">140</span><span class="op">/</span><span class="fl">170</span>, <span class="fl">30</span><span class="op">/</span><span class="fl">170</span>, <span class="fl">140</span><span class="op">/</span><span class="fl">170</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">140</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu">addFootprints</span><span class="op">(</span><span class="va">se</span>, <span class="va">wgt</span>, thresh <span class="op">=</span> <span class="fl">0.05</span>, name <span class="op">=</span> <span class="st">"nucl"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu">addFootprints</span><span class="op">(</span><span class="va">se</span>, <span class="va">wgt</span>, thresh <span class="op">=</span> <span class="fl">0.03</span>, name <span class="op">=</span> <span class="st">"nucl"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> calculating footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[40ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[68ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (6.3 /s) [158ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.0 /s) [100ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> segmenting footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[91ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[84ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (6.3 /s) [158ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.0 /s) [100ms]</span>
 <span class="r-in"><span><span class="va">se</span><span class="op">$</span><span class="va">nucl</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 3:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 10:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-233e48a7-f379-4dcf-9270-958231125563`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 15 ranges and 0 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 50 ranges and 0 metadata columns:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            start       end     width</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]   6926371   6926510       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]   6926557   6926696       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]   6926737   6926876       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]   6926917   6927056       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]   6927105   6927244       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [1]   6926191   6926330       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [2]   6926371   6926510       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [3]   6926557   6926696       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [4]   6926737   6926876       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    [5]   6926917   6927056       140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ...       ...       ...       ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [11]   6935854   6935993       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [12]   6936034   6936173       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [13]   6938096   6938235       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [14]   6939136   6939275       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [15]   6940416   6940555       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [46]   6939327   6939466       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [47]   6939923   6940062       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [48]   6940089   6940228       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [49]   6940249   6940388       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [50]   6940416   6940555       140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 1 range and 0 metadata columns:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           start       end     width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   6933059   6933198       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;9 more elements&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-92e906ae-cddb-4347-a114-bf9137761a8d`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 2 ranges and 0 metadata columns:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           start       end     width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   6931342   6931481       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [2]   6932761   6932900       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># plot identified footprints</span></span></span>
+<span class="r-in"><span><span class="co"># ... in the heatmap</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6935400-6936300"</span>,</span></span>
+<span class="r-in"><span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackType <span class="op">=</span> <span class="st">"Heatmap"</span>, trackData <span class="op">=</span> <span class="st">"mod_prob"</span>,</span></span>
+<span class="r-in"><span>                              interpolate <span class="op">=</span> <span class="cn">TRUE</span>, footprintColumns <span class="op">=</span> <span class="st">"nucl"</span>,</span></span>
+<span class="r-in"><span>                              arglistFootprints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"green3"</span>,</span></span>
+<span class="r-in"><span>                                                       linewidth <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="footprintScoring-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># ... in the lollipop plot</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="plotRegion.html">plotRegion</a></span><span class="op">(</span><span class="va">se</span>, region <span class="op">=</span> <span class="st">"chr1:6935400-6936300"</span>,</span></span>
+<span class="r-in"><span>           tracks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>trackType <span class="op">=</span> <span class="st">"Lollipop"</span>, trackData <span class="op">=</span> <span class="st">"mod_prob"</span>,</span></span>
+<span class="r-in"><span>                              footprintColumns <span class="op">=</span> <span class="st">"nucl"</span>,</span></span>
+<span class="r-in"><span>                              arglistFootprints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"pink"</span>,</span></span>
+<span class="r-in"><span>                                                       height <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="footprintScoring-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># only calculate score</span></span></span>
 <span class="r-in"><span><span class="va">scoresList</span> <span class="op">&lt;-</span> <span class="fu">calcFootprintScores</span><span class="op">(</span><span class="va">se</span>, <span class="va">wgt</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> calculating footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[34ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating footprint scores <span style="color: #B2B2B2;">[63ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (6.3 /s) [158ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.0 /s) [100ms]</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">scoresList</span>, <span class="va">nrow</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 38549</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 98955</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">scoresList</span>, <span class="va">head</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
@@ -330,11 +335,11 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-in"><span><span class="co"># segment calculated scores</span></span></span>
 <span class="r-in"><span><span class="va">irl</span> <span class="op">&lt;-</span> <span class="fu">segmentFootprintScores</span><span class="op">(</span><span class="va">scoresList</span>, thresh <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> segmenting footprint scores</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[47ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> segmenting footprint scores <span style="color: #B2B2B2;">[98ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (6.3 /s) [158ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.0 thousand records processed (10.0 /s) [100ms]</span>
 <span class="r-in"><span><span class="va">irl</span><span class="op">$</span><span class="va">s1</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 3:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IRangesList object of length 10:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-233e48a7-f379-4dcf-9270-958231125563`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 15 ranges and 0 metadata columns:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            start       end     width</span>
@@ -357,13 +362,13 @@ footprints of a single read (all of length <code>with</code> bases).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   6933059   6933198       140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-92e906ae-cddb-4347-a114-bf9137761a8d`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 2 ranges and 0 metadata columns:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           start       end     width</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   6931342   6931481       140</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [2]   6932761   6932900       140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $`s1-fc4646ce-66f9-401f-b968-e9b0cda14d61`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> IRanges object with 0 ranges and 0 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        start       end     width</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;integer&gt; &lt;integer&gt; &lt;integer&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;7 more elements&gt;</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
