@@ -89,6 +89,7 @@ This object is suitable for transformation by
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/GenomicRanges" class="external-link">GenomicRanges</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bioconductor.org/packages/SummarizedExperiment" class="external-link">SummarizedExperiment</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">modbamfiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span></span>
 <span class="r-in"><span>                           <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"6mA_1_10reads.bam"</span>, <span class="st">"6mA_2_10reads.bam"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                           package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
@@ -102,6 +103,44 @@ This object is suitable for transformation by
 <span class="r-in"><span>                 modbase <span class="op">=</span> <span class="st">"a"</span>, trim <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seFourier</span> <span class="op">&lt;-</span> <span class="fu">phasingScoreFourier</span><span class="op">(</span>se <span class="op">=</span> <span class="va">se</span>, gr <span class="op">=</span> <span class="va">windowgr</span>, numCoef <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seFourier</span>, <span class="st">"phasingScoreAbs"</span><span class="op">)</span> <span class="co"># amplitude of requested coefficient</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              s1         s2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,] 22.104124 11.7576205</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2,] 27.132726  3.8888579</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,] 17.332390  0.4179011</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4,]  9.322762  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]  8.247887  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6,]  4.598294  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7,]  0.984381  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [15,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]  0.000000  0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]  0.000000  0.0000000</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">seFourier</span>, <span class="st">"phasingScoreRel"</span><span class="op">)</span> <span class="co"># relative amplitude</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                s1          s2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,] 0.032935952 0.008596142</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2,] 0.027635236 0.005619616</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,] 0.015046715 0.007232441</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4,] 0.009746856         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,] 0.010512054         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6,] 0.008950576         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7,] 0.006229053         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [15,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]         NaN         NaN</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]         NaN         NaN</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
