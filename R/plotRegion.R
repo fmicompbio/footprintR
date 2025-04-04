@@ -823,9 +823,9 @@ plotReadsHeatmap <- function(se,
 #'     \code{\link[ggplot2]{geom_line}}.
 #' @param smoothMethod A character scalar indicating the method to use for
 #'     smoothing. Current options are \code{"smoothSpline"} and
-#'     \code{"rollingMean"} (linear interpolation of values to the single-base
-#'     pair level (unless \code{modbaseSpace} is \code{TRUE}), followed by
-#'     rolling mean calculation).
+#'     \code{"rollingMean"} (default, linear interpolation of values to the
+#'     single-base pair level (unless \code{modbaseSpace} is \code{TRUE}),
+#'     followed by rolling mean calculation).
 #' @param spar A numeric scalar typically in (0,1] specifying the desired
 #'     degree of smoothing if \code{smoothMethod} is \code{"smoothSpline"}
 #'     (\code{spar} argument of \code{\link[stats]{smooth.spline}}).
@@ -882,7 +882,7 @@ plotSummaryPointSmooth <- function(se,
                                    arglistPoint = list(),
                                    doSmooth = TRUE,
                                    arglistSmooth = list(),
-                                   smoothMethod = "smoothSpline",
+                                   smoothMethod = "rollingMean",
                                    spar = 0.01,
                                    windowSize = 15,
                                    modbaseSpace = FALSE,
