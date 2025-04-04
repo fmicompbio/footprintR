@@ -67,7 +67,7 @@
 #' # load example data
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
-#' se <- readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
+#' se <- readModBam(bamfiles = modbamfile, regions = "chr1:6935400-6936300",
 #'                  modbase = "a", verbose = FALSE,
 #'                  BPPARAM = BiocParallel::SerialParam())
 #'
@@ -79,8 +79,22 @@
 #' # - weights are repeated for bases in the (un)modified parts (15 bases in
 #' #   flanks and 140 bases protected by the nucleosome)
 #' wgt <- rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), c(15, 140, 15))
-#' se <- addFootprints(se, wgt, thresh = 0.05, name = "nucl")
+#' se <- addFootprints(se, wgt, thresh = 0.03, name = "nucl")
 #' se$nucl
+#'
+#' # plot identified footprints
+#' # ... in the heatmap
+#' plotRegion(se, region = "chr1:6935400-6936300",
+#'            tracks = list(list(trackType = "Heatmap", trackData = "mod_prob",
+#'                               interpolate = TRUE, footprintColumns = "nucl",
+#'                               arglistFootprints = list(color = "green3",
+#'                                                        linewidth = 2))))
+#' # ... in the lollipop plot
+#' plotRegion(se, region = "chr1:6935400-6936300",
+#'            tracks = list(list(trackType = "Lollipop", trackData = "mod_prob",
+#'                               footprintColumns = "nucl",
+#'                               arglistFootprints = list(fill = "pink",
+#'                                                        height = 0.8))))
 #'
 #' # only calculate score
 #' scoresList <- calcFootprintScores(se, wgt)

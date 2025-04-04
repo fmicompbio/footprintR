@@ -563,9 +563,13 @@ plotBigWig <- function(bwFiles,
 #'     \code{colData(se)} containing footprints to display. Typically these
 #'     columns are generated using \code{addFootprints}. If \code{NULL}, no
 #'     footprints are displayed.
-#' @param footprintColors A named character vector with colors to use for
-#'     footprint indications in the plot. The names must correspond to the
-#'     values of \code{footprintColumns}.
+#' @param arglistFootprints A named list with arguments to be passed to
+#'     \code{\link[ggplot2]{geom_tile}}, in addition to the \code{data},
+#'     \code{mapping}, and \code{inherit.aes} arguments, which are set
+#'     automatically. \code{arglistFootprints} can be either a single
+#'     list of such arguments (in which case the same arguments will be used
+#'     for all plotted footprint columns), or a named list with one entry per
+#'     value in \code{footprintColumns}.
 #' @param facetBy A character scalar indicating the sample annotation column
 #'     to facet the plot by (if \code{NULL}, no faceting is done). By default,
 #'     the plot will be facetted by 'sample', corresponding to the columns of
@@ -592,6 +596,7 @@ plotBigWig <- function(bwFiles,
 #' @import ggplot2
 #' @importFrom rlang .data
 #' @importFrom dplyr filter
+#' @importFrom cli cli_warn
 #'
 plotReadsLollipop <- function(se,
                               region,
@@ -607,7 +612,7 @@ plotReadsLollipop <- function(se,
                               showLegend = TRUE,
                               highlightRegions = NULL,
                               footprintColumns = NULL,
-                              footprintColors = NULL,
+                              arglistFootprints = list(),
                               facetBy = "sample",
                               adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
@@ -619,7 +624,7 @@ plotReadsLollipop <- function(se,
         trackTitle = trackTitle, legendTitle = legendTitle,
         yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
-        footprintColumns = footprintColumns, footprintColors = footprintColors,
+        footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
         referenceCoordinate = referenceCoordinate,
         labelAccuracy = labelAccuracy, size = size, stroke = stroke)
@@ -662,18 +667,29 @@ plotReadsLollipop <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p +
-                geom_tile(
-                    data = fp |> dplyr::filter(!is.na(.data$plotRow)),
-                    mapping = aes(x = (as.numeric(.data$start) +
-                                           as.numeric(.data$end)) / 2,
-                                  y = .data$plotRow,
-                                  width = abs(as.numeric(.data$end) -
-                                                  as.numeric(.data$start)),
-                                  height = 1
-                    ),
-                    fill = argL$footprintColors[fpc], inherit.aes = FALSE
-                )
+            aL <- c(
+                list(data = fp |> dplyr::filter(!is.na(.data$plotRow)),
+                     mapping = aes(x = (as.numeric(.data$start) +
+                                            as.numeric(.data$end)) / 2,
+                                   y = .data$plotRow,
+                                   width = abs(as.numeric(.data$end) -
+                                                   as.numeric(.data$start))
+                     ),
+                     inherit.aes = FALSE),
+                argL$arglistFootprints[[fpc]]
+            )
+            if (is.null(aL$height)) {
+                aL$height <- 1
+            }
+            if (is.null(aL$fill)) {
+                aL$fill <- argL$footprintColors[fpc]
+            }
+            repArgs <- duplicated(names(aL))
+            if (any(repArgs)) {
+                cli_warn("Ignoring pre-defined arguments: {.arg {names(aL)[repArgs]}}.")
+            }
+            aL <- aL[!repArgs]
+            p <- p + do.call(geom_tile, aL)
         }
     }
 
@@ -719,6 +735,7 @@ plotReadsLollipop <- function(se,
 #' @import ggplot2
 #' @importFrom rlang .data
 #' @importFrom dplyr filter
+#' @importFrom cli cli_warn
 #'
 plotReadsHeatmap <- function(se,
                              region,
@@ -734,7 +751,7 @@ plotReadsHeatmap <- function(se,
                              showLegend = TRUE,
                              highlightRegions = NULL,
                              footprintColumns = NULL,
-                             footprintColors = NULL,
+                             arglistFootprints = list(),
                              facetBy = "sample",
                              adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
@@ -746,7 +763,7 @@ plotReadsHeatmap <- function(se,
         trackTitle = trackTitle, legendTitle = legendTitle,
         yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
-        footprintColumns = footprintColumns, footprintColors = footprintColors,
+        footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
         referenceCoordinate = referenceCoordinate,
         labelAccuracy = labelAccuracy, linewidthTiles = linewidthTiles,
@@ -794,19 +811,35 @@ plotReadsHeatmap <- function(se,
         fp <- .prepareFootprintsForPlot(fp = argL$footprints[[fpc]],
                                         plotdf = df, se = se, facetBy = facetBy)
         if (nrow(fp) > 0) {
-            p <- p +
-                geom_tile(
-                    data = fp |> dplyr::filter(!is.na(.data$plotRow)),
-                    mapping = aes(x = (as.numeric(.data$start) +
-                                           as.numeric(.data$end)) / 2,
-                                  y = .data$plotRow,
-                                  width = abs(as.numeric(.data$end) -
-                                                  as.numeric(.data$start)),
-                                  height = 1
-                    ),
-                    fill = "transparent", color = argL$footprintColors[fpc],
-                    linewidth = 1.5, inherit.aes = FALSE
-                )
+            aL <- c(
+                list(data = fp |> dplyr::filter(!is.na(.data$plotRow)),
+                     mapping = aes(x = (as.numeric(.data$start) +
+                                            as.numeric(.data$end)) / 2,
+                                   y = .data$plotRow,
+                                   width = abs(as.numeric(.data$end) -
+                                                   as.numeric(.data$start))
+                     ),
+                     inherit.aes = FALSE),
+                argL$arglistFootprints[[fpc]]
+            )
+            if (is.null(aL$height)) {
+                aL$height <- 1
+            }
+            if (is.null(aL$fill)) {
+                aL$fill <- "transparent"
+            }
+            if (is.null(aL$color) && is.null(aL$colour)) {
+                aL$color <- argL$footprintColors[fpc]
+            }
+            if (is.null(aL$linewidth)) {
+                aL$linewidth <- 1.5
+            }
+            repArgs <- duplicated(names(aL))
+            if (any(repArgs)) {
+                cli_warn("Ignoring pre-defined arguments: {.arg {names(aL)[repArgs]}}.")
+            }
+            aL <- aL[!repArgs]
+            p <- p + do.call(geom_tile, aL)
         }
     }
 
@@ -1245,7 +1278,7 @@ plotGenomicRegions <- function(grl,
                                      orderReads, modbaseSpace, trackTitle,
                                      legendTitle, yAxisLabel,
                                      showLegend, highlightRegions,
-                                     footprintColumns, footprintColors,
+                                     footprintColumns, arglistFootprints,
                                      facetBy, adjustFacetHeight,
                                      referenceCoordinate, labelAccuracy,
                                      size = 0, stroke = 0,
@@ -1267,7 +1300,10 @@ plotGenomicRegions <- function(grl,
     .assertVector(x = highlightRegions, type = "GRanges", allowNULL = TRUE)
     .assertVector(x = footprintColumns, type = "character", allowNULL = TRUE,
                   validValues = .getReadLevelColDataNames(se))
-    .assertVector(x = footprintColors, type = "character", allowNULL = TRUE)
+    .assertVector(x = arglistFootprints, type = "list", allowNULL = TRUE)
+    if (length(arglistFootprints) > 0) {
+        .assertVector(x = names(arglistFootprints), type = "character")
+    }
     .assertScalar(x = facetBy, type = "character", allowNULL = TRUE)
     .assertScalar(x = adjustFacetHeight, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
@@ -1290,18 +1326,13 @@ plotGenomicRegions <- function(grl,
         # highlightRegions <- BiocGenerics::intersect(highlightRegions, region,
         #                                             ignore.strand = TRUE)
     }
-    if (!is.null(footprintColors) && !is.null(footprintColumns)) {
-        if (!all(footprintColumns %in% names(footprintColors))) {
-            cli_abort("{.arg footprintColors} must be provided for all {.arg footprintColumns}")
-        }
-    } else if (!is.null(footprintColumns) && is.null(footprintColors)) {
-        footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
-        names(footprintColors) <- footprintColumns
-    }
     if (modbaseSpace) {
         referenceCoordinate <- NULL
     }
     if (!is.null(footprintColumns)) {
+        footprintColors <- defaultFootprintColors[seq_along(footprintColumns)]
+        names(footprintColors) <- footprintColumns
+
         footprints <- lapply(
             structure(footprintColumns,
                       names = footprintColumns),
@@ -1310,7 +1341,30 @@ plotGenomicRegions <- function(grl,
                     BiocGenerics::intersect(z, ranges(region))
                 })
             }))
+        if (!any(footprintColumns %in% names(arglistFootprints))) {
+            # assume that arglistFootprints is a list of arguments for plotting
+            arglistFootprints <- lapply(
+                setNames(footprintColumns, footprintColumns),
+                function(x) arglistFootprints)
+        } else {
+            if (any(!names(arglistFootprints) %in% footprintColumns)) {
+                cli_abort(paste0("Can't unambiguously interpret ",
+                                 "{.code names(arglistFootprints)} as either ",
+                                 "function arguments or footprint column names."))
+            }
+            for (mf in setdiff(footprintColumns,
+                               names(arglistFootprints))) {
+                arglistFootprints[[mf]] <- list()
+            }
+            are_lists <- vapply(arglistFootprints, is.list, FALSE)
+            if (any(!are_lists)) {
+                cli_abort(paste0("{.arg arglistFootprints} entries must be ",
+                                 "lists, the following are not: ",
+                                 "{.code {names(arglistFootprints)[!are_lists]}}."))
+            }
+        }
     } else {
+        footprintColors <- NULL
         footprints <- NULL
     }
     if (!is.null(referenceCoordinate)) {
@@ -1330,6 +1384,7 @@ plotGenomicRegions <- function(grl,
     # return possibly adjusted arguments
     return(list(highlightRegions = highlightRegions,
                 footprintColors = footprintColors,
+                arglistFootprints = arglistFootprints,
                 referenceCoordinate = referenceCoordinate,
                 footprints = footprints, region = region))
 

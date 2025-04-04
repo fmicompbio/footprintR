@@ -49,7 +49,7 @@ plotReadsLollipop(
   showLegend = TRUE,
   highlightRegions = NULL,
   footprintColumns = NULL,
-  footprintColors = NULL,
+  arglistFootprints = list(),
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
@@ -71,7 +71,7 @@ plotReadsHeatmap(
   showLegend = TRUE,
   highlightRegions = NULL,
   footprintColumns = NULL,
-  footprintColors = NULL,
+  arglistFootprints = list(),
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
@@ -241,9 +241,13 @@ possible. If \code{NULL}, no reordering is done.}
 columns are generated using \code{addFootprints}. If \code{NULL}, no
 footprints are displayed.}
 
-\item{footprintColors}{A named character vector with colors to use for
-footprint indications in the plot. The names must correspond to the
-values of \code{footprintColumns}.}
+\item{arglistFootprints}{A named list with arguments to be passed to
+\code{\link[ggplot2]{geom_tile}}, in addition to the \code{data},
+\code{mapping}, and \code{inherit.aes} arguments, which are set
+automatically. \code{arglistFootprints} can be either a single
+list of such arguments (in which case the same arguments will be used
+for all plotted footprint columns), or a named list with one entry per
+value in \code{footprintColumns}.}
 
 \item{facetBy}{A character scalar indicating the sample annotation column
 to facet the plot by (if \code{NULL}, no faceting is done). By default,
