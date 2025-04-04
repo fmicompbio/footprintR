@@ -95,12 +95,24 @@ test_that("plotRegion works", {
     ))), "All values in .footprintColumns. must be one of")
     expect_error(plotRegion(se = seR2, tracks = list(list(
         trackType = "Lollipop", trackData = "mod_prob",
-        footprintColumns = "footprints", footprintColors = c(x = "red")
-    ))), ".footprintColors. must be provided")
+        footprintColumns = "footprints",
+        arglistFootprints = 1
+    ))), ".arglistFootprints. must be of class .list.")
     expect_error(plotRegion(se = seR2, tracks = list(list(
         trackType = "Heatmap", trackData = "mod_prob",
-        footprintColumns = "footprints", footprintColors = c(x = "red")
-    ))), ".footprintColors. must be provided")
+        footprintColumns = "footprints",
+        arglistFootprints = list(footprints = list(), nucl = list())
+    ))), "Can't unambiguously interpret")
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "Heatmap", trackData = "mod_prob",
+        footprintColumns = "footprints",
+        arglistFootprints = list(footprints = 1)
+    ))), ".arglistFootprints. entries must be lists")
+    expect_error(plotRegion(se = seR2, tracks = list(list(
+        trackType = "Heatmap", trackData = "mod_prob",
+        footprintColumns = "footprints",
+        arglistFootprints = list(list())
+    ))), ".names\\(arglistFootprints\\). must not be .NULL.")
 
     # expected results
     p1 <- plotRegion(se = se, region = "chr1:6948000-6952000")
@@ -399,24 +411,31 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
 
     ## ... don't color by strand, move labels, add footprints
-    p <- plotRegion(
-        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
-        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
-                           legendTitle = "6mA",
-                           orderReads = NULL, trackTitle = "Heatmap",
-                           facetBy = NULL, footprintColumns = "nucleosome"),
-                      list(trackData = "mod_prob", trackType = "Lollipop",
-                           legendTitle = "6mA",
-                           orderReads = NULL, trackTitle = "Heatmap",
-                           facetBy = NULL, footprintColumns = "nucleosome",
-                           footprintColors = c(nucleosome = "cyan")),
-                      list(trackData = grl, trackType = "GenomicRegion",
-                           colorByStrand = FALSE, labelSize = 3,
-                           labelPosition = "above", legendTitle = NULL),
-                      list(trackData = "Nvalid", trackType = "Smooth",
-                           showLegend = FALSE,
-                           highlightRegions = grh))) +
-        plot_layout(heights = c(3, 3, 1, 2))
+    expect_warning({
+        expect_warning({
+            p <- plotRegion(
+                seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+                tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                                   legendTitle = "6mA",
+                                   orderReads = NULL, trackTitle = "Heatmap",
+                                   facetBy = NULL, footprintColumns = "nucleosome",
+                                   arglistFootprints = list(nucleosome = list(inherit.aes = FALSE))),
+                              list(trackData = "mod_prob", trackType = "Lollipop",
+                                   legendTitle = "6mA",
+                                   orderReads = NULL, trackTitle = "Heatmap",
+                                   facetBy = NULL, footprintColumns = c("nucleosome", "footprint2"),
+                                   arglistFootprints = list(nucleosome =
+                                                                list(fill = "cyan",
+                                                                     inherit.aes = FALSE))),
+                              list(trackData = grl, trackType = "GenomicRegion",
+                                   colorByStrand = FALSE, labelSize = 3,
+                                   labelPosition = "above", legendTitle = NULL),
+                              list(trackData = "Nvalid", trackType = "Smooth",
+                                   showLegend = FALSE,
+                                   highlightRegions = grh))) +
+                plot_layout(heights = c(3, 3, 1, 2))
+        })
+    })
     expect_s3_class(p, "ggplot")
 
     ## ... define the region including strand
@@ -430,7 +449,7 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA",
                            orderReads = NULL, trackTitle = "Heatmap",
                            facetBy = NULL, footprintColumns = "nucleosome",
-                           footprintColors = c(nucleosome = "cyan")),
+                           arglistFootprints = list(fill = "cyan")),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = FALSE, labelSize = 3,
                            labelPosition = "above", legendTitle = NULL),

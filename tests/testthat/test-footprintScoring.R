@@ -42,7 +42,6 @@ test_that("addFootprint and helper functions work", {
     se <- readModBam(bamfiles = modbamfile, regions = "chr1:6940000-6955000",
                      modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
-    ### WAS HERE
     adat <- assay(se, "mod_prob")
     SparseArray::nnavals(adat$s1) <- NA
     seEmpty <- SummarizedExperiment(assays = list(mod_prob = adat),
