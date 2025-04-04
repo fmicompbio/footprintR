@@ -1,3 +1,8 @@
+# footprintR 0.3.3
+
+* Add argument `arglistFootprints` replacing and extending `footprintColors` in `plotRegion()`
+* Various smaller improvements and bug fixes 
+
 # footprintR 0.3.2
 
 * Add removeAllNApos argument to filterReads and subsetReads
