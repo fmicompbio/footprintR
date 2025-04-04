@@ -142,7 +142,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  arglistPoint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  doSmooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  arglistSmooth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  smoothMethod <span class="op">=</span> <span class="st">"smoothSpline"</span>,</span>
+<span>  smoothMethod <span class="op">=</span> <span class="st">"rollingMean"</span>,</span>
 <span>  spar <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  windowSize <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -407,9 +407,9 @@ plot.</p></dd>
 <dt id="arg-smoothmethod">smoothMethod<a class="anchor" aria-label="anchor" href="#arg-smoothmethod"></a></dt>
 <dd><p>A character scalar indicating the method to use for
 smoothing. Current options are <code>"smoothSpline"</code> and
-<code>"rollingMean"</code> (linear interpolation of values to the single-base
-pair level (unless <code>modbaseSpace</code> is <code>TRUE</code>), followed by
-rolling mean calculation).</p></dd>
+<code>"rollingMean"</code> (default, linear interpolation of values to the
+single-base pair level (unless <code>modbaseSpace</code> is <code>TRUE</code>),
+followed by rolling mean calculation).</p></dd>
 
 
 <dt id="arg-spar">spar<a class="anchor" aria-label="anchor" href="#arg-spar"></a></dt>
