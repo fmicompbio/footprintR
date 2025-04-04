@@ -70,6 +70,9 @@ test_that("genome scanning works (helper functions)", {
                    function(a) sum(a[sel,]), 0.0)
     cnt1 <- vapply(SummarizedExperiment::assays(res)[c("Nmodpos", "Nmodneg", "Nvalidpos", "Nvalidneg")],
                    function(a) sum(a), 0.0)
+    expect_identical(SummarizedExperiment::assay(res, "Nmodpos")[, "s3"],
+                     setNames(c(11, 37, 58, 35, 32, 14, 42, 37, 49, 32, 24, 0),
+                              letters[1:12]))
     expect_identical(cnt0[["Nmod"]], cnt1[["Nmodpos"]] + cnt1[["Nmodneg"]])
     expect_identical(cnt0[["Nvalid"]], cnt1[["Nvalidpos"]] + cnt1[["Nvalidneg"]])
     res <- strandDiffFracMod(se0, unname(rg))
@@ -209,7 +212,7 @@ test_that("genome scanning works (helper functions)", {
                      SummarizedExperiment::colData(se2))
 
     set.seed(1L)
-    selwindows <- sort(sample(nrow(se2), 40))
+    selwindows <- sample(nrow(se2), 40)
     se3 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                    region = "chr1:6940000-6955000", modbase = "a",
                                    sampleAnnot = data.frame(sample = paste0("s", 1:4),
