@@ -337,7 +337,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
             # extract FracMod vector
             position <- seq(min(start(gr)), max(end(gr)))
             fracMod <- rep(NA, length(position))
-            fracMod[match(pos(rowRanges(se)), position)] <- assay(se, "FracMod")[, i]
+            j <- pos(rowRanges(se)) %in% position
+            fracMod[match(pos(rowRanges(se))[j], position)] <- assay(se, "FracMod")[j, i]
             nna <- which(!is.na(fracMod))
             if (length(nna) < length(fracMod)) {
                 if (is.na(fracMod[1])) {
