@@ -33,6 +33,7 @@ frequency components and extract the \code{numCoef}-th coefficient.
 }
 \examples{
 library(GenomicRanges)
+library(SummarizedExperiment)
 modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
@@ -46,6 +47,8 @@ se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "summary",
                  modbase = "a", trim = TRUE,
                  BPPARAM = BiocParallel::SerialParam())
 seFourier <- phasingScoreFourier(se = se, gr = windowgr, numCoef = 5)
+assay(seFourier, "phasingScoreAbs") # amplitude of requested coefficient
+assay(seFourier, "phasingScoreRel") # relative amplitude
 
 }
 \author{

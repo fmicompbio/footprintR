@@ -283,6 +283,7 @@ sumNmodNvalid <- function(se, gr) {
 #'
 #' @examples
 #' library(GenomicRanges)
+#' library(SummarizedExperiment)
 #' modbamfiles <- system.file("extdata",
 #'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
 #'                            package = "footprintR")
@@ -296,6 +297,8 @@ sumNmodNvalid <- function(se, gr) {
 #'                  modbase = "a", trim = TRUE,
 #'                  BPPARAM = BiocParallel::SerialParam())
 #' seFourier <- phasingScoreFourier(se = se, gr = windowgr, numCoef = 5)
+#' assay(seFourier, "phasingScoreAbs") # amplitude of requested coefficient
+#' assay(seFourier, "phasingScoreRel") # relative amplitude
 #'
 #' @importFrom SummarizedExperiment rowRanges colData assay assayNames ncol
 #' @importFrom GenomicRanges GRanges
