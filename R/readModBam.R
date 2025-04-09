@@ -384,8 +384,8 @@ readModBam <- function(bamfiles,
             found <- which(!is.na(j))
             Nmod[j[found], i] <- resLL[[nm]]$Nmod[found]
             Nvalid[j[found], i] <- resLL[[nm]]$Nvalid[found]
-            FracMod <- Nmod / Nvalid
         }
+        FracMod <- Nmod / Nvalid
     }
 
     # create SummarizedExperiment object
