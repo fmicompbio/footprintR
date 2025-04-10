@@ -103,6 +103,13 @@ test_that("calcReadStats works", {
     reffile <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se <- readModkitExtract(exfile, modbase = "a",
                             BPPARAM = BiocParallel::SerialParam())
+    # ... with all-NA reads
+    seNA <- se
+    mp <- SummarizedExperiment::assay(seNA, "mod_prob")
+    mp$s1 <- as.matrix(mp$s1)
+    mp$s1[, 2:3] <- NA
+    mp$s1 <- SparseArray::NaArray(mp$s1)
+    SummarizedExperiment::assays(seNA, withDimnames = FALSE) <- list(mod_prob = mp)
 
     ## Expected errors
     expect_error(calcReadStats(se, assayName = "error",
@@ -214,6 +221,18 @@ test_that("calcReadStats works", {
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 1L))
     expect_equal(sum(rs1$s1$MeanModProb), 0.4934760681446542)
+
+    ## Using input with all-NA reads
+    rs1 <- calcReadStats(se = seNA, stats = c("MeanModProb", "ACModProb"),
+                         BPPARAM = BiocParallel::SerialParam())
+    expect_named(rs1, "s1")
+    expect_s4_class(rs1$s1, "DFrame")
+    expect_identical(dim(rs1$s1), c(10L, 2L))
+    expect_true(all(is.na(rs1$s1$MeanModProb[2:3])))
+    expect_equal(sum(rs1$s1$MeanModProb[-(2:3)]), 0.909023830485028)
+    expect_true(is.list(rs1$s1$ACModProb))
+    expect_identical(lengths(rs1$s1$ACModProb, use.names = FALSE),
+                     rep(c(53L, 1L, 53L), c(1, 2, 7)))
 })
 
 test_that("addReadStats works", {
