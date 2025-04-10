@@ -286,13 +286,13 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
 #'                           package = "footprintR")
 #' se <- readModBam(bamfile = modbamfile, regions = "chr1:6940000-6955000",
-#'            modbase = "a", verbose = TRUE, 
+#'            modbase = "a", verbose = TRUE,
 #'            BPPARAM = BiocParallel::SerialParam())
 #'
 #' readStats <- calcReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' readStats$s1
 #'
-#' se_withReadStats <- addReadStats(se, name = "QC", 
+#' se_withReadStats <- addReadStats(se, name = "QC",
 #'                                  BPPARAM = BiocParallel::SerialParam())
 #' se_withReadStats$QC$s1
 #' metadata(se_withReadStats$QC$s1)
@@ -385,10 +385,13 @@ calcReadStats <- function(se,
                                                           myLagRangeValues = LagRangeValues) {
                 stats_res <- make_zero_col_DFrame(nrow = length(mycolnames)) # nocov start
                 row.names(stats_res) <- mycolnames
-                stats_res[[param]] <- do.call(param, list(probList = myNNAvals_byCol,
-                                                          useReads = myuseReads,
-                                                          lowConf = myLowConf,
-                                                          xrange = myLagRangeValues))
+                tmp <- structure(rep(NA, length(mycolnames)), names = mycolnames)
+                tmp[names(myNNAvals_byCol)] <- do.call(
+                    param, list(probList = myNNAvals_byCol,
+                                useReads = myuseReads,
+                                lowConf = myLowConf,
+                                xrange = myLagRangeValues))
+                stats_res[[param]] <- tmp
                 stats_res # nocov end
             }, BPPARAM = BPPARAM))
         })
