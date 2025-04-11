@@ -17,11 +17,12 @@
 #'     so that the sequence can be centered on the modified base.
 #'     If \code{sequenceContextWidth = 0} (the default), no
 #'     sequence context will be extracted.
-#' @param sequenceReference A \code{\link[BSgenome]{BSgenome}} object, or a
-#'     character scalar giving the path to a fasta formatted file with reference
-#'     sequences, or a \code{\link[Biostrings]{DNAStringSet}} object.
-#'     The sequence context (see \code{sequenceContextWidth} argument) will be
-#'     extracted from these sequences.
+#' @param sequenceReference A \code{\link[Biostrings]{DNAStringSet}} object,
+#'     a \code{\link[BSgenome]{BSgenome}} object, or a character scalar giving
+#'     the path to a fasta formatted file with reference sequences.
+#'     If a \code{\link[BSgenome]{BSgenome}} object is provided, it will be
+#'     internally converted to a \code{\link[Biostrings]{DNAStringSet}} object,
+#'     since the latter allows for faster sequence retrieval.
 #'
 #' @return A \code{\link[Biostrings]{DNAStringSet}} object of the same length
 #'     as \code{x} with extracted sequence context. All elements are guaranteed
@@ -50,6 +51,7 @@
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-
 #' @importFrom Biostrings readDNAStringSet DNAStringSet
 #' @importFrom BSgenome getSeq
+#' @importFrom BiocGenerics as.list
 #' @importFrom methods as is
 #' @importFrom cli cli_abort cli_warn
 #'
@@ -84,10 +86,11 @@ extractSeqContext <- function(x,
     if (is.character(sequenceReference)) {
         ref <- readDNAStringSet(sequenceReference)
         names(ref) <- sub(" .*$", "", names(ref))
+    } else if (is(sequenceReference, "BSgenome")) {
+        ref <- DNAStringSet(as.list(sequenceReference))
     } else {
         ref <- sequenceReference
     }
-    # seqlengths(xcontext) <- seqlengths(ref)
 
     # extract sequences
     Npre <- pmax(0L, 1L - start(xcontext))
