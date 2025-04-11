@@ -76,11 +76,12 @@ sequence context will be extracted.</p></dd>
 
 
 <dt id="arg-sequencereference">sequenceReference<a class="anchor" aria-label="anchor" href="#arg-sequencereference"></a></dt>
-<dd><p>A <code><a href="https://rdrr.io/pkg/BSgenome/man/BSgenome-class.html" class="external-link">BSgenome</a></code> object, or a
-character scalar giving the path to a fasta formatted file with reference
-sequences, or a <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code> object.
-The sequence context (see <code>sequenceContextWidth</code> argument) will be
-extracted from these sequences.</p></dd>
+<dd><p>A <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code> object,
+a <code><a href="https://rdrr.io/pkg/BSgenome/man/BSgenome-class.html" class="external-link">BSgenome</a></code> object, or a character scalar giving
+the path to a fasta formatted file with reference sequences.
+If a <code><a href="https://rdrr.io/pkg/BSgenome/man/BSgenome-class.html" class="external-link">BSgenome</a></code> object is provided, it will be
+internally converted to a <code><a href="https://rdrr.io/pkg/Biostrings/man/XStringSet-class.html" class="external-link">DNAStringSet</a></code> object,
+since the latter allows for faster sequence retrieval.</p></dd>
 
 </dl></div>
     <div class="section level2">
