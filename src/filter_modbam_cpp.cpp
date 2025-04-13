@@ -336,6 +336,12 @@ end:
     if (ms) {
         hts_base_mod_state_free(ms);
     }
+    if (iter) {
+        sam_itr_destroy(iter);
+    }
+    if (idx) {
+        hts_idx_destroy(idx);
+    }
     if (tpool.pool) {
         hts_tpool_destroy(tpool.pool);
     }
