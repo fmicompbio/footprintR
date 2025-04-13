@@ -442,6 +442,18 @@ NULL
 #' @keywords internal
 NULL
 
+#' Concatenate files
+#'
+#' @param input_files Character vector with input file names to concatenate.
+#' @param output_file Character scalar with output file name to write to.
+#'
+#' @return The \code{output_file} as a character scalar.
+#' @noRd
+#' @keywords internal
+concatenate_files <- function(input_files, output_file) {
+    .Call(`_footprintR_concatenate_files`, input_files, output_file)
+}
+
 #' Get unmodified base corresponding to a modified base
 #'
 #' @param b Modified base as a char

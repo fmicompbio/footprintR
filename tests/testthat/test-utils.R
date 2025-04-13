@@ -1,5 +1,38 @@
 library(testthat)
 
+
+## -------------------------------------------------------------------------- ##
+## Checks, concatenate_files
+## -------------------------------------------------------------------------- ##
+test_that("concatenate_files works", {
+    infiles <- tempfile(pattern = paste0("file", seq.int(3)))
+    outfile <- tempfile()
+
+    expect_error(concatenate_files(), "missing")
+    expect_error(concatenate_files("ERROR"), "missing")
+    expect_error(concatenate_files(infiles, "error/error/error"))
+    expect_error(concatenate_files(1L, "ERROR"), "string vector")
+    expect_error(concatenate_files("in", c("out1", "out2")), "single string")
+    expect_error(concatenate_files(infiles, outfile), "Could not open")
+
+    set.seed(1L)
+    data <- unlist(lapply(seq_along(infiles), function(i) {
+        paste(sample(letters, 10), collapse = "")
+    }))
+
+    for (i in seq_along(data)) {
+        writeLines(text = data[i], con = infiles[i])
+    }
+
+    oL <- list(c(1,2,3), c(1,3,2), c(2,1,3), c(2,3,1), c(3,1,2), c(3,2,1))
+    res <- lapply(oL, function(o) {
+        expect_identical(concatenate_files(infiles[o], outfile), outfile)
+        expect_identical(data[o], readLines(outfile))
+    })
+
+    unlink(c(infiles, outfile))
+})
+
 ## -------------------------------------------------------------------------- ##
 ## Checks, .assertScalar
 ## -------------------------------------------------------------------------- ##

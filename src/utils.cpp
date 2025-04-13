@@ -1,7 +1,51 @@
+#include <stdio.h>
 #include <htslib/sam.h>
 #include <string>
 #include <vector>
 #include <Rcpp.h>
+
+#define CONCAT_BUFFER_SIZE 65536
+
+//' Concatenate files
+//'
+//' @param input_files Character vector with input file names to concatenate.
+//' @param output_file Character scalar with output file name to write to.
+//'
+//' @return The \code{output_file} as a character scalar.
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+std::string concatenate_files(std::vector<std::string> input_files,
+                              const std::string output_file) {
+    int buffer_len = 2000;
+    char buffer[2000];
+
+    FILE *out = fopen(output_file.c_str(), "wb");
+    if (!out) {
+        snprintf(buffer, buffer_len, "Could not create %s\n", output_file.c_str());
+        Rcpp::stop(buffer);
+    }
+
+    for (size_t i = 0; i < input_files.size(); i++) {
+        FILE *in = fopen(input_files[i].c_str(), "rb");
+        if (!in) {
+            snprintf(buffer, buffer_len, "Could not open %s\n", input_files[i].c_str());
+            fclose(out);
+            Rcpp::stop(buffer);
+        }
+
+        char buffer[CONCAT_BUFFER_SIZE];
+        size_t bytes;
+        while ((bytes = fread(buffer, 1, CONCAT_BUFFER_SIZE, in)) > 0) {
+            fwrite(buffer, 1, bytes, out);
+        }
+
+        fclose(in);
+    }
+
+    fclose(out);
+    return output_file;
+}
 
 //' Get unmodified base corresponding to a modified base
 //'

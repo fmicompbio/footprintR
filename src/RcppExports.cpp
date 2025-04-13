@@ -137,6 +137,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// concatenate_files
+std::string concatenate_files(std::vector<std::string> input_files, const std::string output_file);
+RcppExport SEXP _footprintR_concatenate_files(SEXP input_filesSEXP, SEXP output_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type input_files(input_filesSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type output_file(output_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(concatenate_files(input_files, output_file));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_unmodified_base
 char get_unmodified_base(char b);
 RcppExport SEXP _footprintR_get_unmodified_base(SEXP bSEXP) {
@@ -169,6 +181,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
+    {"_footprintR_concatenate_files", (DL_FUNC) &_footprintR_concatenate_files, 2},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {NULL, NULL, 0}
