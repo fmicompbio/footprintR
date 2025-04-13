@@ -89,8 +89,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     hts_set_log_level(HTS_LOG_OFF);
 
     // variable declarations
-    const char *infile_c = infile.c_str(),
-        *outfile_c = outfile.c_str(), *region_c = region.c_str();
+    const char *infile_c = infile.c_str(), *outfile_c = outfile.c_str();
     int c = 0, this_read_len = 0;
     char unmodbase = '0';
     bool had_error = false;
@@ -185,7 +184,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     unmodbase = get_unmodified_base(modbase);
 
     // create iterator
-    if (!(iter = sam_itr_querys(idx, inbamhdr, region_c))) {
+    if (!(iter = sam_itr_querys(idx, inbamhdr, region.c_str()))) {
         had_error = true;
         snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
         goto end;
