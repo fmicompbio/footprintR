@@ -454,6 +454,18 @@ concatenate_files <- function(input_files, output_file) {
     .Call(`_footprintR_concatenate_files`, input_files, output_file)
 }
 
+#' Get chromosome names for a bam file header
+#'
+#' @param bamfile Character scalar with name of bam file.
+#'
+#' @return A character vector with the chromosome (target sequence) names
+#'     extracted from the bam file header.
+#' @noRd
+#' @keywords internal
+getChromosomeNamesFromBam <- function(bamfile) {
+    .Call(`_footprintR_getChromosomeNamesFromBam`, bamfile)
+}
+
 #' Get unmodified base corresponding to a modified base
 #'
 #' @param b Modified base as a char

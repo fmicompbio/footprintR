@@ -47,6 +47,62 @@ std::string concatenate_files(std::vector<std::string> input_files,
     return output_file;
 }
 
+//' Get chromosome names for a bam file header
+//'
+//' @param bamfile Character scalar with name of bam file.
+//'
+//' @return A character vector with the chromosome (target sequence) names
+//'     extracted from the bam file header.
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+Rcpp::CharacterVector getChromosomeNamesFromBam(const std::string bamfile) {
+    int buffer_len = 2000;
+    char buffer[2000];
+    bool had_error = false;
+    samFile *inbamfile = NULL;
+    sam_hdr_t *inbamhdr = NULL;
+    Rcpp::CharacterVector chrs;
+
+    // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
+    hts_set_log_level(HTS_LOG_OFF);
+
+    // open input file
+    if (!(inbamfile = sam_open(bamfile.c_str(), "r"))) {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Could not open %s\n", bamfile.c_str());
+        goto end;
+    }
+
+    // read header
+    if (!(inbamhdr = sam_hdr_read(inbamfile))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to read header from file %s\n", bamfile.c_str());
+        goto end; // # nocov end
+    }
+
+    // extract target sequences
+    for (int i = 0; i < inbamhdr->n_targets; i++) {
+        chrs.push_back(inbamhdr->target_name[i]);
+    }
+
+    end:
+        //cleanup
+        if (inbamhdr) {
+            sam_hdr_destroy(inbamhdr);
+        }
+        if (inbamfile) {
+            sam_close(inbamfile);
+        }
+        if (had_error) {
+            // we encountered an error (message in `buffer`) --> stop
+            Rcpp::stop(buffer);
+
+        } else {
+            return chrs;
+        }
+}
+
 //' Get unmodified base corresponding to a modified base
 //'
 //' @param b Modified base as a char

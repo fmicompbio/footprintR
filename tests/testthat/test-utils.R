@@ -34,6 +34,40 @@ test_that("concatenate_files works", {
 })
 
 ## -------------------------------------------------------------------------- ##
+## Checks, getChromosomeNamesFromBam
+## -------------------------------------------------------------------------- ##
+test_that("getChromosomeNamesFromBam works", {
+    bamfiles <- system.file("extdata", c("6mA_1_10reads.bam",
+                                         "6mA_2_10reads.bam"),
+                            package = "footprintR")
+    bamfileNoheader <- tempfile(fileext = ".bam")
+    res <- filter_modbam_cpp(bamfiles[1], bamfileNoheader, modbase = "a",
+                             includeBamHeader = FALSE)
+    expect_identical(res[["retained"]], 10)
+
+    expect_error(getChromosomeNamesFromBam(), "missing")
+    expect_error(getChromosomeNamesFromBam(1L), "single string")
+    expect_error(getChromosomeNamesFromBam(bamfiles), "single string")
+    expect_error(getChromosomeNamesFromBam(bamfileNoheader), "Could not open")
+
+    expected_chrs <- c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8",
+                       "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15",
+                       "chr16", "chr17", "chr18", "chr19", "chrX", "chrY", "chrM", "GL456210.1",
+                       "GL456211.1", "GL456212.1", "GL456219.1", "GL456221.1", "GL456233.2",
+                       "GL456239.1", "GL456354.1", "GL456359.1", "GL456360.1", "GL456366.1",
+                       "GL456367.1", "GL456368.1", "GL456370.1", "GL456372.1", "GL456378.1",
+                       "GL456379.1", "GL456381.1", "GL456382.1", "GL456383.1", "GL456385.1",
+                       "GL456387.1", "GL456389.1", "GL456390.1", "GL456392.1", "GL456394.1",
+                       "GL456396.1", "JH584295.1", "JH584296.1", "JH584297.1", "JH584298.1",
+                       "JH584299.1", "JH584300.1", "JH584301.1", "JH584302.1", "JH584303.1",
+                       "JH584304.1", "MU069434.1", "MU069435.1")
+    expect_identical(getChromosomeNamesFromBam(bamfiles[1]), expected_chrs)
+    expect_identical(getChromosomeNamesFromBam(bamfiles[2]), expected_chrs)
+
+    unlink(bamfileNoheader)
+})
+
+## -------------------------------------------------------------------------- ##
 ## Checks, .assertScalar
 ## -------------------------------------------------------------------------- ##
 test_that(".assertScalar works", {
