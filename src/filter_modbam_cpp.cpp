@@ -25,6 +25,13 @@
 //' @param outfile Character scalar with name of the output bam file.
 //' @param modbase Character scalar defining the modified base to analyze
 //'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+//' @param region Character scalar specifying the region for which
+//'     to extract overlapping reads, for example in the form
+//'     \code{"chr:start-end"} (genomic interval), \code{"chr"} (all records
+//'     on the given reference sequence) or \code{"."} (all records in the file).
+//' @param includeBamHeader Logical scalar. If \code{TRUE} (the default), the
+//'     bam header from \code{infile} will be read and written to \code{outfile}.
+//'     If \code{FALSE}, no header will be written to \code{outfile}.
 //' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
 //'     indicating whether to keep unmapped, secondary or supplementary
 //'     alignments.
@@ -64,6 +71,8 @@
 Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                                       std::string outfile,
                                       char modbase,
+                                      std::string region = ".",
+                                      bool includeBamHeader = true,
                                       bool keepUnmapped = true,
                                       bool keepSecondary = true,
                                       bool keepSupplementary = true,
@@ -80,7 +89,8 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     hts_set_log_level(HTS_LOG_OFF);
 
     // variable declarations
-    const char *infile_c = infile.c_str(), *outfile_c = outfile.c_str();
+    const char *infile_c = infile.c_str(),
+        *outfile_c = outfile.c_str(), *region_c = region.c_str();
     int c = 0, this_read_len = 0;
     char unmodbase = '0';
     bool had_error = false;
@@ -98,6 +108,8 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     hts_base_mod_state *ms = NULL;
     samFile *inbamfile = NULL, *outbamfile = NULL;
     sam_hdr_t *inbamhdr = NULL;
+    hts_idx_t *idx = NULL;
+    hts_itr_t *iter = NULL;
 
     // ... return values
     unsigned int nUnmapped = 0, nSecondary = 0, nSupplementary = 0,
@@ -119,12 +131,22 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         goto end; // # nocov end
     }
 
-    // open input and output files
+    // open input file
     if (!(inbamfile = sam_open(infile_c, "r"))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Could not open {.file %s}\n", infile_c);
         goto end; // # nocov end
     }
+
+    // load index file
+    if (!(idx = sam_index_load(inbamfile, infile_c))) {
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to load the index for {.file %s}\n", infile_c);
+        goto end;
+    }
+
+    // open output file
     if (!(outbamfile = sam_open(outfile_c, "wb"))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Could not open {.file %s}\n", outfile_c);
@@ -151,14 +173,23 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         snprintf(buffer, buffer_len, "Failed to read header from {.file %s}!\n", infile_c);
         goto end; // # nocov end
     }
-    if (sam_hdr_write(outbamfile, inbamhdr) == -1) {
-        had_error = true; // # nocov start
-        snprintf(buffer, buffer_len, "Failed to write header to {.file %s}\n", outfile_c);
-        goto end; // # nocov end
+    if (includeBamHeader) {
+        if (sam_hdr_write(outbamfile, inbamhdr) == -1) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Failed to write header to {.file %s}\n", outfile_c);
+            goto end; // # nocov end
+        }
     }
 
     // get expected unmodified base corresponding to `modbase`
     unmodbase = get_unmodified_base(modbase);
+
+    // create iterator
+    if (!(iter = sam_itr_querys(idx, inbamhdr, region_c))) {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+        goto end;
+    }
 
     // iterate over records
     if (verbose) {
@@ -170,7 +201,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                 Rcpp::_["format"] = "{cli::pb_spin} {sprintf(\"%.1f\", cli::pb_current / 1e3)} thousand records processed ({sprintf(\"%.1f /s\", cli::pb_rate_raw)}) [{cli::pb_elapsed}]"));
     }
 
-    while ((c = sam_read1(inbamfile, inbamhdr, bamdata)) >= 0) {
+    while ((c = sam_itr_next(inbamfile, iter, bamdata)) >= 0) {
         alncnt++;
 
         // extract read information

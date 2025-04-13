@@ -82,6 +82,13 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #' @param outfile Character scalar with name of the output bam file.
 #' @param modbase Character scalar defining the modified base to analyze
 #'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
+#' @param region Character scalar specifying the region for which
+#'     to extract overlapping reads, for example in the form
+#'     \code{"chr:start-end"} (genomic interval), \code{"chr"} (all records
+#'     on the given reference sequence) or \code{"."} (all records in the file).
+#' @param includeBamHeader Logical scalar. If \code{TRUE} (the default), the
+#'     bam header from \code{infile} will be read and written to \code{outfile}.
+#'     If \code{FALSE}, no header will be written to \code{outfile}.
 #' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
 #'     indicating whether to keep unmapped, secondary or supplementary
 #'     alignments.
@@ -117,8 +124,8 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #'
 #' @noRd
 #' @keywords internal
-filter_modbam_cpp <- function(infile, outfile, modbase, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
+filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeBamHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeBamHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
 #' Create an index for a given bam file

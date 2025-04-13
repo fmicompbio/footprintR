@@ -7,6 +7,16 @@ test_that("filterReadsBam works", {
     # non-existing input files
     expect_error(filterReadsBam(infiles = filtbamfiles, outfiles = filtbamfiles, modbase = "a"))
 
+    # non-existing bam index
+    tmpin <- tempfile(fileext = ".bam")
+    expect_true(file.copy(from = modbamfiles[1], to = tmpin))
+    expect_error(filterReadsBam(infiles = tmpin, outfiles = filtbamfiles[1], modbase = "a"))
+    unlink(c(tmpin, filtbamfiles[1]))
+
+    # mis-specified region
+    expect_error(filter_modbam_cpp(infile = modbamfiles[1], outfile = filtbamfiles[1], modbase = "a", region = "ERROR"))
+    unlink(filtbamfiles[1])
+
     # expected results (filtering out exactly one read for each filter)
     suppressMessages(
         expect_message(
