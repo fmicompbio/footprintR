@@ -39,14 +39,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // filter_modbam_cpp
-Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
-RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
+Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeBamHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
+RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeBamHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type infile(infileSEXP);
     Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
+    Rcpp::traits::input_parameter< std::string >::type region(regionSEXP);
+    Rcpp::traits::input_parameter< bool >::type includeBamHeader(includeBamHeaderSEXP);
     Rcpp::traits::input_parameter< bool >::type keepUnmapped(keepUnmappedSEXP);
     Rcpp::traits::input_parameter< bool >::type keepSecondary(keepSecondarySEXP);
     Rcpp::traits::input_parameter< bool >::type keepSupplementary(keepSupplementarySEXP);
@@ -59,7 +61,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type LowConf(LowConfSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
+    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeBamHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -135,6 +137,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// concatenate_files
+std::string concatenate_files(std::vector<std::string> input_files, const std::string output_file);
+RcppExport SEXP _footprintR_concatenate_files(SEXP input_filesSEXP, SEXP output_fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type input_files(input_filesSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type output_file(output_fileSEXP);
+    rcpp_result_gen = Rcpp::wrap(concatenate_files(input_files, output_file));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getChromosomeNamesFromBam
+Rcpp::CharacterVector getChromosomeNamesFromBam(const std::string bamfile);
+RcppExport SEXP _footprintR_getChromosomeNamesFromBam(SEXP bamfileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string >::type bamfile(bamfileSEXP);
+    rcpp_result_gen = Rcpp::wrap(getChromosomeNamesFromBam(bamfile));
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_unmodified_base
 char get_unmodified_base(char b);
 RcppExport SEXP _footprintR_get_unmodified_base(SEXP bSEXP) {
@@ -161,12 +186,14 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
-    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 15},
+    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 17},
     {"_footprintR_index_bam_cpp", (DL_FUNC) &_footprintR_index_bam_cpp, 1},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 9},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
+    {"_footprintR_concatenate_files", (DL_FUNC) &_footprintR_concatenate_files, 2},
+    {"_footprintR_getChromosomeNamesFromBam", (DL_FUNC) &_footprintR_getChromosomeNamesFromBam, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
     {NULL, NULL, 0}

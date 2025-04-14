@@ -1,7 +1,107 @@
+#include <stdio.h>
 #include <htslib/sam.h>
 #include <string>
 #include <vector>
 #include <Rcpp.h>
+
+#define CONCAT_BUFFER_SIZE 65536
+
+//' Concatenate files
+//'
+//' @param input_files Character vector with input file names to concatenate.
+//' @param output_file Character scalar with output file name to write to.
+//'
+//' @return The \code{output_file} as a character scalar.
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+std::string concatenate_files(std::vector<std::string> input_files,
+                              const std::string output_file) {
+    int buffer_len = 2000;
+    char buffer[2000];
+
+    FILE *out = fopen(output_file.c_str(), "wb");
+    if (!out) {
+        snprintf(buffer, buffer_len, "Could not create %s\n", output_file.c_str());
+        Rcpp::stop(buffer);
+    }
+
+    for (size_t i = 0; i < input_files.size(); i++) {
+        FILE *in = fopen(input_files[i].c_str(), "rb");
+        if (!in) {
+            snprintf(buffer, buffer_len, "Could not open %s\n", input_files[i].c_str());
+            fclose(out);
+            Rcpp::stop(buffer);
+        }
+
+        char buffer[CONCAT_BUFFER_SIZE];
+        size_t bytes;
+        while ((bytes = fread(buffer, 1, CONCAT_BUFFER_SIZE, in)) > 0) {
+            fwrite(buffer, 1, bytes, out);
+        }
+
+        fclose(in);
+    }
+
+    fclose(out);
+    return output_file;
+}
+
+//' Get chromosome names for a bam file header
+//'
+//' @param bamfile Character scalar with name of bam file.
+//'
+//' @return A character vector with the chromosome (target sequence) names
+//'     extracted from the bam file header.
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+Rcpp::CharacterVector getChromosomeNamesFromBam(const std::string bamfile) {
+    int buffer_len = 2000;
+    char buffer[2000];
+    bool had_error = false;
+    samFile *inbamfile = NULL;
+    sam_hdr_t *inbamhdr = NULL;
+    Rcpp::CharacterVector chrs;
+
+    // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
+    hts_set_log_level(HTS_LOG_OFF);
+
+    // open input file
+    if (!(inbamfile = sam_open(bamfile.c_str(), "r"))) {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Could not open %s\n", bamfile.c_str());
+        goto end;
+    }
+
+    // read header
+    if (!(inbamhdr = sam_hdr_read(inbamfile))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to read header from file %s\n", bamfile.c_str());
+        goto end; // # nocov end
+    }
+
+    // extract target sequences
+    for (int i = 0; i < inbamhdr->n_targets; i++) {
+        chrs.push_back(inbamhdr->target_name[i]);
+    }
+
+    end:
+        //cleanup
+        if (inbamhdr) {
+            sam_hdr_destroy(inbamhdr);
+        }
+        if (inbamfile) {
+            sam_close(inbamfile);
+        }
+        if (had_error) {
+            // we encountered an error (message in `buffer`) --> stop
+            Rcpp::stop(buffer);
+
+        } else {
+            return chrs;
+        }
+}
 
 //' Get unmodified base corresponding to a modified base
 //'
