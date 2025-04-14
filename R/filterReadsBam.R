@@ -104,19 +104,9 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
 
     # determine the number of parallel threads to be used for
-    # bam files (preferred) and decompression of bam records (if available)
-    # (accept some level of over-subscription)
+    # bam files (chromosomes) and decompression of bam records
     ncpuTotal <- bpnworkers(BPPARAM)
-    if (is(BPPARAM, "MulticoreParam") || is(BPPARAM, "SnowParam")) {
-        ncpuFiles <- min(ncpuTotal, length(infiles))
-        oversubscriptionRate <- 2.0
-        ncpuDecompression <- min(8L, max(1L, as.integer(
-            floor(oversubscriptionRate * ncpuTotal / ncpuFiles))))
-        bpworkers(BPPARAM) <- ncpuFiles
-        on.exit(bpworkers(BPPARAM) <- ncpuTotal)
-    } else {
-        ncpuDecompression <- 1L
-    }
+    ncpuDecompression <- 2L # accept some level of over-subscription
 
     # iterate over bam files
     res <- data.frame(
@@ -125,50 +115,82 @@ filterReadsBam <- function(infiles,
         outfile = outfiles,
         do.call(
             rbind,
-            bplapply(seq_along(infiles),
-                     function(i,
-                              myinfile = infiles[i],
-                              myoutfile = outfiles[i],
-                              mymodbase = modbase,
-                              myKeepUnmapped = keepUnmapped,
-                              myKeepSecondary = keepSecondary,
-                              myKeepSupplementary = keepSupplementary,
-                              myMinReadLength = as.integer(minReadLength),
-                              myMinAlignedLength = as.integer(minAlignedLength),
-                              myMinAlignedFraction = minAlignedFraction,
-                              myMinQscore = minQscore,
-                              myMaxFracLowConf = maxFracLowConf,
-                              myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
-                              myLowConf = LowConf,
-                              myNThreads = ncpuDecompression,
-                              myverbose = verbose) {
-                         if (myverbose) {
-                             cli_alert_info(
-                                 paste0("opening input file {.file {myinfile}} ",
-                                        "using {myNThreads} thread{?s}"))
-                         }
-                         res1 <- filter_modbam_cpp(infile = myinfile,
-                                                   outfile = myoutfile,
-                                                   modbase = mymodbase,
-                                                   keepUnmapped = myKeepUnmapped,
-                                                   keepSecondary = myKeepSecondary,
-                                                   keepSupplementary = myKeepSupplementary,
-                                                   minReadLength = myMinReadLength,
-                                                   minAlignedLength = myMinAlignedLength,
-                                                   minAlignedFraction = myMinAlignedFraction,
-                                                   minQscore = myMinQscore,
-                                                   maxFracLowConf = myMaxFracLowConf,
-                                                   maxEntropy = myMaxEntropy,
-                                                   LowConf = myLowConf,
-                                                   nThreads = myNThreads,
-                                                   verbose = myverbose)
-                         if (myverbose) {
-                             cli_alert_info(
-                                 paste0("done filtering: retained {res1['retained']} ",
-                                        "of {res1['total']} records ({round(res1['retained']/res1['total']*100, 1)}%)"))
-                         }
-                         return(res1)
-                     }, BPPARAM = BPPARAM)))
+            lapply(seq_along(infiles), function(i) {
+                # get chromosome names
+                if (ncpuTotal > 1) {
+                    chrs <- paste0(getChromosomeNamesFromBam(infiles[i]), ":")
+                    if (keepUnmapped) {
+                        chrs <- c(chrs, "*")
+                    }
+                } else {
+                    chrs <- "."
+                }
+
+                # create temporary output file names
+                tmpbamfiles <- tempfile(pattern = sprintf("file%40d_", seq_along(chrs)),
+                                        fileext = ".bam")
+
+                # filter in parallel
+                if (verbose) {
+                    cli_alert_info(
+                        paste0("start filtering of {.file {infiles[i]}} ",
+                               "using {ncpuTotal} thread{?s}"))
+                }
+                res1PerChr <- bplapply(
+                    seq_along(chrs),
+                    function(j,
+                             myinfile = infiles[i],
+                             myoutfile = tmpbamfiles[j],
+                             mymodbase = modbase,
+                             myregion = chrs[j],
+                             myIncludeBamHeader = identical(j, 1L),
+                             myKeepUnmapped = keepUnmapped,
+                             myKeepSecondary = keepSecondary,
+                             myKeepSupplementary = keepSupplementary,
+                             myMinReadLength = as.integer(minReadLength),
+                             myMinAlignedLength = as.integer(minAlignedLength),
+                             myMinAlignedFraction = minAlignedFraction,
+                             myMinQscore = minQscore,
+                             myMaxFracLowConf = maxFracLowConf,
+                             myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
+                             myLowConf = LowConf,
+                             myNThreads = ncpuDecompression,
+                             myverbose = FALSE) {
+                        filter_modbam_cpp(infile = myinfile,
+                                          outfile = myoutfile,
+                                          modbase = mymodbase,
+                                          region = myregion,
+                                          includeBamHeader = myIncludeBamHeader,
+                                          keepUnmapped = myKeepUnmapped,
+                                          keepSecondary = myKeepSecondary,
+                                          keepSupplementary = myKeepSupplementary,
+                                          minReadLength = myMinReadLength,
+                                          minAlignedLength = myMinAlignedLength,
+                                          minAlignedFraction = myMinAlignedFraction,
+                                          minQscore = myMinQscore,
+                                          maxFracLowConf = myMaxFracLowConf,
+                                          maxEntropy = myMaxEntropy,
+                                          LowConf = myLowConf,
+                                          nThreads = myNThreads,
+                                          verbose = myverbose)
+                    }, BPPARAM = BPPARAM)
+
+                # merge partial outputs
+                if (verbose) {
+                    cli_alert_info("merging {length(tmpbamfiles)} filtered chunks")
+                }
+                concatenate_files(input_files = tmpbamfiles, output_file = outfiles[i])
+                unlink(tmpbamfiles)
+
+                # sum and return filter statistics
+                res1 <- Reduce(f = "+", x = res1PerChr)
+                if (verbose) {
+                    cli_alert_info(
+                        paste0("done filtering: retained {res1['retained']} ",
+                               "of {res1['total']} records ({round(res1['retained']/res1['total']*100, 1)}%)"))
+                }
+                return(res1)
+            })))
 
     if (indexOutfiles) {
         .message("indexing {length(outfiles)} output file{?s}")

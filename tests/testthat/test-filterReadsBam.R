@@ -5,15 +5,27 @@ test_that("filterReadsBam works", {
     filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 
     # non-existing input files
-    expect_error(filterReadsBam(infiles = filtbamfiles, outfiles = filtbamfiles, modbase = "a"))
+    expect_error(filterReadsBam(infiles = filtbamfiles,
+                                outfiles = filtbamfiles,
+                                modbase = "a"),
+                 "not all .infiles. exist")
 
     # non-existing bam index
     tmpin <- tempfile(fileext = ".bam")
     expect_true(file.copy(from = modbamfiles[1], to = tmpin))
-    expect_error(filterReadsBam(infiles = tmpin, outfiles = filtbamfiles[1], modbase = "a"))
+    expect_error(filterReadsBam(infiles = tmpin, outfiles = filtbamfiles[1],
+                                modbase = "a"),
+                 "Failed to load the index")
     unlink(c(tmpin, filtbamfiles[1]))
 
-    # mis-specified region
+    # direct call to filter_modbam_cpp with verbose = TRUE
+    expect_length(filter_modbam_cpp(infile = modbamfiles[1], outfile = filtbamfiles[1],
+                                    modbase = "a", region = ".", includeBamHeader = TRUE,
+                                    verbose = TRUE),
+                  11L)
+    unlink(filtbamfiles[1])
+
+    # miss-specified region
     expect_error(filter_modbam_cpp(infile = modbamfiles[1], outfile = filtbamfiles[1], modbase = "a", region = "ERROR"))
     unlink(filtbamfiles[1])
 
@@ -90,8 +102,14 @@ test_that("filterReadsBam works", {
     expect_identical(res2$filtered_minQscore, c(0, 0))
     expect_identical(res2$filtered_maxFracLowConf, c(0, 0))
     expect_identical(res2$filtered_maxEntropy, c(0, 0))
-    expect_identical(unname(tools::md5sum(modbamfiles)),
-                     unname(tools::md5sum(filtbamfiles)))
+    # remark: the parallel-sorting-and-concatenation changes the file
+    #         (compression of chunks versus compression of whole file),
+    #         but not the content
+    # expect_identical(unname(tools::md5sum(modbamfiles)),
+    #                  unname(tools::md5sum(filtbamfiles)))
+    expect_true(all(file.exists(vapply(filtbamfiles, index_bam_cpp, ""))))
+    expect_identical(SummarizedExperiment::assays(readModBam(modbamfiles, "chr1", "a")),
+                     SummarizedExperiment::assays(readModBam(filtbamfiles, "chr1", "a")))
     unlink(filtbamfiles)
 
     # non-primary alignments

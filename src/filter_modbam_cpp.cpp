@@ -133,22 +133,22 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     // open input file
     if (!(inbamfile = sam_open(infile_c, "r"))) {
         had_error = true; // # nocov start
-        snprintf(buffer, buffer_len, "Could not open {.file %s}\n", infile_c);
+        snprintf(buffer, buffer_len, "Could not open %s\n", infile_c);
         goto end; // # nocov end
     }
 
     // load index file
     if (!(idx = sam_index_load(inbamfile, infile_c))) {
-        had_error = true;
+        had_error = true; // # nocov start
         snprintf(buffer, buffer_len,
-                 "Failed to load the index for {.file %s}\n", infile_c);
-        goto end;
+                 "Failed to load the index for %s\n", infile_c);
+        goto end; // # nocov end
     }
 
     // open output file
     if (!(outbamfile = sam_open(outfile_c, "wb"))) {
         had_error = true; // # nocov start
-        snprintf(buffer, buffer_len, "Could not open {.file %s}\n", outfile_c);
+        snprintf(buffer, buffer_len, "Could not open %s\n", outfile_c);
         goto end; // # nocov end
     }
 
@@ -169,13 +169,13 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     // read and write header
     if (!(inbamhdr = sam_hdr_read(inbamfile))) {
         had_error = true; // # nocov start
-        snprintf(buffer, buffer_len, "Failed to read header from {.file %s}!\n", infile_c);
+        snprintf(buffer, buffer_len, "Failed to read header from %s\n", infile_c);
         goto end; // # nocov end
     }
     if (includeBamHeader) {
         if (sam_hdr_write(outbamfile, inbamhdr) == -1) {
             had_error = true; // # nocov start
-            snprintf(buffer, buffer_len, "Failed to write header to {.file %s}\n", outfile_c);
+            snprintf(buffer, buffer_len, "Failed to write header to %s\n", outfile_c);
             goto end; // # nocov end
         }
     }
