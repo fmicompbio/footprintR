@@ -135,6 +135,19 @@ test_that("readModBam works", {
                             BPPARAM = BiocParallel::SerialParam()),
                  "Read sampling is not supported")
 
+    # query without reads
+    seL <- list(readModBam(bamfiles = modbamfiles, regions = "chr1:1-10",
+                           modbase = "a", level = "read", verbose = FALSE,
+                           BPPARAM = BiocParallel::SerialParam()),
+                readModBam(bamfiles = modbamfiles, regions = "chr1:1-10",
+                           modbase = "a", level = "quickread", verbose = FALSE,
+                           BPPARAM = BiocParallel::SerialParam()),
+                readModBam(bamfiles = modbamfiles, regions = "chr1:1-10",
+                           modbase = "a", level = "summary", verbose = FALSE,
+                           BPPARAM = BiocParallel::SerialParam()))
+    expect_true(all(vapply(seL, is, logical(1), class2 = "SummarizedExperiment")))
+    expect_true(all(vapply(seL, function(x) identical(dim(x), c(0L, 2L)), logical(1))))
+
     # expected results
     se0 <- readModkitExtract(fnames = extractfiles, modbase = "a",
                              BPPARAM = BiocParallel::SerialParam())

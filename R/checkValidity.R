@@ -55,6 +55,7 @@
 #' will be raised.
 #'
 #' @importFrom SummarizedExperiment colData assayNames assay
+#' @importFrom BiocGenerics nrow
 #' @importFrom cli cli_abort
 .checkSEValidity <- function(se, verbose = FALSE) {
     stopifnot(is(se, "SummarizedExperiment"))
@@ -64,9 +65,11 @@
                   all(assayNames(se) != "") &&
                   !any(duplicated(assayNames(se))))
 
-    .message("Checking row names")
-    stopifnot(!is.null(rownames(se)) &&
-                  !any(duplicated(rownames(se))))
+    if (nrow(se) > 0) {
+        .message("Checking row names")
+        stopifnot(!is.null(rownames(se)) &&
+                      !any(duplicated(rownames(se))))
+    }
 
     stopifnot(!is.null(metadata(se)$readLevelData) &&
                   is.list(metadata(se)$readLevelData) &&
