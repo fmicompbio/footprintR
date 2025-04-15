@@ -386,10 +386,172 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 }
 
 
+// process a single bam record (pair of bases state counting):
+// - call modification states (binarize modification probabilities)
+// - increase counts of pairs of bases by state and distance (passed by reference)
+//   for later returning to R
+int count_pairs_bam_record(
+        bam1_t *bamdata,           // bam record
+        unsigned int &alncnt,      // alignment counter
+        char *&qseq,               // buffer for forward read sequence
+        int &qseq_len,             // allocated length of qseq
+        hts_base_mod_state *ms,    // modification state struct
+        bool &had_error,           // error flag
+        char *buffer,              // buffer for message
+        int &buffer_len,           // allocated length of message buffer
+        char modbase,              // modified base to analyze
+        const double thresh_unmod, // mod_prob <  thresh_unmod: unmodified
+        const double thresh_mod,   // mod_prob >= thresh_unmod: modified
+        Rcpp::IntegerMatrix &pair_counts) { // matrix for counters
+
+    // allocate variable only used inside count_pairs_bam_record()
+    int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
+    hts_base_mod mod[5] = {{0}};  //for ATCGN
+    char canonical = '0', unmodbase = '0';
+    int this_read_len = bamdata->core.l_qseq;
+    std::vector<int> modposaln; // alignment position of modified bases
+    std::vector<int> modstate; // modification states of the bases (0: unmod, 1: mod)
+    double modprob = 0.0; // modification probability
+
+    // get expected unmodified base corresponding to `modbase`
+    unmodbase = get_unmodified_base(modbase);
+
+    // process alignment
+    alncnt++;
+
+    // check for interrupt every 100 alignments
+    if (alncnt % 100 == 0) // # nocov start
+        Rcpp::checkUserInterrupt(); // # nocov end
+
+    // ... extract *forward* read sequence to char*
+    //     (populates qseq and qseq_len)
+    if (extract_forward_qseq(bamdata, qseq, qseq_len) != 0) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len,
+                 "Failed to extract forward read sequence (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -44; // # nocov end
+    }
+
+    // ... parse base modifications
+    if (bam_parse_basemod(bamdata, ms)) {
+        had_error = true;
+        snprintf(buffer, buffer_len,
+                 "Failed to parse the base mods (read %s)\n",
+                 bam_get_qname(bamdata));
+        return -1;
+    }
+
+    // ... process read if modifications of the right type are present
+    //     bam_mods_query_type:
+    //     - returns 0 on success, -1 if not found
+    //     - also fills out `canonical`, `strand` and `impl`
+    //       (`impl` is a boolean for whether unlisted positions should be
+    //        implicitly assumed to be unmodified, or require an explicit
+    //        score and should be considered as unknown)
+    if (bam_mods_query_type(ms, modbase, &strand, &impl, &canonical) == 0) {
+        // ... loop over sequence positions i
+        for (i = 0; i < this_read_len; i++) {
+            // i is the position in the aligned read (possibly reverse-complemented)
+            // pos is the position in the original read (qseq)
+            if (bam_is_rev(bamdata)) {
+                pos = this_read_len - 1 - i;
+            } else{
+                pos = i;
+            }
+
+            // r: number of found modifications (>=1, 0 or -1 if failed)
+            r = bam_mods_at_next_pos(bamdata, ms, mod, sizeof(mod)/sizeof(mod[0]));
+            if (r <= -1) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len,
+                         "Failed to get modifications (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -2; // # nocov end
+
+            } else if (r > (int)(sizeof(mod) / sizeof(mod[0]))) {
+                had_error = true;
+                snprintf(buffer, buffer_len,
+                         "More modifications than footprintR:::read_modbam_cpp can handle (read %s)\n",
+                         bam_get_qname(bamdata));
+                return -3;
+
+            } else if (!r && impl) {
+                // implied base without modification at position i
+                if (qseq[pos] == unmodbase) {
+                    // base of the right type -> add to results
+                    modposaln.push_back(i);
+                    modstate.push_back(0);
+                }
+            }
+
+            // modifications
+            for (j = 0; j < r; j++) {
+                if (mod[j].modified_base == modbase) {
+                    // found modified base of the right type -> binarize:
+                    //   `qual` of N corresponds to call probability
+                    //       in [N/256, (N+1)/256] -> calculate midpoint
+                    modprob = ((double) mod[j].qual + 0.5) / 256.0;
+
+                    if (modprob < thresh_unmod) {
+                        modposaln.push_back(i);
+                        modstate.push_back(0);
+
+                    } else if (modprob >= thresh_mod) {
+                        modposaln.push_back(i);
+                        modstate.push_back(1);
+                    }
+
+                }
+            }
+        }
+    }
+
+    // ... convert 0-based read positions to 0-based reference coordinates
+    //     (a coordinate of -1 means unaligned, e.g. soft-masked)
+    std::vector<int> modpos = read_to_reference_pos(bamdata, modposaln);
+    modposaln.clear();
+
+    // ... remove unaligned (e.g. soft-masked) read-bases
+    //     (iterate backwards to avoid messing up indices
+    //      when removing elements)
+    for (size_t e = modpos.size(); e-- > 0;) {
+        if (modpos[e] == -1) {
+            modpos.erase(modpos.begin() + e);
+            modstate.erase(modstate.begin() + e);
+        }
+    }
+
+    // ... process modpos and modstate to update counter in pair_counts
+    int maxdist = pair_counts.nrow() - 1, currdist = 0;
+    for (i = 0; i < (int)modpos.size(); i++) {
+        for (j = i; j < (int)modpos.size(); j++) {
+            currdist = modpos[j] - modpos[i];
+            if (currdist > maxdist)
+                break;
+            pair_counts(currdist, 2 * modstate[i] + modstate[j])++;
+        }
+    }
+
+    return 0;
+}
+
+
 //' Read base modifications from a bam file.
 //'
 //' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
-//' section 1.7) and return a list of information on modified bases.
+//' section 1.7) and return a list of information on modified bases. The
+//' function implements three distinct reading modes:
+//' \enumerate{
+//'     \item{Extraction of modification probabilities for
+//'         alignments overlapping provided regions. This mode is selected
+//'         if \code{n_alns_to_sample = 0} and \code{windowSize = 0}.}
+//'     \item{Extraction of modification probabilities for alignments
+//'         randomly sampled from provided chromosomes. This is selected
+//'         if \code{n_alns_to_sample > 0} and \code{windowSize = 0}.}
+//'     \item{Counting of pairs of bases by distance and modification state.
+//'         This mode is selected if \code{windowSize > 0}.}
+//' }
 //'
 //' @param inname_str Character scalar with name of the input bam file.
 //' @param regions Character vector specifying the region(s) for which
@@ -400,13 +562,30 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //' @param tnames_for_sampling String vector with target names (chromosomes)
 //'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
 //'     \code{n_alns_to_sample = 0}.
+//' @param variantRefNames Character vector with target names (chromosomes)
+//'     of single nucleotide variants.
+//' @param variantRefPositions Integer vector with 0-based target positions
+//'     of single nucleotide variants. Expected to have identical length and
+//'     to be parallel to \code{variantRefNames}.
+//' @param threshUnmod Numeric scalar giving the maximal (non-inclusive)
+//'     modification probability threshold for an unmodified base.
+//' @param threshMod Numeric scalar giving the minimal modification probability
+//'     threshold for a modified base.
+//' @param windowSize Numeric scalar giving the maximum window size
+//'     covering pairs of modified bases to consider in pair-counting mode.
+//'     A window size of 1 corresponds to a single base, a size of 2 to
+//'     directly adjacent bases, etc.
+//' @param minMapQ Numeric scalar giving the minimal mapping quality to include
+//'     alignments in pair-counting mode.
+//' @param minAlignedLength Numeric scalar giving the minimal alignment length
+//'     to include alignments in pair-counting mode.
 //' @param n_threads Integer scalar defining the number of threads to
 //'     use for decompressing a sam record. Especially using in sampling mode
 //'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
 //'     decompressing bam records than processing them.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 //'
-//' @return A named list with elements \code{"read_id"},
+//' @return For reading modes 1. and 2., a named list with elements \code{"read_id"},
 //'     \code{"forward_read_position"}, \code{"ref_position"},
 //'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
 //'     \code{"canonical_base"}, \code{"mod_prob"} and \code{"read_df"}.
@@ -420,11 +599,35 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'     total read length), and \code{"aligned_length"} (the number of
 //'     aligned bases), and \code{"ref_position"}, which is 0-based in
 //'     the output of \code{modkit extract}, but 1-based here.
+//'     For reading mode 3., a named list with a single element called
+//'     \code{"pair_counts"}, corresponding to a \code{windowSize}-by-4
+//'     matrix with the numbers of pairs of bases at a given distance (row) and
+//'     in a given state (columns: 00, 01, 10 and 11).
 //'
 //' @examples
 //' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-//' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", 1, TRUE)
-//' str(res)
+//' res1 <- read_modbam_cpp(inname_str = modbamfile,
+//'                         regions = "chr1:6940000-6955000",
+//'                         modbase = "a",
+//'                         n_alns_to_sample = 0,
+//'                         tnames_for_sampling = "",
+//'                         variantRefNames = "",
+//'                         variantRefPositions = 0,
+//'                         n_threads = 1,
+//'                         verbose = TRUE)
+//' str(res1)
+//'
+//' res3 <- read_modbam_cpp(inname_str = modbamfile,
+//'                         regions = "chr1:6940000-6955000",
+//'                         modbase = "a",
+//'                         n_alns_to_sample = 0,
+//'                         tnames_for_sampling = "",
+//'                         variantRefNames = "",
+//'                         variantRefPositions = 0,
+//'                         windowSize = 200,
+//'                         n_threads = 1,
+//'                         verbose = TRUE)
+//' head(res3$pair_counts)
 //'
 //' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
 //'     SAM ML and MM tags for base modifications.
@@ -435,7 +638,7 @@ int process_bam_record(bam1_t *bamdata,        // bam record
 //'     Description of returned values
 //'      https://nanoporetech.github.io/modkit/intro_extract.html
 //'
-//' @author Michael Stadler
+//' @author Charlotte Soneson, Michael Stadler
 //'
 //' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 //'
@@ -449,6 +652,11 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                            std::vector<std::string> tnames_for_sampling,
                            std::vector<std::string> variantRefNames,
                            std::vector<int> variantRefPositions,
+                           double threshUnmod = 0.5,
+                           double threshMod = 0.5,
+                           int windowSize = 0,
+                           int minMapQ = 0,
+                           int minAlignedLength = 0,
                            int n_threads = 2,
                            bool verbose = false) {
     // turn htslib logging off -> handle via Rcpp::warning or Rcpp::stop
@@ -477,8 +685,10 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     int qseq_len = 0;
     int buffer_len = 2000;
     char buffer[2000];
+    const char* inname = inname_str.c_str();
 
-    // ... return values (one per modification)
+    // ... return values for mode 1 or 2
+    // ... ... one per modification
     std::vector<std::string> read_id;
     std::vector<int> aligned_length;
     std::vector<char> call_code;
@@ -490,14 +700,15 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     std::vector<int> ref_position;
     std::vector<double> mod_prob;
 
-    // ... return values (one per aligned read)
+    // ... ... one per aligned read
     std::vector<std::string> df_read_id;
     std::vector<double> df_qscore;
     std::vector<int> df_read_length;
     std::vector<int> df_aligned_length;
     Rcpp::CharacterVector df_variant_label;
 
-    const char* inname = inname_str.c_str();
+    // ... return value for mode 3
+    Rcpp::IntegerMatrix pair_counts;
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
@@ -545,120 +756,12 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         goto end; // # nocov end
     }
 
-    if (n_alns_to_sample > 0) {
-        // random-sampling-based alignment reading
+    // start reading according to analysis mode
+    if (windowSize > 0) {
+        // Mode 3: counting of pairs of bases by distance and modification state
         // ---------------------------------------------------------------------
+        pair_counts = Rcpp::IntegerMatrix(windowSize, 4);
 
-        // check if tnames_for_sampling exist and count alignments
-        uint64_t mapped = 0, unmapped = 0, total_for_sampling = 0;
-        std::set<std::string> tnames_for_sampling_set(tnames_for_sampling.begin(), tnames_for_sampling.end());
-        std::set<std::string> tnames_existing;
-        double rand_val = 0.0;
-        regcnt = 0;
-        regions_c = (char**) calloc((unsigned int) tnames_for_sampling.size(),
-                                    sizeof(char*));
-        for (i = 0; i < in_samhdr->n_targets; i++) {
-            tnames_existing.insert(in_samhdr->target_name[i]);
-
-            // for each target i that is in tnames_for_sampling_set,
-            // get the number of mapped and unmapped records
-            // and add it to regions_c
-            if (tnames_for_sampling_set.find(in_samhdr->target_name[i]) !=
-                  tnames_for_sampling_set.end() &&
-                hts_idx_get_stat(idx, i, &mapped, &unmapped) == 0) {
-                total_for_sampling += mapped;
-                regions_c[regcnt] = in_samhdr->target_name[i];
-                regcnt++;
-            }
-        }
-        for (i = 0; i < (int)tnames_for_sampling.size(); i++) {
-            if (tnames_existing.find(tnames_for_sampling[i]) == tnames_existing.end()) {
-                Rcpp::warning("Ignoring unknown target name: %s",
-                              tnames_for_sampling[i].c_str());
-            }
-        }
-
-        // check if we have enough alignments to sample from
-        if (total_for_sampling < (uint64_t)n_alns_to_sample) {
-            had_error = true;
-            snprintf(buffer, buffer_len,
-                     "Cannot sample %d alignments from a total of %" PRIu64 "\n",
-                     n_alns_to_sample, total_for_sampling);
-            goto end;
-        }
-        double keep_aln_fraction = (double) n_alns_to_sample / total_for_sampling;
-        if (verbose) {
-            snprintf(buffer, buffer_len, "sampling alignments with probability %g", keep_aln_fraction);
-            cli_alert_info(buffer);
-        }
-
-        // create multi-region iterator
-        if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
-            had_error = true; // # nocov start
-            snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
-            goto end; // # nocov end
-        }
-
-        // iterate over regions
-        if (verbose) {
-            snprintf(buffer, buffer_len,
-                     "reading alignments overlapping {%u} region{?s}",
-                     regcnt);
-            cli_alert_info(buffer);
-            bar = cli_progress_bar(n_alns_to_sample,
-                                   Rcpp::List::create(Rcpp::_["clear"] = false,
-                                                      Rcpp::_["show_after"] = 0.25));
-        }
-        // read overlapping alignments using iterator
-        while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
-            rand_val = R::runif(0, 1);
-            if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY)) &&
-                rand_val < keep_aln_fraction) {
-                success = process_bam_record(bamdata,          // bam record
-                                             alncnt,           // alignment counter
-                                             qseq,             // buffer for forward read sequence
-                                             qseq_len,         // allocated length of qseq
-                                             ms,               // modification state struct
-                                             had_error,        // error flag
-                                             buffer,           // buffer for message
-                                             buffer_len,       // allocated length of message buffer
-                                             modbase,          // modified base to analyze
-                                             in_samhdr,        // sam file header
-                                             n_unaligned,      // number of unaligned modified bases
-                                             n_total,          // total number of modified bases
-                                             variantRefNames,  // seqnames of SNV sites
-                                             variantRefPositions, // coordinates of SNV sites
-                                             // vectors for return values (per modification)
-                                             read_id,
-                                             call_code,
-                                             canonical_base,
-                                             ref_mod_strand,
-                                             chrom,
-                                             aligned_read_position,
-                                             forward_read_position,
-                                             ref_position,
-                                             mod_prob,
-                                             // vectors for return values (per alignment)
-                                             df_read_id,
-                                             df_qscore,
-                                             df_read_length,
-                                             df_aligned_length,
-                                             df_variant_label);
-                if (verbose && CLI_SHOULD_TICK) {
-                    cli_progress_set(bar, (double)alncnt);
-                }
-                if (alncnt % 100 == 0) { // # nocov start
-                    R_CheckUserInterrupt();
-                } // # nocov end
-                if (success != 0) { // # nocov start
-                    goto end;
-                } // # nocov end
-            }
-        }
-
-    } else {
-        // region-based alignment reading
-        // ---------------------------------------------------------------------
         // convert regions to C arrays
         regcnt = (unsigned int) regions.size();
         regions_c = (char**) calloc(regcnt, sizeof(char*));
@@ -676,46 +779,34 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
         // iterate over regions
         if (verbose) {
             snprintf(buffer, buffer_len,
-                     "reading alignments overlapping {%u} region{?s}",
+                     "counting state-pairs for alignments overlapping {%u} region{?s}",
                      regcnt);
             cli_alert_info(buffer);
             bar = cli_progress_bar(NA_REAL,
                                    Rcpp::List::create(Rcpp::_["clear"] = false,
                                                       Rcpp::_["show_after"] = 0.25));
         }
+
         // read overlapping alignments using iterator
         while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
-            if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY))) {
-                success = process_bam_record(bamdata,          // bam record
-                                             alncnt,           // alignment counter
-                                             qseq,             // buffer for forward read sequence
-                                             qseq_len,         // allocated length of qseq
-                                             ms,               // modification state struct
-                                             had_error,        // error flag
-                                             buffer,           // buffer for message
-                                             buffer_len,       // allocated length of message buffer
-                                             modbase,          // modified base to analyze
-                                             in_samhdr,        // sam file header
-                                             n_unaligned,      // number of unaligned modified bases
-                                             n_total,          // total number of modified bases
-                                             variantRefNames,  // seqnames of SNV sites
-                                             variantRefPositions, // coordinates of SNV sites
-                                             // vectors for return values (per modification)
-                                             read_id,
-                                             call_code,
-                                             canonical_base,
-                                             ref_mod_strand,
-                                             chrom,
-                                             aligned_read_position,
-                                             forward_read_position,
-                                             ref_position,
-                                             mod_prob,
-                                             // vectors for return values (per alignment)
-                                             df_read_id,
-                                             df_qscore,
-                                             df_read_length,
-                                             df_aligned_length,
-                                             df_variant_label);
+            if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY)) &&
+                (bamdata->core.qual >= minMapQ) &&
+                (calculate_aligned_bases(bamdata) >= minAlignedLength)) {
+
+                success = count_pairs_bam_record(
+                    bamdata,            // bam record
+                    alncnt,             // alignment counter
+                    qseq,               // buffer for forward read sequence
+                    qseq_len,           // allocated length of qseq
+                    ms,                 // modification state struct
+                    had_error,          // error flag
+                    buffer,             // buffer for message
+                    buffer_len,         // allocated length of message buffer
+                    modbase,            // modified base to analyze
+                    threshUnmod,        // mod_prob <  threshUnmod: unmodified
+                    threshMod,          // mod_prob >= thresh_unmod: modified
+                    pair_counts);       // count matrix for return value
+
                 if (verbose && CLI_SHOULD_TICK) {
                     cli_progress_set(bar, (double)alncnt);
                 }
@@ -724,6 +815,191 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                 } // # nocov end
                 if (success != 0) {
                     goto end;
+                }
+            }
+        }
+
+    } else {
+        if (n_alns_to_sample > 0) {
+            // Mode 2: random-sampling-based alignment reading
+            // ---------------------------------------------------------------------
+
+            // check if tnames_for_sampling exist and count alignments
+            uint64_t mapped = 0, unmapped = 0, total_for_sampling = 0;
+            std::set<std::string> tnames_for_sampling_set(tnames_for_sampling.begin(), tnames_for_sampling.end());
+            std::set<std::string> tnames_existing;
+            double rand_val = 0.0;
+            regcnt = 0;
+            regions_c = (char**) calloc((unsigned int) tnames_for_sampling.size(),
+                                        sizeof(char*));
+            for (i = 0; i < in_samhdr->n_targets; i++) {
+                tnames_existing.insert(in_samhdr->target_name[i]);
+
+                // for each target i that is in tnames_for_sampling_set,
+                // get the number of mapped and unmapped records
+                // and add it to regions_c
+                if (tnames_for_sampling_set.find(in_samhdr->target_name[i]) !=
+                      tnames_for_sampling_set.end() &&
+                    hts_idx_get_stat(idx, i, &mapped, &unmapped) == 0) {
+                    total_for_sampling += mapped;
+                    regions_c[regcnt] = in_samhdr->target_name[i];
+                    regcnt++;
+                }
+            }
+            for (i = 0; i < (int)tnames_for_sampling.size(); i++) {
+                if (tnames_existing.find(tnames_for_sampling[i]) == tnames_existing.end()) {
+                    Rcpp::warning("Ignoring unknown target name: %s",
+                                  tnames_for_sampling[i].c_str());
+                }
+            }
+
+            // check if we have enough alignments to sample from
+            if (total_for_sampling < (uint64_t)n_alns_to_sample) {
+                had_error = true;
+                snprintf(buffer, buffer_len,
+                         "Cannot sample %d alignments from a total of %" PRIu64 "\n",
+                         n_alns_to_sample, total_for_sampling);
+                goto end;
+            }
+            double keep_aln_fraction = (double) n_alns_to_sample / total_for_sampling;
+            if (verbose) {
+                snprintf(buffer, buffer_len, "sampling alignments with probability %g", keep_aln_fraction);
+                cli_alert_info(buffer);
+            }
+
+            // create multi-region iterator
+            if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+                goto end; // # nocov end
+            }
+
+            // iterate over regions
+            if (verbose) {
+                snprintf(buffer, buffer_len,
+                         "reading alignments overlapping {%u} region{?s}",
+                         regcnt);
+                cli_alert_info(buffer);
+                bar = cli_progress_bar(n_alns_to_sample,
+                                       Rcpp::List::create(Rcpp::_["clear"] = false,
+                                                          Rcpp::_["show_after"] = 0.25));
+            }
+            // read overlapping alignments using iterator
+            while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
+                rand_val = R::runif(0, 1);
+                if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY)) &&
+                    rand_val < keep_aln_fraction) {
+                    success = process_bam_record(bamdata,          // bam record
+                                                 alncnt,           // alignment counter
+                                                 qseq,             // buffer for forward read sequence
+                                                 qseq_len,         // allocated length of qseq
+                                                 ms,               // modification state struct
+                                                 had_error,        // error flag
+                                                 buffer,           // buffer for message
+                                                 buffer_len,       // allocated length of message buffer
+                                                 modbase,          // modified base to analyze
+                                                 in_samhdr,        // sam file header
+                                                 n_unaligned,      // number of unaligned modified bases
+                                                 n_total,          // total number of modified bases
+                                                 variantRefNames,  // seqnames of SNV sites
+                                                 variantRefPositions, // coordinates of SNV sites
+                                                 // vectors for return values (per modification)
+                                                 read_id,
+                                                 call_code,
+                                                 canonical_base,
+                                                 ref_mod_strand,
+                                                 chrom,
+                                                 aligned_read_position,
+                                                 forward_read_position,
+                                                 ref_position,
+                                                 mod_prob,
+                                                 // vectors for return values (per alignment)
+                                                 df_read_id,
+                                                 df_qscore,
+                                                 df_read_length,
+                                                 df_aligned_length,
+                                                 df_variant_label);
+                    if (verbose && CLI_SHOULD_TICK) {
+                        cli_progress_set(bar, (double)alncnt);
+                    }
+                    if (alncnt % 100 == 0) { // # nocov start
+                        R_CheckUserInterrupt();
+                    } // # nocov end
+                    if (success != 0) { // # nocov start
+                        goto end;
+                    } // # nocov end
+                }
+            }
+
+        } else {
+            // Mode 1: region-based alignment reading
+            // ---------------------------------------------------------------------
+            // convert regions to C arrays
+            regcnt = (unsigned int) regions.size();
+            regions_c = (char**) calloc(regcnt, sizeof(char*));
+            for (i = 0; i < (int) regcnt; i++) {
+                regions_c[i] = (char*) regions[i].c_str();
+            }
+
+            // create multi-region iterator
+            if (!(iter = sam_itr_regarray(idx, in_samhdr, regions_c, regcnt))) {
+                had_error = true;
+                snprintf(buffer, buffer_len, "Failed to get bam iterator\n");
+                goto end;
+            }
+
+            // iterate over regions
+            if (verbose) {
+                snprintf(buffer, buffer_len,
+                         "reading alignments overlapping {%u} region{?s}",
+                         regcnt);
+                cli_alert_info(buffer);
+                bar = cli_progress_bar(NA_REAL,
+                                       Rcpp::List::create(Rcpp::_["clear"] = false,
+                                                          Rcpp::_["show_after"] = 0.25));
+            }
+            // read overlapping alignments using iterator
+            while ((c = sam_itr_next(infile, iter, bamdata)) >= 0) {
+                if (!(bamdata->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY))) {
+                    success = process_bam_record(bamdata,          // bam record
+                                                 alncnt,           // alignment counter
+                                                 qseq,             // buffer for forward read sequence
+                                                 qseq_len,         // allocated length of qseq
+                                                 ms,               // modification state struct
+                                                 had_error,        // error flag
+                                                 buffer,           // buffer for message
+                                                 buffer_len,       // allocated length of message buffer
+                                                 modbase,          // modified base to analyze
+                                                 in_samhdr,        // sam file header
+                                                 n_unaligned,      // number of unaligned modified bases
+                                                 n_total,          // total number of modified bases
+                                                 variantRefNames,  // seqnames of SNV sites
+                                                 variantRefPositions, // coordinates of SNV sites
+                                                 // vectors for return values (per modification)
+                                                 read_id,
+                                                 call_code,
+                                                 canonical_base,
+                                                 ref_mod_strand,
+                                                 chrom,
+                                                 aligned_read_position,
+                                                 forward_read_position,
+                                                 ref_position,
+                                                 mod_prob,
+                                                 // vectors for return values (per alignment)
+                                                 df_read_id,
+                                                 df_qscore,
+                                                 df_read_length,
+                                                 df_aligned_length,
+                                                 df_variant_label);
+                    if (verbose && CLI_SHOULD_TICK) {
+                        cli_progress_set(bar, (double)alncnt);
+                    }
+                    if (alncnt % 100 == 0) { // # nocov start
+                        R_CheckUserInterrupt();
+                    } // # nocov end
+                    if (success != 0) {
+                        goto end;
+                    }
                 }
             }
         }
@@ -783,32 +1059,45 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
             Rcpp::stop(buffer);
 
         } else {
-            // create data.frame for read-level data
-            Rcpp::DataFrame df = Rcpp::DataFrame::create(
-                Rcpp::_["read_id"] = df_read_id,
-                Rcpp::_["qscore"] = df_qscore,
-                Rcpp::_["read_length"] = df_read_length,
-                Rcpp::_["aligned_length"] = df_aligned_length,
-                Rcpp::_["variant_label"] = df_variant_label
-            );
+            Rcpp::List res;
 
-            // convert 0-based ref_position to 1-based ref_position
-            std::for_each(ref_position.begin(),
-                          ref_position.end(),
-                          [](int &x) { x += 1; });
+            if (windowSize > 0) {
+                // Mode 3
+                // create return list
+                res = Rcpp::List::create(
+                    Rcpp::_["pair_counts"] = pair_counts
+                );
 
-            // create return list
-            Rcpp::List res = Rcpp::List::create(
-                Rcpp::_["read_id"] = read_id,
-                Rcpp::_["forward_read_position"] = forward_read_position,
-                Rcpp::_["ref_position"] = ref_position,
-                Rcpp::_["chrom"] = chrom,
-                Rcpp::_["ref_mod_strand"] = ref_mod_strand,
-                Rcpp::_["call_code"] = call_code,
-                Rcpp::_["canonical_base"] = canonical_base,
-                Rcpp::_["mod_prob"] = mod_prob,
-                Rcpp::_["read_df"] = df);
+            } else {
+                // Mode 1 or 2
+                // create data.frame for read-level data
+                Rcpp::DataFrame df = Rcpp::DataFrame::create(
+                    Rcpp::_["read_id"] = df_read_id,
+                    Rcpp::_["qscore"] = df_qscore,
+                    Rcpp::_["read_length"] = df_read_length,
+                    Rcpp::_["aligned_length"] = df_aligned_length,
+                    Rcpp::_["variant_label"] = df_variant_label
+                );
+
+                // convert 0-based ref_position to 1-based ref_position
+                std::for_each(ref_position.begin(),
+                              ref_position.end(),
+                              [](int &x) { x += 1; });
+
+                // create return list
+                res = Rcpp::List::create(
+                    Rcpp::_["read_id"] = read_id,
+                    Rcpp::_["forward_read_position"] = forward_read_position,
+                    Rcpp::_["ref_position"] = ref_position,
+                    Rcpp::_["chrom"] = chrom,
+                    Rcpp::_["ref_mod_strand"] = ref_mod_strand,
+                    Rcpp::_["call_code"] = call_code,
+                    Rcpp::_["canonical_base"] = canonical_base,
+                    Rcpp::_["mod_prob"] = mod_prob,
+                    Rcpp::_["read_df"] = df);
+            }
 
             return res;
         }
 }
+

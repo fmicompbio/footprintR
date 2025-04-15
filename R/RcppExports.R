@@ -277,7 +277,18 @@ pileup_modbam_cpp <- function(inname_str, regions, modbase, level = "summary", m
 #' Read base modifications from a bam file.
 #'
 #' Parse ML and MM tags (see https://samtools.github.io/hts-specs/SAMtags.pdf,
-#' section 1.7) and return a list of information on modified bases.
+#' section 1.7) and return a list of information on modified bases. The
+#' function implements three distinct reading modes:
+#' \enumerate{
+#'     \item{Extraction of modification probabilities for
+#'         alignments overlapping provided regions. This mode is selected
+#'         if \code{n_alns_to_sample = 0} and \code{windowSize = 0}.}
+#'     \item{Extraction of modification probabilities for alignments
+#'         randomly sampled from provided chromosomes. This is selected
+#'         if \code{n_alns_to_sample > 0} and \code{windowSize = 0}.}
+#'     \item{Counting of pairs of bases by distance and modification state.
+#'         This mode is selected if \code{windowSize > 0}.}
+#' }
 #'
 #' @param inname_str Character scalar with name of the input bam file.
 #' @param regions Character vector specifying the region(s) for which
@@ -288,13 +299,30 @@ pileup_modbam_cpp <- function(inname_str, regions, modbase, level = "summary", m
 #' @param tnames_for_sampling String vector with target names (chromosomes)
 #'     from which to sample \code{n_alns_to_sample} alignments. Ignored if
 #'     \code{n_alns_to_sample = 0}.
+#' @param variantRefNames Character vector with target names (chromosomes)
+#'     of single nucleotide variants.
+#' @param variantRefPositions Integer vector with 0-based target positions
+#'     of single nucleotide variants. Expected to have identical length and
+#'     to be parallel to \code{variantRefNames}.
+#' @param threshUnmod Numeric scalar giving the maximal (non-inclusive)
+#'     modification probability threshold for an unmodified base.
+#' @param threshMod Numeric scalar giving the minimal modification probability
+#'     threshold for a modified base.
+#' @param windowSize Numeric scalar giving the maximum window size
+#'     covering pairs of modified bases to consider in pair-counting mode.
+#'     A window size of 1 corresponds to a single base, a size of 2 to
+#'     directly adjacent bases, etc.
+#' @param minMapQ Numeric scalar giving the minimal mapping quality to include
+#'     alignments in pair-counting mode.
+#' @param minAlignedLength Numeric scalar giving the minimal alignment length
+#'     to include alignments in pair-counting mode.
 #' @param n_threads Integer scalar defining the number of threads to
 #'     use for decompressing a sam record. Especially using in sampling mode
 #'     (\code{n_alns_to_sample > 0}), where more time is spend reading and
 #'     decompressing bam records than processing them.
 #' @param verbose Logical scalar. If \code{TRUE}, report on progress.
 #'
-#' @return A named list with elements \code{"read_id"},
+#' @return For reading modes 1. and 2., a named list with elements \code{"read_id"},
 #'     \code{"forward_read_position"}, \code{"ref_position"},
 #'     \code{"chrom"}, \code{"ref_mod_strand"}, \code{"call_code"},
 #'     \code{"canonical_base"}, \code{"mod_prob"} and \code{"read_df"}.
@@ -308,11 +336,35 @@ pileup_modbam_cpp <- function(inname_str, regions, modbase, level = "summary", m
 #'     total read length), and \code{"aligned_length"} (the number of
 #'     aligned bases), and \code{"ref_position"}, which is 0-based in
 #'     the output of \code{modkit extract}, but 1-based here.
+#'     For reading mode 3., a named list with a single element called
+#'     \code{"pair_counts"}, corresponding to a \code{windowSize}-by-4
+#'     matrix with the numbers of pairs of bases at a given distance (row) and
+#'     in a given state (columns: 00, 01, 10 and 11).
 #'
 #' @examples
 #' modbamfile <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
-#' res <- read_modbam_cpp(modbamfile, "chr1:6940000-6955000", "a", 0, "", 1, TRUE)
-#' str(res)
+#' res1 <- read_modbam_cpp(inname_str = modbamfile,
+#'                         regions = "chr1:6940000-6955000",
+#'                         modbase = "a",
+#'                         n_alns_to_sample = 0,
+#'                         tnames_for_sampling = "",
+#'                         variantRefNames = "",
+#'                         variantRefPositions = 0,
+#'                         n_threads = 1,
+#'                         verbose = TRUE)
+#' str(res1)
+#'
+#' res3 <- read_modbam_cpp(inname_str = modbamfile,
+#'                         regions = "chr1:6940000-6955000",
+#'                         modbase = "a",
+#'                         n_alns_to_sample = 0,
+#'                         tnames_for_sampling = "",
+#'                         variantRefNames = "",
+#'                         variantRefPositions = 0,
+#'                         windowSize = 200,
+#'                         n_threads = 1,
+#'                         verbose = TRUE)
+#' head(res3$pair_counts)
 #'
 #' @seealso https://samtools.github.io/hts-specs/SAMtags.pdf describing the
 #'     SAM ML and MM tags for base modifications.
@@ -323,14 +375,14 @@ pileup_modbam_cpp <- function(inname_str, regions, modbase, level = "summary", m
 #'     Description of returned values
 #'      https://nanoporetech.github.io/modkit/intro_extract.html
 #'
-#' @author Michael Stadler
+#' @author Charlotte Soneson, Michael Stadler
 #'
 #' @importFrom cli cli_progress_step cli_progress_done cli_alert_info
 #'
 #' @noRd
 #' @keywords internal
-read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, n_threads, verbose)
+read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, threshUnmod = 0.5, threshMod = 0.5, windowSize = 0L, minMapQ = 0L, minAlignedLength = 0L, n_threads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, threshUnmod, threshMod, windowSize, minMapQ, minAlignedLength, n_threads, verbose)
 }
 
 #' @title Sample Entropy of Time series signal
