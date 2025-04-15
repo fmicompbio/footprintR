@@ -1,3 +1,9 @@
+# footprintR 0.3.4
+
+* Add countStatePairs function to obtain state pair counts from bam files
+* filterReadsBam can now run with multiple parallel threads
+* Various performance improvements and bug fixes
+
 # footprintR 0.3.3
 
 * Add argument `arglistFootprints` replacing and extending `footprintColors` in `plotRegion()`

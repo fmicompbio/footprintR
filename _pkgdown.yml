@@ -22,6 +22,7 @@ reference:
   - readBedMethyl
   - readModBam
   - readModkitExtract
+  - countStatePairs
 - title: Calculating on data in R
   contents:
   - addReadStats
