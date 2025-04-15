@@ -93,9 +93,9 @@ countStatePairs <- function(bamfile,
                             verbose = verbose)
 
     res <- DataFrame(S = seq.int(windowSize),
-                     Nunmod_unmod = resL$pair_counts[, 1],
-                     Nunmod_mod = resL$pair_counts[, 2],
-                     Nmod_unmod = resL$pair_counts[, 3],
-                     Nmod_mod = resL$pair_counts[, 4])
+                     unmod_unmod = resL$pair_counts[, 1],
+                     unmod_mod = resL$pair_counts[, 2],
+                     mod_unmod = resL$pair_counts[, 3],
+                     mod_mod = resL$pair_counts[, 4])
     return(res)
 }
