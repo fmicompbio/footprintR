@@ -19,10 +19,14 @@ test_that("filterReadsBam works", {
     unlink(c(tmpin, filtbamfiles[1]))
 
     # direct call to filter_modbam_cpp with verbose = TRUE
-    expect_length(filter_modbam_cpp(infile = modbamfiles[1], outfile = filtbamfiles[1],
-                                    modbase = "a", region = ".", includeBamHeader = TRUE,
-                                    verbose = TRUE),
-                  11L)
+    suppressMessages({
+        expect_length(filter_modbam_cpp(infile = modbamfiles[1],
+                                        outfile = filtbamfiles[1],
+                                        modbase = "a", region = ".",
+                                        includeBamHeader = TRUE,
+                                        verbose = TRUE),
+                      11L)
+    })
     unlink(filtbamfiles[1])
 
     # miss-specified region
