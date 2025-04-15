@@ -808,7 +808,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
                     pair_counts);       // count matrix for return value
 
                 if (verbose && CLI_SHOULD_TICK) {
-                    cli_progress_set(bar, (double)alncnt);
+                    cli_progress_set(bar, (double)alncnt); // # nocov
                 }
                 if (alncnt % 100 == 0) { // # nocov start
                     R_CheckUserInterrupt();

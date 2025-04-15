@@ -110,6 +110,13 @@ test_that("read_modbam_cpp works", {
                                  variantRefNames = character(0),
                                  variantRefPositions = integer(0)),
                  "Failed to get bam iterator")
+    expect_error(read_modbam_cpp(inname_str = bam4, regions = "chr2",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10),
+                 "Failed to get bam iterator")
 
     # ... MM/ML tags referring to position beyond read length
     expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
@@ -119,6 +126,14 @@ test_that("read_modbam_cpp works", {
                                  variantRefPositions = integer(0),
                                  verbose = FALSE),
                  "Failed to parse the base mods")
+    expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10,
+                                 verbose = FALSE),
+                 "Failed to parse the base mods")
 
     # ... too many modifications on a single base
     expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
@@ -126,6 +141,14 @@ test_that("read_modbam_cpp works", {
                                  tnames_for_sampling = "chr1",
                                  variantRefNames = character(0),
                                  variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "More modifications than footprintR")
+    expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10,
                                  verbose = FALSE),
                  "More modifications than footprintR")
 
