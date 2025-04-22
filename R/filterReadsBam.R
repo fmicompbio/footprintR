@@ -137,7 +137,7 @@ filterReadsBam <- function(infiles,
                                "using {ncpuTotal} thread{?s}"))
                 }
                 res1PerChr <- bplapply(
-                    seq_along(chrs),
+                    seq_along(chrs)[order(rep_len(seq.int(ncpuTotal), length(chrs)))],
                     function(j,
                              myinfile = infiles[i],
                              myoutfile = tmpbamfiles[j],
