@@ -127,7 +127,7 @@ filterReadsBam <- function(infiles,
                 }
 
                 # create temporary output file names
-                tmpbamfiles <- tempfile(pattern = sprintf("file%40d_", seq_along(chrs)),
+                tmpbamfiles <- tempfile(pattern = sprintf("file%05d_", seq_along(chrs)),
                                         fileext = ".bam")
 
                 # filter in parallel
