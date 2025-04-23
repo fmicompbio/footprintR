@@ -184,12 +184,7 @@ readModBam <- function(bamfiles,
             cli_abort("names of {.arg modbase} and {.arg bamfiles} don't agree")
         }
     }
-    # for valid values of `modbase`, see
-    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
-                                 "U","a","A","o","G","n","N"))) {
-        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
-    }
+    .assertValidModbase(modbase)
     .assertScalar(x = nAlnsToSample, type = "numeric", rngIncl = c(0, Inf))
     if (nAlnsToSample > 0 && level %in% c("summary", "quickread")) {
         cli_abort(paste0("Read sampling is not supported if {.arg level} is set ",

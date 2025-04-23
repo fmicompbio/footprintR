@@ -185,6 +185,22 @@ test_that(".assertPackagesAvailable works", {
 })
 
 ## -------------------------------------------------------------------------- ##
+## Checks, .assertValidModbase
+## -------------------------------------------------------------------------- ##
+test_that(".assertValidModbase works", {
+    good <- c("m","h","f","c","C","g","e","b","T","U","a","A","o","G","n","N")
+    bad <- setdiff(c(letters, LETTERS), good)
+    expect_true(.assertValidModbase(good))
+    for (modbase in good) {
+        expect_true(.assertValidModbase(modbase))
+    }
+    expect_error(.assertValidModbase(bad))
+    for (modbase in bad) {
+        expect_error(.assertValidModbase(modbase))
+    }
+})
+
+## -------------------------------------------------------------------------- ##
 ## Checks, .interpolateColumns
 ## -------------------------------------------------------------------------- ##
 test_that(".interpolateColumns works", {

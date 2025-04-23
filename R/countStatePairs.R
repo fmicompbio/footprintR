@@ -56,12 +56,7 @@ countStatePairs <- function(bamfile,
     }
     .assertVector(x = regions, type = "character")
     .assertScalar(x = modbase, type = "character")
-    # for valid values of `modbase`, see
-    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    if (!modbase %in% c("m","h","f","c","C","g","e","b","T",
-                        "U","a","A","o","G","n","N")) {
-        cli_abort("invalid {.arg modbase} value: {modbase}")
-    }
+    .assertValidModbase(modbase)
     .assertScalar(x = threshUnmod, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = threshMod, type = "numeric", rngIncl = c(0, 1))
     if (threshUnmod > threshMod) {

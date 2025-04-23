@@ -208,6 +208,29 @@
     invisible(TRUE)
 }
 
+#' Utility function to check validity of modified base code(s).
+#'
+#' This function provides a convenient way to check that provided
+#' base modification codes are valid.
+#'
+#' @param modbase A character vector with base modification codes to check.
+#'
+#' @author Michael Stadler
+#' @noRd
+#' @keywords internal
+#'
+#' @importFrom cli cli_abort
+.assertValidModbase <- function(modbase) {
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
+                                 "U","a","A","o","G","n","N"))) {
+        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
+    }
+
+    invisible(TRUE)
+}
+
 #' Linearly interpolate NA-value gaps in columns of a NaArray
 #'
 #' @param assaydat A \code{\link[SparseArray]{NaArray}} object
