@@ -143,10 +143,7 @@ readModBam <- function(bamfiles,
                        BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                        verbose = FALSE) {
     # digest arguments
-    .assertVector(x = bamfiles, type = "character")
-    if (length(bamfiles) == 0) {
-        cli_abort("{.arg bamfiles} must not be an empty vector")
-    }
+    .assertVector(x = bamfiles, type = "character", rngLen = c(1, Inf))
     if (any(i <- !file.exists(bamfiles))) {
         cli_abort("not all {.arg bamfiles} exist: {.file {bamfiles[i]}}")
     }
