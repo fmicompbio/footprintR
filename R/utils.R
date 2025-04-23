@@ -1,10 +1,3 @@
-# This script is provided as a utility via the swissknife package
-# (https://github.com/fmicompbio/swissknife). This script is provided under
-# the MIT license, and package authors are permitted to
-# include the code as-is in other packages, as long as this note and the
-# information provided below crediting the authors of the respective
-# functions is retained.
-
 #' Utility function to check validity of scalar variable values.
 #'
 #' This function provides a convenient way e.g. to check that provided
