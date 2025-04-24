@@ -606,7 +606,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'                               region = "chr1:6940000-6955000", modbase = "a",
 #'                               BPPARAM = BiocParallel::SerialParam())
 #' se$group <- c("group1", "group1", "group2", "group2")
-#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group", verbose = TRUE)
 #' class(gr)
 #' head(gr)
 #'
@@ -664,7 +664,7 @@ getDifferentiallyModifiedWindows <- function(se,
                                                       each = ncol(se)))
 
         # test for differential modification
-        .message("testing for differential modifications")
+        .message("testing for differential modifications ({levels(cd2$group)[2]} - {levels(cd2$group)[1]})")
         dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
                                norm.factors = rep(nfacts, 2),
                                genes = as.data.frame(unname(rowRanges(se))))
