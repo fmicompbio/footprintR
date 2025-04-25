@@ -594,8 +594,10 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'
 #' @returns The \code{\link[GenomicRanges]{GRanges}} object constructed from
 #'     the \code{\link[edgeR]{topTags}} output obtained for the statistical
-#'     analysis, with an additional column named "dirNegLog10PValue", calculated
-#'     as the sign of the logFC multiplied with the -log10(PValue).
+#'     analysis, with additional columns for the average fraction modified
+#'     counts in each group, and summary columns named "dirNegLog10PValue" (the
+#'     sign of the logFC multiplied with the -log10(PValue)) and "DeltaFracMod"
+#'     (the difference of the average modification fraction in the two groups).
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
@@ -636,6 +638,7 @@ getDifferentiallyModifiedWindows <- function(se,
             "The group column in {.code colData(se)} ({groupCol}) ",
             "needs to have exactly two unique values."))
     }
+    levs <- levels(factor(colData(se)[[groupCol]]))
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "edgeR")
 
@@ -688,6 +691,16 @@ getDifferentiallyModifiedWindows <- function(se,
                                FDR = numeric(0),
                                dirNegLog10PValue = numeric(0))
     }
+
+    # add fracmod and deltafracmod
+    FracMod <- assay(se, assayNameMod) / assay(se, assayNameValid)
+    for (i in c(1, 2)) {
+        mcols(gr)[[paste0("FracMod_", levs[i])]] <-
+            rowMeans(FracMod[, se[[groupCol]] == levs[i]])
+    }
+    mcols(gr)[["DeltaFracMod"]] <-
+        mcols(gr)[[paste0("FracMod_", levs[2])]] -
+        mcols(gr)[[paste0("FracMod_", levs[1])]]
     return(gr)
 }
 
@@ -849,8 +862,9 @@ processWindowScores <- function(
         # smooth scores
         .message("smoothing windows")
         xdf <- data.frame(unname(x), check.names = FALSE) |>
-            mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
-                                              seqnames[-1] != seqnames[-length(x)])))) |>
+            mutate(chunkId = cumsum(
+                c(1, (start[-1] - end[-length(x)] > maxGap |
+                          seqnames[-1] != seqnames[-length(x)])))) |>
             group_by(.data$chunkId) |>
             mutate(sscore = .filterScores(.data[[scoreCol]],
                                           minperiod = minperiod,
@@ -867,9 +881,10 @@ processWindowScores <- function(
             .message("thresholding smoothed scores")
             xdfSel <- xdf |>
                 dplyr::filter(abs(.data$sscore) >= thresh) |>
-                mutate(direction = factor(ifelse(sign(.data$sscore) == -1,
-                                                 "negative", "positive"),
-                                          levels = c("negative", "positive")))
+                mutate(direction = factor(
+                    ifelse(sign(.data$sscore) == -1,
+                           "negative", "positive"),
+                    levels = c("negative", "positive")))
 
             # summarise
             .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
@@ -885,7 +900,8 @@ processWindowScores <- function(
                         tapply(X = x$sscore[queryHits(ov1)],
                                INDEX = subjectHits(ov1),
                                FUN = mean))
-                    mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
+                    mcols(gr1)[["numWindowsThresh"]] <-
+                        tabulate(subjectHits(ov1))
                     gr1$direction <- x$direction[1]
                     gr1
                 })

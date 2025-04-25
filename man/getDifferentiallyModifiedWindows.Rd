@@ -32,8 +32,10 @@ that defines the groups of samples to be compared.}
 \value{
 The \code{\link[GenomicRanges]{GRanges}} object constructed from
 the \code{\link[edgeR]{topTags}} output obtained for the statistical
-analysis, with an additional column named "dirNegLog10PValue", calculated
-as the sign of the logFC multiplied with the -log10(PValue).
+analysis, with additional columns for the average fraction modified
+counts in each group, and summary columns named "dirNegLog10PValue" (the
+sign of the logFC multiplied with the -log10(PValue)) and "DeltaFracMod"
+(the difference of the average modification fraction in the two groups).
 }
 \description{
 Given a \code{SummarizedExperiment} with modified and total
