@@ -696,7 +696,7 @@ getDifferentiallyModifiedWindows <- function(se,
     FracMod <- assay(se, assayNameMod) / assay(se, assayNameValid)
     for (i in c(1, 2)) {
         mcols(gr)[[paste0("FracMod_", levs[i])]] <-
-            rowMeans(FracMod[, se[[groupCol]] == levs[i]])
+            rowMeans(FracMod[, se[[groupCol]] == levs[i], drop = FALSE])
     }
     mcols(gr)[["DeltaFracMod"]] <-
         mcols(gr)[[paste0("FracMod_", levs[2])]] -
