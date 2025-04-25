@@ -241,16 +241,18 @@ test_that("genome scanning works (helper functions)", {
     ))
     expect_s4_class(gr1, "GRanges")
     expect_length(gr1, 136L)
-    expect_identical(ncol(GenomicRanges::mcols(gr1)), 6L)
+    expect_identical(ncol(GenomicRanges::mcols(gr1)), 9L)
     expect_identical(colnames(GenomicRanges::mcols(gr1)),
-                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue",
+                       "FracMod_group1", "FracMod_group2", "DeltaFracMod"))
 
     gr2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
     expect_s4_class(gr2, "GRanges")
     expect_length(gr2, 136L)
-    expect_identical(ncol(GenomicRanges::mcols(gr2)), 6L)
+    expect_identical(ncol(GenomicRanges::mcols(gr2)), 9L)
     expect_identical(colnames(GenomicRanges::mcols(gr2)),
-                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue",
+                       "FracMod_group1", "FracMod_group2", "DeltaFracMod"))
     i <- GenomicRanges::match(gr2, gr1)
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
