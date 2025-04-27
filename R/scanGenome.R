@@ -319,7 +319,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
     if (!all(width(gr) == width(gr)[1])) {
         cli_abort("Not all ranges in {.arg gr} have the same width")
     }
-    if (width(gr)[1] %% (numCoef - 1) > 0) {
+    if (length(gr) > 0 && (width(gr)[1] %% (numCoef - 1) > 0)) {
         cli_abort("{.code width(gr)} is not divisible by {.code numCoef - 1}")
     }
     period <- width(gr)[1] / (numCoef - 1)
@@ -327,7 +327,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
         cli_abort("Ranges in {.arg gr} need to be regularly spaced with a shift of {period}")
     }
 
-    if (nrow(se) > 0) {
+    if (nrow(se) > 0 && length(gr) > 0) {
         # make sure we don't have the same position on both strands
         se <- .pruneAmbiguousStrandPositions(se, assayName = "Nvalid",
                                              verbose = FALSE)
