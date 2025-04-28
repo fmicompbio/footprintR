@@ -114,12 +114,16 @@ test_that("genome scanning works (helper functions)", {
         seqnames = "chr1",
         ranges = IRanges::IRanges(start = seq(0, 11) * 183 + 6930001,
                                   width = 4 * 183))
-    res0 <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
+    res0a <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
+    res0b <- phasingScoreFourier(se = se0, gr = GenomicRanges::GRanges(), numCoef = 5)
     res1 <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr),
                                 gr = windowgr, numCoef = 5)
-    expect_identical(dim(res0), c(0L, BiocGenerics::ncol(se0)))
+    expect_identical(dim(res0a), c(0L, BiocGenerics::ncol(se0)))
+    expect_identical(dim(res0b), c(0L, BiocGenerics::ncol(se0)))
     expect_identical(dim(res1), c(length(windowgr), BiocGenerics::ncol(se0)))
-    expect_identical(SummarizedExperiment::assayNames(res0),
+    expect_identical(SummarizedExperiment::assayNames(res0a),
+                     c("phasingScoreAbs", "phasingScoreRel"))
+    expect_identical(SummarizedExperiment::assayNames(res0b),
                      c("phasingScoreAbs", "phasingScoreRel"))
     expect_identical(SummarizedExperiment::assayNames(res1),
                      c("phasingScoreAbs", "phasingScoreRel"))
