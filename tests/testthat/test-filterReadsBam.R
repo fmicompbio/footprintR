@@ -125,14 +125,8 @@ test_that("filterReadsBam works", {
     expect_identical(res2$filtered_minQscore, c(0, 0))
     expect_identical(res2$filtered_maxFracLowConf, c(0, 0))
     expect_identical(res2$filtered_maxEntropy, c(0, 0))
-    # remark: the parallel-sorting-and-concatenation changes the file
-    #         (compression of chunks versus compression of whole file),
-    #         but not the content
-    # expect_identical(unname(tools::md5sum(modbamfiles)),
-    #                  unname(tools::md5sum(filtbamfiles)))
-    expect_true(all(file.exists(vapply(filtbamfiles, index_bam_cpp, ""))))
-    expect_identical(SummarizedExperiment::assays(readModBam(modbamfiles, "chr1", "a")),
-                     SummarizedExperiment::assays(readModBam(filtbamfiles, "chr1", "a")))
+    expect_identical(unname(tools::md5sum(modbamfiles)),
+                     unname(tools::md5sum(filtbamfiles)))
     unlink(filtbamfiles)
 
     # non-primary alignments
