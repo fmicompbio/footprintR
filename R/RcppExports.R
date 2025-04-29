@@ -506,6 +506,28 @@ concatenate_files <- function(input_files, output_file) {
     .Call(`_footprintR_concatenate_files`, input_files, output_file)
 }
 
+#' Concatenate input sam/bam files into a single output sam/bam file
+#'
+#' The idea of this function is to be a simpler replacement for merging
+#' pre-sorted sam or bam files given in the correct order to a single
+#' output file. The header of the first input file is used for the output
+#' file, and no checks are done if the input files have compatible headers,
+#' are sorted or are given in the correct order - use with caution.
+#'
+#' @param input_files Character vector with input sam or bam file names to
+#'     concatenate.
+#' @param output_file Character scalar with output sam or bam file name to
+#'     write to.
+#' @param ncpu Integer scalar giving the number of parallel threads used for
+#'     de-/compressing input and output file records.
+#'
+#' @return The \code{output_file} as a character scalar.
+#' @noRd
+#' @keywords internal
+concatenate_hts_files <- function(input_files, output_file, ncpu = 4L) {
+    .Call(`_footprintR_concatenate_hts_files`, input_files, output_file, ncpu)
+}
+
 #' Get chromosome names for a bam file header
 #'
 #' @param bamfile Character scalar with name of bam file.

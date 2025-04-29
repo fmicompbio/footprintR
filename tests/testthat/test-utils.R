@@ -34,6 +34,79 @@ test_that("concatenate_files works", {
 })
 
 ## -------------------------------------------------------------------------- ##
+## Checks, concatenate_hts_files
+## -------------------------------------------------------------------------- ##
+test_that("concatenate_hts_files works", {
+    bamfiles <- system.file("extdata", c("6mA_1_10reads.bam",
+                                         "6mA_2_10reads.bam"),
+                            package = "footprintR")
+    samfiles <- tempfile(pattern = paste0("file", seq_along(bamfiles)),
+                         fileext = ".sam")
+    outsam <- tempfile(fileext = ".sam")
+    outbam <- tempfile(fileext = ".bam")
+    expect_identical(
+        unlist(lapply(seq_along(bamfiles), function(i) {
+            Rsamtools::asSam(file = bamfiles[i],
+                             destination = sub(".sam$", "", samfiles[i]))
+        })),
+        samfiles)
+
+    # unknown output extension
+    expect_error(
+        concatenate_hts_files(bamfiles, sub(".bam$", ".error", outbam), 2L),
+        "Unknown .output_file. extension"
+    )
+
+    sam_fields <- c("qname", "flag", "rname", "strand", "pos")
+
+    # in: bam, out: bam
+    expect_identical(
+        concatenate_hts_files(bamfiles, outbam, 2L),
+        outbam)
+    res <- Rsamtools::scanBam(
+        file = outbam, param = Rsamtools::ScanBamParam(what = sam_fields))
+    expect_type(res, "list")
+    expect_named(res[[1]], sam_fields)
+    expect_identical(
+        lengths(res[[1]]),
+        setNames(rep(20L, length(sam_fields)), sam_fields))
+    unlink(outbam)
+
+    # in: bam, out: sam
+    expect_identical(
+        concatenate_hts_files(bamfiles, outsam, 2L),
+        outsam)
+    tmp <- readLines(outsam)
+    expect_identical(sum(grepl("^@", tmp)), 67L)
+    expect_length(tmp, 87L)
+    unlink(outsam)
+
+    # in: sam, out: bam
+    expect_identical(
+        concatenate_hts_files(samfiles, outbam, 2L),
+        outbam)
+    res <- Rsamtools::scanBam(
+        file = outbam, param = Rsamtools::ScanBamParam(what = sam_fields))
+    expect_type(res, "list")
+    expect_named(res[[1]], sam_fields)
+    expect_identical(
+        lengths(res[[1]]),
+        setNames(rep(20L, length(sam_fields)), sam_fields))
+    unlink(outbam)
+
+    # in: sam, out: sam
+    expect_identical(
+        concatenate_hts_files(samfiles, outsam, 2L),
+        outsam)
+    tmp <- readLines(outsam)
+    expect_identical(sum(grepl("^@", tmp)), 67L)
+    expect_length(tmp, 87L)
+    unlink(outsam)
+
+    unlink(samfiles)
+})
+
+## -------------------------------------------------------------------------- ##
 ## Checks, getChromosomeNamesFromBam
 ## -------------------------------------------------------------------------- ##
 test_that("getChromosomeNamesFromBam works", {

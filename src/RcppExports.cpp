@@ -154,6 +154,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// concatenate_hts_files
+std::string concatenate_hts_files(std::vector<std::string> input_files, const std::string output_file, int ncpu);
+RcppExport SEXP _footprintR_concatenate_hts_files(SEXP input_filesSEXP, SEXP output_fileSEXP, SEXP ncpuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type input_files(input_filesSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type output_file(output_fileSEXP);
+    Rcpp::traits::input_parameter< int >::type ncpu(ncpuSEXP);
+    rcpp_result_gen = Rcpp::wrap(concatenate_hts_files(input_files, output_file, ncpu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getChromosomeNamesFromBam
 Rcpp::CharacterVector getChromosomeNamesFromBam(const std::string bamfile);
 RcppExport SEXP _footprintR_getChromosomeNamesFromBam(SEXP bamfileSEXP) {
@@ -198,6 +211,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 14},
     {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 3},
     {"_footprintR_concatenate_files", (DL_FUNC) &_footprintR_concatenate_files, 2},
+    {"_footprintR_concatenate_hts_files", (DL_FUNC) &_footprintR_concatenate_hts_files, 3},
     {"_footprintR_getChromosomeNamesFromBam", (DL_FUNC) &_footprintR_getChromosomeNamesFromBam, 1},
     {"_footprintR_get_unmodified_base", (DL_FUNC) &_footprintR_get_unmodified_base, 1},
     {"_footprintR_complement", (DL_FUNC) &_footprintR_complement, 1},
