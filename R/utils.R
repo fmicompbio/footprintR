@@ -130,8 +130,8 @@
         } else {
             if (any(x <= rngExcl[1] | x >= rngExcl[2])) {
                 cli_abort(paste0(
-                "{.arg {xname}} must be between {rngExcl} (exclusive)"),
-                call = NULL)
+                    "{.arg {xname}} must be between {rngExcl} (exclusive)"),
+                    call = NULL)
             }
         }
     } else {
@@ -304,11 +304,12 @@
 #' @noRd
 #' @keywords internal
 .message <- function(message, noTimer = FALSE, ...) {
+    .assertScalar(x = noTimer, type = "logical")
     # Try to get 'verbose' from the calling environment
     env <- parent.frame()
     verbose <- tryCatch(get("verbose", envir = env),
                         error = function(e) FALSE)
-    if (verbose) {
+    if (isTRUE(verbose)) {
         if (noTimer) {
             cli_alert_info(text = message, .envir = env)
         } else {
