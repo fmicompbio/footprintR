@@ -115,7 +115,7 @@ test_that("getChromosomeNamesFromBam works", {
                             package = "footprintR")
     bamfileNoheader <- tempfile(fileext = ".bam")
     res <- filter_modbam_cpp(bamfiles[1], bamfileNoheader, modbase = "a",
-                             includeBamHeader = FALSE)
+                             includeHeader = FALSE)
     expect_identical(res[["retained"]], 10)
 
     expect_error(getChromosomeNamesFromBam(), "missing")

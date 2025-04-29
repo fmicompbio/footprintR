@@ -39,8 +39,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // filter_modbam_cpp
-Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeBamHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
-RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeBamHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
+Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
+RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -48,7 +48,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
     Rcpp::traits::input_parameter< char >::type modbase(modbaseSEXP);
     Rcpp::traits::input_parameter< std::string >::type region(regionSEXP);
-    Rcpp::traits::input_parameter< bool >::type includeBamHeader(includeBamHeaderSEXP);
+    Rcpp::traits::input_parameter< bool >::type includeHeader(includeHeaderSEXP);
     Rcpp::traits::input_parameter< bool >::type keepUnmapped(keepUnmappedSEXP);
     Rcpp::traits::input_parameter< bool >::type keepSecondary(keepSecondarySEXP);
     Rcpp::traits::input_parameter< bool >::type keepSupplementary(keepSupplementarySEXP);
@@ -61,7 +61,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type LowConf(LowConfSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeBamHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
+    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -23,11 +23,30 @@ test_that("filterReadsBam works", {
         expect_length(filter_modbam_cpp(infile = modbamfiles[1],
                                         outfile = filtbamfiles[1],
                                         modbase = "a", region = ".",
-                                        includeBamHeader = TRUE,
+                                        includeHeader = TRUE,
                                         verbose = TRUE),
                       11L)
     })
     unlink(filtbamfiles[1])
+
+    # filter_modbam_cpp with unknown output extension
+    tmpsam <- tempfile(fileext = ".error")
+    expect_error(filter_modbam_cpp(infile = modbamfiles[1],
+                                   outfile = tmpsam,
+                                   modbase = "a", region = ".",
+                                   includeHeader = TRUE,
+                                   verbose = FALSE),
+                 "Unknown .outfile. extension")
+
+    # creating sam output from filter_modbam_cpp
+    tmpsam <- tempfile(fileext = ".sam")
+    res <- filter_modbam_cpp(infile = modbamfiles[1],
+                             outfile = tmpsam,
+                             modbase = "a", region = ".",
+                             includeHeader = FALSE,
+                             verbose = FALSE)
+    expect_equal(res[["retained"]], length(readLines(tmpsam)))
+    unlink(tmpsam)
 
     # miss-specified region
     expect_error(filter_modbam_cpp(infile = modbamfiles[1], outfile = filtbamfiles[1], modbase = "a", region = "ERROR"))
