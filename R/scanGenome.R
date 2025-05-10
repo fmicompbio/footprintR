@@ -100,13 +100,13 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
                               ignore.strand = FALSE)
         ovneg <- findOverlaps(query = rowRanges(se), subject = grneg,
                               ignore.strand = FALSE)
-        mNmodpos <- rowsum(x = assay(se, "Nmod")[queryHits(ovpos), ],
+        mNmodpos <- rowsum(x = assay(se, "Nmod")[queryHits(ovpos), , drop = FALSE],
                            group = subjectHits(ovpos))
-        mNmodneg <- rowsum(x = assay(se, "Nmod")[queryHits(ovneg), ],
+        mNmodneg <- rowsum(x = assay(se, "Nmod")[queryHits(ovneg), , drop = FALSE],
                            group = subjectHits(ovneg))
-        mNvalidpos <- rowsum(x = assay(se, "Nvalid")[queryHits(ovpos), ],
+        mNvalidpos <- rowsum(x = assay(se, "Nvalid")[queryHits(ovpos), , drop = FALSE],
                              group = subjectHits(ovpos))
-        mNvalidneg <- rowsum(x = assay(se, "Nvalid")[queryHits(ovneg), ],
+        mNvalidneg <- rowsum(x = assay(se, "Nvalid")[queryHits(ovneg), , drop = FALSE],
                              group = subjectHits(ovneg))
         rnms <- seq_along(gr)
         mNmodpos <- mNmodpos[match(as.character(rnms), rownames(mNmodpos)), , drop = FALSE]
@@ -222,9 +222,9 @@ sumNmodNvalid <- function(se, gr) {
         # aggregate counts in windows
         ov <- findOverlaps(query = rowRanges(se), subject = gr,
                            ignore.strand = TRUE)
-        mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), ],
+        mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), , drop = FALSE],
                         group = subjectHits(ov), reorder = TRUE)
-        mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), ],
+        mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), , drop = FALSE],
                           group = subjectHits(ov), reorder = TRUE)
         rnms <- as.numeric(rownames(mNmod))
         stopifnot(exprs = {
