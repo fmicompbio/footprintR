@@ -179,6 +179,9 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
 #'     (i.e. with the assays \code{"Nmod"} and \code{"Nvalid"}).
 #' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
 #'     to quantify.
+#' @param includeEmpty Logical scalar. If \code{TRUE}, include also windows
+#'     without overlapping modified bases in the output (with zero counts
+#'     in both the Nmod and Nvalid assays).
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #'
@@ -211,9 +214,10 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
 #' @importFrom cli cli_abort
 #'
 #' @export
-sumNmodNvalid <- function(se, gr) {
+sumNmodNvalid <- function(se, gr, includeEmpty = FALSE) {
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertVector(x = gr, type = "GRanges")
+    .assertScalar(x = includeEmpty, type = "logical")
     if (!all(c("Nmod", "Nvalid") %in% assayNames(se))) {
         cli_abort("{.arg se} must contain assays Nvalid and Nmod")
     }
@@ -222,10 +226,29 @@ sumNmodNvalid <- function(se, gr) {
         # aggregate counts in windows
         ov <- findOverlaps(query = rowRanges(se), subject = gr,
                            ignore.strand = TRUE)
-        mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), , drop = FALSE],
-                        group = subjectHits(ov), reorder = TRUE)
-        mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), , drop = FALSE],
-                          group = subjectHits(ov), reorder = TRUE)
+        mNmodtmp <- rowsum(
+            x = assay(se, "Nmod")[queryHits(ov), , drop = FALSE],
+            group = subjectHits(ov), reorder = TRUE)
+        mNvalidtmp <- rowsum(
+            x = assay(se, "Nvalid")[queryHits(ov), , drop = FALSE],
+            group = subjectHits(ov), reorder = TRUE)
+        if (includeEmpty) {
+            # some regions may not have any overlapping modified bases -
+            # return 0 for those
+            mNmod <- matrix(0, nrow = length(gr), ncol = ncol(mNmodtmp),
+                            dimnames = list(seq_along(gr),
+                                            colnames(mNmodtmp)))
+            mNmod[rownames(mNmodtmp), ] <- mNmodtmp
+            mNvalid <- matrix(0, nrow = length(gr), ncol = ncol(mNvalidtmp),
+                              dimnames = list(seq_along(gr),
+                                              colnames(mNvalidtmp)))
+            mNvalid[rownames(mNvalidtmp), ] <- mNvalidtmp
+        } else {
+            # don't return empty rows
+            mNmod <- mNmodtmp
+            mNvalid <- mNvalidtmp
+        }
+
         rnms <- as.numeric(rownames(mNmod))
         stopifnot(exprs = {
             identical(rownames(mNmod), rownames(mNvalid))

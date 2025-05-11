@@ -88,10 +88,22 @@ test_that("genome scanning works (helper functions)", {
     se1 <- se0
     SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
     expect_error(sumNmodNvalid(se1, rg), ".se. must contain assays")
-    res <- sumNmodNvalid(se0, rg)
+    res <- sumNmodNvalid(se0, rg, includeEmpty = FALSE)
     expect_identical(SummarizedExperiment::assay(res, "Nmod")[1, ],
                      colSums(SummarizedExperiment::assay(se0, "Nmod")))
     expect_identical(SummarizedExperiment::assay(res, "Nvalid")[1, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nvalid")))
+
+    # ... includeEmpty = TRUE
+    rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
+                          windowStep = 1e6, chromName = "chr1",
+                          chromLength = 70e6)
+    se1 <- se0
+    SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
+    res <- sumNmodNvalid(se0, rg, includeEmpty = TRUE)
+    expect_identical(SummarizedExperiment::assay(res, "Nmod")[7, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nmod")))
+    expect_identical(SummarizedExperiment::assay(res, "Nvalid")[7, ],
                      colSums(SummarizedExperiment::assay(se0, "Nvalid")))
 
     ## phasingScoreFourier
@@ -160,13 +172,16 @@ test_that("genome scanning works (helper functions)", {
                                                  BPPARAM = BiocParallel::SerialParam())),
                      c(0L, 4L))
 
+    # sumNmodNvalid, includeEmpty = FALSE
     suppressMessages(expect_message(
         se1 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                        region = "chr1:6940000-6955000", modbase = "a",
                                        modProbThreshold = 0.5,
                                        windowMode = "fixed", windowSize = 24L,
                                        BPPARAM = BiocParallel::SerialParam(),
-                                       verbose = TRUE)
+                                       verbose = TRUE,
+                                       quantFunction = "sumNmodNvalid",
+                                       quantFunctionArgs = list(includeEmpty = FALSE))
     ))
     se1$group <- c("group1", "group1", "group2", "group2")
     expect_s4_class(se1, "RangedSummarizedExperiment")
@@ -191,6 +206,44 @@ test_that("genome scanning works (helper functions)", {
                                            }))
     expect_identical(manualWindows, SummarizedExperiment::assay(se1, "Nmod"))
 
+    # sumNmodNvalid, includeEmpty = TRUE
+    suppressMessages(expect_message(
+        se1b <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+                                        region = "chr1:6940000-6955000", modbase = "a",
+                                        modProbThreshold = 0.5,
+                                        windowMode = "fixed", windowSize = 24L,
+                                        BPPARAM = BiocParallel::SerialParam(),
+                                        verbose = TRUE,
+                                        quantFunction = "sumNmodNvalid",
+                                        quantFunctionArgs = list(includeEmpty = TRUE))
+    ))
+    se1b$group <- c("group1", "group1", "group2", "group2")
+    expect_s4_class(se1b, "RangedSummarizedExperiment")
+    expect_identical(dim(se1b), c(1249L, 4L))
+    expect_identical(sum(rowSums(assay(se1b, "Nvalid")) > 0), 136L)
+    expect_true(all(width(SummarizedExperiment::rowRanges(se1b)) == 24L))
+    expect_identical(SummarizedExperiment::assayNames(se1b),
+                     c("Nmod", "Nvalid", "FracMod"))
+    expect_identical(colSums(SummarizedExperiment::assay(se1b, "Nvalid")),
+                     c(s1 = 1610, s2 = 1610, s3 = 554, s4 = 554))
+    ov <- findOverlaps(query = SummarizedExperiment::rowRanges(se0),
+                       subject = SummarizedExperiment::rowRanges(se1b))
+    Nvalid <- SummarizedExperiment::assay(se0, "Nvalid")
+    manualWindows <- do.call(rbind, lapply(split(queryHits(ov), rownames(se1b)[subjectHits(ov)])[as.character(rownames(se1b))],
+                                           function(i) {
+                                               colSums(Nvalid[i, , drop = FALSE])
+                                           }))
+    rownames(manualWindows) <- seq.int(nrow(manualWindows))
+    expect_identical(manualWindows, SummarizedExperiment::assay(se1b, "Nvalid"))
+    Nmod <- SummarizedExperiment::assay(se0, "Nmod")
+    manualWindows <- do.call(rbind, lapply(split(queryHits(ov), rownames(se1b)[subjectHits(ov)])[as.character(rownames(se1b))],
+                                           function(i) {
+                                               colSums(Nmod[i, , drop = FALSE])
+                                           }))
+    rownames(manualWindows) <- seq.int(nrow(manualWindows))
+    expect_identical(manualWindows, SummarizedExperiment::assay(se1b, "Nmod"))
+
+    # filter by sequence context
     se2 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                    region = "chr1:6940000-6955000", modbase = "a",
                                    sampleAnnot = data.frame(sample = paste0("s", 1:4),
@@ -215,6 +268,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::colData(se1),
                      SummarizedExperiment::colData(se2))
 
+    # predefined windows
     set.seed(1L)
     selwindows <- sample(nrow(se2), 40)
     se3 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
