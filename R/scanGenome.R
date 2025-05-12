@@ -342,8 +342,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
     if (!all(width(gr) == width(gr)[1])) {
         cli_abort("Not all ranges in {.arg gr} have the same width")
     }
-    if (length(gr) > 0 && (width(gr)[1] %% (numCoef - 1) > 0)) {
-        cli_abort("{.code width(gr)} is not divisible by {.code numCoef - 1}")
+    if (length(gr) > 0 && (width(gr)[1] %% (2 * (numCoef - 1)) > 0)) {
+        cli_abort("{.code width(gr)} is not divisible by {.code 2 * (numCoef - 1)}")
     }
     period <- width(gr)[1] / (numCoef - 1)
     if (!all(diff(start(gr)) == period)) {
@@ -375,7 +375,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 
             # Fourier transform
             fit <- e1071::stft(X = fracMod, win = (numCoef - 1) * period,
-                               inc = period, coef = 2 * period,
+                               inc = period, coef = ((numCoef - 1) * period) / 2,
                                wtype = "hanning.window")
 
             # Extract coefficient of ineterst

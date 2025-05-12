@@ -124,8 +124,8 @@ test_that("genome scanning works (helper functions)", {
                  "need to be regularly spaced")
     windowgr <- GenomicRanges::GRanges(
         seqnames = "chr1",
-        ranges = IRanges::IRanges(start = seq(0, 11) * 183 + 6930001,
-                                  width = 4 * 183))
+        ranges = IRanges::IRanges(start = seq(0, 11) * 190 + 6930001,
+                                  width = 4 * 190))
     res0a <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
     res0b <- phasingScoreFourier(se = se0, gr = GenomicRanges::GRanges(), numCoef = 5)
     res1 <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr),
