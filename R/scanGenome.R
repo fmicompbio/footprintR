@@ -379,8 +379,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
                                wtype = "hanning.window")
 
             # Extract coefficient of ineterst
-            list(scoreAbs = fit$values[, numCoef],
-                 scoreRel = fit$values[, numCoef] / rowSums(fit$values))
+            list(scoreAbs = rbind(fit$values)[, numCoef],
+                 scoreRel = rbind(fit$values)[, numCoef] / rowSums(rbind(fit$values)))
         })
 
         # construct SummarizedExperiment

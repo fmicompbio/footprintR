@@ -117,7 +117,7 @@ test_that("genome scanning works (helper functions)", {
         se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 3:4))),
         "have the same width")
     expect_error(phasingScoreFourier(
-        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 6)),
+        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 12)),
         numCoef = 5),
         "is not divisible")
     expect_error(phasingScoreFourier(se0, rg[c(1, 3, 4)]),
@@ -130,9 +130,15 @@ test_that("genome scanning works (helper functions)", {
     res0b <- phasingScoreFourier(se = se0, gr = GenomicRanges::GRanges(), numCoef = 5)
     res1 <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr),
                                 gr = windowgr, numCoef = 5)
+    res1a <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr[7]),
+                                 gr = windowgr[7], numCoef = 5)
     expect_identical(dim(res0a), c(0L, BiocGenerics::ncol(se0)))
     expect_identical(dim(res0b), c(0L, BiocGenerics::ncol(se0)))
     expect_identical(dim(res1), c(length(windowgr), BiocGenerics::ncol(se0)))
+    expect_equal(assay(res1, "phasingScoreAbs")[7, , drop = FALSE],
+                 assay(res1a, "phasingScoreAbs"), tolerance = 1e-4)
+    expect_equal(assay(res1, "phasingScoreRel")[7, , drop = FALSE],
+                 assay(res1a, "phasingScoreRel"), tolerance = 1e-4)
     expect_identical(SummarizedExperiment::assayNames(res0a),
                      c("phasingScoreAbs", "phasingScoreRel"))
     expect_identical(SummarizedExperiment::assayNames(res0b),
