@@ -45,6 +45,8 @@ framework of \code{limma} to fit a model for each row of the specified
 assay and extract statistics corresponding to a specific contrast.
 }
 \examples{
+library(GenomicRanges)
+library(SummarizedExperiment)
 modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
