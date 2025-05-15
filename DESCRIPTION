@@ -55,6 +55,7 @@ Suggests:
     e1071,
     edgeR,
     knitr,
+    limma,
     MatrixGenerics,
     R.utils,
     rmarkdown,

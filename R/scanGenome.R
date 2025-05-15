@@ -727,6 +727,129 @@ getDifferentiallyModifiedWindows <- function(se,
     return(gr)
 }
 
+#' Perform differential analysis on the rows of an assay
+#'
+#' Given a \code{SummarizedExperiment} with at least one assay, use either
+#' the likelihood ratio framework of \code{edgeR} or the linear model
+#' framework of \code{limma} to fit a model for each row of the specified
+#' assay and extract statistics corresponding to a specific contrast.
+#'
+#' @param se \code{SummarizedExperiment}, for example returned by
+#'     \code{phasingScoreFourier}.
+#' @param assayName Character scalar that gives the assay name in \code{se}
+#'     containing the values to test.
+#' @param designMatrix Numeric matrix providing the design matrix for the
+#'     statistical modeling. Must have row names, corresponding to the sample
+#'     (column) names of \code{se}.
+#' @param contrast Numeric vector providing the contrast to test.
+#' @param method Character scalar giving the method to use. Currently
+#'     supported methods are "edgeR" and "limma".
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @author Charlotte Soneson
+#'
+#' @returns The \code{\link[GenomicRanges]{GRanges}} object constructed from
+#'     the \code{\link[edgeR]{topTags}} or \code{\link[limma]{topTable}} output
+#'     obtained for the statistical analysis, with an additional summary column
+#'     named "dirNegLog10PValue" (the sign of the logFC multiplied with the
+#'     -log10(PValue)).
+#'
+#' @examples
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+#'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' rng <- GRanges("chr1", IRanges(6940000, 6943600))
+#' windowStep <- 180
+#' windowSize <- 4 * windowStep
+#' s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
+#' windowgr <- GRanges(seqnames = seqnames(rng),
+#'                     ranges = IRanges(start = s, width = windowSize))
+#' se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "summary",
+#'                  modbase = "a", trim = TRUE,
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' seFourier <- phasingScoreFourier(se = se, gr = windowgr, numCoef = 5)
+#' seFourier$group <- c("group1", "group1", "group2", "group2")
+#' mm <- model.matrix(~ group, data = colData(seFourier))
+#' gr <- getDifferentialWindows(seFourier, assayName = "phasingScoreAbs",
+#'                              designMatrix = mm,
+#'                              contrast = c(0, 1),
+#'                              method = "limma",
+#'                              verbose = TRUE)
+#' class(gr)
+#' head(gr)
+#'
+#' @importFrom SummarizedExperiment assayNames assay rowRanges
+#' @importFrom GenomicRanges GRanges
+#' @importFrom S4Vectors mcols<- DataFrame
+#' @importFrom methods as
+#' @importFrom cli cli_abort
+#'
+#' @export
+getDifferentialWindows <- function(se,
+                                   assayName = "phasingScoreAbs",
+                                   designMatrix,
+                                   contrast,
+                                   method = "limma",
+                                   verbose = FALSE) {
+    # check arguments
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = assayName, type = "character",
+                  validValues = assayNames(se))
+    .assertVector(x = designMatrix, type = "matrix")
+    .assertVector(x = rownames(designMatrix), type = "character")
+    stopifnot(all(rownames(designMatrix) == colnames(se)))
+    .assertVector(x = contrast, type = "numeric", len = ncol(designMatrix))
+    .assertScalar(x = verbose, type = "logical")
+    .assertScalar(x = method, type = "character",
+                  validValues = c("edgeR", "limma"))
+    if (method == "edgeR") {
+        .assertPackagesAvailable(pkgs = "edgeR")
+    } else if (method == "limma") {
+        .assertPackagesAvailable(pkgs = "limma")
+    }
+
+    if (nrow(se) > 0) {
+        if (method == "edgeR") {
+            dgeL <- edgeR::DGEList(counts = assay(se, assayName),
+                                   genes = as.data.frame(unname(rowRanges(se))))
+            dgeL <- edgeR::estimateDisp(y = dgeL, design = designMatrix)
+            fit <- edgeR::glmFit(y = dgeL, design = designMatrix)
+            tst <- edgeR::glmLRT(
+                glmfit = fit,
+                contrast = contrast
+            )
+
+            # coerce topTags to GRanges
+            tt <- edgeR::topTags(object = tst, n = Inf, sort.by = "none")
+            tt$table$dirNegLog10PValue <-
+                sign(tt$table$logFC) * -log10(tt$table$PValue)
+            gr <- as(tt$table, "GRanges")
+        } else {
+            fit <- limma::lmFit(object = assay(se, assayName),
+                                design = designMatrix)
+            fit <- limma::contrasts.fit(fit, contrast = contrast)
+            fit <- limma::eBayes(fit)
+
+            # coerce topTable to GRanges
+            tt <- limma::topTable(fit, number = Inf, sort.by = "none")
+            tt$dirNegLog10PValue <-
+                sign(tt$logFC) * -log10(tt$P.Value)
+            gr <- as(cbind(as.data.frame(unname(rowRanges(se))), tt), "GRanges")
+        }
+    } else {
+        gr <- GRanges()
+        mcols(gr) <- DataFrame(logFC = numeric(0),
+                               AveExpr = numeric(0),
+                               t = numeric(0),
+                               P.Value = numeric(0),
+                               adj.P.Val = numeric(0),
+                               B = numeric(0),
+                               dirNegLog10PValue = numeric(0))
+    }
+    return(gr)
+}
+
 #' Create a \code{GRanges} from a \code{SummarizedExperiment}.
 #'
 #' Create a \code{GRanges} object from \code{rowRanges} and \code{assay} of
