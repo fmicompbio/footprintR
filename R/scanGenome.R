@@ -532,6 +532,8 @@ estimateNRLwindows <- function(se, gr,
 #'     be specified as a character scalar (e.g. "chr1:1200-1300") that can be
 #'     coerced into a \code{GRanges} object.
 #' @param modbase Character vector defining the modified base to extract.
+#' @param level A character scalar giving the level of the data to
+#'     required by \code{quantFunction} (see \code{\link{readModBam}}).
 #' @param modProbThreshold A numeric scalar, indicating the modification
 #'     probability threshold to use to classify a base as 'modified' or
 #'     'unmodified'.
@@ -625,6 +627,7 @@ estimateNRLwindows <- function(se, gr,
 quantifyWindowsInRegion <- function(bamfiles,
                                     region,
                                     modbase,
+                                    level = "summary",
                                     modProbThreshold = 0.5,
                                     sampleAnnot = NULL,
                                     seqinfo = NULL,
@@ -664,7 +667,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 
     # read summary-level data
     se <- readModBam(bamfiles = bamfiles, regions = region, modbase = modbase,
-                     level = "summary", sampleAnnot = sampleAnnot,
+                     level = level, sampleAnnot = sampleAnnot,
                      seqinfo = seqinfo,
                      sequenceContextWidth = sequenceContextWidth,
                      sequenceReference = sequenceReference,
@@ -1254,6 +1257,7 @@ scanForHighScoringRegions <- function(
         scoreFunction = "getDifferentiallyModifiedWindows",
         scoreFunctionArgs = list(),
         modbase,
+        level = "summary",
         modProbThreshold = 0.5,
         tileSize = 1e6,
         seqinfo = NULL,
@@ -1296,6 +1300,7 @@ scanForHighScoringRegions <- function(
             quantifyWindowsInRegion(bamfiles = bamfiles,
                                     region = regs[i],
                                     modbase = modbase,
+                                    level = level,
                                     modProbThreshold = modProbThreshold,
                                     sampleAnnot = sampleAnnot,
                                     seqinfo = seqinfo,

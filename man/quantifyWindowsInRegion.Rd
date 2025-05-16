@@ -8,6 +8,7 @@ quantifyWindowsInRegion(
   bamfiles,
   region,
   modbase,
+  level = "summary",
   modProbThreshold = 0.5,
   sampleAnnot = NULL,
   seqinfo = NULL,
@@ -36,6 +37,9 @@ be specified as a character scalar (e.g. "chr1:1200-1300") that can be
 coerced into a \code{GRanges} object.}
 
 \item{modbase}{Character vector defining the modified base to extract.}
+
+\item{level}{A character scalar giving the level of the data to
+required by \code{quantFunction} (see \code{\link{readModBam}}).}
 
 \item{modProbThreshold}{A numeric scalar, indicating the modification
 probability threshold to use to classify a base as 'modified' or
