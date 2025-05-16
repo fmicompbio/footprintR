@@ -479,10 +479,12 @@ estimateNRLwindows <- function(se, gr,
                         drop = FALSE)
 
         # loop over samples
+        modprobL <- assay(se, assayName)
+        s <- start(se)
         resL <- lapply(seq.int(ncol(se)), function(j) { # for each sample j
             do.call(rbind, bplapply(indexL, function(i,  # for positions i in a window
-                                                     myse = se,
-                                                     myassayName = assayName,
+                                                     mymodprob = modprobL[[j]][i,],
+                                                     mys = s[i],
                                                      myminModProb = minModProb,
                                                      mydmax = dmax,
                                                      myminDist = minDist,
@@ -490,14 +492,17 @@ estimateNRLwindows <- function(se, gr,
                                                      myspan1 = span1,
                                                      myspan2 = span2) {
                 if (length(i) > 0) { # nocov start
-                    moddist <- calcModbaseSpacing(se = myse[i, j],
-                                                  assayName = myassayName,
-                                                  minModProb = myminModProb,
-                                                  poolReads = TRUE,
-                                                  dmax = mydmax)[[1]]
+                    cnt <- numeric(mydmax)
+                    for (r in seq.int(ncol(mymodprob))) {
+                        # extract positions of modified bases
+                        pos <- mys[which(mymodprob[, r] >= myminModProb)]
+                        # add distances in (1..dmax) to 'cnt'
+                        calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+                    }
+
                     suppressWarnings(
                         res <- do.call(c, unname(estimateNRL(
-                            x = moddist, minDist = myminDist,
+                            x = cnt, minDist = myminDist,
                             usePeaks = myusePeaks, span1 = myspan1, span2 = myspan2,
                             returnFit = FALSE)[c("nrl", "nrl.CI95")]))
                     )
