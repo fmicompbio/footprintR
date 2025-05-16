@@ -13,7 +13,8 @@ estimateNRLwindows(
   minDist = 140L,
   usePeaks = seq_len(5),
   span1 = 100/dmax,
-  span2 = 1500/dmax
+  span2 = 1500/dmax,
+  BPPARAM = BiocParallel::MulticoreParam(4L)
 )
 }
 \arguments{
@@ -45,6 +46,11 @@ loess fit (high pass filter).}
 
 \item{span2}{\code{numeric(1)} giving the smoothing parameter for de-noising
 loess fit (low pass filter).}
+
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
+controls the number of parallel CPU threads to use for some of the steps
+in \code{estimateNRLwindows()}. The default value is
+(\code{\link[BiocParallel]{MulticoreParam}(4L)}).}
 }
 \value{
 A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
@@ -71,7 +77,8 @@ windowgr <- GRanges(seqnames = seqnames(rng),
 se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "quickread",
                  modbase = "a", trim = TRUE,
                  BPPARAM = BiocParallel::SerialParam())
-seNRL <- estimateNRLwindows(se = se, gr = windowgr)
+seNRL <- estimateNRLwindows(se = se, gr = windowgr,
+                            BPPARAM = BiocParallel::SerialParam())
 assay(seNRL, "NRL")
 assay(seNRL, "NRL.CI95low")
 assay(seNRL, "NRL.CI95high")

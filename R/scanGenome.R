@@ -417,6 +417,10 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'     containing a read-level assay called \code{assayName}.
 #' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
 #'     to quantify.
+#' @param BPPARAM  A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{estimateNRLwindows()}. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L)}).
 #' @inheritParams calcModbaseSpacing
 #' @inheritParams estimateNRL
 #'
@@ -442,7 +446,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #' se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "quickread",
 #'                  modbase = "a", trim = TRUE,
 #'                  BPPARAM = BiocParallel::SerialParam())
-#' seNRL <- estimateNRLwindows(se = se, gr = windowgr)
+#' seNRL <- estimateNRLwindows(se = se, gr = windowgr,
+#'                             BPPARAM = BiocParallel::SerialParam())
 #' assay(seNRL, "NRL")
 #' assay(seNRL, "NRL.CI95low")
 #' assay(seNRL, "NRL.CI95high")
@@ -451,6 +456,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits subjectHits
+#' @importFrom BiocParallel bplapply
 #'
 #' @export
 estimateNRLwindows <- function(se, gr,
@@ -460,7 +466,8 @@ estimateNRLwindows <- function(se, gr,
                                minDist = 140L,
                                usePeaks = seq_len(5),
                                span1 = 100/dmax,
-                               span2 = 1500/dmax) {
+                               span2 = 1500/dmax,
+                               BPPARAM = BiocParallel::MulticoreParam(4L)) {
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertVector(x = gr, type = "GRanges")
 
@@ -472,25 +479,33 @@ estimateNRLwindows <- function(se, gr,
                         drop = FALSE)
 
         # loop over samples
-        resL <- lapply(seq.int(ncol(se)), function(j) {
-            do.call(rbind, lapply(indexL, function(i) {
-                if (length(i) > 0) {
-                    moddist <- calcModbaseSpacing(se = se[i, j],
-                                                  assayName = assayName,
-                                                  minModProb = minModProb,
+        resL <- lapply(seq.int(ncol(se)), function(j) { # for each sample j
+            do.call(rbind, bplapply(indexL, function(i,  # for positions i in a window
+                                                     myse = se,
+                                                     myassayName = assayName,
+                                                     myminModProb = minModProb,
+                                                     mydmax = dmax,
+                                                     myminDist = minDist,
+                                                     myusePeaks = usePeaks,
+                                                     myspan1 = span1,
+                                                     myspan2 = span2) {
+                if (length(i) > 0) { # nocov start
+                    moddist <- calcModbaseSpacing(se = myse[i, j],
+                                                  assayName = myassayName,
+                                                  minModProb = myminModProb,
                                                   poolReads = TRUE,
-                                                  dmax = dmax)[[1]]
+                                                  dmax = mydmax)[[1]]
                     suppressWarnings(
                         res <- do.call(c, unname(estimateNRL(
-                            x = moddist, minDist = minDist,
-                            usePeaks = usePeaks, span1 = span1, span2 = span2,
+                            x = moddist, minDist = myminDist,
+                            usePeaks = myusePeaks, span1 = myspan1, span2 = myspan2,
                             returnFit = FALSE)[c("nrl", "nrl.CI95")]))
                     )
                 } else {
                     res <- rep(NA, 3L)
                 }
-                return(res)
-            }))
+                return(res) # nocov end
+            }, BPPARAM = BPPARAM))
         })
 
         # construct SummarizedExperiment
