@@ -805,11 +805,7 @@ getDifferentialWindows <- function(se,
     .assertScalar(x = verbose, type = "logical")
     .assertScalar(x = method, type = "character",
                   validValues = c("edgeR", "limma"))
-    if (method == "edgeR") {
-        .assertPackagesAvailable(pkgs = "edgeR")
-    } else if (method == "limma") {
-        .assertPackagesAvailable(pkgs = "limma")
-    }
+    .assertPackagesAvailable(pkgs = method)
 
     if (nrow(se) > 0) {
         if (method == "edgeR") {
