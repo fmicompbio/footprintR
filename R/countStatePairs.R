@@ -32,6 +32,14 @@
 #'
 #' @return A \code{DataFrame} with \code{windowSize} rows and five columns.
 #'
+#' @examples
+#' modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
+#'                           package = "footprintR")
+#' res <- countStatePairs(bamfile = modbamfile,
+#'                        regions = "chr1",
+#'                        modbase = "a", windowSize = 300)
+#' res
+#'
 #' @importFrom S4Vectors DataFrame
 #' @importFrom BiocParallel bpnworkers
 #' @importFrom cli cli_abort
