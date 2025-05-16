@@ -135,6 +135,8 @@ calcModbaseSpacing <- function(se,
 #'   loess fit (high pass filter).
 #' @param span2 \code{numeric(1)} giving the smoothing parameter for de-noising
 #'   loess fit (low pass filter).
+#' @param returnFit \code{logical} scalar. If \code{FALSE}, only the elements
+#'   \code{nrl} and \code{nrl.CI95} will be populated in the returned list.
 #'
 #' @return A \code{list} with elements:
 #' \describe{
@@ -165,12 +167,12 @@ calcModbaseSpacing <- function(se,
 #' moddist <- calcModbaseSpacing(se)
 #'
 #' # analyze NRL for each sample
-#' print(estimateNRL(moddist$s1)[1:2])
-#' print(estimateNRL(moddist$s2)[1:2])
+#' print(estimateNRL(moddist$s1, returnFit = FALSE))
+#' print(estimateNRL(moddist$s2, returnFit = FALSE))
 #'
 #' # combine samples
 #' moddistComb <- Reduce("+", moddist)
-#' print(estimateNRL(moddistComb)[1:2])
+#' print(estimateNRL(moddistComb, returnFit = FALSE))
 #'
 #' @importFrom stats loess lm confint residuals predict coefficients
 #' @importFrom IRanges IRanges Views viewApply
@@ -182,13 +184,15 @@ estimateNRL <- function(x,
                         minDist = 140L,
                         usePeaks = seq_len(5),
                         span1 = 100 / length(x),
-                        span2 = 1500 / length(x)) {
+                        span2 = 1500 / length(x),
+                        returnFit = TRUE) {
     # digest arguments
     .assertVector(x = x, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = minDist, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = usePeaks, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = span1, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = span2, type = "numeric", rngExcl = c(span1, Inf))
+    .assertScalar(x = returnFit, type = "logical")
 
     if (all(x == 0)) {
         cli_warn("NRL not estimated (no non-zero distances)")
@@ -214,12 +218,17 @@ estimateNRL <- function(x,
         cilmfit <- confint(lmfit)[2,]
     }
 
-    res <- list(nrl = unname(coefficients(lmfit)[2]),
-                nrl.CI95 = cilmfit,
-                xs = xs, loessfit = fit, lmfit = lmfit,
-                peaks = xposmax, minDist = minDist,
-                span1 = span1, span2 = span2,
-                usePeaks = usePeaks)
+    if (returnFit) {
+        res <- list(nrl = unname(coefficients(lmfit)[2]),
+                    nrl.CI95 = cilmfit,
+                    xs = xs, loessfit = fit, lmfit = lmfit,
+                    peaks = xposmax, minDist = minDist,
+                    span1 = span1, span2 = span2,
+                    usePeaks = usePeaks)
+    } else {
+        res <- list(nrl = unname(coefficients(lmfit)[2]),
+                    nrl.CI95 = cilmfit)
+    }
     return(res)
 }
 
