@@ -500,12 +500,9 @@ estimateNRLwindows <- function(se, gr,
                         calcAndCountDist(query = pos, reference = pos, cnt = cnt)
                     }
 
-                    suppressWarnings(
-                        res <- do.call(c, unname(estimateNRL(
-                            x = cnt, minDist = myminDist,
-                            usePeaks = myusePeaks, span1 = myspan1, span2 = myspan2,
-                            returnFit = FALSE)[c("nrl", "nrl.CI95")]))
-                    )
+                    res <- unname(.estimateNRLfast(
+                        x = cnt, minDist = myminDist, usePeaks = myusePeaks,
+                        span1 = myspan1, span2 = myspan2))
                 } else {
                     res <- rep(NA, 3L)
                 }

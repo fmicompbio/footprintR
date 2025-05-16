@@ -232,6 +232,63 @@ estimateNRL <- function(x,
     return(res)
 }
 
+#' @title Estimate the nucleosome repeat length (NRL) fast
+#'
+#' @description This is a fast replacement for \code{\link{estimateNRL}}
+#'   intended for internal use. It does not do any argument checks, throws no
+#'   warnings, performs alternative smoothing and only returns the NRL
+#'   estimate and confidence interval.
+#'
+#' @author Michael Stadler
+#'
+#' @inheritParams estimateNRL
+#'
+#' @return A \code{numeric} vector with three elements, the NRL estimate,
+#'   lower and higher 95% confidence interval bounds.
+#'
+#' @seealso \code{\link{estimateNRL}} which should be used instead.
+#'
+#' @importFrom stats lm confint residuals predict coefficients
+#' @importFrom IRanges IRanges Views viewApply
+#' @importFrom methods as
+#'
+#' @keywords internal
+#' @noRd
+.estimateNRLfast <- function(x,
+                             minDist = 140L,
+                             usePeaks = seq_len(5),
+                             span1 = 100 / length(x),
+                             span2 = 1500 / length(x)) {
+    .assertPackagesAvailable(pkgs = "locfit")
+
+    if (all(x == 0)) {
+        return(c(nrl = NA, nrl.CI95low = NA, nrl.CI95high = NA))
+    }
+
+    pos <- seq_along(x)
+    fit1 <- locfit::locfit(x ~ locfit::lp(pos, nn = span1),
+                           subset = pos >= minDist)
+    xs <- predict(fit1, data.frame(pos = pos))
+    fit2 <- locfit::locfit(xs ~ locfit::lp(pos, nn = span2),
+                           subset = pos >= minDist)
+    rx <- residuals(fit2)
+    irpos <- as(rx >= 0, "IRanges")
+    xposmax <- viewApply(X = Views(rx, irpos),
+                         FUN = function(y) which.max(as.vector(y))) + minDist + start(irpos) - 1
+    if (any(!usePeaks %in% seq_along(xposmax))) {
+        usePeaks <- intersect(usePeaks, seq_along(xposmax))
+    }
+    lmfit <- lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
+    cilmfit <- rep(NA_real_, 2)
+    if (!is.na(coefficients(lmfit)[2])) {
+        cilmfit <- unname(confint(lmfit)[2,])
+    }
+
+    return(c(nrl = unname(coefficients(lmfit)[2]),
+             nrl.CI95low = cilmfit[1],
+             nrl.CI95high = cilmfit[2]))
+}
+
 
 #' @title Plot annotated distances between modified bases
 #'
