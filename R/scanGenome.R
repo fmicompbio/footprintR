@@ -1311,7 +1311,7 @@ scanForHighScoringRegions <- function(
 
     # loop over chromosomes
     grL <- lapply(names(chromosomeLengths), function(chr) {
-        regs <- .tileChromosome(tileSize = tileSize,
+        regs <- .tileChromosome(tileSize = min(tileSize, chromosomeLengths[chr]),
                                 windowSize = windowSize,
                                 windowStep = windowStep,
                                 chromName = chr,
