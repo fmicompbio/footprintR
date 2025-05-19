@@ -493,10 +493,10 @@ estimateNRLwindows <- function(se, gr,
                                                      myspan2 = span2) {
                 if (length(i) > 0) { # nocov start
                     cnt <- numeric(mydmax)
-                    for (r in seq.int(ncol(mymodprob))) {
-                        # extract positions of modified bases
-                        pos <- mys[which(mymodprob[, r] >= myminModProb)]
-                        # add distances in (1..dmax) to 'cnt'
+                    tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, ]
+                    tmp[, 1] <- mys[tmp[, 1]]
+                    tmp <- split(tmp[, 1], f = tmp[, 2])
+                    for (pos in tmp) {
                         calcAndCountDist(query = pos, reference = pos, cnt = cnt)
                     }
 
