@@ -241,6 +241,8 @@ estimateNRL <- function(x,
 #'
 #' @author Michael Stadler
 #'
+#' @param minperiod1,minperiod2 \code{numeric} scalars giving the smoothing
+#'   parameter for de-trending the signal (minimal periods).
 #' @inheritParams estimateNRL
 #'
 #' @return A \code{numeric} vector with three elements, the NRL estimate,
@@ -257,21 +259,29 @@ estimateNRL <- function(x,
 .estimateNRLfast <- function(x,
                              minDist = 140L,
                              usePeaks = seq_len(5),
-                             span1 = 100 / length(x),
-                             span2 = 1500 / length(x)) {
-    .assertPackagesAvailable(pkgs = "locfit")
+                             # span1 = 100 / length(x),
+                             # span2 = 1500 / length(x),
+                             minperiod1 = 30,
+                             minperiod2 = 450) {
+    # .assertPackagesAvailable(pkgs = "locfit")
 
     if (all(x == 0)) {
         return(c(nrl = NA, nrl.CI95low = NA, nrl.CI95high = NA))
     }
 
-    pos <- seq_along(x)
-    fit1 <- locfit::locfit(x ~ locfit::lp(pos, nn = span1),
-                           subset = pos >= minDist)
-    xs <- predict(fit1, data.frame(pos = pos))
-    fit2 <- locfit::locfit(xs ~ locfit::lp(pos, nn = span2),
-                           subset = pos >= minDist)
-    rx <- residuals(fit2)
+    # pos <- seq_along(x)
+    # fit1 <- locfit::locfit(x ~ locfit::lp(pos, nn = span1),
+    #                        subset = pos >= minDist)
+    # xs <- predict(fit1, data.frame(pos = pos))
+    # fit2 <- locfit::locfit(xs ~ locfit::lp(pos, nn = span2),
+    #                        subset = pos >= minDist)
+    # rx <- residuals(fit2)
+    xx <- x[seq(minDist, length(x))]
+    xs <- .filterScores(score = xx,
+                        minperiod = 30, maxperiod = NA, type = "low")
+    xs2 <- .filterScores(score = xx,
+                         minperiod = 450, maxperiod = NA, type = "low")
+    rx <- xs - xs2
     irpos <- as(rx >= 0, "IRanges")
     xposmax <- viewApply(X = Views(rx, irpos),
                          FUN = function(y) which.max(as.vector(y))) + minDist + start(irpos) - 1
