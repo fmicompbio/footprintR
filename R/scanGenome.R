@@ -498,7 +498,7 @@ estimateNRLwindows <- function(se, gr,
                 if (length(i) > 0) { # nocov start
                     mymodprob <- mymodprob[i,]
                     cnt <- numeric(mydmax)
-                    tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, ]
+                    tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, , drop = FALSE]
                     tmp[, 1] <- mys[tmp[, 1]]
                     tmp <- split(tmp[, 1], f = tmp[, 2])
                     for (pos in tmp) {
