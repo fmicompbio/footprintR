@@ -278,9 +278,9 @@ estimateNRL <- function(x,
     # rx <- residuals(fit2)
     xx <- x[seq(minDist, length(x))]
     xs <- .filterScores(score = xx,
-                        minperiod = 30, maxperiod = NA, type = "low")
+                        minperiod = minperiod1, maxperiod = NA, type = "low")
     xs2 <- .filterScores(score = xx,
-                         minperiod = 450, maxperiod = NA, type = "low")
+                         minperiod = minperiod2, maxperiod = NA, type = "low")
     rx <- xs - xs2
     irpos <- as(rx >= 0, "IRanges")
     xposmax <- viewApply(X = Views(rx, irpos),

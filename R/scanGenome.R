@@ -417,6 +417,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'     containing a read-level assay called \code{assayName}.
 #' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
 #'     to quantify.
+#' @param minperiod1,minperiod2 \code{numeric} scalars giving the smoothing
+#'   parameter for de-trending the signal (minimal periods).
 #' @param BPPARAM  A \code{\link[BiocParallel]{BiocParallelParam}} object that
 #'     controls the number of parallel CPU threads to use for some of the steps
 #'     in \code{estimateNRLwindows()}. The default value is
@@ -465,8 +467,10 @@ estimateNRLwindows <- function(se, gr,
                                minModProb = 0.5,
                                minDist = 140L,
                                usePeaks = seq_len(5),
-                               span1 = 100/dmax,
-                               span2 = 1500/dmax,
+                               # span1 = 100/dmax,
+                               # span2 = 1500/dmax,
+                               minperiod1 = 30,
+                               minperiod2 = 450,
                                BPPARAM = BiocParallel::MulticoreParam(4L)) {
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertVector(x = gr, type = "GRanges")
@@ -483,15 +487,16 @@ estimateNRLwindows <- function(se, gr,
         s <- start(se)
         resL <- lapply(seq.int(ncol(se)), function(j) { # for each sample j
             do.call(rbind, bplapply(indexL, function(i,  # for positions i in a window
-                                                     mymodprob = modprobL[[j]][i,],
+                                                     mymodprob = modprobL[[j]],
                                                      mys = s[i],
                                                      myminModProb = minModProb,
                                                      mydmax = dmax,
                                                      myminDist = minDist,
                                                      myusePeaks = usePeaks,
-                                                     myspan1 = span1,
-                                                     myspan2 = span2) {
+                                                     myminperiod1 = minperiod1,
+                                                     myminperiod2 = minperiod2) {
                 if (length(i) > 0) { # nocov start
+                    mymodprob <- mymodprob[i,]
                     cnt <- numeric(mydmax)
                     tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, ]
                     tmp[, 1] <- mys[tmp[, 1]]
@@ -502,7 +507,7 @@ estimateNRLwindows <- function(se, gr,
 
                     res <- unname(.estimateNRLfast(
                         x = cnt, minDist = myminDist, usePeaks = myusePeaks,
-                        span1 = myspan1, span2 = myspan2))
+                        minperiod1 = myminperiod1, minperiod2 = myminperiod2))
                 } else {
                     res <- rep(NA, 3L)
                 }
