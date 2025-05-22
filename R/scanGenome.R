@@ -496,7 +496,7 @@ estimateNRLwindows <- function(se, gr,
                                                      myminperiod1 = minperiod1,
                                                      myminperiod2 = minperiod2) {
                 if (length(i) > 0) { # nocov start
-                    mymodprob <- mymodprob[i,]
+                    mymodprob <- mymodprob[i, , drop = FALSE]
                     cnt <- numeric(mydmax)
                     tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, , drop = FALSE]
                     tmp[, 1] <- mys[tmp[, 1]]
