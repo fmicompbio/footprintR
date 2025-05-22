@@ -467,8 +467,6 @@ estimateNRLwindows <- function(se, gr,
                                minModProb = 0.5,
                                minDist = 140L,
                                usePeaks = seq_len(5),
-                               # span1 = 100/dmax,
-                               # span2 = 1500/dmax,
                                minperiod1 = 30,
                                minperiod2 = 450,
                                BPPARAM = BiocParallel::MulticoreParam(4L)) {

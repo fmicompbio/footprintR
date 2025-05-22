@@ -12,8 +12,8 @@ estimateNRLwindows(
   minModProb = 0.5,
   minDist = 140L,
   usePeaks = seq_len(5),
-  span1 = 100/dmax,
-  span2 = 1500/dmax,
+  minperiod1 = 30,
+  minperiod2 = 450,
   BPPARAM = BiocParallel::MulticoreParam(4L)
 )
 }
@@ -41,11 +41,8 @@ span at least a single nucleosome.}
 \item{usePeaks}{\code{integer} vector selecting the modes (peaks) in the
 phasogram used in NRL estimation.}
 
-\item{span1}{\code{numeric(1)} giving the smoothing parameter for de-trending
-loess fit (high pass filter).}
-
-\item{span2}{\code{numeric(1)} giving the smoothing parameter for de-noising
-loess fit (low pass filter).}
+\item{minperiod1, minperiod2}{\code{numeric} scalars giving the smoothing
+parameter for de-trending the signal (minimal periods).}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for some of the steps
