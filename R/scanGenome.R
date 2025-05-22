@@ -522,7 +522,8 @@ estimateNRLwindows <- function(se, gr,
                 NRL.CI95low = do.call(cbind, lapply(resL, "[", , 2)),
                 NRL.CI95high = do.call(cbind, lapply(resL, "[", , 3))),
             rowRanges = gr,
-            colData = colData(se),
+            colData = colData(se)[, setdiff(colnames(colData(se)),
+                                            c("n_reads", "readInfo"))],
             metadata = metadata(se))
     } else {
         seNew <- SummarizedExperiment(
@@ -531,7 +532,8 @@ estimateNRLwindows <- function(se, gr,
                 NRL.CI95low = matrix(nrow = 0, ncol = ncol(se)),
                 NRL.CI95high = matrix(nrow = 0, ncol = ncol(se))),
             rowRanges = GRanges(),
-            colData = colData(se),
+            colData = colData(se)[, setdiff(colnames(colData(se)),
+                                            c("n_reads", "readInfo"))],
             metadata = metadata(se))
     }
 
