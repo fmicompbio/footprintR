@@ -65,6 +65,15 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     expect_equal(nrl$nrl, 184.3)
     expect_length(nrl$nrl.CI95, 2L)
 
+    nrl3 <- .estimateNRLfast(x = rep(0, 1000))
+    expect_identical(nrl3, c(nrl = NA, nrl.CI95low = NA, nrl.CI95high = NA))
+    nrl4 <- .estimateNRLfast(x = pg1comb, usePeaks = 1:20)
+    nrl5 <- .estimateNRLfast(x = pg1comb)
+    expect_identical(nrl4, nrl5)
+    expect_equal(nrl5, c(nrl = nrl2$nrl, nrl.CI95low = nrl2$nrl.CI95[[1]],
+                         nrl.CI95high = nrl2$nrl.CI95[[2]]),
+                 tolerance = 1e-2)
+
     expect_equal(calcAndCountDist(c(1,2,4),c(1,3,5),numeric(4)), c(2,1,1,1))
     expect_equal(calcAndCountDist(c(1,3,5),c(1,2,4),numeric(4)), c(2,0,1,0))
 })
