@@ -13,6 +13,7 @@ scanForHighScoringRegions(
   scoreFunction = "getDifferentiallyModifiedWindows",
   scoreFunctionArgs = list(),
   modbase,
+  level = "summary",
   modProbThreshold = 0.5,
   tileSize = 1e+06,
   seqinfo = NULL,
@@ -72,6 +73,9 @@ score added to the \code{mcols()}.}
 \item{scoreFunctionArgs}{List with additional arguments for \code{scoreFunction}.}
 
 \item{modbase}{Character vector defining the modified base to extract.}
+
+\item{level}{A character scalar giving the level of the data to
+required by \code{quantFunction} (see \code{\link{readModBam}}).}
 
 \item{modProbThreshold}{A numeric scalar, indicating the modification
 probability threshold to use to classify a base as 'modified' or

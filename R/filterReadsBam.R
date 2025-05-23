@@ -127,8 +127,8 @@ filterReadsBam <- function(infiles,
                 }
 
                 # create temporary output file names
-                tmpbamfiles <- tempfile(pattern = sprintf("file%40d_", seq_along(chrs)),
-                                        fileext = ".bam")
+                tmpsamfiles <- tempfile(pattern = sprintf("file%05d_", seq_along(chrs)),
+                                        fileext = ".sam")
 
                 # filter in parallel
                 if (verbose) {
@@ -137,13 +137,12 @@ filterReadsBam <- function(infiles,
                                "using {ncpuTotal} thread{?s}"))
                 }
                 res1PerChr <- bplapply(
-                    seq_along(chrs),
+                    seq_along(chrs)[order(rep_len(seq.int(ncpuTotal), length(chrs)))],
                     function(j,
                              myinfile = infiles[i],
-                             myoutfile = tmpbamfiles[j],
+                             myoutfile = tmpsamfiles[j],
                              mymodbase = modbase,
                              myregion = chrs[j],
-                             myIncludeBamHeader = identical(j, 1L),
                              myKeepUnmapped = keepUnmapped,
                              myKeepSecondary = keepSecondary,
                              myKeepSupplementary = keepSupplementary,
@@ -160,7 +159,7 @@ filterReadsBam <- function(infiles,
                                           outfile = myoutfile,
                                           modbase = mymodbase,
                                           region = myregion,
-                                          includeBamHeader = myIncludeBamHeader,
+                                          includeHeader = TRUE,
                                           keepUnmapped = myKeepUnmapped,
                                           keepSecondary = myKeepSecondary,
                                           keepSupplementary = myKeepSupplementary,
@@ -177,10 +176,12 @@ filterReadsBam <- function(infiles,
 
                 # merge partial outputs
                 if (verbose) {
-                    cli_alert_info("merging {length(tmpbamfiles)} filtered chunks")
+                    cli_alert_info("merging {length(tmpsamfiles)} filtered chunks")
                 }
-                concatenate_files(input_files = tmpbamfiles, output_file = outfiles[i])
-                unlink(tmpbamfiles)
+                concatenate_hts_files(input_files = tmpsamfiles,
+                                      output_file = outfiles[i],
+                                      ncpu = ncpuTotal)
+                unlink(tmpsamfiles)
 
                 # sum and return filter statistics
                 res1 <- Reduce(f = "+", x = res1PerChr)

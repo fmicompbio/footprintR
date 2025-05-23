@@ -113,12 +113,7 @@ readBedMethyl <- function(fnames,
             cli_abort("names of {.arg modbase} and {.arg fnames} don't agree")
         }
     }
-    # for valid values of `modbase`, see
-    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
-                                 "U","a","A","o","G","n","N"))) {
-        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
-    }
+    .assertValidModbase(modbase)
     if (any(lengths(lapply(split(modbase, names(modbase)), unique)) != 1L)) {
         cli_abort("at least one sample was defined to have more than one {.arg modbase}")
     }

@@ -1,6 +1,6 @@
 Package: footprintR
 Title: Tools for working with single-molecule footprinting data
-Version: 0.3.3
+Version: 0.3.4
 Authors@R: c(
     person("Michael", "Stadler", , "michael.stadler@fmi.ch",
            role = c("aut", "cre"), comment = c(ORCID = "0000-0002-2269-4934")),
@@ -55,6 +55,7 @@ Suggests:
     e1071,
     edgeR,
     knitr,
+    limma,
     MatrixGenerics,
     R.utils,
     rmarkdown,

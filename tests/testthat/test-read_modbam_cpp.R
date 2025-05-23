@@ -110,6 +110,13 @@ test_that("read_modbam_cpp works", {
                                  variantRefNames = character(0),
                                  variantRefPositions = integer(0)),
                  "Failed to get bam iterator")
+    expect_error(read_modbam_cpp(inname_str = bam4, regions = "chr2",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10),
+                 "Failed to get bam iterator")
 
     # ... MM/ML tags referring to position beyond read length
     expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
@@ -119,6 +126,14 @@ test_that("read_modbam_cpp works", {
                                  variantRefPositions = integer(0),
                                  verbose = FALSE),
                  "Failed to parse the base mods")
+    expect_error(read_modbam_cpp(inname_str = bam7, regions = "chr1",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10,
+                                 verbose = FALSE),
+                 "Failed to parse the base mods")
 
     # ... too many modifications on a single base
     expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
@@ -126,6 +141,14 @@ test_that("read_modbam_cpp works", {
                                  tnames_for_sampling = "chr1",
                                  variantRefNames = character(0),
                                  variantRefPositions = integer(0),
+                                 verbose = FALSE),
+                 "More modifications than footprintR")
+    expect_error(read_modbam_cpp(inname_str = bam8, regions = "chr1",
+                                 modbase = "a", n_alns_to_sample = 0,
+                                 tnames_for_sampling = "chr1",
+                                 variantRefNames = character(0),
+                                 variantRefPositions = integer(0),
+                                 windowSize = 10,
                                  verbose = FALSE),
                  "More modifications than footprintR")
 
@@ -152,22 +175,42 @@ test_that("read_modbam_cpp works", {
     df <- read.delim(extractfile)
     df$ref_position <- df$ref_position + 1L # modkit-extract has 0-based coordinates
     suppressMessages(expect_message(
-        res1 <- read_modbam_cpp(inname_str = modbamfile,
-                                regions = "chr1:6940000-6955000",
-                                modbase = "a",
-                                n_alns_to_sample = 0,
-                                tnames_for_sampling = "chr1",
-                                variantRefNames = character(0),
-                                variantRefPositions = integer(0),
-                                n_threads = 2,
-                                verbose = TRUE)
+        res1 <- read_modbam_cpp(
+            inname_str = modbamfile, regions = "chr1:6940000-6955000",
+            modbase = "a", n_alns_to_sample = 0, tnames_for_sampling = "chr1",
+            variantRefNames = character(0), variantRefPositions = integer(0),
+            n_threads = 2, verbose = TRUE)
     ))
-    res2 <- read_modbam_cpp(modbamfile, "chr1:", "a", 0, "", character(0), integer(0), 1, FALSE)
-    res3 <- read_modbam_cpp(modbamfile, c("chr1", "chr2"), "m", 0, "", character(0), integer(0), 1, FALSE)
-    res4 <- read_modbam_cpp(bam4, "chr1", "a", 0, "", character(0), integer(0), 1, FALSE)
-    res5 <- read_modbam_cpp(bam5, "chr1", "a", 0, "", character(0), integer(0), 1, FALSE)
-    res6a <- read_modbam_cpp(modbamfile, "chr1:6941000-6941001", "a", 0, "", character(0), integer(0), 1, FALSE)
-    res6b <- read_modbam_cpp(modbamfile, c("chr1:6941000-6941001", "chr1:6928000-6928001"), "a", 0, "", character(0), integer(0), 1, FALSE)
+    res2 <- read_modbam_cpp(
+        inname_str = modbamfile, regions = "chr1:", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res3 <- read_modbam_cpp(
+        inname_str = modbamfile, regions = c("chr1", "chr2"), modbase = "m",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res4 <- read_modbam_cpp(
+        inname_str = bam4, regions = "chr1", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res5 <- read_modbam_cpp(
+        inname_str = bam5, regions = "chr1", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res6a <- read_modbam_cpp(
+        inname_str = modbamfile, regions = "chr1:6941000-6941001", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res6b <- read_modbam_cpp(
+        inname_str = modbamfile, regions = c("chr1:6941000-6941001", "chr1:6928000-6928001"),
+        modbase = "a", n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
     aln6a <- Rsamtools::scanBam(file = modbamfile,
                                 param = Rsamtools::ScanBamParam(
                                     what = "qname",
@@ -176,91 +219,90 @@ test_that("read_modbam_cpp works", {
     aln6b <- Rsamtools::scanBam(file = modbamfile,
                                 param = Rsamtools::ScanBamParam(
                                     what = "qname",
-                                    which = GRanges(c("chr1:6941000-6941001", "chr1:6928000-6928001"))
+                                    which = GRanges(c("chr1:6941000-6941001",
+                                                      "chr1:6928000-6928001"))
                                 ))
     set.seed(1L)
     expect_warning(
-        res7a <- read_modbam_cpp(modbamfile, "chr1", "a", 3, c("chr1", "error"), character(0), integer(0), 1, FALSE),
+        res7a <- read_modbam_cpp(
+            inname_str = modbamfile, regions = "chr1", modbase = "a",
+            n_alns_to_sample = 3, tnames_for_sampling = c("chr1", "error"),
+            variantRefNames = character(0), variantRefPositions = integer(0),
+            n_threads = 1, verbose = FALSE),
         "Ignoring unknown target name"
     )
     set.seed(1L)
-    res7b <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", character(0), integer(0), 1, FALSE)
+    res7b <- read_modbam_cpp(
+        inname_str = modbamfile, regions = "chr1", modbase = "a",
+        n_alns_to_sample = 3, tnames_for_sampling = "chr1",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
     suppressMessages(expect_message(
-        res7c <- read_modbam_cpp(modbamfile, "chr1", "a", 3, "chr1", character(0), integer(0), 1, TRUE)
+        res7c <- read_modbam_cpp(
+            inname_str = modbamfile, regions = "chr1", modbase = "a",
+            n_alns_to_sample = 3, tnames_for_sampling = "chr1",
+            variantRefNames = character(0), variantRefPositions = integer(0),
+            n_threads = 1, verbose = TRUE)
     ))
-    res9h <- read_modbam_cpp(bam9, "chr1", "h", 0, "", character(0), integer(0), 1, FALSE)
-    res9m <- read_modbam_cpp(bam9, "chr1", "m", 0, "", character(0), integer(0), 1, FALSE)
-    expect_identical(res9h[!names(res9h) %in% c("call_code", "mod_prob")],
-                     res9m[!names(res9m) %in% c("call_code", "mod_prob")])
-    expect_identical(res9h$call_code, c("h", "h"))
-    expect_identical(res9m$call_code, c("m", "m"))
-    expect_equal(res9h$mod_prob, (c(25,10) + 0.5) / 256)
-    expect_equal(res9m$mod_prob, (c(230,245) + 0.5) / 256)
+    res9h <- read_modbam_cpp(
+        inname_str = bam9, regions = "chr1", modbase = "h",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+    res9m <- read_modbam_cpp(
+        inname_str = bam9, regions = "chr1", modbase = "m",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        n_threads = 1, verbose = FALSE)
+
+    suppressMessages(expect_message({
+        res10a <- read_modbam_cpp(
+            inname_str = modbamfile, regions = "chr1", modbase = "a",
+            n_alns_to_sample = 0, tnames_for_sampling = "",
+            variantRefNames = character(0), variantRefPositions = integer(0),
+            threshUnmod = 0.5, threshMod = 0.5, windowSize = 200,
+            n_threads = 2, verbose = TRUE)
+    }, "read 10 alignments"))
+    res10b <- read_modbam_cpp(
+        inname_str = modbamfile, regions = ".", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        threshUnmod = 0.5, threshMod = 0.5, windowSize = 200,
+        n_threads = 2, verbose = FALSE)
+    res10c <- read_modbam_cpp(
+        inname_str = modbamfile, regions = ".", modbase = "a",
+        n_alns_to_sample = 0, tnames_for_sampling = "",
+        variantRefNames = character(0), variantRefPositions = integer(0),
+        threshUnmod = 0.15, threshMod = 0.75, windowSize = 200,
+        minMapQ = 1, minAlignedLength = 500,
+        n_threads = 1, verbose = FALSE)
+
+    # ... collect all mode 1 and mode 2 results in list
+    resL <- list(res1, res2, res3, res4, res5, res6a, res6b,
+                 res7a, res7b, res7c, res9h, res9m)
 
     # ... results structure
-    expect_type(res1, "list")
-    expect_type(res2, "list")
-    expect_type(res3, "list")
-    expect_type(res4, "list")
-    expect_type(res5, "list")
-    expect_type(res6a, "list")
-    expect_type(res6b, "list")
-    expect_type(res7a, "list")
-    expect_type(res7b, "list")
-    expect_type(res7c, "list")
+    invisible(lapply(resL, function(r) expect_type(r, "list")))
 
     expected_names <- c(
         "read_id", "forward_read_position", "ref_position", "chrom",
         "ref_mod_strand", "call_code", "canonical_base", "mod_prob", "read_df")
-    expect_named(res1, expected_names)
-    expect_named(res2, expected_names)
-    expect_named(res3, expected_names)
-    expect_named(res4, expected_names)
-    expect_named(res5, expected_names)
-    expect_named(res6a, expected_names)
-    expect_named(res6b, expected_names)
-    expect_named(res7a, expected_names)
-    expect_named(res7b, expected_names)
-    expect_named(res7c, expected_names)
+    invisible(lapply(resL, function(r) expect_named(r, expected_names)))
 
     expected_types <- c(
         "character", "integer", "integer", "character", "character",
         "character", "character", "double", "list")
     for (i in seq_along(expected_names)) {
-        expect_type(res1[[expected_names[i]]], expected_types[i])
-        expect_type(res2[[expected_names[i]]], expected_types[i])
-        expect_type(res3[[expected_names[i]]], expected_types[i])
-        expect_type(res4[[expected_names[i]]], expected_types[i])
-        expect_type(res5[[expected_names[i]]], expected_types[i])
-        expect_type(res6a[[expected_names[i]]], expected_types[i])
-        expect_type(res6b[[expected_names[i]]], expected_types[i])
-        expect_type(res7a[[expected_names[i]]], expected_types[i])
-        expect_type(res7b[[expected_names[i]]], expected_types[i])
-        expect_type(res7c[[expected_names[i]]], expected_types[i])
+        invisible(lapply(resL, function(r) {
+            expect_type(r[[expected_names[i]]], expected_types[i])
+        }))
     }
 
-    expect_s3_class(res1[["read_df"]], "data.frame")
-    expect_s3_class(res2[["read_df"]], "data.frame")
-    expect_s3_class(res3[["read_df"]], "data.frame")
-    expect_s3_class(res4[["read_df"]], "data.frame")
-    expect_s3_class(res5[["read_df"]], "data.frame")
-    expect_s3_class(res6a[["read_df"]], "data.frame")
-    expect_s3_class(res6b[["read_df"]], "data.frame")
-    expect_s3_class(res7a[["read_df"]], "data.frame")
-    expect_s3_class(res7b[["read_df"]], "data.frame")
-    expect_s3_class(res7c[["read_df"]], "data.frame")
+    invisible(lapply(resL, function(r) expect_s3_class(r[["read_df"]], "data.frame")))
 
-    expected_df_colnames <- c("read_id", "qscore", "read_length", "aligned_length", "variant_label")
-    expect_named(res1$read_df, expected_df_colnames)
-    expect_named(res2$read_df, expected_df_colnames)
-    expect_named(res3$read_df, expected_df_colnames)
-    expect_named(res4$read_df, expected_df_colnames)
-    expect_named(res5$read_df, expected_df_colnames)
-    expect_named(res6a$read_df, expected_df_colnames)
-    expect_named(res6b$read_df, expected_df_colnames)
-    expect_named(res7a$read_df, expected_df_colnames)
-    expect_named(res7b$read_df, expected_df_colnames)
-    expect_named(res7c$read_df, expected_df_colnames)
+    expected_df_colnames <- c("read_id", "qscore", "read_length",
+                              "aligned_length", "variant_label")
+    invisible(lapply(resL, function(r) expect_named(r$read_df, expected_df_colnames)))
 
     # ... content res1
     expect_identical(res1$read_df$read_id,
@@ -400,4 +442,28 @@ test_that("read_modbam_cpp works", {
     expect_length(unique(res7c$read_id), 2L)
     expect_identical(nrow(res7a$read_df), length(unique(res7a$read_id)))
     expect_identical(nrow(res7c$read_df), length(unique(res7c$read_id)))
+
+    # ... content of res9h and res9m
+    expect_identical(res9h[!names(res9h) %in% c("call_code", "mod_prob")],
+                     res9m[!names(res9m) %in% c("call_code", "mod_prob")])
+    expect_identical(res9h$call_code, c("h", "h"))
+    expect_identical(res9m$call_code, c("m", "m"))
+    expect_equal(res9h$mod_prob, (c(25,10) + 0.5) / 256)
+    expect_equal(res9m$mod_prob, (c(230,245) + 0.5) / 256)
+
+    # ... structure and content of res10a, res10b and res10c
+    expect_type(res10a, "list")
+    expect_type(res10b, "list")
+    expect_type(res10c, "list")
+    expect_length(res10a, 1L)
+    expect_length(res10b, 1L)
+    expect_length(res10c, 1L)
+    expect_named(res10a, "pair_counts")
+    expect_named(res10b, "pair_counts")
+    expect_named(res10c, "pair_counts")
+    expect_identical(dim(res10a$pair_counts), c(200L, 4L))
+    expect_identical(dim(res10b$pair_counts), c(200L, 4L))
+    expect_identical(dim(res10c$pair_counts), c(200L, 4L))
+    expect_identical(res10a, res10b)
+    expect_true(all(res10c$pair_counts <= res10a$pair_counts))
 })

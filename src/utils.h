@@ -1,4 +1,5 @@
 #include <htslib/sam.h>
+#include <htslib/thread_pool.h>
 #include <string>
 #include <vector>
 #include <Rcpp.h>
@@ -6,6 +7,7 @@
 // for description of the arguments see function definitions in utils.cpp
 
 std::string concatenate_files(std::vector<std::string>, const std::string);
+std::string concatenate_hts_files(std::vector<std::string>, const std::string, int);
 Rcpp::CharacterVector getChromosomeNamesFromBam(const std::string);
 char get_unmodified_base(char);
 char complement(char);

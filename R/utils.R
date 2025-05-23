@@ -1,10 +1,3 @@
-# This script is provided as a utility via the swissknife package
-# (https://github.com/fmicompbio/swissknife). This script is provided under
-# the MIT license, and package authors are permitted to
-# include the code as-is in other packages, as long as this note and the
-# information provided below crediting the authors of the respective
-# functions is retained.
-
 #' Utility function to check validity of scalar variable values.
 #'
 #' This function provides a convenient way e.g. to check that provided
@@ -137,8 +130,8 @@
         } else {
             if (any(x <= rngExcl[1] | x >= rngExcl[2])) {
                 cli_abort(paste0(
-                "{.arg {xname}} must be between {rngExcl} (exclusive)"),
-                call = NULL)
+                    "{.arg {xname}} must be between {rngExcl} (exclusive)"),
+                    call = NULL)
             }
         }
     } else {
@@ -210,6 +203,29 @@
                           paste(pkgs[!avail], collapse = "\", \""), "\"))")
         }
         cli_abort(msg, call = NULL)
+    }
+
+    invisible(TRUE)
+}
+
+#' Utility function to check validity of modified base code(s).
+#'
+#' This function provides a convenient way to check that provided
+#' base modification codes are valid.
+#'
+#' @param modbase A character vector with base modification codes to check.
+#'
+#' @author Michael Stadler
+#' @noRd
+#' @keywords internal
+#'
+#' @importFrom cli cli_abort
+.assertValidModbase <- function(modbase) {
+    # for valid values of `modbase`, see
+    # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
+    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
+                                 "U","a","A","o","G","n","N"))) {
+        cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
     }
 
     invisible(TRUE)
@@ -288,11 +304,12 @@
 #' @noRd
 #' @keywords internal
 .message <- function(message, noTimer = FALSE, ...) {
+    .assertScalar(x = noTimer, type = "logical")
     # Try to get 'verbose' from the calling environment
     env <- parent.frame()
     verbose <- tryCatch(get("verbose", envir = env),
                         error = function(e) FALSE)
-    if (verbose) {
+    if (isTRUE(verbose)) {
         if (noTimer) {
             cli_alert_info(text = message, .envir = env)
         } else {

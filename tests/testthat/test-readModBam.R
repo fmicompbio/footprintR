@@ -30,7 +30,7 @@ test_that("readModBam works", {
                             regions = "chr1:6940000-6955000",
                             modbase = "a",
                             BPPARAM = BiocParallel::SerialParam()),
-                 ".bamfiles. must not be an empty vector")
+                 "length of .bamfiles. must be between 1 and Inf")
     expect_error(readModBam(bamfiles = "error",
                             regions = "chr1:6940000-6955000",
                             modbase = "a", nAlnsToSample = 0,

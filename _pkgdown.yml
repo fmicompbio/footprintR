@@ -22,6 +22,7 @@ reference:
   - readBedMethyl
   - readModBam
   - readModkitExtract
+  - countStatePairs
 - title: Calculating on data in R
   contents:
   - addReadStats
@@ -43,7 +44,9 @@ reference:
   - sumNmodNvalid
   - strandDiffFracMod
   - phasingScoreFourier
+  - estimateNRLwindows
   - getDifferentiallyModifiedWindows
+  - getDifferentialWindows
   - getRangesWithAssayValues
   - processWindowScores
   - scanForHighScoringRegions

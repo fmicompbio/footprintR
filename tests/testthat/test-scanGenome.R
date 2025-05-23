@@ -88,10 +88,22 @@ test_that("genome scanning works (helper functions)", {
     se1 <- se0
     SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
     expect_error(sumNmodNvalid(se1, rg), ".se. must contain assays")
-    res <- sumNmodNvalid(se0, rg)
+    res <- sumNmodNvalid(se0, rg, includeEmpty = FALSE)
     expect_identical(SummarizedExperiment::assay(res, "Nmod")[1, ],
                      colSums(SummarizedExperiment::assay(se0, "Nmod")))
     expect_identical(SummarizedExperiment::assay(res, "Nvalid")[1, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nvalid")))
+
+    # ... includeEmpty = TRUE
+    rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
+                          windowStep = 1e6, chromName = "chr1",
+                          chromLength = 70e6)
+    se1 <- se0
+    SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
+    res <- sumNmodNvalid(se0, rg, includeEmpty = TRUE)
+    expect_identical(SummarizedExperiment::assay(res, "Nmod")[7, ],
+                     colSums(SummarizedExperiment::assay(se0, "Nmod")))
+    expect_identical(SummarizedExperiment::assay(res, "Nvalid")[7, ],
                      colSums(SummarizedExperiment::assay(se0, "Nvalid")))
 
     ## phasingScoreFourier
@@ -105,21 +117,31 @@ test_that("genome scanning works (helper functions)", {
         se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 3:4))),
         "have the same width")
     expect_error(phasingScoreFourier(
-        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 6)),
+        se0, GenomicRanges::GRanges("chr1", IRanges::IRanges(start = 1:2, width = 12)),
         numCoef = 5),
         "is not divisible")
     expect_error(phasingScoreFourier(se0, rg[c(1, 3, 4)]),
                  "need to be regularly spaced")
     windowgr <- GenomicRanges::GRanges(
         seqnames = "chr1",
-        ranges = IRanges::IRanges(start = seq(0, 11) * 183 + 6930001,
-                                  width = 4 * 183))
-    res0 <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
+        ranges = IRanges::IRanges(start = seq(0, 11) * 190 + 6930001,
+                                  width = 4 * 190))
+    res0a <- phasingScoreFourier(se = se0[numeric(0), ], gr = windowgr, numCoef = 5)
+    res0b <- phasingScoreFourier(se = se0, gr = GenomicRanges::GRanges(), numCoef = 5)
     res1 <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr),
                                 gr = windowgr, numCoef = 5)
-    expect_identical(dim(res0), c(0L, BiocGenerics::ncol(se0)))
+    res1a <- phasingScoreFourier(se = IRanges::subsetByOverlaps(se0, windowgr[7]),
+                                 gr = windowgr[7], numCoef = 5)
+    expect_identical(dim(res0a), c(0L, BiocGenerics::ncol(se0)))
+    expect_identical(dim(res0b), c(0L, BiocGenerics::ncol(se0)))
     expect_identical(dim(res1), c(length(windowgr), BiocGenerics::ncol(se0)))
-    expect_identical(SummarizedExperiment::assayNames(res0),
+    expect_equal(assay(res1, "phasingScoreAbs")[7, , drop = FALSE],
+                 assay(res1a, "phasingScoreAbs"), tolerance = 1e-4)
+    expect_equal(assay(res1, "phasingScoreRel")[7, , drop = FALSE],
+                 assay(res1a, "phasingScoreRel"), tolerance = 1e-4)
+    expect_identical(SummarizedExperiment::assayNames(res0a),
+                     c("phasingScoreAbs", "phasingScoreRel"))
+    expect_identical(SummarizedExperiment::assayNames(res0b),
                      c("phasingScoreAbs", "phasingScoreRel"))
     expect_identical(SummarizedExperiment::assayNames(res1),
                      c("phasingScoreAbs", "phasingScoreRel"))
@@ -137,6 +159,37 @@ test_that("genome scanning works (helper functions)", {
     corr1 <- cor(ass1[, c(1, 3)], ass2[, c(1, 3)])
     expect_equal(which.max(corr1[, 1]), 1L, ignore_attr = TRUE)
     expect_equal(which.max(corr1[, 2]), 2L, ignore_attr = TRUE)
+
+    ## estimateNRLwindows
+    rng <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6930000, 6940000))
+    windowSize <- 2000
+    windowStep <- 1000
+    s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
+    windowgr <- GenomicRanges::GRanges(
+        seqnames = seqnames(rng),
+        ranges = IRanges::IRanges(start = s, width = windowSize))
+    se1 <- readModBam(bamfiles = modbamfiles, regions = rng, level = "quickread",
+                      modbase = "a", trim = TRUE,
+                      BPPARAM = BiocParallel::SerialParam())
+    seEmpty1 <- estimateNRLwindows(se = se1, gr = GRanges())
+    expect_s4_class(seEmpty1, "RangedSummarizedExperiment")
+    expect_identical(dim(seEmpty1), c(0L, length(modbamfiles)))
+    expect_identical(SummarizedExperiment::assayNames(seEmpty1),
+                     c("NRL", "NRL.CI95low", "NRL.CI95high"))
+    gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(1:2, width = 2000))
+    seEmpty2 <- estimateNRLwindows(se = se1, gr = gr2)
+    expect_s4_class(seEmpty2, "RangedSummarizedExperiment")
+    expect_identical(dim(seEmpty2), c(length(gr2), length(modbamfiles)))
+    expect_identical(SummarizedExperiment::assayNames(seEmpty2),
+                     c("NRL", "NRL.CI95low", "NRL.CI95high"))
+    expect_true(all(is.na(SummarizedExperiment::assay(seEmpty2, "NRL"))))
+    seNRL <- estimateNRLwindows(se = se1, gr = windowgr)
+    expect_s4_class(seNRL, "RangedSummarizedExperiment")
+    expect_equal(assay(seNRL, "NRL")[, c(1,3)], assay(seNRL, "NRL")[, c(2,4)],
+                 ignore_attr = TRUE)
+    expect_true(all(assay(seNRL, "NRL") > 100))
+    expect_true(all(assay(seNRL, "NRL") < 300))
+    expect_true(all(assay(seNRL, "NRL.CI95low") < assay(seNRL, "NRL.CI95high")))
 
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
@@ -156,13 +209,16 @@ test_that("genome scanning works (helper functions)", {
                                                  BPPARAM = BiocParallel::SerialParam())),
                      c(0L, 4L))
 
+    # sumNmodNvalid, includeEmpty = FALSE
     suppressMessages(expect_message(
         se1 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                        region = "chr1:6940000-6955000", modbase = "a",
                                        modProbThreshold = 0.5,
                                        windowMode = "fixed", windowSize = 24L,
                                        BPPARAM = BiocParallel::SerialParam(),
-                                       verbose = TRUE)
+                                       verbose = TRUE,
+                                       quantFunction = "sumNmodNvalid",
+                                       quantFunctionArgs = list(includeEmpty = FALSE))
     ))
     se1$group <- c("group1", "group1", "group2", "group2")
     expect_s4_class(se1, "RangedSummarizedExperiment")
@@ -187,6 +243,44 @@ test_that("genome scanning works (helper functions)", {
                                            }))
     expect_identical(manualWindows, SummarizedExperiment::assay(se1, "Nmod"))
 
+    # sumNmodNvalid, includeEmpty = TRUE
+    suppressMessages(expect_message(
+        se1b <- quantifyWindowsInRegion(bamfiles = modbamfiles,
+                                        region = "chr1:6940000-6955000", modbase = "a",
+                                        modProbThreshold = 0.5,
+                                        windowMode = "fixed", windowSize = 24L,
+                                        BPPARAM = BiocParallel::SerialParam(),
+                                        verbose = TRUE,
+                                        quantFunction = "sumNmodNvalid",
+                                        quantFunctionArgs = list(includeEmpty = TRUE))
+    ))
+    se1b$group <- c("group1", "group1", "group2", "group2")
+    expect_s4_class(se1b, "RangedSummarizedExperiment")
+    expect_identical(dim(se1b), c(1249L, 4L))
+    expect_identical(sum(rowSums(assay(se1b, "Nvalid")) > 0), 136L)
+    expect_true(all(width(SummarizedExperiment::rowRanges(se1b)) == 24L))
+    expect_identical(SummarizedExperiment::assayNames(se1b),
+                     c("Nmod", "Nvalid", "FracMod"))
+    expect_identical(colSums(SummarizedExperiment::assay(se1b, "Nvalid")),
+                     c(s1 = 1610, s2 = 1610, s3 = 554, s4 = 554))
+    ov <- findOverlaps(query = SummarizedExperiment::rowRanges(se0),
+                       subject = SummarizedExperiment::rowRanges(se1b))
+    Nvalid <- SummarizedExperiment::assay(se0, "Nvalid")
+    manualWindows <- do.call(rbind, lapply(split(queryHits(ov), rownames(se1b)[subjectHits(ov)])[as.character(rownames(se1b))],
+                                           function(i) {
+                                               colSums(Nvalid[i, , drop = FALSE])
+                                           }))
+    rownames(manualWindows) <- seq.int(nrow(manualWindows))
+    expect_identical(manualWindows, SummarizedExperiment::assay(se1b, "Nvalid"))
+    Nmod <- SummarizedExperiment::assay(se0, "Nmod")
+    manualWindows <- do.call(rbind, lapply(split(queryHits(ov), rownames(se1b)[subjectHits(ov)])[as.character(rownames(se1b))],
+                                           function(i) {
+                                               colSums(Nmod[i, , drop = FALSE])
+                                           }))
+    rownames(manualWindows) <- seq.int(nrow(manualWindows))
+    expect_identical(manualWindows, SummarizedExperiment::assay(se1b, "Nmod"))
+
+    # filter by sequence context
     se2 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                    region = "chr1:6940000-6955000", modbase = "a",
                                    sampleAnnot = data.frame(sample = paste0("s", 1:4),
@@ -211,6 +305,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::colData(se1),
                      SummarizedExperiment::colData(se2))
 
+    # predefined windows
     set.seed(1L)
     selwindows <- sample(nrow(se2), 40)
     se3 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
@@ -241,16 +336,18 @@ test_that("genome scanning works (helper functions)", {
     ))
     expect_s4_class(gr1, "GRanges")
     expect_length(gr1, 136L)
-    expect_identical(ncol(GenomicRanges::mcols(gr1)), 6L)
+    expect_identical(ncol(GenomicRanges::mcols(gr1)), 9L)
     expect_identical(colnames(GenomicRanges::mcols(gr1)),
-                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue",
+                       "FracMod_group1", "FracMod_group2", "DeltaFracMod"))
 
     gr2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
     expect_s4_class(gr2, "GRanges")
     expect_length(gr2, 136L)
-    expect_identical(ncol(GenomicRanges::mcols(gr2)), 6L)
+    expect_identical(ncol(GenomicRanges::mcols(gr2)), 9L)
     expect_identical(colnames(GenomicRanges::mcols(gr2)),
-                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
+                     c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue",
+                       "FracMod_group1", "FracMod_group2", "DeltaFracMod"))
     i <- GenomicRanges::match(gr2, gr1)
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)

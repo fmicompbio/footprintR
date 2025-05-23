@@ -100,13 +100,13 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
                               ignore.strand = FALSE)
         ovneg <- findOverlaps(query = rowRanges(se), subject = grneg,
                               ignore.strand = FALSE)
-        mNmodpos <- rowsum(x = assay(se, "Nmod")[queryHits(ovpos), ],
+        mNmodpos <- rowsum(x = assay(se, "Nmod")[queryHits(ovpos), , drop = FALSE],
                            group = subjectHits(ovpos))
-        mNmodneg <- rowsum(x = assay(se, "Nmod")[queryHits(ovneg), ],
+        mNmodneg <- rowsum(x = assay(se, "Nmod")[queryHits(ovneg), , drop = FALSE],
                            group = subjectHits(ovneg))
-        mNvalidpos <- rowsum(x = assay(se, "Nvalid")[queryHits(ovpos), ],
+        mNvalidpos <- rowsum(x = assay(se, "Nvalid")[queryHits(ovpos), , drop = FALSE],
                              group = subjectHits(ovpos))
-        mNvalidneg <- rowsum(x = assay(se, "Nvalid")[queryHits(ovneg), ],
+        mNvalidneg <- rowsum(x = assay(se, "Nvalid")[queryHits(ovneg), , drop = FALSE],
                              group = subjectHits(ovneg))
         rnms <- seq_along(gr)
         mNmodpos <- mNmodpos[match(as.character(rnms), rownames(mNmodpos)), , drop = FALSE]
@@ -179,6 +179,9 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
 #'     (i.e. with the assays \code{"Nmod"} and \code{"Nvalid"}).
 #' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
 #'     to quantify.
+#' @param includeEmpty Logical scalar. If \code{TRUE}, include also windows
+#'     without overlapping modified bases in the output (with zero counts
+#'     in both the Nmod and Nvalid assays).
 #'
 #' @author Charlotte Soneson, Michael Stadler
 #'
@@ -211,9 +214,10 @@ strandDiffFracMod <- function(se, gr, pseudocount = 0) {
 #' @importFrom cli cli_abort
 #'
 #' @export
-sumNmodNvalid <- function(se, gr) {
+sumNmodNvalid <- function(se, gr, includeEmpty = FALSE) {
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertVector(x = gr, type = "GRanges")
+    .assertScalar(x = includeEmpty, type = "logical")
     if (!all(c("Nmod", "Nvalid") %in% assayNames(se))) {
         cli_abort("{.arg se} must contain assays Nvalid and Nmod")
     }
@@ -222,10 +226,29 @@ sumNmodNvalid <- function(se, gr) {
         # aggregate counts in windows
         ov <- findOverlaps(query = rowRanges(se), subject = gr,
                            ignore.strand = TRUE)
-        mNmod <- rowsum(x = assay(se, "Nmod")[queryHits(ov), ],
-                        group = subjectHits(ov), reorder = TRUE)
-        mNvalid <- rowsum(x = assay(se, "Nvalid")[queryHits(ov), ],
-                          group = subjectHits(ov), reorder = TRUE)
+        mNmodtmp <- rowsum(
+            x = assay(se, "Nmod")[queryHits(ov), , drop = FALSE],
+            group = subjectHits(ov), reorder = TRUE)
+        mNvalidtmp <- rowsum(
+            x = assay(se, "Nvalid")[queryHits(ov), , drop = FALSE],
+            group = subjectHits(ov), reorder = TRUE)
+        if (includeEmpty) {
+            # some regions may not have any overlapping modified bases -
+            # return 0 for those
+            mNmod <- matrix(0, nrow = length(gr), ncol = ncol(mNmodtmp),
+                            dimnames = list(seq_along(gr),
+                                            colnames(mNmodtmp)))
+            mNmod[rownames(mNmodtmp), ] <- mNmodtmp
+            mNvalid <- matrix(0, nrow = length(gr), ncol = ncol(mNvalidtmp),
+                              dimnames = list(seq_along(gr),
+                                              colnames(mNvalidtmp)))
+            mNvalid[rownames(mNvalidtmp), ] <- mNvalidtmp
+        } else {
+            # don't return empty rows
+            mNmod <- mNmodtmp
+            mNvalid <- mNvalidtmp
+        }
+
         rnms <- as.numeric(rownames(mNmod))
         stopifnot(exprs = {
             identical(rownames(mNmod), rownames(mNvalid))
@@ -319,15 +342,15 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
     if (!all(width(gr) == width(gr)[1])) {
         cli_abort("Not all ranges in {.arg gr} have the same width")
     }
-    if (width(gr)[1] %% (numCoef - 1) > 0) {
-        cli_abort("{.code width(gr)} is not divisible by {.code numCoef - 1}")
+    if (length(gr) > 0 && (width(gr)[1] %% (2 * (numCoef - 1)) > 0)) {
+        cli_abort("{.code width(gr)} is not divisible by {.code 2 * (numCoef - 1)}")
     }
     period <- width(gr)[1] / (numCoef - 1)
     if (!all(diff(start(gr)) == period)) {
         cli_abort("Ranges in {.arg gr} need to be regularly spaced with a shift of {period}")
     }
 
-    if (nrow(se) > 0) {
+    if (nrow(se) > 0 && length(gr) > 0) {
         # make sure we don't have the same position on both strands
         se <- .pruneAmbiguousStrandPositions(se, assayName = "Nvalid",
                                              verbose = FALSE)
@@ -352,12 +375,12 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 
             # Fourier transform
             fit <- e1071::stft(X = fracMod, win = (numCoef - 1) * period,
-                               inc = period, coef = 2 * period,
+                               inc = period, coef = ((numCoef - 1) * period) / 2,
                                wtype = "hanning.window")
 
             # Extract coefficient of ineterst
-            list(scoreAbs = fit$values[, numCoef],
-                 scoreRel = fit$values[, numCoef] / rowSums(fit$values))
+            list(scoreAbs = rbind(fit$values)[, numCoef],
+                 scoreRel = rbind(fit$values)[, numCoef] / rowSums(rbind(fit$values)))
         })
 
         # construct SummarizedExperiment
@@ -384,6 +407,138 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 }
 
 
+#' Quantify windows by estimating nucleosome repeat lengths (NRLs)
+#'
+#' Estimate nucleosome repeath length in windows using
+#' \code{\link{calcModbaseSpacing}} and \code{\link{estimateNRL}}.
+#'
+#' @param se A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
+#'     object, as generated by \code{readModBam(..., level = "quickread")}
+#'     containing a read-level assay called \code{assayName}.
+#' @param gr A \code{\link[GenomicRanges]{GRanges}} object defining the windows
+#'     to quantify.
+#' @param minperiod1,minperiod2 \code{numeric} scalars giving the smoothing
+#'   parameter for de-trending the signal (minimal periods).
+#' @param BPPARAM  A \code{\link[BiocParallel]{BiocParallelParam}} object that
+#'     controls the number of parallel CPU threads to use for some of the steps
+#'     in \code{estimateNRLwindows()}. The default value is
+#'     (\code{\link[BiocParallel]{MulticoreParam}(4L)}).
+#' @inheritParams calcModbaseSpacing
+#' @inheritParams estimateNRL
+#'
+#' @author Michael Stadler
+#'
+#' @returns A \code{\link[SummarizedExperiment]{RangedSummarizedExperiment}}
+#'     object with one row per window defined by \code{gr} and the NRL
+#'     estimates. This object is suitable for transformation by
+#'     \code{getRangesWithAssayValues}.
+#'
+#' @examples
+#' library(GenomicRanges)
+#' library(SummarizedExperiment)
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' rng <- GRanges("chr1", IRanges(6930000, 6940000))
+#' windowSize <- 2000
+#' windowStep <- 1000
+#' s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
+#' windowgr <- GRanges(seqnames = seqnames(rng),
+#'                     ranges = IRanges(start = s, width = windowSize))
+#' se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "quickread",
+#'                  modbase = "a", trim = TRUE,
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' seNRL <- estimateNRLwindows(se = se, gr = windowgr,
+#'                             BPPARAM = BiocParallel::SerialParam())
+#' assay(seNRL, "NRL")
+#' assay(seNRL, "NRL.CI95low")
+#' assay(seNRL, "NRL.CI95high")
+#'
+#' @importFrom SummarizedExperiment rowRanges colData assay assayNames ncol
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges findOverlaps
+#' @importFrom S4Vectors queryHits subjectHits
+#' @importFrom BiocParallel bplapply
+#'
+#' @export
+estimateNRLwindows <- function(se, gr,
+                               dmax = 1000L,
+                               assayName = "mod_prob",
+                               minModProb = 0.5,
+                               minDist = 140L,
+                               usePeaks = seq_len(5),
+                               minperiod1 = 30,
+                               minperiod2 = 450,
+                               BPPARAM = BiocParallel::MulticoreParam(4L)) {
+    .assertVector(x = se, type = "RangedSummarizedExperiment")
+    .assertVector(x = gr, type = "GRanges")
+
+    if (nrow(se) > 0 && length(gr) > 0) {
+
+        ov <- findOverlaps(query = rowRanges(se), subject = gr)
+        indexL <- split(x = queryHits(ov),
+                        f = factor(subjectHits(ov), levels = seq.int(length(gr))),
+                        drop = FALSE)
+
+        # loop over samples
+        modprobL <- assay(se, assayName)
+        s <- start(se)
+        resL <- lapply(seq.int(ncol(se)), function(j) { # for each sample j
+            do.call(rbind, bplapply(indexL, function(i,  # for positions i in a window
+                                                     mymodprob = modprobL[[j]],
+                                                     mys = s[i],
+                                                     myminModProb = minModProb,
+                                                     mydmax = dmax,
+                                                     myminDist = minDist,
+                                                     myusePeaks = usePeaks,
+                                                     myminperiod1 = minperiod1,
+                                                     myminperiod2 = minperiod2) {
+                if (length(i) > 0) { # nocov start
+                    mymodprob <- mymodprob[i, , drop = FALSE]
+                    cnt <- numeric(mydmax)
+                    tmp <- nnawhich(mymodprob, arr.ind = TRUE)[nnavals(mymodprob) >= myminModProb, , drop = FALSE]
+                    tmp[, 1] <- mys[tmp[, 1]]
+                    tmp <- split(tmp[, 1], f = tmp[, 2])
+                    for (pos in tmp) {
+                        calcAndCountDist(query = pos, reference = pos, cnt = cnt)
+                    }
+
+                    res <- unname(.estimateNRLfast(
+                        x = cnt, minDist = myminDist, usePeaks = myusePeaks,
+                        minperiod1 = myminperiod1, minperiod2 = myminperiod2))
+                } else {
+                    res <- rep(NA, 3L)
+                }
+                return(res) # nocov end
+            }, BPPARAM = BPPARAM))
+        })
+
+        # construct SummarizedExperiment
+        seNew <- SummarizedExperiment(
+            assays = list(
+                NRL = do.call(cbind, lapply(resL, "[", , 1)),
+                NRL.CI95low = do.call(cbind, lapply(resL, "[", , 2)),
+                NRL.CI95high = do.call(cbind, lapply(resL, "[", , 3))),
+            rowRanges = gr,
+            colData = colData(se)[, setdiff(colnames(colData(se)),
+                                            c("n_reads", "readInfo"))],
+            metadata = metadata(se))
+    } else {
+        seNew <- SummarizedExperiment(
+            assays = list(
+                NRL = matrix(nrow = 0, ncol = ncol(se)),
+                NRL.CI95low = matrix(nrow = 0, ncol = ncol(se)),
+                NRL.CI95high = matrix(nrow = 0, ncol = ncol(se))),
+            rowRanges = GRanges(),
+            colData = colData(se)[, setdiff(colnames(colData(se)),
+                                            c("n_reads", "readInfo"))],
+            metadata = metadata(se))
+    }
+
+    return(seNew)
+}
+
+
 #' Generate counts for sequential windows in a single region
 #'
 #' Read modification data from \code{bamfiles} for a chunk of the genome
@@ -399,6 +554,8 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #'     be specified as a character scalar (e.g. "chr1:1200-1300") that can be
 #'     coerced into a \code{GRanges} object.
 #' @param modbase Character vector defining the modified base to extract.
+#' @param level A character scalar giving the level of the data to
+#'     required by \code{quantFunction} (see \code{\link{readModBam}}).
 #' @param modProbThreshold A numeric scalar, indicating the modification
 #'     probability threshold to use to classify a base as 'modified' or
 #'     'unmodified'.
@@ -492,6 +649,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 quantifyWindowsInRegion <- function(bamfiles,
                                     region,
                                     modbase,
+                                    level = "summary",
                                     modProbThreshold = 0.5,
                                     sampleAnnot = NULL,
                                     seqinfo = NULL,
@@ -531,7 +689,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 
     # read summary-level data
     se <- readModBam(bamfiles = bamfiles, regions = region, modbase = modbase,
-                     level = "summary", sampleAnnot = sampleAnnot,
+                     level = level, sampleAnnot = sampleAnnot,
                      seqinfo = seqinfo,
                      sequenceContextWidth = sequenceContextWidth,
                      sequenceReference = sequenceReference,
@@ -594,8 +752,10 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'
 #' @returns The \code{\link[GenomicRanges]{GRanges}} object constructed from
 #'     the \code{\link[edgeR]{topTags}} output obtained for the statistical
-#'     analysis, with an additional column named "dirNegLog10PValue", calculated
-#'     as the sign of the logFC multiplied with the -log10(PValue).
+#'     analysis, with additional columns for the average fraction modified
+#'     counts in each group, and summary columns named "dirNegLog10PValue" (the
+#'     sign of the logFC multiplied with the -log10(PValue)) and "DeltaFracMod"
+#'     (the difference of the average modification fraction in the two groups).
 #'
 #' @examples
 #' modbamfiles <- system.file("extdata",
@@ -606,7 +766,7 @@ quantifyWindowsInRegion <- function(bamfiles,
 #'                               region = "chr1:6940000-6955000", modbase = "a",
 #'                               BPPARAM = BiocParallel::SerialParam())
 #' se$group <- c("group1", "group1", "group2", "group2")
-#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+#' gr <- getDifferentiallyModifiedWindows(se, groupCol = "group", verbose = TRUE)
 #' class(gr)
 #' head(gr)
 #'
@@ -636,6 +796,7 @@ getDifferentiallyModifiedWindows <- function(se,
             "The group column in {.code colData(se)} ({groupCol}) ",
             "needs to have exactly two unique values."))
     }
+    levs <- levels(factor(colData(se)[[groupCol]]))
     .assertScalar(x = verbose, type = "logical")
     .assertPackagesAvailable(pkgs = "edgeR")
 
@@ -664,7 +825,7 @@ getDifferentiallyModifiedWindows <- function(se,
                                                       each = ncol(se)))
 
         # test for differential modification
-        .message("testing for differential modifications")
+        .message("testing for differential modifications ({levels(cd2$group)[2]} - {levels(cd2$group)[1]})")
         dgeL <- edgeR::DGEList(counts = cnt, lib.size = rep(libsizes, 2),
                                norm.factors = rep(nfacts, 2),
                                genes = as.data.frame(unname(rowRanges(se))))
@@ -686,6 +847,137 @@ getDifferentiallyModifiedWindows <- function(se,
                                LR = numeric(0),
                                PValue = numeric(0),
                                FDR = numeric(0),
+                               dirNegLog10PValue = numeric(0))
+    }
+
+    # add fracmod and deltafracmod
+    FracMod <- assay(se, assayNameMod) / assay(se, assayNameValid)
+    for (i in c(1, 2)) {
+        mcols(gr)[[paste0("FracMod_", levs[i])]] <-
+            rowMeans(FracMod[, se[[groupCol]] == levs[i], drop = FALSE])
+    }
+    mcols(gr)[["DeltaFracMod"]] <-
+        mcols(gr)[[paste0("FracMod_", levs[2])]] -
+        mcols(gr)[[paste0("FracMod_", levs[1])]]
+    return(gr)
+}
+
+#' Perform differential analysis on the rows of an assay
+#'
+#' Given a \code{SummarizedExperiment} with at least one assay, use either
+#' the likelihood ratio framework of \code{edgeR} or the linear model
+#' framework of \code{limma} to fit a model for each row of the specified
+#' assay and extract statistics corresponding to a specific contrast.
+#'
+#' @param se \code{SummarizedExperiment}, for example returned by
+#'     \code{phasingScoreFourier}.
+#' @param assayName Character scalar that gives the assay name in \code{se}
+#'     containing the values to test.
+#' @param designMatrix Numeric matrix providing the design matrix for the
+#'     statistical modeling. Must have row names, corresponding to the sample
+#'     (column) names of \code{se}.
+#' @param contrast Numeric vector providing the contrast to test.
+#' @param method Character scalar giving the method to use. Currently
+#'     supported methods are "edgeR" and "limma".
+#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+#'
+#' @author Charlotte Soneson
+#'
+#' @returns The \code{\link[GenomicRanges]{GRanges}} object constructed from
+#'     the \code{\link[edgeR]{topTags}} or \code{\link[limma]{topTable}} output
+#'     obtained for the statistical analysis, with an additional summary column
+#'     named "dirNegLog10PValue" (the sign of the logFC multiplied with the
+#'     -log10(PValue)).
+#'
+#' @examples
+#' library(GenomicRanges)
+#' library(SummarizedExperiment)
+#' modbamfiles <- system.file("extdata",
+#'                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+#'                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+#'                            package = "footprintR")
+#' rng <- GRanges("chr1", IRanges(6940000, 6943600))
+#' windowStep <- 180
+#' windowSize <- 4 * windowStep
+#' s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
+#' windowgr <- GRanges(seqnames = seqnames(rng),
+#'                     ranges = IRanges(start = s, width = windowSize))
+#' se <- readModBam(bamfiles = modbamfiles, regions = rng, level = "summary",
+#'                  modbase = "a", trim = TRUE,
+#'                  BPPARAM = BiocParallel::SerialParam())
+#' seFourier <- phasingScoreFourier(se = se, gr = windowgr, numCoef = 5)
+#' seFourier$group <- c("group1", "group1", "group2", "group2")
+#' mm <- model.matrix(~ group, data = colData(seFourier))
+#' gr <- getDifferentialWindows(seFourier, assayName = "phasingScoreAbs",
+#'                              designMatrix = mm,
+#'                              contrast = c(0, 1),
+#'                              method = "limma",
+#'                              verbose = TRUE)
+#' class(gr)
+#' head(gr)
+#'
+#' @importFrom SummarizedExperiment assayNames assay rowRanges
+#' @importFrom GenomicRanges GRanges
+#' @importFrom S4Vectors mcols<- DataFrame
+#' @importFrom methods as
+#' @importFrom cli cli_abort
+#'
+#' @export
+getDifferentialWindows <- function(se,
+                                   assayName = "phasingScoreAbs",
+                                   designMatrix,
+                                   contrast,
+                                   method = "limma",
+                                   verbose = FALSE) {
+    # check arguments
+    .assertVector(x = se, type = "SummarizedExperiment")
+    .assertScalar(x = assayName, type = "character",
+                  validValues = assayNames(se))
+    .assertVector(x = designMatrix, type = "matrix")
+    .assertVector(x = rownames(designMatrix), type = "character")
+    stopifnot(all(rownames(designMatrix) == colnames(se)))
+    .assertVector(x = contrast, type = "numeric", len = ncol(designMatrix))
+    .assertScalar(x = verbose, type = "logical")
+    .assertScalar(x = method, type = "character",
+                  validValues = c("edgeR", "limma"))
+    .assertPackagesAvailable(pkgs = method)
+
+    if (nrow(se) > 0) {
+        if (method == "edgeR") {
+            dgeL <- edgeR::DGEList(counts = assay(se, assayName),
+                                   genes = as.data.frame(unname(rowRanges(se))))
+            dgeL <- edgeR::estimateDisp(y = dgeL, design = designMatrix)
+            fit <- edgeR::glmFit(y = dgeL, design = designMatrix)
+            tst <- edgeR::glmLRT(
+                glmfit = fit,
+                contrast = contrast
+            )
+
+            # coerce topTags to GRanges
+            tt <- edgeR::topTags(object = tst, n = Inf, sort.by = "none")
+            tt$table$dirNegLog10PValue <-
+                sign(tt$table$logFC) * -log10(tt$table$PValue)
+            gr <- as(tt$table, "GRanges")
+        } else {
+            fit <- limma::lmFit(object = assay(se, assayName),
+                                design = designMatrix)
+            fit <- limma::contrasts.fit(fit, contrast = contrast)
+            fit <- limma::eBayes(fit)
+
+            # coerce topTable to GRanges
+            tt <- limma::topTable(fit, number = Inf, sort.by = "none")
+            tt$dirNegLog10PValue <-
+                sign(tt$logFC) * -log10(tt$P.Value)
+            gr <- as(cbind(as.data.frame(unname(rowRanges(se))), tt), "GRanges")
+        }
+    } else {
+        gr <- GRanges()
+        mcols(gr) <- DataFrame(logFC = numeric(0),
+                               AveExpr = numeric(0),
+                               t = numeric(0),
+                               P.Value = numeric(0),
+                               adj.P.Val = numeric(0),
+                               B = numeric(0),
                                dirNegLog10PValue = numeric(0))
     }
     return(gr)
@@ -849,8 +1141,9 @@ processWindowScores <- function(
         # smooth scores
         .message("smoothing windows")
         xdf <- data.frame(unname(x), check.names = FALSE) |>
-            mutate(chunkId = cumsum(c(1, (start[-1] - end[-length(x)] > maxGap |
-                                              seqnames[-1] != seqnames[-length(x)])))) |>
+            mutate(chunkId = cumsum(
+                c(1, (start[-1] - end[-length(x)] > maxGap |
+                          seqnames[-1] != seqnames[-length(x)])))) |>
             group_by(.data$chunkId) |>
             mutate(sscore = .filterScores(.data[[scoreCol]],
                                           minperiod = minperiod,
@@ -867,9 +1160,10 @@ processWindowScores <- function(
             .message("thresholding smoothed scores")
             xdfSel <- xdf |>
                 dplyr::filter(abs(.data$sscore) >= thresh) |>
-                mutate(direction = factor(ifelse(sign(.data$sscore) == -1,
-                                                 "negative", "positive"),
-                                          levels = c("negative", "positive")))
+                mutate(direction = factor(
+                    ifelse(sign(.data$sscore) == -1,
+                           "negative", "positive"),
+                    levels = c("negative", "positive")))
 
             # summarise
             .message("summarise {nrow(xdfSel)} window{?s} into regions of interest")
@@ -885,7 +1179,8 @@ processWindowScores <- function(
                         tapply(X = x$sscore[queryHits(ov1)],
                                INDEX = subjectHits(ov1),
                                FUN = mean))
-                    mcols(gr1)[["numWindowsThresh"]] <- tabulate(subjectHits(ov1))
+                    mcols(gr1)[["numWindowsThresh"]] <-
+                        tabulate(subjectHits(ov1))
                     gr1$direction <- x$direction[1]
                     gr1
                 })
@@ -984,6 +1279,7 @@ scanForHighScoringRegions <- function(
         scoreFunction = "getDifferentiallyModifiedWindows",
         scoreFunctionArgs = list(),
         modbase,
+        level = "summary",
         modProbThreshold = 0.5,
         tileSize = 1e6,
         seqinfo = NULL,
@@ -1015,7 +1311,7 @@ scanForHighScoringRegions <- function(
 
     # loop over chromosomes
     grL <- lapply(names(chromosomeLengths), function(chr) {
-        regs <- .tileChromosome(tileSize = tileSize,
+        regs <- .tileChromosome(tileSize = min(tileSize, chromosomeLengths[chr]),
                                 windowSize = windowSize,
                                 windowStep = windowStep,
                                 chromName = chr,
@@ -1026,6 +1322,7 @@ scanForHighScoringRegions <- function(
             quantifyWindowsInRegion(bamfiles = bamfiles,
                                     region = regs[i],
                                     modbase = modbase,
+                                    level = level,
                                     modProbThreshold = modProbThreshold,
                                     sampleAnnot = sampleAnnot,
                                     seqinfo = seqinfo,

@@ -32,8 +32,10 @@ that defines the groups of samples to be compared.}
 \value{
 The \code{\link[GenomicRanges]{GRanges}} object constructed from
 the \code{\link[edgeR]{topTags}} output obtained for the statistical
-analysis, with an additional column named "dirNegLog10PValue", calculated
-as the sign of the logFC multiplied with the -log10(PValue).
+analysis, with additional columns for the average fraction modified
+counts in each group, and summary columns named "dirNegLog10PValue" (the
+sign of the logFC multiplied with the -log10(PValue)) and "DeltaFracMod"
+(the difference of the average modification fraction in the two groups).
 }
 \description{
 Given a \code{SummarizedExperiment} with modified and total
@@ -49,7 +51,7 @@ se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                               region = "chr1:6940000-6955000", modbase = "a",
                               BPPARAM = BiocParallel::SerialParam())
 se$group <- c("group1", "group1", "group2", "group2")
-gr <- getDifferentiallyModifiedWindows(se, groupCol = "group")
+gr <- getDifferentiallyModifiedWindows(se, groupCol = "group", verbose = TRUE)
 class(gr)
 head(gr)
 

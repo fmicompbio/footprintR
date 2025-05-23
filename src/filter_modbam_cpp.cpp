@@ -20,16 +20,18 @@
 //' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
 //' minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxEntropy,
 //' maxFracLowConf.
+//' The output file format will be determined based on the extension of
+//' \code{outfile} (sam format for ".sam" and bam format for ".bam").
 //'
 //' @param infile Character scalar with name of the input bam file.
-//' @param outfile Character scalar with name of the output bam file.
+//' @param outfile Character scalar with name of the output sam or bam file.
 //' @param modbase Character scalar defining the modified base to analyze
 //'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
 //' @param region Character scalar specifying the region for which
 //'     to extract overlapping reads, for example in the form
 //'     \code{"chr:start-end"} (genomic interval), \code{"chr"} (all records
 //'     on the given reference sequence) or \code{"."} (all records in the file).
-//' @param includeBamHeader Logical scalar. If \code{TRUE} (the default), the
+//' @param includeHeader Logical scalar. If \code{TRUE} (the default), the
 //'     bam header from \code{infile} will be read and written to \code{outfile}.
 //'     If \code{FALSE}, no header will be written to \code{outfile}.
 //' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
@@ -72,7 +74,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                                       std::string outfile,
                                       char modbase,
                                       std::string region = ".",
-                                      bool includeBamHeader = true,
+                                      bool includeHeader = true,
                                       bool keepUnmapped = true,
                                       bool keepSecondary = true,
                                       bool keepSupplementary = true,
@@ -100,12 +102,13 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     int qseq_len = 0;
     Rcpp::NumericVector mod_probs = Rcpp::NumericVector(0);
     double fracLowConf = 0.0;
+    const char *outmode = NULL;
 
     // ... htslib
     bam1_t *bamdata = NULL;
     htsThreadPool tpool = {NULL, 0};
     hts_base_mod_state *ms = NULL;
-    samFile *inbamfile = NULL, *outbamfile = NULL;
+    samFile *inbamfile = NULL, *outhtsfile = NULL;
     sam_hdr_t *inbamhdr = NULL;
     hts_idx_t *idx = NULL;
     hts_itr_t *iter = NULL;
@@ -117,6 +120,19 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
 
     // ... cli progress bar
     Rcpp::RObject bar;
+
+    // determine outmode based on extension of outfile
+    if (outfile.compare(outfile.size() - 4, 4, ".bam") == 0 ||
+        outfile.compare(outfile.size() - 4, 4, ".BAM") == 0) {
+        outmode = "wb";
+    } else if (outfile.compare(outfile.size() - 4, 4, ".sam") == 0 ||
+        outfile.compare(outfile.size() - 4, 4, ".SAM") == 0) {
+        outmode = "w";
+    } else {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Unknown `outfile` extension (must be '.bam' or '.sam'): %s\n", outfile_c);
+        goto end;
+    }
 
     // initialize
     if (!(bamdata = bam_init1())) {
@@ -131,7 +147,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     }
 
     // open input file
-    if (!(inbamfile = sam_open(infile_c, "r"))) {
+    if (!(inbamfile = sam_open(infile_c, "rb"))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Could not open %s\n", infile_c);
         goto end; // # nocov end
@@ -146,7 +162,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     }
 
     // open output file
-    if (!(outbamfile = sam_open(outfile_c, "wb"))) {
+    if (!(outhtsfile = sam_open(outfile_c, outmode))) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Could not open %s\n", outfile_c);
         goto end; // # nocov end
@@ -158,9 +174,9 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         snprintf(buffer, buffer_len, "Failed to initialize the thread pool using {%d} threads\n", nThreads);
         goto end; // # nocov end
     }
-    // ... and use it for both inbamfile and outbamfile
+    // ... and use it for both inbamfile and outhtsfile
     if (hts_set_opt(inbamfile, HTS_OPT_THREAD_POOL, &tpool) < 0 ||
-        hts_set_opt(outbamfile, HTS_OPT_THREAD_POOL, &tpool) < 0) {
+        hts_set_opt(outhtsfile, HTS_OPT_THREAD_POOL, &tpool) < 0) {
         had_error = true; // # nocov start
         snprintf(buffer, buffer_len, "Failed to set thread options\n");
         goto end; // # nocov end
@@ -172,8 +188,8 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         snprintf(buffer, buffer_len, "Failed to read header from %s\n", infile_c);
         goto end; // # nocov end
     }
-    if (includeBamHeader) {
-        if (sam_hdr_write(outbamfile, inbamhdr) == -1) {
+    if (includeHeader) {
+        if (sam_hdr_write(outhtsfile, inbamhdr) == -1) {
             had_error = true; // # nocov start
             snprintf(buffer, buffer_len, "Failed to write header to %s\n", outfile_c);
             goto end; // # nocov end
@@ -291,7 +307,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
 
         // still here -> write to output
         outcnt++;
-        if (sam_write1(outbamfile, inbamhdr, bamdata) < 0) {
+        if (sam_write1(outhtsfile, inbamhdr, bamdata) < 0) {
             had_error = true; // # nocov start
             snprintf(buffer, buffer_len, "Failed to write output data to {.file %s}\n", outfile_c);
             goto end; // # nocov end
@@ -326,8 +342,8 @@ end:
     if (inbamfile) {
         sam_close(inbamfile);
     }
-    if (outbamfile) {
-        sam_close(outbamfile);
+    if (outhtsfile) {
+        sam_close(outhtsfile);
     }
     if (bamdata) {
         bam_destroy1(bamdata);

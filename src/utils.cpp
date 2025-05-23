@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <htslib/sam.h>
+#include <htslib/thread_pool.h>
 #include <string>
 #include <vector>
 #include <Rcpp.h>
@@ -45,6 +46,163 @@ std::string concatenate_files(std::vector<std::string> input_files,
 
     fclose(out);
     return output_file;
+}
+
+//' Concatenate input sam/bam files into a single output sam/bam file
+//'
+//' The idea of this function is to be a simpler replacement for merging
+//' pre-sorted sam or bam files given in the correct order to a single
+//' output file. The header of the first input file is used for the output
+//' file, and no checks are done if the input files have compatible headers,
+//' are sorted or are given in the correct order - use with caution.
+//'
+//' @param input_files Character vector with input sam or bam file names to
+//'     concatenate.
+//' @param output_file Character scalar with output sam or bam file name to
+//'     write to.
+//' @param ncpu Integer scalar giving the number of parallel threads used for
+//'     de-/compressing input and output file records.
+//'
+//' @return The \code{output_file} as a character scalar.
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
+std::string concatenate_hts_files(std::vector<std::string> input_files,
+                                  const std::string output_file,
+                                  int ncpu = 4) {
+    // variable declarations
+    const char *infile_c = NULL, *outfile_c = output_file.c_str();
+    bool had_error = false;
+    int buffer_len = 2000;
+    char buffer[2000];
+    const char *outmode = NULL;
+
+    // ... htslib
+    bam1_t *bamdata = NULL;
+    htsThreadPool tpool = {NULL, 0};
+    samFile *inhtsfile = NULL, *outhtsfile = NULL;
+    sam_hdr_t *inhtshdr = NULL, *outhtshdr = NULL;
+
+    // initialize
+    if (!(bamdata = bam_init1())) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to initialize bamdata\n");
+        goto end; // # nocov end
+    }
+
+    // determine outmode based on extension of output_file
+    if (output_file.compare(output_file.size() - 4, 4, ".bam") == 0 ||
+        output_file.compare(output_file.size() - 4, 4, ".BAM") == 0) {
+        outmode = "wb";
+    } else if (output_file.compare(output_file.size() - 4, 4, ".sam") == 0 ||
+        output_file.compare(output_file.size() - 4, 4, ".SAM") == 0) {
+        outmode = "w";
+    } else {
+        had_error = true;
+        snprintf(buffer, buffer_len, "Unknown `output_file` extension (must be '.bam' or '.sam'): %s\n", outfile_c);
+        goto end;
+    }
+
+    // open outhtsfile
+    if (!(outhtsfile = sam_open(outfile_c, outmode))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Could not open %s\n", outfile_c);
+        goto end; // # nocov end
+    }
+
+    // create a pool of ncpu threads...
+    if (!(tpool.pool = hts_tpool_init(ncpu))) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to initialize the thread pool using {%d} threads\n", ncpu);
+        goto end; // # nocov end
+    }
+    // ... and use it for outhtsfile
+    if (hts_set_opt(outhtsfile, HTS_OPT_THREAD_POOL, &tpool) < 0) {
+        had_error = true; // # nocov start
+        snprintf(buffer, buffer_len, "Failed to set thread options\n");
+        goto end; // # nocov end
+    }
+
+    // iterate over input files
+    for (size_t i = 0; i < input_files.size(); i++) {
+        // open input file
+        infile_c = input_files[i].c_str();
+        if (!(inhtsfile = sam_open(infile_c, "r"))) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Could not open %s\n", infile_c);
+            goto end; // # nocov end
+        }
+
+        // use thread pool for decompression
+        if (hts_set_opt(inhtsfile, HTS_OPT_THREAD_POOL, &tpool) < 0) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Failed to set thread options\n");
+            goto end; // # nocov end
+        }
+
+        // read input header
+        if (!(inhtshdr = sam_hdr_read(inhtsfile))) {
+            had_error = true; // # nocov start
+            snprintf(buffer, buffer_len, "Failed to read header from %s\n", infile_c);
+            goto end; // # nocov end
+        }
+
+        // write header of first input file to output file
+        if (i == 0) {
+            outhtshdr = sam_hdr_dup(inhtshdr);
+            if (sam_hdr_write(outhtsfile, outhtshdr) == -1) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len, "Failed to write header to %s\n", outfile_c);
+                goto end; // # nocov end
+            }
+        }
+
+        // read from inhtsfile and write to outhtsfile
+        while (sam_read1(inhtsfile, inhtshdr, bamdata) >= 0) {
+            if (sam_write1(outhtsfile, outhtshdr, bamdata) < 0) {
+                had_error = true; // # nocov start
+                snprintf(buffer, buffer_len, "Failed to write record from %s\n", infile_c);
+                goto end; // #nocov end
+            }
+        }
+
+        // close inputs
+        if (inhtshdr) {
+            sam_hdr_destroy(inhtshdr);
+            inhtshdr = NULL;
+        }
+        sam_close(inhtsfile);
+        inhtsfile = NULL;
+    }
+
+end:
+    //clean up
+    if (bamdata) {
+        bam_destroy1(bamdata);
+    }
+    if (inhtshdr) {
+        sam_hdr_destroy(inhtshdr); // # nocov
+    }
+    if (outhtshdr) {
+        sam_hdr_destroy(outhtshdr);
+    }
+    if (outhtsfile) {
+        sam_close(outhtsfile);
+    }
+    if (inhtsfile) {
+        sam_close(inhtsfile); // # nocov
+    }
+    if (tpool.pool) {
+        hts_tpool_destroy(tpool.pool);
+    }
+
+    if (had_error) {
+        // we encountered an error (message in `buffer`) --> stop
+        Rcpp::stop(buffer); // # nocov
+
+    } else {
+        return output_file;
+    }
 }
 
 //' Get chromosome names for a bam file header
