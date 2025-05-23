@@ -159,6 +159,7 @@ test_that("genome scanning works (helper functions)", {
     corr1 <- cor(ass1[, c(1, 3)], ass2[, c(1, 3)])
     expect_equal(which.max(corr1[, 1]), 1L, ignore_attr = TRUE)
     expect_equal(which.max(corr1[, 2]), 2L, ignore_attr = TRUE)
+    se4 <- res1
 
     ## estimateNRLwindows
     rng <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6930000, 6940000))
@@ -351,6 +352,48 @@ test_that("genome scanning works (helper functions)", {
     i <- GenomicRanges::match(gr2, gr1)
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
+
+    ## getDifferentialWindows
+    se4$group <- c("cond1", "cond1", "cond2", "cond2")
+    dsgn <- stats::model.matrix(~ group, data = SummarizedExperiment::colData(se4))
+    cntr <- c(0, 1)
+    expect_error(getDifferentialWindows(se = "error"))
+    expect_error(getDifferentialWindows(se = se4, assayName = "error"))
+    expect_error(getDifferentialWindows(se = se4, designMatrix = "error"))
+    expect_error(getDifferentialWindows(se = se4, designMatrix = dsgn,
+                                        contrast = "error"))
+    expect_error(getDifferentialWindows(se = se4, designMatrix = dsgn,
+                                        contrast = cntr, method = "error"))
+    expect_error(getDifferentialWindows(se = se4, designMatrix = dsgn,
+                                        contrast = cntr, method = "limma",
+                                        verbose = "error"))
+    res0 <- getDifferentialWindows(se = se4[numeric(0), ],
+                                   designMatrix =  dsgn, contrast = cntr)
+    expect_s4_class(res0, "GRanges")
+    expect_length(res0, 0L)
+    expect_named(GenomicRanges::mcols(res0),
+                 c("logFC", "AveExpr", "t", "P.Value", "adj.P.Val", "B",
+                   "dirNegLog10PValue"))
+    res1a <- getDifferentialWindows(se = se4, designMatrix =  dsgn,
+                                    contrast = cntr, method = "limma")
+    expect_warning(res1b <- getDifferentialWindows(se = se4, designMatrix =  dsgn,
+                                                   contrast = cntr, method = "edgeR"))
+    expect_s4_class(res1a, "GRanges")
+    expect_s4_class(res1b, "GRanges")
+    expect_length(res1a, nrow(se4))
+    expect_identical(GenomicRanges::ranges(res1a),
+                     GenomicRanges::ranges(SummarizedExperiment::rowRanges(se4)))
+    expect_identical(GenomicRanges::ranges(res1a),
+                     GenomicRanges::ranges(res1b))
+    expect_identical(ncol(GenomicRanges::mcols(gr1)), 9L)
+    expect_named(GenomicRanges::mcols(res1a),
+                 c("logFC", "AveExpr", "t", "P.Value", "adj.P.Val", "B",
+                   "dirNegLog10PValue"))
+    expect_named(GenomicRanges::mcols(res1b),
+                 c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
+    expect_true(cor(res1a$logFC, res1b$logFC) > 0.9)
+    expect_equal(sum(res1a$B), 1252.2457119911)
+    expect_equal(sum(res1b$LR), 116.118134297667)
 
     ## getRangesWithAssayValues
     resL <- list(getRangesWithAssayValues(se0),
