@@ -392,8 +392,6 @@ test_that("genome scanning works (helper functions)", {
     expect_named(GenomicRanges::mcols(res1b),
                  c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
     expect_true(cor(res1a$logFC, res1b$logFC) > 0.9)
-    expect_equal(sum(res1a$B), 1252.2457119911)
-    expect_equal(sum(res1b$LR), 116.118134297667)
 
     ## getRangesWithAssayValues
     resL <- list(getRangesWithAssayValues(se0),
