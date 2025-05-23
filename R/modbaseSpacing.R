@@ -259,23 +259,12 @@ estimateNRL <- function(x,
 .estimateNRLfast <- function(x,
                              minDist = 140L,
                              usePeaks = seq_len(5),
-                             # span1 = 100 / length(x),
-                             # span2 = 1500 / length(x),
                              minperiod1 = 30,
                              minperiod2 = 450) {
-    # .assertPackagesAvailable(pkgs = "locfit")
-
     if (all(x == 0)) {
         return(c(nrl = NA, nrl.CI95low = NA, nrl.CI95high = NA))
     }
 
-    # pos <- seq_along(x)
-    # fit1 <- locfit::locfit(x ~ locfit::lp(pos, nn = span1),
-    #                        subset = pos >= minDist)
-    # xs <- predict(fit1, data.frame(pos = pos))
-    # fit2 <- locfit::locfit(xs ~ locfit::lp(pos, nn = span2),
-    #                        subset = pos >= minDist)
-    # rx <- residuals(fit2)
     xx <- x[seq(minDist, length(x))]
     xs <- .filterScores(score = xx,
                         minperiod = minperiod1, maxperiod = NA, type = "low")
