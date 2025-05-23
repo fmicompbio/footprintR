@@ -11,7 +11,7 @@ perform a pairwise statistical test for differential modification.'></head><body
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,10 @@ that defines the groups of samples to be compared.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The <code><a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GRanges</a></code> object constructed from
 the <code><a href="https://rdrr.io/pkg/edgeR/man/topTags.html" class="external-link">topTags</a></code> output obtained for the statistical
-analysis, with an additional column named "dirNegLog10PValue", calculated
-as the sign of the logFC multiplied with the -log10(PValue).</p>
+analysis, with additional columns for the average fraction modified
+counts in each group, and summary columns named "dirNegLog10PValue" (the
+sign of the logFC multiplied with the -log10(PValue)) and "DeltaFracMod"
+(the difference of the average modification fraction in the two groups).</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
@@ -109,13 +111,25 @@ as the sign of the logFC multiplied with the -log10(PValue).</p>
 <span class="r-in"><span>                              region <span class="op">=</span> <span class="st">"chr1:6940000-6955000"</span>, modbase <span class="op">=</span> <span class="st">"a"</span>,</span></span>
 <span class="r-in"><span>                              BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">se</span><span class="op">$</span><span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group1"</span>, <span class="st">"group1"</span>, <span class="st">"group2"</span>, <span class="st">"group2"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">gr</span> <span class="op">&lt;-</span> <span class="fu">getDifferentiallyModifiedWindows</span><span class="op">(</span><span class="va">se</span>, groupCol <span class="op">=</span> <span class="st">"group"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">gr</span> <span class="op">&lt;-</span> <span class="fu">getDifferentiallyModifiedWindows</span><span class="op">(</span><span class="va">se</span>, groupCol <span class="op">=</span> <span class="st">"group"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> calculating library sizes and normalization factors</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> calculating library sizes and normalization factors <span style="color: #B2B2B2;">[20ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> creating design matrix</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> creating design matrix <span style="color: #B2B2B2;">[12ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> testing for differential modifications (group2 - group1)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> testing for differential modifications (group2 - group1) <span style="color: #B2B2B2;">[83ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">gr</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "GRanges"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"package")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "GenomicRanges"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">gr</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 6 ranges and 6 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 6 ranges and 9 metadata columns:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       seqnames          ranges strand |     logFC    logCPM        LR</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]     chr1 6940000-6940023      * |  6.696961   12.9861 22.480673</span>
@@ -124,14 +138,22 @@ as the sign of the logFC multiplied with the -log10(PValue).</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [4]     chr1 6940036-6940059      * |  0.585622   13.7867  0.166427</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [5]     chr1 6940048-6940071      * |  1.214138   13.6466  1.284355</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [6]     chr1 6940060-6940083      * | -1.165075   13.5237  1.256727</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            PValue         FDR dirNegLog10PValue</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;numeric&gt;   &lt;numeric&gt;         &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 2.12269e-06 1.44343e-04          5.673114</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [2] 4.72749e-08 6.42938e-06          7.325370</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [3] 2.42112e-04 8.23181e-03          3.615984</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [4] 6.83307e-01 1.00000e+00          0.165384</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [5] 2.57091e-01 1.00000e+00          0.589913</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [6] 2.62272e-01 1.00000e+00         -0.581249</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            PValue         FDR dirNegLog10PValue FracMod_group1 FracMod_group2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;numeric&gt;   &lt;numeric&gt;         &lt;numeric&gt;      &lt;numeric&gt;      &lt;numeric&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 2.12269e-06 1.44343e-04          5.673114      0.0000000      0.5454545</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [2] 4.72749e-08 6.42938e-06          7.325370      0.0000000      0.5000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [3] 2.42112e-04 8.23181e-03          3.615984      0.0000000      0.1875000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [4] 6.83307e-01 1.00000e+00          0.165384      0.0588235      0.0833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [5] 2.57091e-01 1.00000e+00          0.589913      0.0714286      0.1538462</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [6] 2.62272e-01 1.00000e+00         -0.581249      0.1666667      0.0769231</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       DeltaFracMod</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;numeric&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]    0.5454545</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [2]    0.5000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [3]    0.1875000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [4]    0.0245098</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [5]    0.0824176</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [6]   -0.0897436</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span>
 <span class="r-in"><span></span></span>
@@ -146,7 +168,7 @@ as the sign of the logFC multiplied with the -log10(PValue).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer></div>

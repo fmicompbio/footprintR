@@ -27,7 +27,7 @@ the latter consumes the output of the former."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,7 @@ the latter consumes the output of the former.</p>
 <span>  scoreFunction <span class="op">=</span> <span class="st">"getDifferentiallyModifiedWindows"</span>,</span>
 <span>  scoreFunctionArgs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">modbase</span>,</span>
+<span>  level <span class="op">=</span> <span class="st">"summary"</span>,</span>
 <span>  modProbThreshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  tileSize <span class="op">=</span> <span class="fl">1e+06</span>,</span>
 <span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -161,6 +162,11 @@ score added to the <code><a href="https://rdrr.io/pkg/S4Vectors/man/Vector-class
 
 <dt id="arg-modbase">modbase<a class="anchor" aria-label="anchor" href="#arg-modbase"></a></dt>
 <dd><p>Character vector defining the modified base to extract.</p></dd>
+
+
+<dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
+<dd><p>A character scalar giving the level of the data to
+required by <code>quantFunction</code> (see <code><a href="readModBam.html">readModBam</a></code>).</p></dd>
 
 
 <dt id="arg-modprobthreshold">modProbThreshold<a class="anchor" aria-label="anchor" href="#arg-modprobthreshold"></a></dt>
@@ -357,7 +363,7 @@ regions of interest, or a named list of such objects if
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer></div>

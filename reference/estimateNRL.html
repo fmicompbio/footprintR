@@ -13,7 +13,7 @@ linear fit to the modes in the distance distribution."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ linear fit to the modes in the distance distribution.</p>
 <span>  minDist <span class="op">=</span> <span class="fl">140L</span>,</span>
 <span>  usePeaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span>,</span>
 <span>  span1 <span class="op">=</span> <span class="fl">100</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
-<span>  span2 <span class="op">=</span> <span class="fl">1500</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span>  span2 <span class="op">=</span> <span class="fl">1500</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
+<span>  returnFit <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -90,6 +91,11 @@ loess fit (high pass filter).</p></dd>
 <dt id="arg-span-">span2<a class="anchor" aria-label="anchor" href="#arg-span-"></a></dt>
 <dd><p><code>numeric(1)</code> giving the smoothing parameter for de-noising
 loess fit (low pass filter).</p></dd>
+
+
+<dt id="arg-returnfit">returnFit<a class="anchor" aria-label="anchor" href="#arg-returnfit"></a></dt>
+<dd><p><code>logical</code> scalar. If <code>FALSE</code>, only the elements
+<code>nrl</code> and <code>nrl.CI95</code> will be populated in the returned list.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -147,7 +153,7 @@ annotated distance frequencies between modified bases.</p></div>
 <span class="r-in"><span><span class="va">moddist</span> <span class="op">&lt;-</span> <span class="fu"><a href="calcModbaseSpacing.html">calcModbaseSpacing</a></span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># analyze NRL for each sample</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddist</span><span class="op">$</span><span class="va">s1</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddist</span><span class="op">$</span><span class="va">s1</span>, returnFit <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nrl</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 182.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -155,7 +161,7 @@ annotated distance frequencies between modified bases.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    2.5 %   97.5 % </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 179.5475 185.6525 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddist</span><span class="op">$</span><span class="va">s2</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddist</span><span class="op">$</span><span class="va">s2</span>, returnFit <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nrl</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 113.4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -166,7 +172,7 @@ annotated distance frequencies between modified bases.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># combine samples</span></span></span>
 <span class="r-in"><span><span class="va">moddistComb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/funprog.html" class="external-link">Reduce</a></span><span class="op">(</span><span class="st">"+"</span>, <span class="va">moddist</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddistComb</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">estimateNRL</span><span class="op">(</span><span class="va">moddistComb</span>, returnFit <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $nrl</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 184.3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -186,7 +192,7 @@ annotated distance frequencies between modified bases.</p></div>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer></div>

@@ -12,7 +12,9 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/calcAndCountDist.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/calcModbaseSpacing.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/calcReadStats.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/countStatePairs.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNRL.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNRLwindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/extractSeqContext.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterPositions.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterReads.html</loc></url>
@@ -20,6 +22,7 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/flattenReadLevelAssay.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/footprintScoring.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/getAnchorRegions.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/getDifferentialWindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/getDifferentiallyModifiedWindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/getRangesWithAssayValues.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/index.html</loc></url>
