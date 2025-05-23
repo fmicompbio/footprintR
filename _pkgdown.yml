@@ -44,7 +44,9 @@ reference:
   - sumNmodNvalid
   - strandDiffFracMod
   - phasingScoreFourier
+  - estimateNRLwindows
   - getDifferentiallyModifiedWindows
+  - getDifferentialWindows
   - getRangesWithAssayValues
   - processWindowScores
   - scanForHighScoringRegions

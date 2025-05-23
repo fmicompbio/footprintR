@@ -9,7 +9,8 @@ estimateNRL(
   minDist = 140L,
   usePeaks = seq_len(5),
   span1 = 100/length(x),
-  span2 = 1500/length(x)
+  span2 = 1500/length(x),
+  returnFit = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ loess fit (high pass filter).}
 
 \item{span2}{\code{numeric(1)} giving the smoothing parameter for de-noising
 loess fit (low pass filter).}
+
+\item{returnFit}{\code{logical} scalar. If \code{FALSE}, only the elements
+\code{nrl} and \code{nrl.CI95} will be populated in the returned list.}
 }
 \value{
 A \code{list} with elements:
@@ -61,12 +65,12 @@ se <- readModBam(modbamfiles, "chr1:6940000-6955000", "a",
 moddist <- calcModbaseSpacing(se)
 
 # analyze NRL for each sample
-print(estimateNRL(moddist$s1)[1:2])
-print(estimateNRL(moddist$s2)[1:2])
+print(estimateNRL(moddist$s1, returnFit = FALSE))
+print(estimateNRL(moddist$s2, returnFit = FALSE))
 
 # combine samples
 moddistComb <- Reduce("+", moddist)
-print(estimateNRL(moddistComb)[1:2])
+print(estimateNRL(moddistComb, returnFit = FALSE))
 
 }
 \seealso{

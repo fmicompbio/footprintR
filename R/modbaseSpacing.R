@@ -135,6 +135,8 @@ calcModbaseSpacing <- function(se,
 #'   loess fit (high pass filter).
 #' @param span2 \code{numeric(1)} giving the smoothing parameter for de-noising
 #'   loess fit (low pass filter).
+#' @param returnFit \code{logical} scalar. If \code{FALSE}, only the elements
+#'   \code{nrl} and \code{nrl.CI95} will be populated in the returned list.
 #'
 #' @return A \code{list} with elements:
 #' \describe{
@@ -165,12 +167,12 @@ calcModbaseSpacing <- function(se,
 #' moddist <- calcModbaseSpacing(se)
 #'
 #' # analyze NRL for each sample
-#' print(estimateNRL(moddist$s1)[1:2])
-#' print(estimateNRL(moddist$s2)[1:2])
+#' print(estimateNRL(moddist$s1, returnFit = FALSE))
+#' print(estimateNRL(moddist$s2, returnFit = FALSE))
 #'
 #' # combine samples
 #' moddistComb <- Reduce("+", moddist)
-#' print(estimateNRL(moddistComb)[1:2])
+#' print(estimateNRL(moddistComb, returnFit = FALSE))
 #'
 #' @importFrom stats loess lm confint residuals predict coefficients
 #' @importFrom IRanges IRanges Views viewApply
@@ -182,13 +184,15 @@ estimateNRL <- function(x,
                         minDist = 140L,
                         usePeaks = seq_len(5),
                         span1 = 100 / length(x),
-                        span2 = 1500 / length(x)) {
+                        span2 = 1500 / length(x),
+                        returnFit = TRUE) {
     # digest arguments
     .assertVector(x = x, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = minDist, type = "numeric", rngIncl = c(0, Inf))
     .assertVector(x = usePeaks, type = "numeric", rngIncl = c(1, Inf))
     .assertScalar(x = span1, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = span2, type = "numeric", rngExcl = c(span1, Inf))
+    .assertScalar(x = returnFit, type = "logical")
 
     if (all(x == 0)) {
         cli_warn("NRL not estimated (no non-zero distances)")
@@ -214,13 +218,74 @@ estimateNRL <- function(x,
         cilmfit <- confint(lmfit)[2,]
     }
 
-    res <- list(nrl = unname(coefficients(lmfit)[2]),
-                nrl.CI95 = cilmfit,
-                xs = xs, loessfit = fit, lmfit = lmfit,
-                peaks = xposmax, minDist = minDist,
-                span1 = span1, span2 = span2,
-                usePeaks = usePeaks)
+    if (returnFit) {
+        res <- list(nrl = unname(coefficients(lmfit)[2]),
+                    nrl.CI95 = cilmfit,
+                    xs = xs, loessfit = fit, lmfit = lmfit,
+                    peaks = xposmax, minDist = minDist,
+                    span1 = span1, span2 = span2,
+                    usePeaks = usePeaks)
+    } else {
+        res <- list(nrl = unname(coefficients(lmfit)[2]),
+                    nrl.CI95 = cilmfit)
+    }
     return(res)
+}
+
+#' @title Estimate the nucleosome repeat length (NRL) fast
+#'
+#' @description This is a fast replacement for \code{\link{estimateNRL}}
+#'   intended for internal use. It does not do any argument checks, throws no
+#'   warnings, performs alternative smoothing and only returns the NRL
+#'   estimate and confidence interval.
+#'
+#' @author Michael Stadler
+#'
+#' @param minperiod1,minperiod2 \code{numeric} scalars giving the smoothing
+#'   parameter for de-trending the signal (minimal periods).
+#' @inheritParams estimateNRL
+#'
+#' @return A \code{numeric} vector with three elements, the NRL estimate,
+#'   lower and higher 95% confidence interval bounds.
+#'
+#' @seealso \code{\link{estimateNRL}} which should be used instead.
+#'
+#' @importFrom stats lm confint residuals predict coefficients
+#' @importFrom IRanges IRanges Views viewApply
+#' @importFrom methods as
+#'
+#' @keywords internal
+#' @noRd
+.estimateNRLfast <- function(x,
+                             minDist = 140L,
+                             usePeaks = seq_len(5),
+                             minperiod1 = 30,
+                             minperiod2 = 450) {
+    if (all(x == 0)) {
+        return(c(nrl = NA, nrl.CI95low = NA, nrl.CI95high = NA))
+    }
+
+    xx <- x[seq(minDist, length(x))]
+    xs <- .filterScores(score = xx,
+                        minperiod = minperiod1, maxperiod = NA, type = "low")
+    xs2 <- .filterScores(score = xx,
+                         minperiod = minperiod2, maxperiod = NA, type = "low")
+    rx <- xs - xs2
+    irpos <- as(rx >= 0, "IRanges")
+    xposmax <- viewApply(X = Views(rx, irpos),
+                         FUN = function(y) which.max(as.vector(y))) + minDist + start(irpos) - 1
+    if (any(!usePeaks %in% seq_along(xposmax))) {
+        usePeaks <- intersect(usePeaks, seq_along(xposmax))
+    }
+    lmfit <- lm(xposmax ~ seq_along(xposmax), subset = usePeaks)
+    cilmfit <- rep(NA_real_, 2)
+    if (!is.na(coefficients(lmfit)[2])) {
+        cilmfit <- unname(confint(lmfit)[2,])
+    }
+
+    return(c(nrl = unname(coefficients(lmfit)[2]),
+             nrl.CI95low = cilmfit[1],
+             nrl.CI95high = cilmfit[2]))
 }
 
 

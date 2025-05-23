@@ -58,6 +58,15 @@ A \code{DataFrame} with \code{windowSize} rows and five columns.
 For all pairs of bases with modification calls in a read, tabulate the
 number of pairs at a given distance with a given modification state.
 }
+\examples{
+modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
+                          package = "footprintR")
+res <- countStatePairs(bamfile = modbamfile,
+                       regions = "chr1",
+                       modbase = "a", windowSize = 300)
+res
+
+}
 \author{
 Charlotte Soneson, Michael Stadler
 }

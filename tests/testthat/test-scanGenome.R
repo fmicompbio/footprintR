@@ -160,6 +160,37 @@ test_that("genome scanning works (helper functions)", {
     expect_equal(which.max(corr1[, 1]), 1L, ignore_attr = TRUE)
     expect_equal(which.max(corr1[, 2]), 2L, ignore_attr = TRUE)
 
+    ## estimateNRLwindows
+    rng <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6930000, 6940000))
+    windowSize <- 2000
+    windowStep <- 1000
+    s <- seq(start(rng), end(rng) - windowSize + 1, by = windowStep)
+    windowgr <- GenomicRanges::GRanges(
+        seqnames = seqnames(rng),
+        ranges = IRanges::IRanges(start = s, width = windowSize))
+    se1 <- readModBam(bamfiles = modbamfiles, regions = rng, level = "quickread",
+                      modbase = "a", trim = TRUE,
+                      BPPARAM = BiocParallel::SerialParam())
+    seEmpty1 <- estimateNRLwindows(se = se1, gr = GRanges())
+    expect_s4_class(seEmpty1, "RangedSummarizedExperiment")
+    expect_identical(dim(seEmpty1), c(0L, length(modbamfiles)))
+    expect_identical(SummarizedExperiment::assayNames(seEmpty1),
+                     c("NRL", "NRL.CI95low", "NRL.CI95high"))
+    gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(1:2, width = 2000))
+    seEmpty2 <- estimateNRLwindows(se = se1, gr = gr2)
+    expect_s4_class(seEmpty2, "RangedSummarizedExperiment")
+    expect_identical(dim(seEmpty2), c(length(gr2), length(modbamfiles)))
+    expect_identical(SummarizedExperiment::assayNames(seEmpty2),
+                     c("NRL", "NRL.CI95low", "NRL.CI95high"))
+    expect_true(all(is.na(SummarizedExperiment::assay(seEmpty2, "NRL"))))
+    seNRL <- estimateNRLwindows(se = se1, gr = windowgr)
+    expect_s4_class(seNRL, "RangedSummarizedExperiment")
+    expect_equal(assay(seNRL, "NRL")[, c(1,3)], assay(seNRL, "NRL")[, c(2,4)],
+                 ignore_attr = TRUE)
+    expect_true(all(assay(seNRL, "NRL") > 100))
+    expect_true(all(assay(seNRL, "NRL") < 300))
+    expect_true(all(assay(seNRL, "NRL.CI95low") < assay(seNRL, "NRL.CI95high")))
+
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
                                          region = "chr1:6940000-6955000",

@@ -1,5 +1,7 @@
 # footprintR 0.3.4
 
+* Add estimateNRLwindows for nucleosome repeat length scanning
+* Add getDifferentialWindows allowing flexible statistical testing when scanning
 * Add countStatePairs function to obtain state pair counts from bam files
 * filterReadsBam can now run with multiple parallel threads
 * Various performance improvements and bug fixes
