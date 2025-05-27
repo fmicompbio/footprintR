@@ -1,3 +1,7 @@
+# footprintR 0.3.5
+
+* Add argument `fillColors` to read-level plotting functions to control colors of modification probabilities
+
 # footprintR 0.3.4
 
 * Add estimateNRLwindows for nucleosome repeat length scanning
