@@ -71,6 +71,13 @@
 #' @param minAlignedFraction A numeric scalar representing the smallest
 #'     acceptable aligned fraction of a read. Reads where the aligned fraction
 #'     is smaller than this value will be filtered out.
+#' @param minCoveredFracion A numeric scalar giving the minimal fraction of
+#'     \code{region} that a read alignment needs to cover to be retained.
+#' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
+#'     region to be used for the \code{minCoveredFraction} filter.
+#'     Alternatively, the region can be specified as a character scalar (e.g.
+#'     "chr1:1200-1300") that can be coerced into a \code{GRanges} object. If
+#'     \code{NULL} (the default), all reads are retained.
 #' @param prune A logical scalar. If \code{TRUE} (the default), samples for
 #'     which the filtering retains none of the reads will be completely removed
 #'     from the returned \code{SummarizedExperiment} (also from \code{colData}
@@ -105,7 +112,10 @@
 #'                    BPPARAM = BiocParallel::SerialParam())
 #'
 #' ## Filter se
+#' ## ... by quality score and aligned length
 #' sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
+#' ## ... by covered fraction of the specified region
+#' sefilt <- filterReads(se, minCoveredFraction = 1, region = "chr1:6930000-6935000")
 #'
 #' ## Only calculate filter stats
 #' filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000,
@@ -118,14 +128,18 @@
 #'                         intersect = colnames(filtstats$s1))
 #' }
 #'
-#' @importFrom SparseArray SVT_SparseArray rowSums colSums is_nonna
-#' @importFrom SummarizedExperiment colData
+#' @importFrom SparseArray SVT_SparseArray rowSums colSums is_nonna nnawhich
+#' @importFrom SummarizedExperiment colData assay rowRanges
+#' @importFrom BiocGenerics pos
+#' @importFrom GenomicRanges GRanges pintersect
+#' @importFrom IRanges IRanges
 #'
 filterReads <- function(se, assayName = "mod_prob",
                         readInfoCol = "readInfo", qcCol = "QC",
                         minQscore = 0, maxEntropy = Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
+                        minCoveredFraction = 0, region = NULL,
                         prune = TRUE, onlyStats = FALSE,
                         removeAllNApos = TRUE) {
     ## Input checks
@@ -143,6 +157,11 @@ filterReads <- function(se, assayName = "mod_prob",
     .assertScalar(x = minReadLength, type = "numeric")
     .assertScalar(x = minAlignedLength, type = "numeric")
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
+    .assertScalar(x = minCoveredFraction, type = "numeric", rngIncl = c(0, 1))
+    if (is.character(region) && length(region) == 1L) {
+        region <- as(region, "GRanges")
+    }
+    .assertScalar(x = region, type = "GRanges", allowNULL = TRUE)
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = onlyStats, type = "logical")
     .assertScalar(x = removeAllNApos, type = "logical")
@@ -151,7 +170,8 @@ filterReads <- function(se, assayName = "mod_prob",
     ## for reads that are filtered out with respect to the different criteria
     ## Remark: Could move this to a global constant
     filterNames <- c("Qscore", "Entropy", "FracLowConf", "ReadLength",
-                     "AlignedLength", "AlignedFraction", "AllNA")
+                     "AlignedLength", "AlignedFraction", "CoveredFraction",
+                     "AllNA")
     readsToRemove <- lapply(
         structure(colnames(se), names = colnames(se)),
         function(nm) {
@@ -213,6 +233,19 @@ filterReads <- function(se, assayName = "mod_prob",
         if (!is.null(ri) && "aligned_fraction" %in% colnames(ri)) {
             readsToRemove[[nm]][which(ri$aligned_fraction < minAlignedFraction),
                                 "AlignedFraction"] <- TRUE
+        }
+
+        ## Region coverage fraction
+        if (!is.null(region) && minCoveredFraction > 0) {
+            tmp <- nnawhich(assay(se, assayName)[[nm]], arr.ind = TRUE)
+            tmpp <- split(pos(rowRanges(se))[tmp[, 1]], tmp[, 2])
+            tmpgr <- GRanges(
+                seqnames = seqnames(rowRanges(se))[1],
+                ranges = IRanges(start = unlist(lapply(tmpp, min), use.names = FALSE),
+                                 end = unlist(lapply(tmpp, max), use.names = FALSE)))
+            cvgFrac <- width(pintersect(tmpgr, region, ignore.strand = TRUE, drop.nohit.ranges = FALSE)) / width(region)
+            readsToRemove[[nm]][which(cvgFrac < minCoveredFraction),
+                                "CoveredFraction"] <- TRUE
         }
 
         ## NA in all positions
