@@ -53,7 +53,8 @@ plotReadsLollipop(
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  fillColors = "-cividis"
 )
 
 plotReadsHeatmap(
@@ -75,7 +76,8 @@ plotReadsHeatmap(
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  fillColors = "-cividis"
 )
 
 plotSummaryPointSmooth(
@@ -257,6 +259,15 @@ the plot will be facetted by 'sample', corresponding to the columns of
 \item{adjustFacetHeight}{A logical scalar. If \code{TRUE}, adjust the
 height of the facets by the number of reads in each of them. If
 \code{FALSE}, all facets have the same height.}
+
+\item{fillColors}{A character scalar defining the continuous color palette to
+represent modification probabilities. If \code{fillColors}
+has length one, it is assumed to be the a supported value to pass to the
+\code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+optionally prefixed with a minus sign to in addition set
+\code{direction = -1}). If \code{fillColors} has more than one element,
+it is assumed to be a vector of colors to pass to the \code{colors}
+argument of \code{\link[ggplot2]{scale_colour_gradientn}}.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}

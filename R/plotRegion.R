@@ -354,7 +354,7 @@ plotRegion <- function(
                      referenceCoordinate = referenceCoordinate),
                      tr[!names(tr) %in% c("trackData", "trackType", "grl",
                                           "region", "referenceCoordinate",
-                                          "labelAccuracy")]
+                                          "labelAccuracy", "fillColors")]
             )
         } else if (trt == "file") {
             args <- c(
@@ -363,7 +363,7 @@ plotRegion <- function(
                      referenceCoordinate = referenceCoordinate),
                 tr[!names(tr) %in% c("trackData", "trackType", "region",
                                      "referenceCoordinate", "labelAccuracy",
-                                     "bwFiles")]
+                                     "bwFiles", "fillColors")]
             )
         }
         pL[[i]] <- switch(
@@ -577,6 +577,14 @@ plotBigWig <- function(bwFiles,
 #' @param adjustFacetHeight A logical scalar. If \code{TRUE}, adjust the
 #'     height of the facets by the number of reads in each of them. If
 #'     \code{FALSE}, all facets have the same height.
+#' @param fillColors A character scalar defining the continuous color palette to
+#'     represent modification probabilities. If \code{fillColors}
+#'     has length one, it is assumed to be the a supported value to pass to the
+#'     \code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+#'     optionally prefixed with a minus sign to in addition set
+#'     \code{direction = -1}). If \code{fillColors} has more than one element,
+#'     it is assumed to be a vector of colors to pass to the \code{colors}
+#'     argument of \code{\link[ggplot2]{scale_colour_gradientn}}.
 #'
 #' @export
 #' @rdname plotRegion
@@ -616,7 +624,8 @@ plotReadsLollipop <- function(se,
                               facetBy = "sample",
                               adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
-                              labelAccuracy = NULL) {
+                              labelAccuracy = NULL,
+                              fillColors = "-cividis") {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
@@ -647,7 +656,8 @@ plotReadsLollipop <- function(se,
                               facetBy = facetBy,
                               adjustFacetHeight = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
-                              labelAccuracy = labelAccuracy)
+                              labelAccuracy = labelAccuracy,
+                              fillColors = fillColors)
 
     # add segments (round 1) - need to keep this before the footprints to
     # make sure that the read ordering is respected
@@ -755,7 +765,8 @@ plotReadsHeatmap <- function(se,
                              facetBy = "sample",
                              adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
-                             labelAccuracy = NULL) {
+                             labelAccuracy = NULL,
+                             fillColors = "-cividis") {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
@@ -788,7 +799,8 @@ plotReadsHeatmap <- function(se,
                               facetBy = facetBy,
                               adjustFacetHeight  = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
-                              labelAccuracy = labelAccuracy)
+                              labelAccuracy = labelAccuracy,
+                              fillColors = fillColors)
 
     # add segments
     if (drawRead) {
@@ -1731,6 +1743,14 @@ plotGenomicRegions <- function(grl,
 #'     positions along the genomic axis. Will be passed to
 #'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
+#' @param fillColors A character scalar defining the continuous color palette to
+#'     represent modification probabilities. If \code{fillColors}
+#'     has length one, it is assumed to be the a supported value to pass to the
+#'     \code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+#'     optionally prefixed with a minus sign to in addition set
+#'     \code{direction = -1}). If \code{fillColors} has more than one element,
+#'     it is assumed to be a vector of colors to pass to the \code{colors}
+#'     argument of \code{\link[ggplot2]{scale_fill_gradientn}}.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1748,14 +1768,14 @@ plotGenomicRegions <- function(grl,
                                  facetBy,
                                  adjustFacetHeight,
                                  referenceCoordinate,
-                                 labelAccuracy) {
+                                 labelAccuracy,
+                                 fillColors = "-cividis") {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["plotRow"]],
                       fill = .data[["value"]])) +
-        scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
-                             direction = -1, na.value = "beige") +
+        .createFillScale(fillColors) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ",
