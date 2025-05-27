@@ -1263,6 +1263,38 @@ plotGenomicRegions <- function(grl,
 
 ## helper functions used above -------------------------------------------------
 
+#' Create a ggplot2 fill scale based on \code{fillColors} argument
+#'
+#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn
+#' @keywords internal
+#' @noRd
+.createFillScale <- function(fillColors) {
+    # check arguments
+    .assertVector(x = fillColors, type = "character", rngLen = c(1, Inf))
+
+    scl <- NULL
+    if (identical(length(fillColors), 1L)) {
+        # scale_fill_viridis_c
+        # ... extract direction
+        direction <- 1
+        if (identical(substr(fillColors, 1, 1), "-")) {
+            direction <- -1
+            fillColors <- substr(fillColors, 2, nchar(fillColors))
+        }
+
+        # ... create scale
+        scl <- scale_fill_viridis_c(begin = 0, end = 1,
+                                    option = fillColors,
+                                    direction = direction,
+                                    na.value = "beige")
+    } else {
+        # scale_fill_gradientn
+        scl <- scale_fill_gradientn(colors = fillColors)
+    }
+
+    return(scl)
+}
+
 #' Check arguments for read-level plot functions, and generate required objects
 #'
 #' @keywords internal

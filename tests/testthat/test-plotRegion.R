@@ -857,3 +857,35 @@ test_that("plotRegion works - manual inspection", {
         ))
     expect_s3_class(p, "ggplot")
 })
+
+## -------------------------------------------------------------------------- ##
+## Checks, helper functions
+## -------------------------------------------------------------------------- ##
+test_that(".createBaseplotReads works", {
+    expect_error(.createFillScale(NULL), "must not be .NULL.")
+    expect_error(.createFillScale(1L), "must be of class .character.")
+
+    expect_warning(scl1 <- .createFillScale("error"), "Option .error. does not exist")
+    expect_s3_class(scl1, "ScaleContinuous")
+
+    scl2 <- .createFillScale("-cividis")
+    scl3 <- .createFillScale("cividis")
+    scl4 <- .createFillScale("F")
+    scl5 <- .createFillScale(c("red", "yellow", "blue"))
+
+    expect_s3_class(scl2, "ScaleContinuous")
+    expect_s3_class(scl3, "ScaleContinuous")
+    expect_s3_class(scl4, "ScaleContinuous")
+    expect_s3_class(scl5, "ScaleContinuous")
+
+    expect_identical(scl2$palette(seq(0, 1, length.out = 10)),
+                     scl3$palette(seq(1, 0, length.out = 10)))
+
+    expect_identical(scl4$palette(c(0, 0.5, 1)),
+                     c("#03051A", "#C52D4E", "#FAEBDD"))
+
+    expect_identical(scl5$palette(c(0, 0.5, 1)),
+                     unname(apply(grDevices::col2rgb(c("red", "yellow", "blue")),
+                                  2, \(x) grDevices::rgb(x[1], x[2], x[3],
+                                                         maxColorValue = 255))))
+})
