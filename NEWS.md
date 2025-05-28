@@ -1,13 +1,14 @@
 # footprintR 0.3.5
 
+* Add argument `minCoveredFraction` to `filterReads()` and `plotRegion()`
 * Add argument `fillColors` to read-level plotting functions to control colors of modification probabilities
 
 # footprintR 0.3.4
 
-* Add estimateNRLwindows for nucleosome repeat length scanning
-* Add getDifferentialWindows allowing flexible statistical testing when scanning
-* Add countStatePairs function to obtain state pair counts from bam files
-* filterReadsBam can now run with multiple parallel threads
+* Add `estimateNRLwindows()` for nucleosome repeat length scanning
+* Add `getDifferentialWindows()` allowing flexible statistical testing when scanning
+* Add `countStatePairs()` function to obtain state pair counts from bam files
+* `filterReadsBam()` can now run with multiple parallel threads
 * Various performance improvements and bug fixes
 
 # footprintR 0.3.3
@@ -24,7 +25,7 @@
 
 # footprintR 0.3.1
 
-* Explicitly ignore supplementary and secondary alignments in all reading modes in `readModBam`
+* Explicitly ignore supplementary and secondary alignments in all reading modes in `readModBam()`
 * Various smaller improvements and bug fixes
 
 # footprintR 0.3.0
@@ -35,7 +36,7 @@
 
 # footprintR 0.2.5
 
-* Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
+* Expand `readModBam()` to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values
 * Add `filterReadsBam()` to filter-out reads from input bam files and write reads that pass all filters to output bam files
 * Add functions to statistically identify differentially modified regions (`scanForHighScoringRegions()` and helpers)
 
