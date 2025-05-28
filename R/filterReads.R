@@ -241,11 +241,16 @@ filterReads <- function(se, assayName = "mod_prob",
             tmpp <- split(pos(rowRanges(se))[tmp[, 1]], tmp[, 2])
             tmpgr <- GRanges(
                 seqnames = seqnames(rowRanges(se))[1],
-                ranges = IRanges(start = unlist(lapply(tmpp, min), use.names = FALSE),
-                                 end = unlist(lapply(tmpp, max), use.names = FALSE)))
-            cvgFrac <- width(pintersect(tmpgr, region, ignore.strand = TRUE, drop.nohit.ranges = FALSE)) / width(region)
-            readsToRemove[[nm]][which(cvgFrac < minCoveredFraction),
-                                "CoveredFraction"] <- TRUE
+                ranges = IRanges(start = unlist(lapply(tmpp, min),
+                                                use.names = FALSE),
+                                 end = unlist(lapply(tmpp, max),
+                                              use.names = FALSE)))
+            cvgFrac <- width(
+                pintersect(tmpgr, region, ignore.strand = TRUE,
+                           drop.nohit.ranges = FALSE)) / width(region)
+            readsToRemove[[nm]][
+                as.numeric(names(tmpp))[which(cvgFrac < minCoveredFraction)],
+                "CoveredFraction"] <- TRUE
         }
 
         ## NA in all positions
