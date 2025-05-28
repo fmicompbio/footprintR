@@ -228,6 +228,9 @@ test_that("plotRegion works", {
                                                  6935410, 6935430
                                              )
                                          ))))
+    p13 <- plotRegion(se = seR2, region = "chr1:6940000-6942000", minCoveredFraction = 0.5,
+                      tracks = list(list(trackType = "Lollipop",
+                                         trackData = "mod_prob", orderReads = NULL)))
     expect_error(
         plotRegion(se = seR2, region = "chr1:693-1093",
                    modbaseSpace = FALSE,
@@ -277,6 +280,12 @@ test_that("plotRegion works", {
                                       smoothMethod = "missing"))),
         "All values in .smoothMethod. must be one of"
     )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6940000-6942000", minCoveredFraction = 1.0,
+                   tracks = list(list(trackType = "Lollipop",
+                                      trackData = "mod_prob", orderReads = NULL))),
+        "No reads retained for plotting"
+    )
 
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
@@ -290,6 +299,7 @@ test_that("plotRegion works", {
     expect_s3_class(p10, "ggplot")
     expect_s3_class(p11, "ggplot")
     expect_s3_class(p12, "ggplot")
+    expect_s3_class(p13, "ggplot")
     expect_identical(nrow(p1$data), 4006L)
     expect_identical(nrow(p2$data), 24040L)
     expect_identical(nrow(p3$data), 20000L)
@@ -300,6 +310,7 @@ test_that("plotRegion works", {
     expect_identical(nrow(p7$data), 29104L)
     expect_identical(nrow(p8$data), 430L)
     expect_length(p9$data, 0L)
+    expect_identical(nrow(p13$data), 476L)
 
     # make sure the plotting works
     tmpplot <- tempfile(fileext = ".png")
@@ -315,6 +326,7 @@ test_that("plotRegion works", {
     expect_identical(ggsave(filename = tmpplot, plot = p10, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p11, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p12, width = 6, height = 6), tmpplot)
+    expect_identical(ggsave(filename = tmpplot, plot = p13, width = 6, height = 6), tmpplot)
     unlink(tmpplot)
 })
 

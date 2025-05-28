@@ -17,7 +17,8 @@ plotRegion(
   sequenceContext = NULL,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  suppressTickLabels = FALSE
+  suppressTickLabels = FALSE,
+  minCoveredFraction = 0
 )
 
 plotBigWig(
@@ -183,6 +184,9 @@ value will be derived from \code{region}.}
 
 \item{suppressTickLabels}{Logical scalar. If \code{TRUE}, suppress x-axis
 tick labels for all but the last panel.}
+
+\item{minCoveredFraction}{A numeric scalar giving the minimal fraction of
+\code{region} that a read needs to cover to be plotted.}
 
 \item{bwFiles}{A named character vector with paths to one or more bigWig
 files to plot.}
@@ -367,7 +371,7 @@ seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
                          BPPARAM = BiocParallel::SerialParam())
 
 # Lollipop plot
-plotRegion(seB, region = "chr1:6935800-6935900",
+plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
 # Heatmap plots (observed only or interpolated)
 plotRegion(seB, region = "chr1:6935800-6935900",

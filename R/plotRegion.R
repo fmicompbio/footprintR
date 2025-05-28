@@ -103,6 +103,8 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'     value will be derived from \code{region}.
 #' @param suppressTickLabels Logical scalar. If \code{TRUE}, suppress x-axis
 #'     tick labels for all but the last panel.
+#' @param minCoveredFraction A numeric scalar giving the minimal fraction of
+#'     \code{region} that a read needs to cover to be plotted.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
@@ -136,7 +138,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'                          BPPARAM = BiocParallel::SerialParam())
 #'
 #' # Lollipop plot
-#' plotRegion(seB, region = "chr1:6935800-6935900",
+#' plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
 #' # Heatmap plots (observed only or interpolated)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
@@ -172,6 +174,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels seqnames
 #' @importFrom IRanges subsetByOverlaps
+#' @importFrom BiocGenerics nrow ncol
 #' @import ggplot2
 #' @importFrom patchwork wrap_plots
 #' @importFrom cli cli_abort cli_warn
@@ -186,7 +189,8 @@ plotRegion <- function(
         sequenceContext = NULL,
         referenceCoordinate = NULL,
         labelAccuracy = NULL,
-        suppressTickLabels = FALSE) {
+        suppressTickLabels = FALSE,
+        minCoveredFraction = 0) {
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
@@ -306,6 +310,7 @@ plotRegion <- function(
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minCoveredFraction, type = "numeric", rngIncl = c(0, 1))
 
     if (modbaseSpace) {
         # relative coordinates are not meaningful in modbase space (as there
@@ -328,6 +333,19 @@ plotRegion <- function(
 
     if (nrow(se) == 0) {
         cli_abort("No positions retained for plotting!")
+    }
+
+    # subset reads in SE
+    if (minCoveredFraction > 0) {
+        for (nm in intersect(assaysInUse, .getReadLevelAssayNames(se))) {
+            se <- filterReads(se = se, assayName = nm, readInfoCol = NULL,
+                              qcCol = NULL, minCoveredFraction = minCoveredFraction,
+                              region = region, prune = TRUE)
+        }
+    }
+
+    if (ncol(se) == 0) {
+        cli_abort("No reads retained for plotting!")
     }
 
     ## create plots
