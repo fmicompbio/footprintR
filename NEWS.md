@@ -1,5 +1,6 @@
 # footprintR 0.3.5
 
+* Add argument `orderRegion` and `orderReads = "region"` to read-level plotting functions to sort reads by average modification probabilities in a specified window
 * Add argument `minCoveredFraction` to `filterReads()` and `plotRegion()`
 * Add argument `fillColors` to read-level plotting functions to control colors of modification probabilities
 

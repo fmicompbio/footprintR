@@ -569,6 +569,34 @@ test_that("plotRegion works - manual inspection", {
         plot_layout(heights = c(3, 1, 3, 2))
     expect_s3_class(p, "ggplot")
 
+    ## orderReads = "region" + no facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "region", orderRegion = grh[2],
+                           facetBy = NULL, interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "region", orderRegion = grh[1],
+                           facetBy = NULL, size = 2, stroke = 0.5)))
+    expect_s3_class(p, "ggplot")
+
+    ## orderReads = "region" + facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "region", orderRegion = grh[2],
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "region", orderRegion = grh[1],
+                           facetBy = "sample", size = 2, stroke = 0.5)))
+    expect_s3_class(p, "ggplot")
+
     ## facet, different number of reads per facet - adjust height
     setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563",
                                 "s1-d52a5f6a-a60a-4f85-913e-eada84bfbfb9",

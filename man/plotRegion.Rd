@@ -43,6 +43,7 @@ plotReadsLollipop(
   stroke = 0.5,
   drawRead = TRUE,
   orderReads = "cluster",
+  orderRegion = NULL,
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -65,6 +66,7 @@ plotReadsHeatmap(
   drawRead = TRUE,
   linewidthTiles = 0,
   orderReads = "cluster",
+  orderRegion = NULL,
   modbaseSpace = FALSE,
   interpolate = FALSE,
   trackTitle = NULL,
@@ -240,7 +242,15 @@ the position of reads on the y-axis will be reordered using
 \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 over windows of 25 nucleotides. If set to \code{"squish"}, the display
 will be compacted by placing multiple reads in the same row when
-possible. If \code{NULL}, no reordering is done.}
+possible. If set to \code{"region"}, the reads are sorted by increasing
+average modification fraction in the window given by \code{orderRegion}.
+If \code{NULL}, no reordering is done.}
+
+\item{orderRegion}{Either \code{NULL} or a length-one \code{GRanges} object.
+If \code{orderReads = "region"}, the \code{GRanges} object defines the
+window in which average modification probability is calculated to order
+the reads in read-level plots. A \code{NULL} value indicates that the
+entire plotted region should be used as the window.}
 
 \item{footprintColumns}{A character vector with names of columns from
 \code{colData(se)} containing footprints to display. Typically these
