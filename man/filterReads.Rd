@@ -63,6 +63,9 @@ be filtered out.}
 acceptable aligned fraction of a read. Reads where the aligned fraction
 is smaller than this value will be filtered out.}
 
+\item{minCoveredFraction}{A numeric scalar giving the minimal fraction of
+\code{region} that a read alignment needs to cover to be retained.}
+
 \item{region}{A \code{\link[GenomicRanges]{GRanges}} object with a single
 region to be used for the \code{minCoveredFraction} filter.
 Alternatively, the region can be specified as a character scalar (e.g.
@@ -84,9 +87,6 @@ and returned, but the object is not subset.}
 \item{removeAllNApos}{A logical scalar. If \code{TRUE}, remove all positions
 for which all values in \code{assayName} are \code{NA} after the read
 filtering.}
-
-\item{minCoveredFracion}{A numeric scalar giving the minimal fraction of
-\code{region} that a read alignment needs to cover to be retained.}
 }
 \value{
 If \code{onlyStats} is \code{FALSE}, a filtered

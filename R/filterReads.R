@@ -71,7 +71,7 @@
 #' @param minAlignedFraction A numeric scalar representing the smallest
 #'     acceptable aligned fraction of a read. Reads where the aligned fraction
 #'     is smaller than this value will be filtered out.
-#' @param minCoveredFracion A numeric scalar giving the minimal fraction of
+#' @param minCoveredFraction A numeric scalar giving the minimal fraction of
 #'     \code{region} that a read alignment needs to cover to be retained.
 #' @param region A \code{\link[GenomicRanges]{GRanges}} object with a single
 #'     region to be used for the \code{minCoveredFraction} filter.
