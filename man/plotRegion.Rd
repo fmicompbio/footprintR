@@ -17,7 +17,8 @@ plotRegion(
   sequenceContext = NULL,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  suppressTickLabels = FALSE
+  suppressTickLabels = FALSE,
+  minCoveredFraction = 0
 )
 
 plotBigWig(
@@ -42,6 +43,7 @@ plotReadsLollipop(
   stroke = 0.5,
   drawRead = TRUE,
   orderReads = "cluster",
+  orderRegion = NULL,
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -53,7 +55,8 @@ plotReadsLollipop(
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  fillColors = "-cividis"
 )
 
 plotReadsHeatmap(
@@ -63,6 +66,7 @@ plotReadsHeatmap(
   drawRead = TRUE,
   linewidthTiles = 0,
   orderReads = "cluster",
+  orderRegion = NULL,
   modbaseSpace = FALSE,
   interpolate = FALSE,
   trackTitle = NULL,
@@ -75,7 +79,8 @@ plotReadsHeatmap(
   facetBy = "sample",
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
-  labelAccuracy = NULL
+  labelAccuracy = NULL,
+  fillColors = "-cividis"
 )
 
 plotSummaryPointSmooth(
@@ -182,6 +187,9 @@ value will be derived from \code{region}.}
 \item{suppressTickLabels}{Logical scalar. If \code{TRUE}, suppress x-axis
 tick labels for all but the last panel.}
 
+\item{minCoveredFraction}{A numeric scalar giving the minimal fraction of
+\code{region} that a read needs to cover to be plotted.}
+
 \item{bwFiles}{A named character vector with paths to one or more bigWig
 files to plot.}
 
@@ -234,7 +242,15 @@ the position of reads on the y-axis will be reordered using
 \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 over windows of 25 nucleotides. If set to \code{"squish"}, the display
 will be compacted by placing multiple reads in the same row when
-possible. If \code{NULL}, no reordering is done.}
+possible. If set to \code{"regionAvg"}, the reads are sorted by increasing
+average modification probability in the window given by \code{orderRegion}.
+If \code{NULL}, no reordering is done.}
+
+\item{orderRegion}{Either \code{NULL} or a length-one \code{GRanges} object.
+If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
+window in which average modification probability is calculated to order
+the reads in read-level plots. A \code{NULL} value indicates that the
+entire plotted region should be used as the window.}
 
 \item{footprintColumns}{A character vector with names of columns from
 \code{colData(se)} containing footprints to display. Typically these
@@ -257,6 +273,15 @@ the plot will be facetted by 'sample', corresponding to the columns of
 \item{adjustFacetHeight}{A logical scalar. If \code{TRUE}, adjust the
 height of the facets by the number of reads in each of them. If
 \code{FALSE}, all facets have the same height.}
+
+\item{fillColors}{A character scalar defining the continuous color palette to
+represent modification probabilities. If \code{fillColors}
+has length one, it is assumed to be the a supported value to pass to the
+\code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+optionally prefixed with a minus sign to in addition set
+\code{direction = -1}). If \code{fillColors} has more than one element,
+it is assumed to be a vector of colors to pass to the \code{colors}
+argument of \code{\link[ggplot2]{scale_colour_gradientn}}.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}
@@ -356,8 +381,9 @@ seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
                          BPPARAM = BiocParallel::SerialParam())
 
 # Lollipop plot
-plotRegion(seB, region = "chr1:6935800-6935900",
-           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
+plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
+           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+                              orderReads = "regionAvg")))
 # Heatmap plots (observed only or interpolated)
 plotRegion(seB, region = "chr1:6935800-6935900",
            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))

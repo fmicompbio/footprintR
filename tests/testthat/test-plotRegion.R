@@ -228,6 +228,9 @@ test_that("plotRegion works", {
                                                  6935410, 6935430
                                              )
                                          ))))
+    p13 <- plotRegion(se = seR2, region = "chr1:6940000-6942000", minCoveredFraction = 0.5,
+                      tracks = list(list(trackType = "Lollipop",
+                                         trackData = "mod_prob", orderReads = NULL)))
     expect_error(
         plotRegion(se = seR2, region = "chr1:693-1093",
                    modbaseSpace = FALSE,
@@ -277,6 +280,12 @@ test_that("plotRegion works", {
                                       smoothMethod = "missing"))),
         "All values in .smoothMethod. must be one of"
     )
+    expect_error(
+        plotRegion(se = seR2, region = "chr1:6940000-6942000", minCoveredFraction = 1.0,
+                   tracks = list(list(trackType = "Lollipop",
+                                      trackData = "mod_prob", orderReads = NULL))),
+        "No reads retained for plotting"
+    )
 
     expect_s3_class(p1, "ggplot")
     expect_s3_class(p2, "ggplot")
@@ -290,6 +299,7 @@ test_that("plotRegion works", {
     expect_s3_class(p10, "ggplot")
     expect_s3_class(p11, "ggplot")
     expect_s3_class(p12, "ggplot")
+    expect_s3_class(p13, "ggplot")
     expect_identical(nrow(p1$data), 4006L)
     expect_identical(nrow(p2$data), 24040L)
     expect_identical(nrow(p3$data), 20000L)
@@ -300,6 +310,7 @@ test_that("plotRegion works", {
     expect_identical(nrow(p7$data), 29104L)
     expect_identical(nrow(p8$data), 430L)
     expect_length(p9$data, 0L)
+    expect_identical(nrow(p13$data), 476L)
 
     # make sure the plotting works
     tmpplot <- tempfile(fileext = ".png")
@@ -315,6 +326,7 @@ test_that("plotRegion works", {
     expect_identical(ggsave(filename = tmpplot, plot = p10, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p11, width = 6, height = 6), tmpplot)
     expect_identical(ggsave(filename = tmpplot, plot = p12, width = 6, height = 6), tmpplot)
+    expect_identical(ggsave(filename = tmpplot, plot = p13, width = 6, height = 6), tmpplot)
     unlink(tmpplot)
 })
 
@@ -555,6 +567,34 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 3, 2))
+    expect_s3_class(p, "ggplot")
+
+    ## orderReads = "region" + no facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "regionAvg", orderRegion = grh[2],
+                           facetBy = NULL, interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "regionAvg", orderRegion = grh[1],
+                           facetBy = NULL, size = 2, stroke = 0.5)))
+    expect_s3_class(p, "ggplot")
+
+    ## orderReads = "region" + facet
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "regionAvg", orderRegion = grh[2],
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "regionAvg", orderRegion = grh[1],
+                           facetBy = "sample", size = 2, stroke = 0.5)))
     expect_s3_class(p, "ggplot")
 
     ## facet, different number of reads per facet - adjust height
@@ -856,4 +896,36 @@ test_that("plotRegion works - manual inspection", {
                            smoothMethod = "rollingMean")
         ))
     expect_s3_class(p, "ggplot")
+})
+
+## -------------------------------------------------------------------------- ##
+## Checks, helper functions
+## -------------------------------------------------------------------------- ##
+test_that(".createBaseplotReads works", {
+    expect_error(.createFillScale(NULL), "must not be .NULL.")
+    expect_error(.createFillScale(1L), "must be of class .character.")
+
+    expect_warning(scl1 <- .createFillScale("error"), "Option .error. does not exist")
+    expect_s3_class(scl1, "ScaleContinuous")
+
+    scl2 <- .createFillScale("-cividis")
+    scl3 <- .createFillScale("cividis")
+    scl4 <- .createFillScale("F")
+    scl5 <- .createFillScale(c("red", "yellow", "blue"))
+
+    expect_s3_class(scl2, "ScaleContinuous")
+    expect_s3_class(scl3, "ScaleContinuous")
+    expect_s3_class(scl4, "ScaleContinuous")
+    expect_s3_class(scl5, "ScaleContinuous")
+
+    expect_identical(scl2$palette(seq(0, 1, length.out = 10)),
+                     scl3$palette(seq(1, 0, length.out = 10)))
+
+    expect_identical(scl4$palette(c(0, 0.5, 1)),
+                     c("#03051A", "#C52D4E", "#FAEBDD"))
+
+    expect_identical(scl5$palette(c(0, 0.5, 1)),
+                     unname(apply(grDevices::col2rgb(c("red", "yellow", "blue")),
+                                  2, \(x) grDevices::rgb(x[1], x[2], x[3],
+                                                         maxColorValue = 255))))
 })

@@ -15,6 +15,8 @@ filterReads(
   minReadLength = 0,
   minAlignedLength = 0,
   minAlignedFraction = 0,
+  minCoveredFraction = 0,
+  region = NULL,
   prune = TRUE,
   onlyStats = FALSE,
   removeAllNApos = TRUE
@@ -61,6 +63,15 @@ be filtered out.}
 acceptable aligned fraction of a read. Reads where the aligned fraction
 is smaller than this value will be filtered out.}
 
+\item{minCoveredFraction}{A numeric scalar giving the minimal fraction of
+\code{region} that a read alignment needs to cover to be retained.}
+
+\item{region}{A \code{\link[GenomicRanges]{GRanges}} object with a single
+region to be used for the \code{minCoveredFraction} filter.
+Alternatively, the region can be specified as a character scalar (e.g.
+"chr1:1200-1300") that can be coerced into a \code{GRanges} object. If
+\code{NULL} (the default), all reads are retained.}
+
 \item{prune}{A logical scalar. If \code{TRUE} (the default), samples for
 which the filtering retains none of the reads will be completely removed
 from the returned \code{SummarizedExperiment} (also from \code{colData}
@@ -98,7 +109,10 @@ se <- addReadStats(se, name = "QC",
                    BPPARAM = BiocParallel::SerialParam())
 
 ## Filter se
+## ... by quality score and aligned length
 sefilt <- filterReads(se, minQscore = 14, minAlignedLength = 10000)
+## ... by covered fraction of the specified region
+sefilt <- filterReads(se, minCoveredFraction = 1, region = "chr1:6930000-6935000")
 
 ## Only calculate filter stats
 filtstats <- filterReads(se, minQscore = 14, minAlignedLength = 10000,

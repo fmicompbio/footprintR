@@ -103,6 +103,8 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'     value will be derived from \code{region}.
 #' @param suppressTickLabels Logical scalar. If \code{TRUE}, suppress x-axis
 #'     tick labels for all but the last panel.
+#' @param minCoveredFraction A numeric scalar giving the minimal fraction of
+#'     \code{region} that a read needs to cover to be plotted.
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object with tracks selected by
 #'     \code{tracks}.
@@ -136,8 +138,9 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'                          BPPARAM = BiocParallel::SerialParam())
 #'
 #' # Lollipop plot
-#' plotRegion(seB, region = "chr1:6935800-6935900",
-#'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
+#' plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
+#'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+#'                               orderReads = "regionAvg")))
 #' # Heatmap plots (observed only or interpolated)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
@@ -172,6 +175,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels seqnames
 #' @importFrom IRanges subsetByOverlaps
+#' @importFrom BiocGenerics nrow ncol
 #' @import ggplot2
 #' @importFrom patchwork wrap_plots
 #' @importFrom cli cli_abort cli_warn
@@ -186,7 +190,8 @@ plotRegion <- function(
         sequenceContext = NULL,
         referenceCoordinate = NULL,
         labelAccuracy = NULL,
-        suppressTickLabels = FALSE) {
+        suppressTickLabels = FALSE,
+        minCoveredFraction = 0) {
 
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
@@ -306,6 +311,7 @@ plotRegion <- function(
     .assertVector(x = sequenceContext, type = "character", allowNULL = TRUE)
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minCoveredFraction, type = "numeric", rngIncl = c(0, 1))
 
     if (modbaseSpace) {
         # relative coordinates are not meaningful in modbase space (as there
@@ -328,6 +334,19 @@ plotRegion <- function(
 
     if (nrow(se) == 0) {
         cli_abort("No positions retained for plotting!")
+    }
+
+    # subset reads in SE
+    if (minCoveredFraction > 0) {
+        for (nm in intersect(assaysInUse, .getReadLevelAssayNames(se))) {
+            se <- filterReads(se = se, assayName = nm, readInfoCol = NULL,
+                              qcCol = NULL, minCoveredFraction = minCoveredFraction,
+                              region = region, prune = TRUE)
+        }
+    }
+
+    if (ncol(se) == 0) {
+        cli_abort("No reads retained for plotting!")
     }
 
     ## create plots
@@ -547,7 +566,14 @@ plotBigWig <- function(bwFiles,
 #'     \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 #'     over windows of 25 nucleotides. If set to \code{"squish"}, the display
 #'     will be compacted by placing multiple reads in the same row when
-#'     possible. If \code{NULL}, no reordering is done.
+#'     possible. If set to \code{"regionAvg"}, the reads are sorted by increasing
+#'     average modification probability in the window given by \code{orderRegion}.
+#'     If \code{NULL}, no reordering is done.
+#' @param orderRegion Either \code{NULL} or a length-one \code{GRanges} object.
+#'     If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
+#'     window in which average modification probability is calculated to order
+#'     the reads in read-level plots. A \code{NULL} value indicates that the
+#'     entire plotted region should be used as the window.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
@@ -577,6 +603,14 @@ plotBigWig <- function(bwFiles,
 #' @param adjustFacetHeight A logical scalar. If \code{TRUE}, adjust the
 #'     height of the facets by the number of reads in each of them. If
 #'     \code{FALSE}, all facets have the same height.
+#' @param fillColors A character scalar defining the continuous color palette to
+#'     represent modification probabilities. If \code{fillColors}
+#'     has length one, it is assumed to be the a supported value to pass to the
+#'     \code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+#'     optionally prefixed with a minus sign to in addition set
+#'     \code{direction = -1}). If \code{fillColors} has more than one element,
+#'     it is assumed to be a vector of colors to pass to the \code{colors}
+#'     argument of \code{\link[ggplot2]{scale_colour_gradientn}}.
 #'
 #' @export
 #' @rdname plotRegion
@@ -605,6 +639,7 @@ plotReadsLollipop <- function(se,
                               stroke = 0.5,
                               drawRead = TRUE,
                               orderReads = "cluster",
+                              orderRegion = NULL,
                               modbaseSpace = FALSE,
                               trackTitle = NULL,
                               legendTitle = NULL,
@@ -616,13 +651,14 @@ plotReadsLollipop <- function(se,
                               facetBy = "sample",
                               adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
-                              labelAccuracy = NULL) {
+                              labelAccuracy = NULL,
+                              fillColors = "-cividis") {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
-        orderReads = orderReads, modbaseSpace = modbaseSpace,
-        trackTitle = trackTitle, legendTitle = legendTitle,
-        yAxisLabel = yAxisLabel,
+        orderReads = orderReads, orderRegion = orderRegion,
+        modbaseSpace = modbaseSpace, trackTitle = trackTitle,
+        legendTitle = legendTitle, yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
         footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
@@ -634,7 +670,9 @@ plotReadsLollipop <- function(se,
                                 modbaseSpace = modbaseSpace,
                                 referenceCoordinate = argL$referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"),
-                                orderReads = orderReads, facetBy = facetBy)
+                                orderReads = orderReads,
+                                orderRegion = argL$orderRegion,
+                                facetBy = facetBy)
 
     # create base plot
     p <- .createBaseplotReads(df = df, region = argL$region,
@@ -647,7 +685,8 @@ plotReadsLollipop <- function(se,
                               facetBy = facetBy,
                               adjustFacetHeight = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
-                              labelAccuracy = labelAccuracy)
+                              labelAccuracy = labelAccuracy,
+                              fillColors = fillColors)
 
     # add segments (round 1) - need to keep this before the footprints to
     # make sure that the read ordering is respected
@@ -743,6 +782,7 @@ plotReadsHeatmap <- function(se,
                              drawRead = TRUE,
                              linewidthTiles = 0,
                              orderReads = "cluster",
+                             orderRegion = NULL,
                              modbaseSpace = FALSE,
                              interpolate = FALSE,
                              trackTitle = NULL,
@@ -755,13 +795,14 @@ plotReadsHeatmap <- function(se,
                              facetBy = "sample",
                              adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
-                             labelAccuracy = NULL) {
+                             labelAccuracy = NULL,
+                             fillColors = "-cividis") {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
-        orderReads = orderReads, modbaseSpace = modbaseSpace,
-        trackTitle = trackTitle, legendTitle = legendTitle,
-        yAxisLabel = yAxisLabel,
+        orderReads = orderReads, orderRegion = orderRegion,
+        modbaseSpace = modbaseSpace, trackTitle = trackTitle,
+        legendTitle = legendTitle, yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
         footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
@@ -775,7 +816,9 @@ plotReadsHeatmap <- function(se,
                                 interpolate = interpolate,
                                 referenceCoordinate = argL$referenceCoordinate,
                                 extraColAnnots = setdiff(facetBy, "sample"),
-                                orderReads = orderReads, facetBy = facetBy)
+                                orderReads = orderReads,
+                                orderRegion = argL$orderRegion,
+                                facetBy = facetBy)
 
     # create base plot
     p <- .createBaseplotReads(df = df, region = argL$region,
@@ -788,7 +831,8 @@ plotReadsHeatmap <- function(se,
                               facetBy = facetBy,
                               adjustFacetHeight  = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
-                              labelAccuracy = labelAccuracy)
+                              labelAccuracy = labelAccuracy,
+                              fillColors = fillColors)
 
     # add segments
     if (drawRead) {
@@ -1263,6 +1307,38 @@ plotGenomicRegions <- function(grl,
 
 ## helper functions used above -------------------------------------------------
 
+#' Create a ggplot2 fill scale based on \code{fillColors} argument
+#'
+#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn
+#' @keywords internal
+#' @noRd
+.createFillScale <- function(fillColors) {
+    # check arguments
+    .assertVector(x = fillColors, type = "character", rngLen = c(1, Inf))
+
+    scl <- NULL
+    if (identical(length(fillColors), 1L)) {
+        # scale_fill_viridis_c
+        # ... extract direction
+        direction <- 1
+        if (identical(substr(fillColors, 1, 1), "-")) {
+            direction <- -1
+            fillColors <- substr(fillColors, 2, nchar(fillColors))
+        }
+
+        # ... create scale
+        scl <- scale_fill_viridis_c(begin = 0, end = 1,
+                                    option = fillColors,
+                                    direction = direction,
+                                    na.value = "beige")
+    } else {
+        # scale_fill_gradientn
+        scl <- scale_fill_gradientn(colors = fillColors)
+    }
+
+    return(scl)
+}
+
 #' Check arguments for read-level plot functions, and generate required objects
 #'
 #' @keywords internal
@@ -1275,8 +1351,8 @@ plotGenomicRegions <- function(grl,
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
-                                     orderReads, modbaseSpace, trackTitle,
-                                     legendTitle, yAxisLabel,
+                                     orderReads, orderRegion, modbaseSpace,
+                                     trackTitle, legendTitle, yAxisLabel,
                                      showLegend, highlightRegions,
                                      footprintColumns, arglistFootprints,
                                      facetBy, adjustFacetHeight,
@@ -1291,7 +1367,8 @@ plotGenomicRegions <- function(grl,
                   validValues = assayNames(se))
     .assertScalar(x = drawRead, type = "logical")
     .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
-                  validValues = c("cluster", "squish"))
+                  validValues = c("cluster", "squish", "regionAvg"))
+    .assertScalar(x = orderRegion, type = "GRanges", allowNULL = TRUE)
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
@@ -1318,6 +1395,9 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = interpolate, type = "logical")
 
     # adjust arguments if necessary
+    if (is.null(orderRegion)) {
+        orderRegion <- region
+    }
     if (!is.null(highlightRegions)) {
         highlightRegions <- GenomicRanges::pintersect(highlightRegions, region,
                                                       ignore.strand = TRUE,
@@ -1386,7 +1466,8 @@ plotGenomicRegions <- function(grl,
                 footprintColors = footprintColors,
                 arglistFootprints = arglistFootprints,
                 referenceCoordinate = referenceCoordinate,
-                footprints = footprints, region = region))
+                footprints = footprints, region = region,
+                orderRegion = orderRegion))
 
 }
 
@@ -1481,6 +1562,7 @@ plotGenomicRegions <- function(grl,
                                   referenceCoordinate = NULL,
                                   extraColAnnots = NULL,
                                   orderReads = "cluster",
+                                  orderRegion = NULL,
                                   facetBy = NULL) {
     assaydat <- assay(x, assayName)
     assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
@@ -1525,9 +1607,12 @@ plotGenomicRegions <- function(grl,
     }
 
     # order reads
-    if (!is.null(orderReads) && orderReads == "cluster") {
+    if (!is.null(orderReads) && orderReads %in% c("cluster", "regionAvg")) {
         df$read <- factor(as.character(df$read),
-                          levels = .orderReads(x, assayName))
+                          levels = .orderReads(x = x, assayName = assayName,
+                                               method = orderReads,
+                                               windowWidth = 25,
+                                               orderRegion = orderRegion))
         df$plotRow <- df$read
     } else if (!is.null(orderReads) && orderReads == "squish") {
         if (!is.null(facetBy)) {
@@ -1699,6 +1784,14 @@ plotGenomicRegions <- function(grl,
 #'     positions along the genomic axis. Will be passed to
 #'     \code{\link[scales]{label_number}}. If \code{NULL} (default), a suitable
 #'     value will be derived from \code{region}.
+#' @param fillColors A character scalar defining the continuous color palette to
+#'     represent modification probabilities. If \code{fillColors}
+#'     has length one, it is assumed to be the a supported value to pass to the
+#'     \code{option} argument of \code{\link[ggplot2]{scale_fill_viridis_c}},
+#'     optionally prefixed with a minus sign to in addition set
+#'     \code{direction = -1}). If \code{fillColors} has more than one element,
+#'     it is assumed to be a vector of colors to pass to the \code{colors}
+#'     argument of \code{\link[ggplot2]{scale_fill_gradientn}}.
 #'
 #' @import ggplot2
 #' @importFrom rlang .data
@@ -1716,14 +1809,14 @@ plotGenomicRegions <- function(grl,
                                  facetBy,
                                  adjustFacetHeight,
                                  referenceCoordinate,
-                                 labelAccuracy) {
+                                 labelAccuracy,
+                                 fillColors = "-cividis") {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["plotRow"]],
                       fill = .data[["value"]])) +
-        scale_fill_viridis_c(begin = 0, end = 1, option = "cividis",
-                             direction = -1, na.value = "beige") +
+        .createFillScale(fillColors) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ",
@@ -1842,22 +1935,31 @@ plotGenomicRegions <- function(grl,
 #' Return ordered read identifiers
 #'
 #' @description
-#' Returns ordered read identifiers (\code{colnames(x)} such that they follow
-#' \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X} is
-#' \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
-#' over windows of \code{windowWidth} nucleotides.
+#' Returns ordered read identifiers (\code{colnames(x)} according to
+#' \code{method}.
 #'
 #' @param x A \code{\link[SummarizedExperiment]{SummarizedExperiment}} object
 #'     with summary-level footprinting data (positions in rows and samples in
 #'     columns).
 #' @param assayName A character or numerical scalar selecting the assay to plot.
+#' @param method A character scalar with the ordering method to be used.
+#'     Supported values are:
+#'     \describe{
+#'         \item{\code{"cluster"}}{, which orders reads such that they
+#'         follow \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X}
+#'         is \code{assay(x, assayName)} with zero values set to \code{NA} and
+#'         averaged over windows of \code{windowWidth} nucleotides.}
+#'         \item{\code{"regionAvg"}}{, which orders reads increasingly by the
+#'         average fraction probability in \code{orderRegion}.}
+#'     }
 #' @param windowWidth A numeric scalar giving the window width for which read-level
 #'     data will be averaged. This should help to reduce the noise and
 #'     allows to compare reads without any common modification calls, such
 #'     as plus- and minus-strand reads with 6mA calls.
 #'
 #' @importFrom BiocGenerics colnames start ncol
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment assay rowRanges
+#' @importFrom IRanges overlapsAny
 #' @importFrom stats cor as.dist hclust
 #' @importFrom SparseArray colMeans
 #'
@@ -1865,32 +1967,44 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .orderReads <- function(x,
                         assayName,
-                        windowWidth = 25) {
+                        method = c("cluster", "regionAvg"),
+                        windowWidth = 25,
+                        orderRegion = NULL) {
+    method <- match.arg(method)
+
     # extract and flatten assay matrix
     X <- as.matrix(assay(x, assayName))
+    res <- colnames(X)
 
-    if (ncol(X) > 1) {
-        # group positions into bins of windowWidth
-        bin <- findInterval(
-            x = start(x),
-            vec = seq(from = min(start(x)),
-                      to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
-                      by = windowWidth),
-            rightmost.closed = TRUE, left.open = FALSE)
-        iByBin <- split(seq.int(nrow(X)), bin)
-        XX <- do.call(rbind, lapply(iByBin, function(i) {
-            colMeans(X[i, , drop = FALSE], na.rm = TRUE)
-        }))
-        # calculate distances between reads
-        D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
-                                      use = "pairwise.complete")))
-        D[is.na(D)] <- 1.0
-        # cluster reads and return order
-        cl <- hclust(D, method = "ward.D2")
-        return(colnames(X)[cl$order])
-    } else {
-        return(colnames(X))
+    if (identical(method, "cluster")) {
+        if (ncol(X) > 1) {
+            # group positions into bins of windowWidth
+            bin <- findInterval(
+                x = start(x),
+                vec = seq(from = min(start(x)),
+                          to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
+                          by = windowWidth),
+                rightmost.closed = TRUE, left.open = FALSE)
+            iByBin <- split(seq.int(nrow(X)), bin)
+            XX <- do.call(rbind, lapply(iByBin, function(i) {
+                colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+            }))
+            # calculate distances between reads
+            D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
+                                          use = "pairwise.complete")))
+            D[is.na(D)] <- 1.0
+            # cluster reads and return order
+            cl <- hclust(D, method = "ward.D2")
+            res <- colnames(X)[cl$order]
+        }
+    } else if (identical(method, "regionAvg")) {
+        # select rows that fall into orderRegion
+        sel <- overlapsAny(query = rowRanges(x), subject = orderRegion,
+                           ignore.strand = TRUE)
+        avg <- colMeans(X[sel, , drop = FALSE], na.rm = TRUE)
+        res <- colnames(X)[order(avg, na.last = TRUE, decreasing = TRUE)]
     }
+    return(res)
 }
 
 #' Add formatting for base-space x-axis to ggplot object

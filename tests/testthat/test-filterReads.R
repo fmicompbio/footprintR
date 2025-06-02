@@ -81,6 +81,12 @@ test_that("filterReads works", {
                  ".minAlignedFraction. must be between 0 and 1")
     expect_error(filterReads(se = se, qcCol = "qcc", minAlignedFraction = c(0.5, 1)),
                  ".minAlignedFraction. must have length 1")
+    expect_error(filterReads(se = se, qcCol = "qcc", minCoveredFraction = "1"),
+                 ".minCoveredFraction. must be of class .numeric.")
+    expect_error(filterReads(se = se, qcCol = "qcc", minCoveredFraction = c(0, 1)),
+                 ".minCoveredFraction. must have length 1")
+    expect_error(filterReads(se = se, qcCol = "qcc", minCoveredFraction = -1),
+                 ".minCoveredFraction. must be between 0 and 1")
     expect_error(filterReads(se = se, qcCol = "qcc", prune = "1"),
                  ".prune. must be of class .logical.")
     expect_error(filterReads(se = se, qcCol = "qcc", prune = c(TRUE, FALSE)),
@@ -94,16 +100,18 @@ test_that("filterReads works", {
     out1 <- filterReads(se, qcCol = "qcc")
     setmp <- se
     metadata(setmp)$filteredOutReads = list(
-        s1 = SVT_SparseArray(dim = c(0, 7),
+        s1 = SVT_SparseArray(dim = c(0, 8),
                              dimnames = list(character(0),
                                              c("Qscore", "Entropy", "FracLowConf",
                                                "ReadLength", "AlignedLength",
-                                               "AlignedFraction", "AllNA"))),
-        s2 = SVT_SparseArray(dim = c(0, 7),
+                                               "AlignedFraction", "CoveredFraction",
+                                               "AllNA"))),
+        s2 = SVT_SparseArray(dim = c(0, 8),
                              dimnames = list(character(0),
                                              c("Qscore", "Entropy", "FracLowConf",
                                                "ReadLength", "AlignedLength",
-                                               "AlignedFraction", "AllNA"))))
+                                               "AlignedFraction",  "CoveredFraction",
+                                               "AllNA"))))
     expect_identical(setmp, out1)
 
     ## Some filtering
@@ -119,11 +127,12 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7)])
     expect_s4_class(metadata(out1)$filteredOutReads$s1, "SparseMatrix")
     expect_s4_class(metadata(out1)$filteredOutReads$s2, "SparseMatrix")
-    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(8, 7))
-    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(7, 7))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(8, 8))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(7, 8))
     expect_equal(colnames(metadata(out1)$filteredOutReads$s1),
                  c("Qscore", "Entropy", "FracLowConf", "ReadLength",
-                   "AlignedLength", "AlignedFraction", "AllNA"))
+                   "AlignedLength", "AlignedFraction", "CoveredFraction",
+                   "AllNA"))
 
     ## Only QC filtering
     out1 <- filterReads(se, qcCol = "qcc", readInfoCol = NULL,
@@ -151,14 +160,37 @@ test_that("filterReads works", {
     expect_equal(nrow(out1$qcc$s2), 5L)
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[3:7])
 
+    ## Only region-coverage filtering
+    # infer expected result from:
+    # plotRegion(se, region = "chr1:6930000-6938500",
+    #            tracks = list(list(trackType = "Lollipop", trackData = "mod_prob",
+    #                               orderReads = NULL)))
+    # --> s1: c(1,2,4,5), s2: c(2,3,4)
+    out2 <- filterReads(se, qcCol = NULL, minCoveredFraction = 1.0,
+                        region = "chr1:6930000-6938500")
+    expect_s4_class(out2, "SummarizedExperiment")
+    expect_equal(dim(out2), c(8360L, 2L))
+    expect_equal(nrow(out2$qcc$s1), 4L)
+    expect_equal(rownames(out2$qcc$s1), rownames(se$qcc$s1)[c(1,2,4,5)])
+    expect_equal(nrow(out2$qcc$s2), 3L)
+    expect_equal(rownames(out2$qcc$s2), rownames(se$qcc$s2)[c(2,3,4)])
+    out3 <- filterReads(se, qcCol = NULL, minCoveredFraction = 0.1,
+                        region = "chr2:6930000-6938500")
+    expect_s4_class(out3, "SummarizedExperiment")
+    expect_equal(dim(out3), c(0L, 0L))
+    out4 <- filterReads(se, qcCol = NULL, minCoveredFraction = 0.1,
+                        region = "chr2:6930000-6938500", prune = FALSE)
+    expect_s4_class(out4, "SummarizedExperiment")
+    expect_equal(dim(out4), c(0L, ncol(se)))
+
     ## Return filter stats only (compare to previous output)
     stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "readInfo",
                           minQscore = 13, maxEntropy = 0.2,
                           minReadLength = 8000, minAlignedLength = 5000,
                           minAlignedFraction = 0.8, onlyStats = TRUE)
     expect_s4_class(stats1$s1, "SparseArray")
-    expect_equal(dim(stats1$s1), c(4L, 7L))
-    expect_equal(dim(stats1$s2), c(5L, 7L))
+    expect_equal(dim(stats1$s1), c(4L, 8L))
+    expect_equal(dim(stats1$s2), c(5L, 8L))
     expect_equal(stats1, metadata(out1)$filteredOutReads)
 })
 
