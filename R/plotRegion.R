@@ -1976,18 +1976,22 @@ plotGenomicRegions <- function(grl,
     X <- as.matrix(assay(x, assayName))
     res <- colnames(X)
 
+    # select rows that fall into orderRegion
+    sel <- overlapsAny(query = rowRanges(x), subject = orderRegion,
+                       ignore.strand = TRUE)
+
     if (identical(method, "cluster")) {
         if (ncol(X) > 1) {
             # group positions into bins of windowWidth
             bin <- findInterval(
-                x = start(x),
-                vec = seq(from = min(start(x)),
-                          to = ceiling(max(end(x)) / windowWidth) * windowWidth + 1,
+                x = start(x)[sel],
+                vec = seq(from = min(start(x)[sel]),
+                          to = ceiling(max(end(x)[sel]) / windowWidth) * windowWidth + 1,
                           by = windowWidth),
                 rightmost.closed = TRUE, left.open = FALSE)
-            iByBin <- split(seq.int(nrow(X)), bin)
+            iByBin <- split(seq.int(nrow(X[sel, , drop = FALSE])), bin)
             XX <- do.call(rbind, lapply(iByBin, function(i) {
-                colMeans(X[i, , drop = FALSE], na.rm = TRUE)
+                colMeans(X[which(sel)[i], , drop = FALSE], na.rm = TRUE)
             }))
             # calculate distances between reads
             D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
@@ -1998,9 +2002,6 @@ plotGenomicRegions <- function(grl,
             res <- colnames(X)[cl$order]
         }
     } else if (identical(method, "regionAvg")) {
-        # select rows that fall into orderRegion
-        sel <- overlapsAny(query = rowRanges(x), subject = orderRegion,
-                           ignore.strand = TRUE)
         avg <- colMeans(X[sel, , drop = FALSE], na.rm = TRUE)
         res <- colnames(X)[order(avg, na.last = TRUE, decreasing = TRUE)]
     }
