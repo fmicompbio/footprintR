@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,11 +38,19 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.5" id="footprintr-035">footprintR 0.3.5<a class="anchor" aria-label="anchor" href="#footprintr-035"></a></h2>
+<ul><li>Add argument <code>orderRegion</code> and <code>orderReads = "region"</code> to read-level plotting functions to sort reads by average modification probabilities in a specified window</li>
+<li>Add argument <code>minCoveredFraction</code> to <code><a href="../reference/filterReads.html">filterReads()</a></code> and <code><a href="../reference/plotRegion.html">plotRegion()</a></code>
+</li>
+<li>Add argument <code>fillColors</code> to read-level plotting functions to control colors of modification probabilities</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.4" id="footprintr-034">footprintR 0.3.4<a class="anchor" aria-label="anchor" href="#footprintr-034"></a></h2>
-<ul><li>Add estimateNRLwindows for nucleosome repeat length scanning</li>
-<li>Add getDifferentialWindows allowing flexible statistical testing when scanning</li>
-<li>Add countStatePairs function to obtain state pair counts from bam files</li>
-<li>filterReadsBam can now run with multiple parallel threads</li>
+<ul><li>Add <code><a href="../reference/estimateNRLwindows.html">estimateNRLwindows()</a></code> for nucleosome repeat length scanning</li>
+<li>Add <code><a href="../reference/getDifferentialWindows.html">getDifferentialWindows()</a></code> allowing flexible statistical testing when scanning</li>
+<li>Add <code><a href="../reference/countStatePairs.html">countStatePairs()</a></code> function to obtain state pair counts from bam files</li>
+<li>
+<code><a href="../reference/filterReadsBam.html">filterReadsBam()</a></code> can now run with multiple parallel threads</li>
 <li>Various performance improvements and bug fixes</li>
 </ul></div>
     <div class="section level2">
@@ -60,7 +68,7 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="footprintr-031">footprintR 0.3.1<a class="anchor" aria-label="anchor" href="#footprintr-031"></a></h2>
-<ul><li>Explicitly ignore supplementary and secondary alignments in all reading modes in <code>readModBam</code>
+<ul><li>Explicitly ignore supplementary and secondary alignments in all reading modes in <code><a href="../reference/readModBam.html">readModBam()</a></code>
 </li>
 <li>Various smaller improvements and bug fixes</li>
 </ul></div>
@@ -73,7 +81,7 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.5" id="footprintr-025">footprintR 0.2.5<a class="anchor" aria-label="anchor" href="#footprintr-025"></a></h2>
-<ul><li>Expand readModBam to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values</li>
+<ul><li>Expand <code><a href="../reference/readModBam.html">readModBam()</a></code> to allow direct extraction of summary values (Nmod, Nvalid), and to use the pileup approach for quick extraction of read-level values</li>
 <li>Add <code><a href="../reference/filterReadsBam.html">filterReadsBam()</a></code> to filter-out reads from input bam files and write reads that pass all filters to output bam files</li>
 <li>Add functions to statistically identify differentially modified regions (<code><a href="../reference/scanForHighScoringRegions.html">scanForHighScoringRegions()</a></code> and helpers)</li>
 </ul></div>
