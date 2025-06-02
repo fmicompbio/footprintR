@@ -373,7 +373,7 @@ plotRegion <- function(
                      referenceCoordinate = referenceCoordinate),
                      tr[!names(tr) %in% c("trackData", "trackType", "grl",
                                           "region", "referenceCoordinate",
-                                          "labelAccuracy", "fillColors")]
+                                          "labelAccuracy")]
             )
         } else if (trt == "file") {
             args <- c(
@@ -382,7 +382,7 @@ plotRegion <- function(
                      referenceCoordinate = referenceCoordinate),
                 tr[!names(tr) %in% c("trackData", "trackType", "region",
                                      "referenceCoordinate", "labelAccuracy",
-                                     "bwFiles", "fillColors")]
+                                     "bwFiles")]
             )
         }
         pL[[i]] <- switch(
