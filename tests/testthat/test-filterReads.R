@@ -174,6 +174,14 @@ test_that("filterReads works", {
     expect_equal(rownames(out2$qcc$s1), rownames(se$qcc$s1)[c(1,2,4,5)])
     expect_equal(nrow(out2$qcc$s2), 3L)
     expect_equal(rownames(out2$qcc$s2), rownames(se$qcc$s2)[c(2,3,4)])
+    out3 <- filterReads(se, qcCol = NULL, minCoveredFraction = 0.1,
+                        region = "chr2:6930000-6938500")
+    expect_s4_class(out3, "SummarizedExperiment")
+    expect_equal(dim(out3), c(0L, 0L))
+    out4 <- filterReads(se, qcCol = NULL, minCoveredFraction = 0.1,
+                        region = "chr2:6930000-6938500", prune = FALSE)
+    expect_s4_class(out4, "SummarizedExperiment")
+    expect_equal(dim(out4), c(0L, ncol(se)))
 
     ## Return filter stats only (compare to previous output)
     stats1 <- filterReads(se, qcCol = NULL, readInfoCol = "readInfo",

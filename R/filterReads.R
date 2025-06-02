@@ -131,7 +131,7 @@
 #' @importFrom SparseArray SVT_SparseArray rowSums colSums is_nonna nnawhich
 #' @importFrom SummarizedExperiment colData assay rowRanges
 #' @importFrom BiocGenerics pos
-#' @importFrom GenomicRanges GRanges pintersect
+#' @importFrom GenomicRanges GRanges pintersect seqnames
 #' @importFrom IRanges IRanges
 #'
 filterReads <- function(se, assayName = "mod_prob",
@@ -237,10 +237,17 @@ filterReads <- function(se, assayName = "mod_prob",
 
         ## Region coverage fraction
         if (!is.null(region) && minCoveredFraction > 0) {
+            # start with all reads being filtered to capture reads on
+            #   other chromosomes than `region`
+            readsToRemove[[nm]][, "CoveredFraction", drop = FALSE] <- TRUE
+            # calculate coverage for reads on same chromosome as `region`
             tmp <- nnawhich(assay(se, assayName)[[nm]], arr.ind = TRUE)
+            regchr <- as.character(seqnames(region))
+            keepRows <- which(as.character(seqnames(se)) %in% regchr)
+            tmp <- tmp[tmp[,1] %in% keepRows, , drop = FALSE]
             tmpp <- split(pos(rowRanges(se))[tmp[, 1]], tmp[, 2])
             tmpgr <- GRanges(
-                seqnames = seqnames(rowRanges(se))[1],
+                seqnames = rep(regchr, length(tmpp)),
                 ranges = IRanges(start = unlist(lapply(tmpp, min),
                                                 use.names = FALSE),
                                  end = unlist(lapply(tmpp, max),
@@ -248,9 +255,10 @@ filterReads <- function(se, assayName = "mod_prob",
             cvgFrac <- width(
                 pintersect(tmpgr, region, ignore.strand = TRUE,
                            drop.nohit.ranges = FALSE)) / width(region)
+            # set filter to FALSE for reads satisfying coverage
             readsToRemove[[nm]][
-                as.numeric(names(tmpp))[which(cvgFrac < minCoveredFraction)],
-                "CoveredFraction"] <- TRUE
+                as.numeric(names(tmpp))[which(cvgFrac >= minCoveredFraction)],
+                "CoveredFraction"] <- FALSE
         }
 
         ## NA in all positions
