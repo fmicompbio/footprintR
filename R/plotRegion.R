@@ -140,7 +140,7 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #' # Lollipop plot
 #' plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
-#'                               orderReads = "region")))
+#'                               orderReads = "regionAvg")))
 #' # Heatmap plots (observed only or interpolated)
 #' plotRegion(seB, region = "chr1:6935800-6935900",
 #'            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
@@ -566,11 +566,11 @@ plotBigWig <- function(bwFiles,
 #'     \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 #'     over windows of 25 nucleotides. If set to \code{"squish"}, the display
 #'     will be compacted by placing multiple reads in the same row when
-#'     possible. If set to \code{"region"}, the reads are sorted by increasing
-#'     average modification fraction in the window given by \code{orderRegion}.
+#'     possible. If set to \code{"regionAvg"}, the reads are sorted by increasing
+#'     average modification probability in the window given by \code{orderRegion}.
 #'     If \code{NULL}, no reordering is done.
 #' @param orderRegion Either \code{NULL} or a length-one \code{GRanges} object.
-#'     If \code{orderReads = "region"}, the \code{GRanges} object defines the
+#'     If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
 #'     window in which average modification probability is calculated to order
 #'     the reads in read-level plots. A \code{NULL} value indicates that the
 #'     entire plotted region should be used as the window.
@@ -1367,7 +1367,7 @@ plotGenomicRegions <- function(grl,
                   validValues = assayNames(se))
     .assertScalar(x = drawRead, type = "logical")
     .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
-                  validValues = c("cluster", "squish", "region"))
+                  validValues = c("cluster", "squish", "regionAvg"))
     .assertScalar(x = orderRegion, type = "GRanges", allowNULL = TRUE)
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
@@ -1607,7 +1607,7 @@ plotGenomicRegions <- function(grl,
     }
 
     # order reads
-    if (!is.null(orderReads) && orderReads %in% c("cluster", "region")) {
+    if (!is.null(orderReads) && orderReads %in% c("cluster", "regionAvg")) {
         df$read <- factor(as.character(df$read),
                           levels = .orderReads(x = x, assayName = assayName,
                                                method = orderReads,
@@ -1949,8 +1949,8 @@ plotGenomicRegions <- function(grl,
 #'         follow \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X}
 #'         is \code{assay(x, assayName)} with zero values set to \code{NA} and
 #'         averaged over windows of \code{windowWidth} nucleotides.}
-#'         \item{\code{"region"}}{, which orders reads increasingly by the
-#'         avearge fraction probability in \code{orderRegion}.}
+#'         \item{\code{"regionAvg"}}{, which orders reads increasingly by the
+#'         average fraction probability in \code{orderRegion}.}
 #'     }
 #' @param windowWidth A numeric scalar giving the window width for which read-level
 #'     data will be averaged. This should help to reduce the noise and
@@ -1967,7 +1967,7 @@ plotGenomicRegions <- function(grl,
 #' @keywords internal
 .orderReads <- function(x,
                         assayName,
-                        method = c("cluster", "region"),
+                        method = c("cluster", "regionAvg"),
                         windowWidth = 25,
                         orderRegion = NULL) {
     method <- match.arg(method)
@@ -1997,7 +1997,7 @@ plotGenomicRegions <- function(grl,
             cl <- hclust(D, method = "ward.D2")
             res <- colnames(X)[cl$order]
         }
-    } else if (identical(method, "region")) {
+    } else if (identical(method, "regionAvg")) {
         # select rows that fall into orderRegion
         sel <- overlapsAny(query = rowRanges(x), subject = orderRegion,
                            ignore.strand = TRUE)

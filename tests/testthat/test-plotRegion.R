@@ -574,12 +574,12 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = "region", orderRegion = grh[2],
+                           orderReads = "regionAvg", orderRegion = grh[2],
                            facetBy = NULL, interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = "region", orderRegion = grh[1],
+                           orderReads = "regionAvg", orderRegion = grh[1],
                            facetBy = NULL, size = 2, stroke = 0.5)))
     expect_s3_class(p, "ggplot")
 
@@ -588,12 +588,12 @@ test_that("plotRegion works - manual inspection", {
         seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = "region", orderRegion = grh[2],
+                           orderReads = "regionAvg", orderRegion = grh[2],
                            facetBy = "sample", interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
-                           orderReads = "region", orderRegion = grh[1],
+                           orderReads = "regionAvg", orderRegion = grh[1],
                            facetBy = "sample", size = 2, stroke = 0.5)))
     expect_s3_class(p, "ggplot")
 

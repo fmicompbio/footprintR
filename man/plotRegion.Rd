@@ -242,12 +242,12 @@ the position of reads on the y-axis will be reordered using
 \code{assay(x, assayName)} with zero values set to \code{NA} and averaged
 over windows of 25 nucleotides. If set to \code{"squish"}, the display
 will be compacted by placing multiple reads in the same row when
-possible. If set to \code{"region"}, the reads are sorted by increasing
-average modification fraction in the window given by \code{orderRegion}.
+possible. If set to \code{"regionAvg"}, the reads are sorted by increasing
+average modification probability in the window given by \code{orderRegion}.
 If \code{NULL}, no reordering is done.}
 
 \item{orderRegion}{Either \code{NULL} or a length-one \code{GRanges} object.
-If \code{orderReads = "region"}, the \code{GRanges} object defines the
+If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
 window in which average modification probability is calculated to order
 the reads in read-level plots. A \code{NULL} value indicates that the
 entire plotted region should be used as the window.}
@@ -382,7 +382,8 @@ seB <- readModkitExtract(extractfiles, modbase = "a", filter = "modkit",
 
 # Lollipop plot
 plotRegion(seB, region = "chr1:6935800-6935900", minCoveredFraction = 0.95,
-           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop")))
+           tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
+                              orderReads = "regionAvg")))
 # Heatmap plots (observed only or interpolated)
 plotRegion(seB, region = "chr1:6935800-6935900",
            tracks = list(list(trackData = "mod_prob", trackType = "Heatmap")))
