@@ -376,8 +376,8 @@ test_that("genome scanning works (helper functions)", {
                    "dirNegLog10PValue"))
     res1a <- getDifferentialWindows(se = se4, designMatrix =  dsgn,
                                     contrast = cntr, method = "limma")
-    expect_warning(res1b <- getDifferentialWindows(se = se4, designMatrix =  dsgn,
-                                                   contrast = cntr, method = "edgeR"))
+    res1b <- getDifferentialWindows(se = se4, designMatrix =  dsgn,
+                                    contrast = cntr, method = "edgeR")
     expect_s4_class(res1a, "GRanges")
     expect_s4_class(res1b, "GRanges")
     expect_length(res1a, nrow(se4))

@@ -412,7 +412,7 @@ test_that("plotRegion works - manual inspection", {
         labelAccuracy = 1e-6,
         tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
                            size = 2, stroke = 0.25, legendTitle = "6mA",
-                           highlightRegions = grh),
+                           highlightRegions = grh, clustDist = "correlation"),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 3,
                            labelPosition = "inside", legendTitle = NULL),
@@ -495,7 +495,7 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
 
     ## referenceCoordinate = left border of plot, squish+interpolate heatmap
-    expect_warning(p <- plotRegion(
+    p <- plotRegion(
         seB, region = "chr1:6929237-6929337", modbaseSpace = FALSE,
         referenceCoordinate = 6929237,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
@@ -517,8 +517,7 @@ test_that("plotRegion works - manual inspection", {
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
-            plot_layout(heights = c(3, 1, 2, 3, 2)),
-        "the standard deviation is zero")
+        plot_layout(heights = c(3, 1, 2, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## squish + no facet
@@ -594,6 +593,22 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "regionAvg", orderRegion = grh[1],
+                           facetBy = "sample", size = 2, stroke = 0.5)))
+    expect_s3_class(p, "ggplot")
+
+    ## cluster reads using different distance metrics
+    p <- plotRegion(
+        seB, region = "chr1:6935800-6935900", modbaseSpace = FALSE,
+        tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "cluster", orderRegion = grh[2],
+                           windowWidth = 15, clustDist = "euclidean",
+                           facetBy = "sample", interpolate = FALSE,
+                           linewidthTiles = 0.25),
+                      list(trackData = "mod_prob", trackType = "Lollipop",
+                           legendTitle = "6mA", highlightRegions = grh,
+                           orderReads = "cluster", orderRegion = grh[1],
+                           windowWidth = 15, clustDist = "cosine",
                            facetBy = "sample", size = 2, stroke = 0.5)))
     expect_s3_class(p, "ggplot")
 
@@ -738,6 +753,7 @@ test_that("plotRegion works - manual inspection", {
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", trackTitle = "Heatmap",
+                           clustDist = "correlation",
                            facetBy = "sample", interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
@@ -746,6 +762,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample",
+                           clustDist = "correlation",
                            size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
@@ -757,7 +774,7 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
 
     ## modbaseSpace = TRUE, change colors
-    expect_warning(p <- plotRegion(
+    p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
@@ -773,8 +790,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            colors = c(s1 = "forestgreen", s2 = "firebrick1"),
                            highlightRegions = grh))) +
-            plot_layout(heights = c(3, 3, 2)),
-        "the standard deviation is zero")
+        plot_layout(heights = c(3, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## modbaseSpace = TRUE, footprints -> set modbaseSpace to FALSE
@@ -788,7 +804,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample",
-                           size = 2, stroke = 0.5,
+                           size = 2, stroke = 0.5, clustDist = "correlation",
                            footprintColumns = "nucleosome"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
@@ -834,7 +850,7 @@ test_that("plotRegion works - manual inspection", {
     expect_s3_class(p, "ggplot")
 
     ## ... change y-axis range
-    expect_warning(p <- plotRegion(
+    p <- plotRegion(
         seB, region = "chr1:6935800-6935900", modbaseSpace = TRUE,
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
@@ -849,8 +865,7 @@ test_that("plotRegion works - manual inspection", {
                            showLegend = FALSE, spar = 0.5,
                            trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh, yAxisRange = c(3, 9)))) +
-            plot_layout(heights = c(3, 3, 2)),
-        "the standard deviation is zero")
+        plot_layout(heights = c(3, 3, 2))
     expect_s3_class(p, "ggplot")
 
     ## ... compare smoothing methods
