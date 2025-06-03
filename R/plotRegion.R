@@ -1612,7 +1612,8 @@ plotGenomicRegions <- function(grl,
                           levels = .orderReads(x = x, assayName = assayName,
                                                method = orderReads,
                                                windowWidth = 25,
-                                               orderRegion = orderRegion))
+                                               orderRegion = orderRegion,
+                                               clustDist = "euclidean"))
         df$plotRow <- df$read
     } else if (!is.null(orderReads) && orderReads == "squish") {
         if (!is.null(facetBy)) {
@@ -1969,7 +1970,8 @@ plotGenomicRegions <- function(grl,
                         assayName,
                         method = c("cluster", "regionAvg"),
                         windowWidth = 25,
-                        orderRegion = NULL) {
+                        orderRegion = NULL,
+                        clustDist = "euclidean") {
     method <- match.arg(method)
 
     # extract and flatten assay matrix
@@ -1977,8 +1979,8 @@ plotGenomicRegions <- function(grl,
     res <- colnames(X)
 
     # select rows that fall into orderRegion
-    sel <- overlapsAny(query = rowRanges(x), subject = orderRegion,
-                       ignore.strand = TRUE)
+    sel <- which(overlapsAny(query = rowRanges(x), subject = orderRegion,
+                             ignore.strand = TRUE))
 
     if (identical(method, "cluster")) {
         if (ncol(X) > 1) {
@@ -1989,14 +1991,23 @@ plotGenomicRegions <- function(grl,
                           to = ceiling(max(end(x)[sel]) / windowWidth) * windowWidth + 1,
                           by = windowWidth),
                 rightmost.closed = TRUE, left.open = FALSE)
-            iByBin <- split(seq.int(nrow(X[sel, , drop = FALSE])), bin)
+            iByBin <- split(seq.int(length(sel)), bin)
             XX <- do.call(rbind, lapply(iByBin, function(i) {
-                colMeans(X[which(sel)[i], , drop = FALSE], na.rm = TRUE)
+                colMeans(X[sel[i], , drop = FALSE], na.rm = TRUE)
             }))
             # calculate distances between reads
-            D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
-                                          use = "pairwise.complete")))
-            D[is.na(D)] <- 1.0
+            if (clustDist == "correlation") {
+                D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
+                                              use = "pairwise.complete")))
+                D[is.na(D)] <- 1.0
+            } else if (clustDist == "euclidean") {
+                D <- dist(t(XX), method = "euclidean")
+                D[is.na(D)] <- sqrt(nrow(XX))
+            } else if (clustDist == "cosine") {
+                D <- as.dist(1 - (t(XX) %*% XX) /
+                                 sqrt(cbind(colSums(XX ^ 2)) %*% rbind(colSums(XX ^ 2))))
+                D[is.na(D)] <- 1
+            }
             # cluster reads and return order
             cl <- hclust(D, method = "ward.D2")
             res <- colnames(X)[cl$order]
