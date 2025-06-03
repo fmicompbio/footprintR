@@ -574,6 +574,13 @@ plotBigWig <- function(bwFiles,
 #'     window in which average modification probability is calculated to order
 #'     the reads in read-level plots. A \code{NULL} value indicates that the
 #'     entire plotted region should be used as the window.
+#' @param windowWidth A numeric scalar giving the window width for which
+#'     read-level data will be averaged before clustering. This should help
+#'     to reduce the noise and allows to compare reads without any common
+#'     modification calls, such as plus- and minus-strand reads with 6mA calls.
+#' @param clustDist A character scalar defining the distance measure to use
+#'     for clustering. Should be one of \code{"correlation"},
+#'     \code{"euclidean"} or \code{"cosine"}.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
@@ -640,6 +647,8 @@ plotReadsLollipop <- function(se,
                               drawRead = TRUE,
                               orderReads = "cluster",
                               orderRegion = NULL,
+                              clustDist = "euclidean",
+                              windowWidth = 25,
                               modbaseSpace = FALSE,
                               trackTitle = NULL,
                               legendTitle = NULL,
@@ -657,6 +666,7 @@ plotReadsLollipop <- function(se,
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, orderRegion = orderRegion,
+        clustDist = clustDist, windowWidth = windowWidth,
         modbaseSpace = modbaseSpace, trackTitle = trackTitle,
         legendTitle = legendTitle, yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
@@ -672,6 +682,8 @@ plotReadsLollipop <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads,
                                 orderRegion = argL$orderRegion,
+                                clustDist = clustDist,
+                                windowWidth = windowWidth,
                                 facetBy = facetBy)
 
     # create base plot
@@ -783,6 +795,8 @@ plotReadsHeatmap <- function(se,
                              linewidthTiles = 0,
                              orderReads = "cluster",
                              orderRegion = NULL,
+                             clustDist = "euclidean",
+                             windowWidth = 25,
                              modbaseSpace = FALSE,
                              interpolate = FALSE,
                              trackTitle = NULL,
@@ -801,6 +815,7 @@ plotReadsHeatmap <- function(se,
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, orderRegion = orderRegion,
+        clustDist = clustDist, windowWidth = windowWidth,
         modbaseSpace = modbaseSpace, trackTitle = trackTitle,
         legendTitle = legendTitle, yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
@@ -818,6 +833,8 @@ plotReadsHeatmap <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads,
                                 orderRegion = argL$orderRegion,
+                                clustDist = clustDist,
+                                windowWidth = windowWidth,
                                 facetBy = facetBy)
 
     # create base plot
@@ -1351,7 +1368,8 @@ plotGenomicRegions <- function(grl,
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
-                                     orderReads, orderRegion, modbaseSpace,
+                                     orderReads, orderRegion,
+                                     clustDist, windowWidth, modbaseSpace,
                                      trackTitle, legendTitle, yAxisLabel,
                                      showLegend, highlightRegions,
                                      footprintColumns, arglistFootprints,
@@ -1369,6 +1387,9 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
                   validValues = c("cluster", "squish", "regionAvg"))
     .assertScalar(x = orderRegion, type = "GRanges", allowNULL = TRUE)
+    .assertScalar(x = clustDist, type = "character",
+                  validValues = c("correlation", "euclidean", "cosine"))
+    .assertScalar(x = windowWidth, type = "numeric", rngExcl = c(0, Inf))
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
     .assertScalar(x = legendTitle, type = "character", allowNULL = TRUE)
@@ -1563,6 +1584,8 @@ plotGenomicRegions <- function(grl,
                                   extraColAnnots = NULL,
                                   orderReads = "cluster",
                                   orderRegion = NULL,
+                                  clustDist = "euclidean",
+                                  windowWidth = 25,
                                   facetBy = NULL) {
     assaydat <- assay(x, assayName)
     assaydat <- .removeAllNAReads(assaydat, prune = TRUE)
@@ -1611,9 +1634,9 @@ plotGenomicRegions <- function(grl,
         df$read <- factor(as.character(df$read),
                           levels = .orderReads(x = x, assayName = assayName,
                                                method = orderReads,
-                                               windowWidth = 25,
+                                               windowWidth = windowWidth,
                                                orderRegion = orderRegion,
-                                               clustDist = "euclidean"))
+                                               clustDist = clustDist))
         df$plotRow <- df$read
     } else if (!is.null(orderReads) && orderReads == "squish") {
         if (!is.null(facetBy)) {
@@ -1946,17 +1969,33 @@ plotGenomicRegions <- function(grl,
 #' @param method A character scalar with the ordering method to be used.
 #'     Supported values are:
 #'     \describe{
-#'         \item{\code{"cluster"}}{, which orders reads such that they
-#'         follow \code{hclust(as.dist(sqrt(2 - 2 * cor(X))))$order}, where \code{X}
+#'         \item{\code{"cluster"}}{, which orders reads using hierarchical
+#'         clustering based on Pearson correlation distance
+#'         (\code{as.dist(sqrt(2 - 2 * cor(X)))}, if
+#'         \code{clustDist = "correlation"}, Euclidean distance (if
+#'         \code{clustDist = "euclidean"}) or cosine distance (if
+#'         \code{clustDist = "cosine"}). The input to the distance calculation
 #'         is \code{assay(x, assayName)} with zero values set to \code{NA} and
-#'         averaged over windows of \code{windowWidth} nucleotides.}
+#'         averaged over windows of \code{windowWidth} nucleotides. The
+#'         distance calculations can be further limited to a specific region
+#'         by specifying \code{orderRegion}.}
 #'         \item{\code{"regionAvg"}}{, which orders reads increasingly by the
-#'         average fraction probability in \code{orderRegion}.}
+#'         average modification probability in \code{orderRegion}.}
 #'     }
-#' @param windowWidth A numeric scalar giving the window width for which read-level
-#'     data will be averaged. This should help to reduce the noise and
-#'     allows to compare reads without any common modification calls, such
-#'     as plus- and minus-strand reads with 6mA calls.
+#' @param windowWidth A numeric scalar giving the window width for which
+#'     read-level data will be averaged before clustering. This should help
+#'     to reduce the noise and allows to compare reads without any common
+#'     modification calls, such as plus- and minus-strand reads with 6mA calls.
+#' @param orderRegion Either \code{NULL} or a length-one \code{GRanges} object.
+#'     If \code{method = "regionAvg"}, the \code{GRanges} object defines the
+#'     window in which average modification probability is calculated to order
+#'     the reads in read-level plots. If \code{method = "cluster"}, the
+#'     object defines the region within which the clustering is calculated.
+#'     A \code{NULL} value indicates that the entire plotted region should be
+#'     used as the window.
+#' @param clustDist A character scalar defining the distance measure to use
+#'     for clustering. Should be one of \code{"correlation"},
+#'     \code{"euclidean"} or \code{"cosine"}.
 #'
 #' @importFrom BiocGenerics colnames start ncol
 #' @importFrom SummarizedExperiment assay rowRanges
@@ -1971,8 +2010,9 @@ plotGenomicRegions <- function(grl,
                         method = c("cluster", "regionAvg"),
                         windowWidth = 25,
                         orderRegion = NULL,
-                        clustDist = "euclidean") {
+                        clustDist = c("correlation", "euclidean", "cosine")) {
     method <- match.arg(method)
+    clustDist <- match.arg(clustDist)
 
     # extract and flatten assay matrix
     X <- as.matrix(assay(x, assayName))
