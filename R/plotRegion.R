@@ -2055,14 +2055,16 @@ plotGenomicRegions <- function(grl,
     if (clustDist == "pearson") {
         D <- as.dist(sqrt(2 - 2 * cor(X, method = "pearson",
                                       use = "pairwise.complete")))
-        D[is.na(D)] <- 1.0
+        D[is.na(D)] <- 2.0
     } else if (clustDist == "euclidean") {
         D <- dist(t(X), method = "euclidean")
         D[is.na(D)] <- sqrt(nrow(X))
     } else if (clustDist == "cosine") {
         D <- as.dist(1 - (t(X) %*% X) /
                          sqrt(cbind(colSums(X ^ 2)) %*% rbind(colSums(X ^ 2))))
-        D[is.na(D)] <- 2
+        # in principle, the maximal distance is 1 since the values in X are
+        # non-negative - in general though, cosine distances are in [0, 2]
+        D[is.na(D)] <- 2.0
     }
     D
 }
