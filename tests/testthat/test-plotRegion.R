@@ -15,13 +15,13 @@ test_that(".calcDist works", {
                  sqrt(sum((X[, 1] - X[, 3]) ^ 2)))
     expect_equal(as.matrix(.calcDist(X, clustDist = "cosine"))[1, 3],
                  1 - sum(X[, 1] * X[, 3]) / sqrt(sum(X[, 1] ^ 2) * sum(X[, 3] ^ 2)))
-    expect_equal(as.matrix(.calcDist(X, clustDist = "correlation"))[1, 3],
+    expect_equal(as.matrix(.calcDist(X, clustDist = "pearson"))[1, 3],
                  sqrt(2 - 2 * cor(X[, 1], X[, 3], method = "pearson")))
 
     X[1, 3] <- NA
     expect_equal(as.matrix(.calcDist(X, clustDist = "euclidean"))[1, 3],
                  sqrt(sum((X[2:5, 1] - X[2:5, 3]) ^ 2 * 5 / 4)))
-    expect_equal(as.matrix(.calcDist(X, clustDist = "correlation"))[1, 3],
+    expect_equal(as.matrix(.calcDist(X, clustDist = "pearson"))[1, 3],
                  sqrt(2 - 2 * cor(X[, 1], X[, 3], method = "pearson",
                                   use = "pairwise.complete")))
 })
@@ -431,7 +431,7 @@ test_that("plotRegion works - manual inspection", {
         labelAccuracy = 1e-6,
         tracks = list(list(trackData = "mod_prob", trackType = "Lollipop",
                            size = 2, stroke = 0.25, legendTitle = "6mA",
-                           highlightRegions = grh, clustDist = "correlation"),
+                           highlightRegions = grh, clustDist = "pearson"),
                       list(trackData = grl, trackType = "GenomicRegion",
                            colorByStrand = TRUE, labelSize = 3,
                            labelPosition = "inside", legendTitle = NULL),
@@ -627,7 +627,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", orderRegion = grh[1],
-                           windowWidth = 15, clustDist = "cosine",
+                           windowWidth = 15, clustDist = "euclidean",
                            facetBy = "sample", size = 2, stroke = 0.5)))
     expect_s3_class(p, "ggplot")
 
@@ -772,7 +772,7 @@ test_that("plotRegion works - manual inspection", {
         tracks = list(list(trackData = "mod_prob", trackType = "Heatmap",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", trackTitle = "Heatmap",
-                           clustDist = "correlation",
+                           clustDist = "pearson",
                            facetBy = "sample", interpolate = FALSE,
                            linewidthTiles = 0.25),
                       list(trackData = grl, trackType = "GenomicRegion",
@@ -781,7 +781,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample",
-                           clustDist = "correlation",
+                           clustDist = "pearson",
                            size = 2, stroke = 0.5),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,
@@ -823,7 +823,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = "mod_prob", trackType = "Lollipop",
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "cluster", facetBy = "sample",
-                           size = 2, stroke = 0.5, clustDist = "correlation",
+                           size = 2, stroke = 0.5, clustDist = "pearson",
                            footprintColumns = "nucleosome"),
                       list(trackData = "Nvalid", trackType = "PointSmooth",
                            showLegend = FALSE, spar = 0.5,

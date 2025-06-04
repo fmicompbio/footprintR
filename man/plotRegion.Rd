@@ -257,8 +257,8 @@ the reads in read-level plots. A \code{NULL} value indicates that the
 entire plotted region should be used as the window.}
 
 \item{clustDist}{A character scalar defining the distance measure to use
-for clustering. Should be one of \code{"correlation"},
-\code{"euclidean"} or \code{"cosine"}.}
+for clustering. Should be one of \code{"pearson"} or
+\code{"euclidean"}.}
 
 \item{windowWidth}{A numeric scalar giving the window width for which
 read-level data will be averaged before clustering. This should help

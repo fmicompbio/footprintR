@@ -579,8 +579,8 @@ plotBigWig <- function(bwFiles,
 #'     to reduce the noise and allows to compare reads without any common
 #'     modification calls, such as plus- and minus-strand reads with 6mA calls.
 #' @param clustDist A character scalar defining the distance measure to use
-#'     for clustering. Should be one of \code{"correlation"},
-#'     \code{"euclidean"} or \code{"cosine"}.
+#'     for clustering. Should be one of \code{"pearson"} or
+#'     \code{"euclidean"}.
 #' @param trackTitle A character scalar or \code{NULL}, giving the title of
 #'     the track.
 #' @param legendTitle A character scalar or \code{NULL}. If not \code{NULL},
@@ -1388,7 +1388,7 @@ plotGenomicRegions <- function(grl,
                   validValues = c("cluster", "squish", "regionAvg"))
     .assertScalar(x = orderRegion, type = "GRanges", allowNULL = TRUE)
     .assertScalar(x = clustDist, type = "character",
-                  validValues = c("correlation", "euclidean", "cosine"))
+                  validValues = c("pearson", "euclidean"))
     .assertScalar(x = windowWidth, type = "numeric", rngExcl = c(0, Inf))
     .assertScalar(x = modbaseSpace, type = "logical")
     .assertScalar(x = trackTitle, type = "character", allowNULL = TRUE)
@@ -1972,9 +1972,8 @@ plotGenomicRegions <- function(grl,
 #'         \item{\code{"cluster"}}{, which orders reads using hierarchical
 #'         clustering based on Pearson correlation distance
 #'         (\code{as.dist(sqrt(2 - 2 * cor(X)))}, if
-#'         \code{clustDist = "correlation"}, Euclidean distance (if
-#'         \code{clustDist = "euclidean"}) or cosine distance (if
-#'         \code{clustDist = "cosine"}). The input to the distance calculation
+#'         \code{clustDist = "pearson"} or Euclidean distance (if
+#'         \code{clustDist = "euclidean"}). The input to the distance calculation
 #'         is \code{assay(x, assayName)} with zero values set to \code{NA} and
 #'         averaged over windows of \code{windowWidth} nucleotides. The
 #'         distance calculations can be further limited to a specific region
@@ -1994,8 +1993,8 @@ plotGenomicRegions <- function(grl,
 #'     A \code{NULL} value indicates that the entire plotted region should be
 #'     used as the window.
 #' @param clustDist A character scalar defining the distance measure to use
-#'     for clustering. Should be one of \code{"correlation"},
-#'     \code{"euclidean"} or \code{"cosine"}.
+#'     for clustering. Should be one of \code{"pearson"} or
+#'     \code{"euclidean"}.
 #'
 #' @importFrom BiocGenerics colnames start ncol
 #' @importFrom SummarizedExperiment assay rowRanges
@@ -2010,7 +2009,7 @@ plotGenomicRegions <- function(grl,
                         method = c("cluster", "regionAvg"),
                         windowWidth = 25,
                         orderRegion = NULL,
-                        clustDist = c("correlation", "euclidean", "cosine")) {
+                        clustDist = c("pearson", "euclidean")) {
     method <- match.arg(method)
     clustDist <- match.arg(clustDist)
 
@@ -2053,7 +2052,7 @@ plotGenomicRegions <- function(grl,
 #' @noRd
 #' @keywords internal
 .calcDist <- function(X, clustDist = "euclidean") {
-    if (clustDist == "correlation") {
+    if (clustDist == "pearson") {
         D <- as.dist(sqrt(2 - 2 * cor(X, method = "pearson",
                                       use = "pairwise.complete")))
         D[is.na(D)] <- 1.0
