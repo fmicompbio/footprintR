@@ -2036,18 +2036,7 @@ plotGenomicRegions <- function(grl,
                 colMeans(X[sel[i], , drop = FALSE], na.rm = TRUE)
             }))
             # calculate distances between reads
-            if (clustDist == "correlation") {
-                D <- as.dist(sqrt(2 - 2 * cor(XX, method = "pearson",
-                                              use = "pairwise.complete")))
-                D[is.na(D)] <- 1.0
-            } else if (clustDist == "euclidean") {
-                D <- dist(t(XX), method = "euclidean")
-                D[is.na(D)] <- sqrt(nrow(XX))
-            } else if (clustDist == "cosine") {
-                D <- as.dist(1 - (t(XX) %*% XX) /
-                                 sqrt(cbind(colSums(XX ^ 2)) %*% rbind(colSums(XX ^ 2))))
-                D[is.na(D)] <- 1
-            }
+            D <- .calcDist(XX, clustDist = clustDist)
             # cluster reads and return order
             cl <- hclust(D, method = "ward.D2")
             res <- colnames(X)[cl$order]
@@ -2057,6 +2046,26 @@ plotGenomicRegions <- function(grl,
         res <- colnames(X)[order(avg, na.last = TRUE, decreasing = TRUE)]
     }
     return(res)
+}
+
+#' Calculate distances between columns of matrix
+#'
+#' @noRd
+#' @keywords internal
+.calcDist <- function(X, clustDist = "euclidean") {
+    if (clustDist == "correlation") {
+        D <- as.dist(sqrt(2 - 2 * cor(X, method = "pearson",
+                                      use = "pairwise.complete")))
+        D[is.na(D)] <- 1.0
+    } else if (clustDist == "euclidean") {
+        D <- dist(t(X), method = "euclidean")
+        D[is.na(D)] <- sqrt(nrow(X))
+    } else if (clustDist == "cosine") {
+        D <- as.dist(1 - (t(X) %*% X) /
+                         sqrt(cbind(colSums(X ^ 2)) %*% rbind(colSums(X ^ 2))))
+        D[is.na(D)] <- 2
+    }
+    D
 }
 
 #' Add formatting for base-space x-axis to ggplot object

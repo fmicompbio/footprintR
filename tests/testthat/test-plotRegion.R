@@ -7,6 +7,25 @@ suppressPackageStartupMessages({
     library(patchwork)
 })
 
+## Helper functions
+test_that(".calcDist works", {
+    set.seed(123L)
+    X <- matrix(rnorm(15), ncol = 3)
+    expect_equal(as.matrix(.calcDist(X, clustDist = "euclidean"))[1, 3],
+                 sqrt(sum((X[, 1] - X[, 3]) ^ 2)))
+    expect_equal(as.matrix(.calcDist(X, clustDist = "cosine"))[1, 3],
+                 1 - sum(X[, 1] * X[, 3]) / sqrt(sum(X[, 1] ^ 2) * sum(X[, 3] ^ 2)))
+    expect_equal(as.matrix(.calcDist(X, clustDist = "correlation"))[1, 3],
+                 sqrt(2 - 2 * cor(X[, 1], X[, 3], method = "pearson")))
+
+    X[1, 3] <- NA
+    expect_equal(as.matrix(.calcDist(X, clustDist = "euclidean"))[1, 3],
+                 sqrt(sum((X[2:5, 1] - X[2:5, 3]) ^ 2 * 5 / 4)))
+    expect_equal(as.matrix(.calcDist(X, clustDist = "correlation"))[1, 3],
+                 sqrt(2 - 2 * cor(X[, 1], X[, 3], method = "pearson",
+                                  use = "pairwise.complete")))
+})
+
 ## -------------------------------------------------------------------------- ##
 ## Checks, plotRegion
 ## -------------------------------------------------------------------------- ##
