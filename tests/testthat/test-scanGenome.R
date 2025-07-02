@@ -178,7 +178,8 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(SummarizedExperiment::assayNames(seEmpty1),
                      c("NRL", "NRL.CI95low", "NRL.CI95high"))
     gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(1:2, width = 2000))
-    seEmpty2 <- estimateNRLwindows(se = se1, gr = gr2)
+    seEmpty2 <- estimateNRLwindows(se = se1, gr = gr2,
+                                   BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(seEmpty2, "RangedSummarizedExperiment")
     expect_identical(dim(seEmpty2), c(length(gr2), length(modbamfiles)))
     expect_identical(SummarizedExperiment::assayNames(seEmpty2),

@@ -14,7 +14,8 @@ test_that("filterReadsBam works", {
     tmpin <- tempfile(fileext = ".bam")
     expect_true(file.copy(from = modbamfiles[1], to = tmpin))
     expect_error(filterReadsBam(infiles = tmpin, outfiles = filtbamfiles[1],
-                                modbase = "a"),
+                                modbase = "a",
+                                BPPARAM = BiocParallel::SerialParam()),
                  "Failed to load the index")
     unlink(c(tmpin, filtbamfiles[1]))
 
