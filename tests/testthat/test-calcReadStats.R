@@ -19,7 +19,7 @@ test_that("read statistic functions work", {
     # ... list of non-NA values per read
     ind <- nnawhich(mat, arr.ind = TRUE)
     probList <- split(nnavals(mat), colnames(mat)[ind[, 2]])[colnames(mat)]
-    idxList   <- split(ind[, 1]      , colnames(mat)[ind[, 2]])[colnames(mat)]
+    idxList <- split(ind[, 1], colnames(mat)[ind[, 2]])[colnames(mat)]
 
     expect_identical(lengths(probList), rlens)
     # ... reads to include
@@ -36,9 +36,9 @@ test_that("read statistic functions work", {
     # pre-compute SNR, Signal, Noise
     snr_res <- .estimate_snr_probList(probList, idxList)
 
-
     # expected values
-    argL <- list(probList = probList, idxList = idxList, useReads = useReads, lowConf = 0.7, xrange = lagvals)
+    argL <- list(probList = probList, idxList = idxList, useReads = useReads,
+                 lowConf = 0.7, xrange = lagvals)
 
     resL <- lapply(allReadStats, function(param) {
         res <- do.call(param, argL)
@@ -97,9 +97,9 @@ test_that("read statistic functions work", {
                     "sdModProb" = unname(SparseArray::colSds(mat[, useReads], na.rm = TRUE)),
                     "Lag1DModProb" = unlist(lapply(
                         useReads, \(i) mean(abs(diff(probList[[i]] >= 0.5, lag = 1))))),
-                    "SignalVar" = snr_res$signal[useReads],
-                    "NoiseVar" = snr_res$noise[useReads],
-                    "SNR" = snr_res$snr[useReads]
+                    "SignalVar" = unname(snr_res$signal[useReads]),
+                    "NoiseVar" = unname(snr_res$noise[useReads]),
+                    "SNR" = unname(snr_res$snr[useReads])
                 ))
         }
     })

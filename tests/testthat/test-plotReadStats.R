@@ -3,7 +3,9 @@ test_that("plotReadStats works", {
     bamf <- system.file("extdata", "6mA_1_10reads.bam", package = "footprintR")
     se <- readModBam(bamf, regions = "chr1:6940000-6955000", modbase = "a",
                      BPPARAM = BiocParallel::SerialParam())
-    se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
+    expect_warning(
+        se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam()),
+        "Too few points")
 
     setmp <- se
     names(setmp$QC) <- "wrong_name"

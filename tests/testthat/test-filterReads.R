@@ -100,16 +100,16 @@ test_that("filterReads works", {
     out1 <- filterReads(se, qcCol = "qcc")
     setmp <- se
     metadata(setmp)$filteredOutReads = list(
-        s1 = SVT_SparseArray(dim = c(0, 8),
+        s1 = SVT_SparseArray(dim = c(0, 9),
                              dimnames = list(character(0),
                                              c("Qscore", "Entropy", "FracLowConf",
-                                               "ReadLength", "AlignedLength",
+                                               "SNR", "ReadLength", "AlignedLength",
                                                "AlignedFraction", "CoveredFraction",
                                                "AllNA"))),
-        s2 = SVT_SparseArray(dim = c(0, 8),
+        s2 = SVT_SparseArray(dim = c(0, 9),
                              dimnames = list(character(0),
                                              c("Qscore", "Entropy", "FracLowConf",
-                                               "ReadLength", "AlignedLength",
+                                               "SNR", "ReadLength", "AlignedLength",
                                                "AlignedFraction",  "CoveredFraction",
                                                "AllNA"))))
     expect_identical(setmp, out1)
@@ -127,10 +127,10 @@ test_that("filterReads works", {
     expect_equal(rownames(out1$qcc$s2), rownames(se$qcc$s2)[c(3, 5, 7)])
     expect_s4_class(metadata(out1)$filteredOutReads$s1, "SparseMatrix")
     expect_s4_class(metadata(out1)$filteredOutReads$s2, "SparseMatrix")
-    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(8, 8))
-    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(7, 8))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s1), c(8, 9))
+    expect_equal(dim(metadata(out1)$filteredOutReads$s2), c(7, 9))
     expect_equal(colnames(metadata(out1)$filteredOutReads$s1),
-                 c("Qscore", "Entropy", "FracLowConf", "ReadLength",
+                 c("Qscore", "Entropy", "FracLowConf", "SNR", "ReadLength",
                    "AlignedLength", "AlignedFraction", "CoveredFraction",
                    "AllNA"))
 
@@ -189,8 +189,8 @@ test_that("filterReads works", {
                           minReadLength = 8000, minAlignedLength = 5000,
                           minAlignedFraction = 0.8, onlyStats = TRUE)
     expect_s4_class(stats1$s1, "SparseArray")
-    expect_equal(dim(stats1$s1), c(4L, 8L))
-    expect_equal(dim(stats1$s2), c(5L, 8L))
+    expect_equal(dim(stats1$s1), c(4L, 9L))
+    expect_equal(dim(stats1$s2), c(5L, 9L))
     expect_equal(stats1, metadata(out1)$filteredOutReads)
 })
 
