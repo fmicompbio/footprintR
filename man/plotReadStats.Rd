@@ -8,12 +8,13 @@ plotReadStats(
   se,
   readInfoCol = "readInfo",
   qcCol = "QC",
-  minQscore = 0,
-  maxEntropy = Inf,
-  maxFracLowConf = 1,
-  minReadLength = 0,
-  minAlignedLength = 0,
-  minAlignedFraction = 0
+  minQscore = NULL,
+  maxEntropy = NULL,
+  maxFracLowConf = NULL,
+  minReadLength = NULL,
+  minAlignedLength = NULL,
+  minAlignedFraction = NULL,
+  minSNR = NULL
 )
 }
 \arguments{
