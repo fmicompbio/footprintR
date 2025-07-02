@@ -37,24 +37,27 @@
 #' @importFrom BiocGenerics as.data.frame colnames
 #' @importFrom SummarizedExperiment colData
 #' @importFrom cli cli_abort
+#' @importFrom stats median mad
 #'
 #' @export
 plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
-                          minQscore = 0, maxEntropy = Inf,
-                          maxFracLowConf = 1, minReadLength = 0,
-                          minAlignedLength = 0, minAlignedFraction = 0) {
+                          minQscore = NULL, maxEntropy = NULL,
+                          maxFracLowConf = NULL, minReadLength = NULL,
+                          minAlignedLength = NULL, minAlignedFraction = NULL,
+                          minSNR = NULL ) {
     # check arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
     .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
-    .assertScalar(x = minQscore, type = "numeric")
-    .assertScalar(x = maxEntropy, type = "numeric")
-    .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
-    .assertScalar(x = minReadLength, type = "numeric")
-    .assertScalar(x = minAlignedLength, type = "numeric")
-    .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
+    .assertScalar(x = minQscore, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = maxEntropy, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1), allowNULL = TRUE)
+    .assertScalar(x = minReadLength, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minAlignedLength, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1), allowNULL = TRUE)
+    .assertScalar(x = minSNR, type = "numeric", allowNULL = TRUE)
 
     # prepare main plotdata
     dfL <- list()
@@ -77,11 +80,32 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     df <- do.call(cbind, lapply(dfL, \(x) x[, !colnames(x) %in% c("group", "group_name")]))
     df$sample <- dfL[[1]]$group_name
 
+    # helper functions for automatic thresholds -----------------------------
+    calc_min <- function(x) stats::median(x, na.rm = TRUE) - 3 * stats::mad(x, na.rm = TRUE)
+    calc_max <- function(x) stats::median(x, na.rm = TRUE) + 3 * stats::mad(x, na.rm = TRUE)
+    
+    # derive thresholds when not provided 
+    # min thresholds
+    if ("qscore" %in% colnames(df) && is.null(minQscore))          minQscore <- max(0,calc_min(df$qscore))
+    if ("read_length" %in% colnames(df) && is.null(minReadLength)) minReadLength <- max(0,calc_min(df$read_length))
+    if ("aligned_length" %in% colnames(df) && is.null(minAlignedLength)) minAlignedLength <- max(0,calc_min(df$aligned_length))
+    if ("aligned_fraction" %in% colnames(df) && is.null(minAlignedFraction)) minAlignedFraction <- max(0,calc_min(df$aligned_fraction))
+    if ("SNR" %in% colnames(df) && is.null(minSNR))                minSNR <- calc_min(df$SNR)
+    
+    # max thresholds
+    if ("SEntrModProb" %in% colnames(df) && is.null(maxEntropy))   maxEntropy <- calc_max(df$SEntrModProb)
+    if ("MeanConf" %in% colnames(df) && is.null(maxFracLowConf))   maxFracLowConf  <- min(1,calc_max(df$MeanConf))
+    
+    
+    
+    
     # prepare plotdata for thresholds
     map2thresh <- c(qscore = minQscore, read_length = minReadLength,
                     aligned_length = minAlignedLength,
                     aligned_fraction = minAlignedFraction,
-                    MeanConf = maxFracLowConf, SEntrModProb = maxEntropy)
+                    MeanConf = maxFracLowConf, SEntrModProb = maxEntropy,
+                    SNR = minSNR)
+    
     threshnms <- intersect(names(map2thresh), colnames(df))
     df2 <- data.frame(key = threshnms, value = map2thresh[threshnms])
 
