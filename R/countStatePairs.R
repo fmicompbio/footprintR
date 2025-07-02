@@ -37,7 +37,8 @@
 #'                           package = "footprintR")
 #' res <- countStatePairs(bamfile = modbamfile,
 #'                        regions = "chr1",
-#'                        modbase = "a", windowSize = 300)
+#'                        modbase = "a", windowSize = 300,
+#'                        BPPARAM = BiocParallel::SerialParam())
 #' res
 #'
 #' @importFrom S4Vectors DataFrame
