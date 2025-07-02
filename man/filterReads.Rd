@@ -48,8 +48,8 @@ read-level entropy. Reads with entropy above this value will be filtered
 out.}
 
 \item{minSNR}{A numeric scalar representing the smallest acceptable
-read Signal to Noise ratio (SNR). Reads with SNR below this value will be filtered
-out.}
+read Signal to Noise ratio (SNR). Reads with SNR below this value will
+be filtered out.}
 
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
 fraction of low-confidence modified base calls in a read. Reads with

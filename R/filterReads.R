@@ -58,9 +58,9 @@
 #' @param maxEntropy A numeric scalar representing the largest acceptable
 #'     read-level entropy. Reads with entropy above this value will be filtered
 #'     out.
-#' @param minSNR A numeric scalar representing the smallest acceptable 
-#'     read Signal to Noise ratio (SNR). Reads with SNR below this value will be filtered
-#'     out.
+#' @param minSNR A numeric scalar representing the smallest acceptable
+#'     read Signal to Noise ratio (SNR). Reads with SNR below this value will
+#'     be filtered out.
 #' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 #'     fraction of low-confidence modified base calls in a read. Reads with
 #'     a fraction of low confidence calls greater than this value will be
@@ -214,13 +214,13 @@ filterReads <- function(se, assayName = "mod_prob",
             readsToRemove[[nm]][which(qc$SEntrModProb > maxEntropy),
                                 "Entropy"] <- TRUE
         }
-        
+
         ## SNR
         if (!is.null(qc) && "SNR" %in% colnames(qc)) {
             readsToRemove[[nm]][which(qc$SNR < minSNR),
                                 "SNR"] <- TRUE
         }
-        
+
 
         ## Fraction of low-confidence modification calls
         if (!is.null(qc) && "FracLowConf" %in% colnames(qc)) {

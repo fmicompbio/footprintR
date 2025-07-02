@@ -12,7 +12,7 @@
 #' @param qcCol A character scalar providing the name of the column in
 #'     \code{colData} that contains quality metrics (calculated by
 #'     \code{calcReadStats}). Can be \code{NULL} if no such column exists.
-#' @param minQscore,maxEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction
+#' @param minQscore,maxEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction,minSNR
 #'     Numeric scalars representing possible threshold values used in
 #'     \code{\link{filterReads}}, for illustration in the plot panels.
 #'
@@ -83,29 +83,29 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     # helper functions for automatic thresholds -----------------------------
     calc_min <- function(x) stats::median(x, na.rm = TRUE) - 3 * stats::mad(x, na.rm = TRUE)
     calc_max <- function(x) stats::median(x, na.rm = TRUE) + 3 * stats::mad(x, na.rm = TRUE)
-    
-    # derive thresholds when not provided 
+
+    # derive thresholds when not provided
     # min thresholds
     if ("qscore" %in% colnames(df) && is.null(minQscore))          minQscore <- max(0,calc_min(df$qscore))
     if ("read_length" %in% colnames(df) && is.null(minReadLength)) minReadLength <- max(0,calc_min(df$read_length))
     if ("aligned_length" %in% colnames(df) && is.null(minAlignedLength)) minAlignedLength <- max(0,calc_min(df$aligned_length))
     if ("aligned_fraction" %in% colnames(df) && is.null(minAlignedFraction)) minAlignedFraction <- max(0,calc_min(df$aligned_fraction))
     if ("SNR" %in% colnames(df) && is.null(minSNR))                minSNR <- calc_min(df$SNR)
-    
+
     # max thresholds
     if ("SEntrModProb" %in% colnames(df) && is.null(maxEntropy))   maxEntropy <- calc_max(df$SEntrModProb)
     if ("MeanConf" %in% colnames(df) && is.null(maxFracLowConf))   maxFracLowConf  <- min(1,calc_max(df$MeanConf))
-    
-    
-    
-    
+
+
+
+
     # prepare plotdata for thresholds
     map2thresh <- c(qscore = minQscore, read_length = minReadLength,
                     aligned_length = minAlignedLength,
                     aligned_fraction = minAlignedFraction,
                     MeanConf = maxFracLowConf, SEntrModProb = maxEntropy,
                     SNR = minSNR)
-    
+
     threshnms <- intersect(names(map2thresh), colnames(df))
     df2 <- data.frame(key = threshnms, value = map2thresh[threshnms])
 
