@@ -2051,6 +2051,7 @@ plotGenomicRegions <- function(grl,
 #'
 #' @noRd
 #' @keywords internal
+#' @importFrom stats dist
 .calcDist <- function(X, clustDist = "euclidean") {
     if (clustDist == "pearson") {
         D <- as.dist(sqrt(2 - 2 * cor(X, method = "pearson",
