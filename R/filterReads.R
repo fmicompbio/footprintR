@@ -139,7 +139,7 @@
 #'
 filterReads <- function(se, assayName = "mod_prob",
                         readInfoCol = "readInfo", qcCol = "QC",
-                        minQscore = 0, maxEntropy = Inf, minSNR=-Inf,
+                        minQscore = 0, maxEntropy = Inf, minSNR = -Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
                         minCoveredFraction = 0, region = NULL,
@@ -173,7 +173,7 @@ filterReads <- function(se, assayName = "mod_prob",
     ## Initialize sparse logical array for each sample, which will be TRUE
     ## for reads that are filtered out with respect to the different criteria
     ## Remark: Could move this to a global constant
-    filterNames <- c("Qscore", "Entropy", "FracLowConf", "SNR","ReadLength",
+    filterNames <- c("Qscore", "Entropy", "FracLowConf", "SNR", "ReadLength",
                      "AlignedLength", "AlignedFraction", "CoveredFraction",
                      "AllNA")
     readsToRemove <- lapply(
@@ -220,7 +220,6 @@ filterReads <- function(se, assayName = "mod_prob",
             readsToRemove[[nm]][which(qc$SNR < minSNR),
                                 "SNR"] <- TRUE
         }
-
 
         ## Fraction of low-confidence modification calls
         if (!is.null(qc) && "FracLowConf" %in% colnames(qc)) {

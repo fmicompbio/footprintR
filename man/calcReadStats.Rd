@@ -142,16 +142,15 @@ the signal of nucleosome periodicity.}
 \item{PACModProb}{: Partial autocorrelation of the modification
 probability values for lags in the range \code{LagRange}. This range
 typically covers the signal of nucleosome periodicity.}
-\item{NoiseVar}{: raw \strong{Read Noise variance} estimated as
+\item{NoiseVar}{: raw Read Noise variance estimated as
 \eqn{0.5\,\mathrm{Var}(\Delta x)}, where \eqn{\Delta x} are
 lag-1 differences that may skip up to \eqn{k} consecutive NAs.
 A floor is applied: \eqn{\mathrm{noise} =
         \max(\mathrm{rawNoise},\, b_0 + b_1 \bar{x})}.}
-\item{SignalVar}{: \strong{Read Signal variance}
+\item{SignalVar}{: Read Signal variance
 \eqn{\max(\mathrm{totalVar}-\mathrm{NoiseVar},\,\varepsilon)}.}
-\item{SNR}{: \strong{Read Signal-to-Noise Ratio}
+\item{SNR}{: Read Signal-to-Noise Ratio
 \eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})}.}
-
 }
 }
 \examples{

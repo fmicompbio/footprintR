@@ -20,7 +20,7 @@ test_that("read statistic functions work", {
     ind <- nnawhich(mat, arr.ind = TRUE)
     probList <- split(nnavals(mat), colnames(mat)[ind[, 2]])[colnames(mat)]
     idxList   <- split(ind[, 1]      , colnames(mat)[ind[, 2]])[colnames(mat)]
-    
+
     expect_identical(lengths(probList), rlens)
     # ... reads to include
     useReads <- sort(sample(nreads, size = nreads - 3L))
@@ -35,11 +35,11 @@ test_that("read statistic functions work", {
 
     # pre-compute SNR, Signal, Noise
     snr_res <- .estimate_snr_probList(probList, idxList)
-    
-    
+
+
     # expected values
     argL <- list(probList = probList, idxList = idxList, useReads = useReads, lowConf = 0.7, xrange = lagvals)
-    
+
     resL <- lapply(allReadStats, function(param) {
         res <- do.call(param, argL)
         expect_length(res, nreads)
@@ -97,9 +97,9 @@ test_that("read statistic functions work", {
                     "sdModProb" = unname(SparseArray::colSds(mat[, useReads], na.rm = TRUE)),
                     "Lag1DModProb" = unlist(lapply(
                         useReads, \(i) mean(abs(diff(probList[[i]] >= 0.5, lag = 1))))),
-                    "SignalVar"    = snr_res$signal[useReads],
-                    "NoiseVar"     = snr_res$noise [useReads],
-                    "SNR"          = snr_res$snr   [useReads]
+                    "SignalVar" = snr_res$signal[useReads],
+                    "NoiseVar" = snr_res$noise[useReads],
+                    "SNR" = snr_res$snr[useReads]
                 ))
         }
     })
@@ -140,12 +140,12 @@ test_that("calcReadStats works", {
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 15L)                          
+    expect_equal(ncol(qc), 15L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1, na.rm = TRUE) /
                      colSums(assay(se)$s1 >= 0, na.rm = TRUE),
@@ -181,7 +181,7 @@ test_that("calcReadStats works", {
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1[idx, ], na.rm = TRUE) /
                      colSums(assay(se)$s1[idx, ] >= 0, na.rm = TRUE),
@@ -283,7 +283,7 @@ test_that("addReadStats works", {
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_identical(metadata(se2$qc2)$minNobsPread, 0)
     expect_identical(metadata(se3$qc2)$minNobsPread, 2600)
     na_rows <- lapply(endoapply(assay(se), function(x) colSums(is_nonna(x))),
