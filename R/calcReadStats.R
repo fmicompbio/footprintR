@@ -405,7 +405,6 @@ calcReadStats <- function(se,
                           LagRange = c(12, 64),
                           BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                           verbose = FALSE) {
-    print ("HELLO")
     # digest arguments
     .assertVector(x = se, type = "RangedSummarizedExperiment")
     .assertScalar(x = assayName, type = "character",
@@ -479,46 +478,35 @@ calcReadStats <- function(se,
             
             
             # Iterate over param_names and add columns to stats_res
-            do.call(cbind, bplapply(param_names, function(param,
-                                                          myColNames = colnames(mat),
-                                                          myProbList = NNAvals_byCol,
-                                                          myIdxList = NNAind_byCol,
-                                                          myUseReads = useReads,
-                                                          myLowConf = LowConf,
-                                                          mySNRstats = SNRstats,
-                                                          snr_res    = snr_res) {
-                
-                if (is.null(snr_res))
-                    snr_res <- get("snr_res", envir = parent.frame())
-                
-                
-                stats_res <- make_zero_col_DFrame(nrow = length(myColNames))
-                row.names(stats_res) <- myColNames
-                
-                vec <- rep(NA_real_, length(myColNames))
-                names(vec) <- myColNames
-                
-                if (param %in% mySNRstats) {
-                    # SNR stats
-                    src <- switch(param,
-                                  "SNR"       = snr_res$snr,
-                                  "SignalVar" = snr_res$signal,
-                                  "NoiseVar"  = snr_res$noise)
-                    vec[myUseReads] <- src[myUseReads]
-                } else {
-                    # all other stats
-                    helper_args <- list(probList = myProbList,
-                                        idxList  = myIdxList,
-                                        useReads = myUseReads,
-                                        lowConf  = myLowConf,
-                                        xrange   = myLagRangeValues)
-                    
-                    vec[names(myProbList)] <- do.call(param, helper_args)
-                }
-                
-                stats_res[[param]] <- vec
-                stats_res
-            }, BPPARAM = BPPARAM))
+            do.call(
+                cbind,
+                bplapply(
+                    param_names,
+                    function(param) {
+                        
+                        stats_res <- make_zero_col_DFrame(nrow = length(colnames(mat)))
+                        row.names(stats_res) <- colnames(mat)
+                        vec <- rep(NA_real_, length(colnames(mat))); names(vec) <- colnames(mat)
+                        
+                        if (param %in% SNRstats) {
+                            src <- switch(param,
+                                          SNR       = snr_res$snr,
+                                          SignalVar = snr_res$signal,
+                                          NoiseVar  = snr_res$noise)
+                            vec[useReads] <- src[useReads]
+                        } else {
+                            helper_args <- list(probList = NNAvals_byCol,
+                                                idxList  = NNAind_byCol,
+                                                useReads = useReads,
+                                                lowConf  = LowConf,
+                                                xrange   = LagRangeValues)
+                            vec[names(NNAvals_byCol)] <- do.call(param, helper_args)
+                        }
+                        
+                        stats_res[[param]] <- vec
+                        stats_res
+                    },
+                    BPPARAM = BPPARAM))
         })
     )
     
