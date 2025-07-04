@@ -236,7 +236,35 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 
 
 
+#' @noRd
+#' @keywords internal
+SNR <- function(probList, idxList, useReads, ...) {
+    snr_res  <- .estimate_snr_probList(probList = probList,
+                                       idxList  = idxList, ...)
+    out      <- rep(NA_real_, length(probList))
+    out[useReads] <- snr_res$snr[useReads]
+    out
+}
 
+#' @noRd
+#' @keywords internal
+SignalVar <- function(probList, idxList, useReads, ...) {
+    snr_res  <- .estimate_snr_probList(probList = probList,
+                                       idxList  = idxList, ...)
+    out      <- rep(NA_real_, length(probList))
+    out[useReads] <- snr_res$signal[useReads]
+    out
+}
+
+#' @noRd
+#' @keywords internal
+NoiseVar <- function(probList, idxList, useReads, ...) {
+    snr_res  <- .estimate_snr_probList(probList = probList,
+                                       idxList  = idxList, ...)
+    out      <- rep(NA_real_, length(probList))
+    out[useReads] <- snr_res$noise[useReads]
+    out
+}
 
 
 
