@@ -200,7 +200,7 @@ test_that("calcReadStats works", {
                          BPPARAM = BiocParallel::SerialParam())
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
-    expect_identical(dim(rs1$s1), c(10L, 15L))
+    expect_identical(dim(rs1$s1), c(10L, 14L))
     expect_equal(sum(rs1$s1$MeanModProb), 1.400375383766)
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
