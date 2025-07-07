@@ -133,24 +133,22 @@ one-dimensional physiological signals. The higher the sample entropy,
 the more irregular, unpredictable and therefore complex the signal.
 See \href{https://en.wikipedia.org/wiki/Sample_entropy}{wikipedia:Sample_entropy}
 for more details.}
-\item{Lag1DModProb}{: Mean Lag1 differences of modification calls,
-defined as: \code{mean(Mod[i]-Mod[i-1])}, where \code{Mod} is a
-\code{{0,1}} modification call.}
 \item{ACModProb}{: Autocorrelation of the modification probability values
 for lags in the range \code{LagRange}. This range typically covers
 the signal of nucleosome periodicity.}
 \item{PACModProb}{: Partial autocorrelation of the modification
 probability values for lags in the range \code{LagRange}. This range
 typically covers the signal of nucleosome periodicity.}
-\item{NoiseVar}{: raw Read Noise variance estimated as
+\item{NoiseVar}{: raw \strong{Read Noise variance} estimated as
 \eqn{0.5\,\mathrm{Var}(\Delta x)}, where \eqn{\Delta x} are
 lag-1 differences that may skip up to \eqn{k} consecutive NAs.
 A floor is applied: \eqn{\mathrm{noise} =
         \max(\mathrm{rawNoise},\, b_0 + b_1 \bar{x})}.}
-\item{SignalVar}{: Read Signal variance
+\item{SignalVar}{: \strong{Read Signal variance}
 \eqn{\max(\mathrm{totalVar}-\mathrm{NoiseVar},\,\varepsilon)}.}
-\item{SNR}{: Read Signal-to-Noise Ratio
+\item{SNR}{: \strong{Read Signal-to-Noise Ratio}
 \eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})}.}
+
 }
 }
 \examples{
