@@ -95,8 +95,6 @@ test_that("read statistic functions work", {
                         MatrixGenerics::colIQRs(as.matrix(mat[, useReads]),
                                                 na.rm = TRUE)),
                     "sdModProb" = unname(SparseArray::colSds(mat[, useReads], na.rm = TRUE)),
-                    "Lag1DModProb" = unlist(lapply(
-                        useReads, \(i) mean(abs(diff(probList[[i]] >= 0.5, lag = 1))))),
                     "SignalVar" = unname(snr_res$signal[useReads]),
                     "NoiseVar" = unname(snr_res$noise[useReads]),
                     "SNR" = unname(snr_res$snr[useReads])
@@ -140,10 +138,10 @@ test_that("calcReadStats works", {
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 15L)
+    expect_equal(ncol(qc), 14L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
-                      "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
+                      "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
 
     expect_equal(qc$MeanModProb,
@@ -176,10 +174,10 @@ test_that("calcReadStats works", {
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 15L)
+    expect_equal(ncol(qc), 14L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
-                      "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
+                      "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
 
     expect_equal(qc$MeanModProb,
@@ -278,10 +276,10 @@ test_that("addReadStats works", {
     qc <- se2$qc2[["s1"]]
     expect_s4_class(qc, "DFrame")
     expect_equal(nrow(qc), 10L)
-    expect_equal(ncol(qc), 15L)
+    expect_equal(ncol(qc), 14L)
     expect_true(all(c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
-                      "SEntrModProb", "Lag1DModProb", "ACModProb", "PACModProb",
+                      "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
 
     expect_identical(metadata(se2$qc2)$minNobsPread, 0)

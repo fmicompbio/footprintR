@@ -4,7 +4,7 @@
 # exclude "SEntrModProb"
 defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
-                      "Lag1DModProb", "ACModProb", "PACModProb","SNR", "SignalVar", "NoiseVar")
+                      "ACModProb", "PACModProb","SNR", "SignalVar", "NoiseVar")
 # global vector with all available read stats functions
 allReadStats <- c(defaultReadStats, "SEntrModProb")
 
@@ -116,15 +116,7 @@ SEntrModProb <- function(probList, useReads, ...) {
     stats_res
 }
 
-#' @noRd
-#' @keywords internal
-Lag1DModProb <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
-        mean(abs(diff(probList[[r]] >= 0.5, lag = 1)))
-    }, numeric(1))
-    stats_res
-}
+
 
 #' @noRd
 #' @keywords internal
@@ -365,9 +357,6 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #'         the more irregular, unpredictable and therefore complex the signal.
 #'         See [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 #'         for more details.}
-#'     \item{Lag1DModProb}{: Mean Lag1 differences of modification calls,
-#'         defined as: \code{mean(Mod[i]-Mod[i-1])}, where \code{Mod} is a
-#'         \code{{0,1}} modification call.}
 #'     \item{ACModProb}{: Autocorrelation of the modification probability values
 #'         for lags in the range \code{LagRange}. This range typically covers
 #'         the signal of nucleosome periodicity.}
@@ -469,9 +458,14 @@ calcReadStats <- function(se,
                 minNbrSamples = NULL)
             
             mat <- assay(sesub, assayName)[[nm]]
+            POS <- BiocGenerics::pos(rowRanges(sesub))
             
             # Non-NA indices
             NNAind <- nnawhich(mat, arr.ind = TRUE)
+            
+            # Positions of observed measurements
+            idxPos_byCol <- split(POS[NNAind[,1]], NNAind[,2])             
+            names(idxPos_byCol) <- colnames(mat)[as.numeric(names(idxPos_byCol))]
             
             # Create list of non-NA row indices per column (i.e per read)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
@@ -500,7 +494,7 @@ calcReadStats <- function(se,
             if (needSNRstats) {
                 snr_res <- .estimate_snr_probList(
                     probList = NNAvals_byCol,
-                    idxList  = NNAind_byCol
+                    idxList  = idxPos_byCol
                 )
             }
             
@@ -524,7 +518,7 @@ calcReadStats <- function(se,
                             vec[useReads] <- src[useReads]
                         } else {
                             helper_args <- list(probList = NNAvals_byCol,
-                                                idxList  = NNAind_byCol,
+                                                idxList  = idxPos_byCol,
                                                 useReads = useReads,
                                                 lowConf  = LowConf,
                                                 xrange   = LagRangeValues)
