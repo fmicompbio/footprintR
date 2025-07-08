@@ -201,7 +201,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
             quantile(m_means, .90, na.rm = TRUE)) &
             !is.na(noise_v)
         
-        if (sum(keep) < 2) {
+        if (sum(keep) < 16) {
             ## Fallback: keep raw noise variances, no floor – but warn the user
             warning("Too few points to estimate noise floor; raw noise variances are used.")
             floor_pars   <- c(NA_real_, NA_real_)        # returned for bookkeeping
