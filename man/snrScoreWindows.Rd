@@ -66,6 +66,7 @@ structured variation is incorrectly interpreted as random noise.
 }
 }
 \examples{
+library(GenomicRanges)
 modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
@@ -84,6 +85,9 @@ se <- readModBam(bamfiles = modbamfiles,
                    minCov=2, assayNameNA=NULL) 
 se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation 
 se_snr_scores2 <- snrScoreWindows(se, gr = gr_tiles) # non-parametric noise estimation
+}
+\seealso{
+\code{\link{estimateNoiseParsWindows}} for estimation of the global noise model parameters.
 }
 \author{
 Panagiotis Papasaikas

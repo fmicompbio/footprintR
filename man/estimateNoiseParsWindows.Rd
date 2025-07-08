@@ -2,7 +2,7 @@
 % Please edit documentation in R/scanGenome.R
 \name{estimateNoiseParsWindows}
 \alias{estimateNoiseParsWindows}
-\title{Estimate global noise parameters at window level}
+\title{Estimate noise ~ methylation, coverage fit from randomly sampled windows}
 \usage{
 estimateNoiseParsWindows(
   bamfiles,
@@ -11,14 +11,18 @@ estimateNoiseParsWindows(
   windowSize = 500L,
   nWindows = 500L,
   k = 2L,
-  minCov = 2L,
+  minCov = 3L,
   windows = NULL,
   plot = FALSE,
   BPPARAM = BiocParallel::MulticoreParam(4L, RNGseed = 42L)
 )
 }
 \arguments{
-\item{bamfiles}{Character vector with modBAM paths (named or unnamed).}
+\item{bamfiles}{Character vector with one or several modBam file names.
+When several files are supplied, the noise model
+is fitted \strong{independently for each sample}. The final
+coefficients returned are the arithmetic mean
+of the per-sample coefficient vectors.}
 
 \item{modbase}{Character scalar giving the modified base (as understood by
 \code{readModBam()}).}
@@ -69,6 +73,7 @@ regresses the resulting noise variances on window means and coverage.  Optionall
 plots the (mean, noise) cloud together with the fitted line.
 }
 \examples{
+library(GenomicRanges)
 modbamfiles <- system.file("extdata",
                            c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                            package = "footprintR")
