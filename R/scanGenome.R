@@ -764,12 +764,13 @@ estimateNoiseParsWindows <- function(bamfiles,
         # keep / filter 
         keep <- is.finite(meanVals)  & is.finite(noiseVals) &
             is.finite(depthVals) & depthVals > 0
-        
-        qMean  <- quantile(meanVals [keep], c(0.05, 0.95))
+        qMean  <- quantile(meanVals [keep], c(0.05, 0.99))
         qDepth <- quantile(depthVals[keep], c(0.01, 0.95))
+        qNoise <- quantile(noiseVals[keep]/(meanVals[keep]+0.01), c(0.01, 0.7) )
         keep <- keep &
             between(meanVals , qMean [1], qMean [2]) &
-            between(depthVals, qDepth[1], qDepth[2])
+            between(depthVals, qDepth[1], qDepth[2]) &
+            between(noiseVals/(meanVals+0.01), qNoise[1], qNoise[2])
         
         if (sum(keep) >= 10) {
             z <- ifelse(depthVals[keep] <= d_cut, 1 / depthVals[keep], 0)
@@ -778,9 +779,9 @@ estimateNoiseParsWindows <- function(bamfiles,
         }
         
         # store stats for plotting
-        meanMat [, j] <- meanVals
-        noiseMat[, j] <- noiseVals
-        depthMat[, j] <- depthVals
+        meanMat [keep, j] <- meanVals[keep]
+        noiseMat[keep, j] <- noiseVals[keep]
+        depthMat[keep, j] <- depthVals[keep]
     }
 
     # Average per sample coefficients:
@@ -797,34 +798,31 @@ estimateNoiseParsWindows <- function(bamfiles,
             meanVals  <- meanMat [, j]
             noiseVals <- noiseMat[, j]
             depthVals <- depthMat[, j]
-            
-            keep <- is.finite(meanVals)  & is.finite(noiseVals) &
-                is.finite(depthVals) & depthVals > 0
-            
+
             ## colour maps 
             cols_depth <- colorRampPalette(c("navy", "gold"))(100)[
-                cut(depthVals[keep], 100)]
+                cut(depthVals, 100)]
             cols_mean  <- colorRampPalette(c("navy", "gold"))(100)[
-                cut(meanVals [keep], 100)]
+                cut(meanVals, 100)]
             
             ## global fitted lines
-            avgInvDepth <- mean(1 / depthVals[keep])
-            avgMean     <- mean(meanVals[keep])
+            avgInvDepth <- mean(1 / depthVals, na.rm=TRUE)
+            avgMean     <- mean(meanVals, na.rm=TRUE)
             
             int1 <- cf["intercept"] + cf["slopeInvDepth"] * avgInvDepth
             slo1 <- cf["slopeMean"]
-            int2 <- cf["intercept"] + cf["slopeMean"]     * avgMean
+            int2 <- cf["intercept"] + cf["slopeMean"] * avgMean
             slo2 <- cf["slopeInvDepth"]
             
             ## panel 1: noise ~ mean
-            plot(meanVals[keep], noiseVals[keep],
+            plot(meanVals, noiseVals,
                  pch = 19, col = cols_depth,
                  main = colnames(sePos)[j],
                  xlab = "Window meanmod.", ylab = "Noise variance")
             abline(a = int1, b = slo1, lwd = 2); grid()
             
             ## panel 2: noise ~ 1/coverage
-            plot(1 / depthVals[keep], noiseVals[keep],
+            plot(1 / depthVals, noiseVals,
                  pch = 19, col = cols_mean,
                  xlab = "1/Window coverage", ylab = "Noise variance")
             abline(a = int2, b = slo2, lwd = 2); grid()
