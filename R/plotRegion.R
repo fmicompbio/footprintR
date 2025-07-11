@@ -2059,6 +2059,8 @@ plotGenomicRegions <- function(grl,
 
 #' Calculate distances between columns of matrix
 #'
+#' @importFrom stats dist
+#'
 #' @noRd
 #' @keywords internal
 .calcDist <- function(X, clustDist = "euclidean") {
