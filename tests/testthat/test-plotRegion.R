@@ -306,19 +306,19 @@ test_that("plotRegion works", {
         "No reads retained for plotting"
     )
 
-    expect_s3_class(p1, "ggplot")
-    expect_s3_class(p2, "ggplot")
-    expect_s3_class(p3, "ggplot")
-    expect_s3_class(p4, "ggplot")
-    expect_s3_class(p5, "ggplot")
-    expect_s3_class(p6, "ggplot")
-    expect_s3_class(p7, "ggplot")
-    expect_s3_class(p8, "ggplot")
-    expect_s3_class(p9, "ggplot")
-    expect_s3_class(p10, "ggplot")
-    expect_s3_class(p11, "ggplot")
-    expect_s3_class(p12, "ggplot")
-    expect_s3_class(p13, "ggplot")
+    expect_true(ggplot2::is_ggplot(p1))
+    expect_true(ggplot2::is_ggplot(p2))
+    expect_true(ggplot2::is_ggplot(p3))
+    expect_true(ggplot2::is_ggplot(p4))
+    expect_true(ggplot2::is_ggplot(p5))
+    expect_true(ggplot2::is_ggplot(p6))
+    expect_true(ggplot2::is_ggplot(p7))
+    expect_true(ggplot2::is_ggplot(p8))
+    expect_true(ggplot2::is_ggplot(p9))
+    expect_true(ggplot2::is_ggplot(p10))
+    expect_true(ggplot2::is_ggplot(p11))
+    expect_true(ggplot2::is_ggplot(p12))
+    expect_true(ggplot2::is_ggplot(p13))
     expect_identical(nrow(p1$data), 4006L)
     expect_identical(nrow(p2$data), 24040L)
     expect_identical(nrow(p3$data), 20000L)
@@ -439,7 +439,7 @@ test_that("plotRegion works - manual inspection", {
                            showLegend = FALSE))) +
         plot_layout(heights = c(3, 1, 2)),
         "the standard deviation is zero")
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... don't color by strand, move labels, add footprints
     expect_warning({
@@ -467,7 +467,7 @@ test_that("plotRegion works - manual inspection", {
                 plot_layout(heights = c(3, 3, 1, 2))
         })
     })
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... define the region including strand
     p <- plotRegion(
@@ -488,7 +488,7 @@ test_that("plotRegion works - manual inspection", {
                            showLegend = FALSE,
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 3, 1, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... interpolate, add bigwig tracks
     p <- plotRegion(
@@ -511,7 +511,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 2, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## referenceCoordinate = left border of plot, squish+interpolate heatmap
     p <- plotRegion(
@@ -537,7 +537,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 2, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## squish + no facet
     p <- plotRegion(
@@ -561,7 +561,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## squish + facet
     p <- plotRegion(
@@ -585,7 +585,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## orderReads = "region" + no facet
     p <- plotRegion(
@@ -599,7 +599,7 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "regionAvg", orderRegion = grh[1],
                            facetBy = NULL, size = 2, stroke = 0.5)))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## orderReads = "region" + facet
     p <- plotRegion(
@@ -613,7 +613,7 @@ test_that("plotRegion works - manual inspection", {
                            legendTitle = "6mA", highlightRegions = grh,
                            orderReads = "regionAvg", orderRegion = grh[1],
                            facetBy = "sample", size = 2, stroke = 0.5)))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## cluster reads using different distance metrics
     p <- plotRegion(
@@ -629,7 +629,7 @@ test_that("plotRegion works - manual inspection", {
                            orderReads = "cluster", orderRegion = grh[1],
                            windowWidth = 15, clustDist = "euclidean",
                            facetBy = "sample", size = 2, stroke = 0.5)))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## facet, different number of reads per facet - adjust height
     setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563",
@@ -657,7 +657,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## facet, different number of reads per facet - don't adjust height
     ## put GenomicRegion track last - make sure axis text is still shown
@@ -687,7 +687,7 @@ test_that("plotRegion works - manual inspection", {
                            colorByStrand = TRUE, labelSize = 2,
                            labelPosition = "inside", legendTitle = NULL))) +
         plot_layout(heights = c(3, 3, 2, 1))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## cluster, with single read
     setmp <- subsetReads(seB, c("s1-233e48a7-f379-4dcf-9270-958231125563"),
@@ -713,7 +713,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## referenceCoordinate outside plot (left) - breaks in scale_cut!
     ## fixed in https://github.com/r-lib/scales/commit/6f2f979a81678c7cd5597b1d18cac78e9cf473c6,
@@ -739,7 +739,7 @@ test_that("plotRegion works - manual inspection", {
     #                        highlightRegions = grh))) +
     #         plot_layout(heights = c(3, 1, 3, 2)),
     #     "the standard deviation is zero")
-    # expect_s3_class(p, "ggplot")
+    # expect_true(ggplot2::is_ggplot(p))
 
     ## referenceCoordinate outside plot (right)
     p <- plotRegion(
@@ -763,7 +763,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth",
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 1, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## referenceCoordinate in the middle of plot region
     expect_warning(expect_warning(p <- plotRegion(
@@ -790,7 +790,7 @@ test_that("plotRegion works - manual inspection", {
                            highlightRegions = grh))) +
             plot_layout(heights = c(3, 1, 3, 2)),
         "the standard deviation is zero"), "the standard deviation is zero")
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## modbaseSpace = TRUE, change colors
     p <- plotRegion(
@@ -810,7 +810,7 @@ test_that("plotRegion works - manual inspection", {
                            colors = c(s1 = "forestgreen", s2 = "firebrick1"),
                            highlightRegions = grh))) +
         plot_layout(heights = c(3, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## modbaseSpace = TRUE, footprints -> set modbaseSpace to FALSE
     expect_warning(expect_warning(p <- plotRegion(
@@ -832,7 +832,7 @@ test_that("plotRegion works - manual inspection", {
                            highlightRegions = grh))) +
             plot_layout(heights = c(3, 3, 2)),
         "Plotting in `modbaseSpace` is not allowed"), "the standard deviation is zero")
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## modbaseSpace = TRUE, bigwig -> set modbaseSpace to FALSE
     expect_warning(p <- plotRegion(
@@ -845,7 +845,7 @@ test_that("plotRegion works - manual inspection", {
                       list(trackData = bwfiles, trackType = "BigWig"))) +
             plot_layout(heights = c(3, 3)),
         "Plotting in `modbaseSpace` is not allowed if BigWig")
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... with only smooth, suppressTickLabels = TRUE
     p <- plotRegion(
@@ -866,7 +866,7 @@ test_that("plotRegion works - manual inspection", {
                            highlightRegions = grh, yAxisLabel = "Smooth",
                            arglistSmooth = list(linewidth = 2)))) +
         plot_layout(heights = c(3, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... change y-axis range
     p <- plotRegion(
@@ -885,7 +885,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Smooth", colorBy = "modbase",
                            highlightRegions = grh, yAxisRange = c(3, 9)))) +
         plot_layout(heights = c(3, 3, 2))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... compare smoothing methods
     p <- plotRegion(
@@ -907,7 +907,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Rolling mean, windowSize = 15",
                            smoothMethod = "rollingMean")
         ))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 
     ## ... compare smoothing methods, in modbaseSpace
     p <- plotRegion(
@@ -929,7 +929,7 @@ test_that("plotRegion works - manual inspection", {
                            trackTitle = "Rolling mean, windowSize = 15",
                            smoothMethod = "rollingMean")
         ))
-    expect_s3_class(p, "ggplot")
+    expect_true(ggplot2::is_ggplot(p))
 })
 
 ## -------------------------------------------------------------------------- ##

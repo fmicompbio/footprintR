@@ -389,8 +389,8 @@ plotModbaseSpacing <- function(x,
         geom_line() +
         labs(x = "Distance between modified bases (bp)",
              y = "Number of distances",
-             color = element_blank(),
-             linewidth = element_blank()) +
+             color = NULL,
+             linewidth = NULL) +
         scale_color_manual(
             values = structure(c("gray", "red", "green3"), names = types)) +
         scale_linewidth_manual(

@@ -93,7 +93,7 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
         geom_vline(data = df2, mapping = aes(xintercept = .data$value),
                    linetype = "dashed") +
         facet_wrap(~ key, scales = "free_x") +
-        labs(x = element_blank(),
+        labs(x = NULL,
              y = "Number of reads",
              fill = "Sample") +
         theme_bw()
