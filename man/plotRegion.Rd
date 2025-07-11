@@ -44,6 +44,8 @@ plotReadsLollipop(
   drawRead = TRUE,
   orderReads = "cluster",
   orderRegion = NULL,
+  clustDist = "euclidean",
+  windowWidth = 25,
   modbaseSpace = FALSE,
   trackTitle = NULL,
   legendTitle = NULL,
@@ -67,6 +69,8 @@ plotReadsHeatmap(
   linewidthTiles = 0,
   orderReads = "cluster",
   orderRegion = NULL,
+  clustDist = "euclidean",
+  windowWidth = 25,
   modbaseSpace = FALSE,
   interpolate = FALSE,
   trackTitle = NULL,
@@ -251,6 +255,15 @@ If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
 window in which average modification probability is calculated to order
 the reads in read-level plots. A \code{NULL} value indicates that the
 entire plotted region should be used as the window.}
+
+\item{clustDist}{A character scalar defining the distance measure to use
+for clustering. Should be one of \code{"pearson"} or
+\code{"euclidean"}.}
+
+\item{windowWidth}{A numeric scalar giving the window width for which
+read-level data will be averaged before clustering. This should help
+to reduce the noise and allows to compare reads without any common
+modification calls, such as plus- and minus-strand reads with 6mA calls.}
 
 \item{footprintColumns}{A character vector with names of columns from
 \code{colData(se)} containing footprints to display. Typically these
