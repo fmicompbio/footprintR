@@ -403,7 +403,7 @@ plotRegion <- function(
     ## assemble composite plot
     if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
         for (i in seq.int(length(pL) - 1L)) {
-            pL[[i]] <- pL[[i]] + labs(x = element_blank())
+            pL[[i]] <- pL[[i]] + labs(x = NULL)
             if (suppressTickLabels) {
                 pL[[i]] <- pL[[i]] + theme(axis.text.x = element_blank())
             }
