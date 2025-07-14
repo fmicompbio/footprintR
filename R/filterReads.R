@@ -205,8 +205,7 @@ filterReads <- function(se, assayName = "mod_prob",
 
         ## Quality score
         if (!is.null(ri) && "qscore" %in% colnames(ri)) {
-            readsToRemove[[nm]][which(ri$qscore < minQscore),
-                                "Qscore"] <- TRUE
+            readsToRemove[[nm]][which(ri$qscore < minQscore), "Qscore"] <- TRUE
         }
 
         ## KS entropy
@@ -217,8 +216,7 @@ filterReads <- function(se, assayName = "mod_prob",
 
         ## SNR
         if (!is.null(qc) && "SNR" %in% colnames(qc)) {
-            readsToRemove[[nm]][which(qc$SNR < minSNR),
-                                "SNR"] <- TRUE
+            readsToRemove[[nm]][which(qc$SNR < minSNR), "SNR"] <- TRUE
         }
 
         ## Fraction of low-confidence modification calls

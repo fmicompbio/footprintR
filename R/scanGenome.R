@@ -542,49 +542,61 @@ estimateNRLwindows <- function(se, gr,
 
 #' Internal: core SNR estimator for one numeric vector
 #'
+#' Adapted from \code{.estimate_snr_probList()} but acting on a *single*,
+#' already aggregated signal. The noise parameters are **not estimated here** –
+#' they are supplied (typically pre-computed by \code{estimateSNRfloorPars()}).
 #'
 #' @importFrom stats var
 #'
 #' @keywords internal
 #' @noRd
-.estimate_snr_vec <- function(x, pos,
-                              depth      = NA_real_,
-                              k          = 2L,
-                              min_diffs  = NULL,
+.estimate_snr_vec <- function(x,
+                              pos,
+                              depth = NA_real_,
+                              k = 2L,
+                              min_diffs = NULL,
                               noise_pars = NULL,
+                              eps = 1e-3) {
     ## check arguments
     .assertVector(x = x, type = "numeric", len = length(pos))
     .assertVector(x = pos, type = "numeric")
-    
+
     ## need at least three data points
-    if (length(x) < 3L)
+    if (length(x) < 3L) {
         return(list(total = NA_real_, signal = NA_real_, noise = NA_real_))
-    
-    if (is.null(min_diffs))
-        min_diffs <- max(16L, floor(0.05 * length(x)))
-    ## total variance
-    total_v <- var(x,na.rm=TRUE)
-    
-    ## parametric vs non-parametric noise estimation:
-    if (!is.null(noise_pars)) {
-        d_cut <- max(10,quantile(depth,0.05,na.rm = TRUE) ) # depth threshold for including depth in the model
-        noise_v <- noise_pars[1] + noise_pars[2] * mean(x,na.rm=TRUE) +
-            noise_pars[3] * ((depth < d_cut) / depth)  
+
     } else {
-        ## noise variance: 0.5 * var of lag-1 differences with gap ≤ k
-        gaps <- diff(pos) - 1L
-        d <- diff(x)[gaps <= k]
-        noise_v <- if (sum(!is.na(d)) >= min_diffs) var(d, na.rm = TRUE) / 2 else NA_real_
+        if (is.null(min_diffs)) {
+            min_diffs <- max(16L, floor(0.05 * length(x)))
+        }
+
+        ## total variance
+        total_v <- var(x, na.rm = TRUE)
+
+        ## parametric vs non-parametric noise estimation:
+        if (!is.null(noise_pars)) {
+            # depth threshold for including depth in the model
+            d_cut <- max(10, quantile(depth, 0.05, na.rm = TRUE))
+            noise_v <- noise_pars[1] + noise_pars[2] * mean(x, na.rm = TRUE) +
+                noise_pars[3] * ((depth < d_cut) / depth)
+
+        } else {
+            ## noise variance: 0.5 * var of lag-1 differences with gap ≤ k
+            gaps <- diff(pos) - 1L
+            d <- diff(x)[gaps <= k]
+            noise_v <- NA_real_
+            if (sum(!is.na(d)) >= min_diffs) {
+                noise_v <- var(d, na.rm = TRUE) / 2
+            }
+        }
+
+        signal_v <- pmax(total_v - noise_v, eps)
+
+        return(list(total = total_v,
+                    signal = signal_v,
+                    noise  = noise_v))
     }
-    
-    signal_v <- pmax(total_v - noise_v, eps)
-    
-    list(total = total_v,
-         signal = signal_v,
-         noise  = noise_v)
 }
-
-
 
 #' Estimate noise ~ f(methylation, coverage) fit from randomly sampled windows
 #'
@@ -646,7 +658,7 @@ estimateNRLwindows <- function(se, gr,
 #' noisePars <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
 #'                                       windows = gr_tiles, plot = TRUE)
 #' noisePars
-#' 
+#'
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges findOverlaps
 #' @importFrom SummarizedExperiment assay assayNames
@@ -663,41 +675,40 @@ estimateNoiseParsWindows <- function(bamfiles,
                                      modbase,
                                      chromosomeLengths = NULL,
                                      windowSize = 500L,
-                                     nWindows   = 500L,
+                                     nWindows = 500L,
                                      k = 2L,
-                                     minCov     = 3L,
-                                     windows    = NULL,
-                                     plot       = FALSE,
-                                     BPPARAM    = BiocParallel::MulticoreParam(
-                                         4L, RNGseed = 42L)) {
-    .assertVector(bamfiles, "character")
-    .assertScalar(modbase,  "character")
-    .assertScalar(k,         "numeric", rngIncl = c(1L, Inf))
+                                     minCov = 3L,
+                                     windows = NULL,
+                                     plot = FALSE,
+                                     BPPARAM = MulticoreParam(4L, RNGseed = 42L)) {
+    # check arguments
+    .assertVector(x = bamfiles, type = "character")
+    .assertScalar(x = modbase,  type = "character")
+    .assertScalar(x = k, type = "numeric", rngIncl = c(1L, Inf))
     if (is.null(windows)) {
-        # sample* windows 
-        .assertVector(chromosomeLengths, "numeric")
-        .assertScalar(windowSize,        "numeric", rngExcl = c(0, Inf))
-        .assertScalar(nWindows,          "numeric", rngExcl = c(10, Inf))
+        # sample windows from genome
+        .assertVector(x = chromosomeLengths, type = "numeric")
+        .assertScalar(x = windowSize, type = "numeric", rngExcl = c(0, Inf))
+        .assertScalar(x = nWindows, type = "numeric", rngExcl = c(10, Inf))
         if (is.null(names(chromosomeLengths)) ||
-            anyDuplicated(names(chromosomeLengths)))
+            anyDuplicated(names(chromosomeLengths))) {
             cli_abort("{.arg chromosomeLengths} must be a *named* vector.")
-        
-        
-        seqnamesToSampleFrom <- names(chromosomeLengths)
+        }
+
     } else {
-        # *use* explicit windows 
-        .assertVector(windows, "GRanges")
-        winGR <- windows              # keep original order/names
-        if (length(winGR) == 0)
-            return(setNames(rep(NA_real_, 3),
-                            c("intercept", "slopeMean", "slopeInvDepth")))
+        # use explicit windows
+        .assertVector(x = windows, type = "GRanges", rngLen = c(1, Inf))
     }
-    
-    .assertScalar(minCov,  "numeric", rngExcl = c(1, Inf))
-    .assertScalar(plot,    "logical")
-    
-    ## 1. obtain (or sample) windows 
+    .assertScalar(x = minCov,  type = "numeric", rngExcl = c(1, Inf))
+    .assertScalar(x = plot, type = "logical")
+
+    # init empty result
+    cf <- setNames(rep(NA_real_, 3),
+                   c("intercept", "slopeMean", "slopeInvDepth"))
+
+    ## 1. obtain (or sample) windows
     if (is.null(windows)) {
+        seqnamesToSampleFrom <- names(chromosomeLengths)
         nPerChr <- ceiling(nWindows / length(seqnamesToSampleFrom))
         starts  <- lapply(seqnamesToSampleFrom, function(chr) {
             maxStart <- chromosomeLengths[chr] - windowSize + 1L
@@ -707,85 +718,88 @@ estimateNoiseParsWindows <- function(bamfiles,
         winGR <- GRanges(seqnames = rep(seqnamesToSampleFrom, each = nPerChr),
                          ranges   = IRanges(unlist(starts), width = windowSize))
         winGR <- winGR[seq_len(min(length(winGR), nWindows))]
+    } else {
+        winGR <- windows # keep original order/names
     }
-    
+
     ## 2. fetch per-position summary data
     sePos <- readModBam(bamfiles = bamfiles,
-                        regions  = winGR,
-                        modbase  = modbase,
-                        level    = "summary",
-                        trim     = TRUE,
-                        BPPARAM  = BPPARAM) |>
-        filterPositions(filters="coverage",
-                        minCov=minCov, assayNameNA=NULL,
-                        minNbrSamples=length(bamfiles))
-    
-    if (!all(c("FracMod","Nvalid","Nmod") %in% assayNames(sePos)))
-        return(setNames(rep(NA_real_,3),
+                        regions = winGR,
+                        modbase = modbase,
+                        level = "summary",
+                        trim = TRUE,
+                        BPPARAM = BPPARAM) |>
+        filterPositions(filters = "coverage",
+                        minCov = minCov, assayNameNA = NULL,
+                        minNbrSamples = length(bamfiles))
+
+    if (!all(c("FracMod","Nvalid","Nmod") %in% assayNames(sePos))) {
+        return(setNames(rep(NA_real_, 3),
                         c("intercept","slopeMean","slopeInvDepth")))
-    
+    }
+
     ov   <- findOverlaps(rowRanges(sePos), winGR, ignore.strand = TRUE)
     idxL <- split(queryHits(ov),
-                  factor(subjectHits(ov), levels = seq_along(winGR)), drop=FALSE)
-    
+                  factor(subjectHits(ov), levels = seq_along(winGR)),
+                  drop = FALSE)
+
     POS <- pos(rowRanges(sePos)) # genomic coordinates
     FM <- assay(sePos, "FracMod")              # nPos × nSam
     NV <- assay(sePos, "Nvalid")
-    
+
     # per-sample regressions
     nWin <- length(winGR)
     nSam <- ncol(sePos)
-    
+
     meanMat  <- noiseMat <- depthMat <-
         matrix(NA_real_, nrow = nWin, ncol = nSam,
                dimnames = list(NULL, colnames(sePos)))
-    
+
     coefMat <- matrix(NA_real_, nrow = 3, ncol = nSam,
                       dimnames = list(c("intercept",
                                         "slopeMean",
                                         "slopeInvDepth"),
                                       colnames(sePos)))
-    
 
     for (j in seq_len(nSam)) {
-        
+
         meanVals <- noiseVals <- depthVals <- numeric(nWin)
-        
+
         for (w in seq_along(idxL)) {
             ii   <- idxL[[w]]
             vec  <- FM[ii, j]
             dep  <- median(NV[ii, j])
             offs <- POS[ii] - start(winGR)[w] + 1L
-            
+
             est  <- .estimate_snr_vec(vec, pos = offs, depth = dep, k = k)
-            
-            meanVals [w] <- mean(vec,  na.rm = TRUE)
+
+            meanVals[w] <- mean(vec, na.rm = TRUE)
             noiseVals[w] <- est$noise
             depthVals[w] <- dep
         }
-        
+
         #depth threshold for including depth in the model
-        d_cut <- max(10,quantile(depthVals,0.05,na.rm = TRUE) )
-        
-        # keep / filter 
+        d_cut <- max(10, quantile(depthVals, 0.05, na.rm = TRUE))
+
+        # keep / filter
         keep <- is.finite(meanVals)  & is.finite(noiseVals) &
             is.finite(depthVals) & depthVals > 0
-        qMean  <- quantile(meanVals [keep], c(0.05, 0.99))
+        qMean  <- quantile(meanVals[keep], c(0.05, 0.99))
         qDepth <- quantile(depthVals[keep], c(0.01, 0.95))
-        qNoise <- quantile(noiseVals[keep]/(meanVals[keep]+0.01), c(0.01, 0.7) )
+        qNoise <- quantile(noiseVals[keep] / (meanVals[keep] + 0.01),
+                           c(0.01, 0.7))
         keep <- keep &
-            between(meanVals , qMean [1], qMean [2]) &
+            between(meanVals , qMean[1], qMean[2]) &
             between(depthVals, qDepth[1], qDepth[2]) &
-            between(noiseVals/(meanVals+0.01), qNoise[1], qNoise[2])
-        
+            between(noiseVals / (meanVals + 0.01), qNoise[1], qNoise[2])
+
         if (sum(keep) >= 10) {
             z <- ifelse(depthVals[keep] <= d_cut, 1 / depthVals[keep], 0)
-            coefMat[, j] <- coef(
-                lm(noiseVals[keep] ~ meanVals[keep] + z ))
+            coefMat[, j] <- coef(lm(noiseVals[keep] ~ meanVals[keep] + z))
         }
-        
+
         # store stats for plotting
-        meanMat [keep, j] <- meanVals[keep]
+        meanMat[keep, j] <- meanVals[keep]
         noiseMat[keep, j] <- noiseVals[keep]
         depthMat[keep, j] <- depthVals[keep]
     }
@@ -793,40 +807,40 @@ estimateNoiseParsWindows <- function(bamfiles,
     # Average per sample coefficients:
     cf  <- setNames(rowMeans(coefMat, na.rm = TRUE),
                     c("intercept","slopeMean","slopeInvDepth"))
-    
+
     ##  Plotting
     if (plot) {
         par(mfrow = c(nSam, 2))
         op <- par(mar = c(4, 4, 0.5, 0.5)); on.exit(par(op))
-        
+
         for (j in seq_len(nSam)) {
-            
-            meanVals  <- meanMat [, j]
+
+            meanVals  <- meanMat[, j]
             noiseVals <- noiseMat[, j]
             depthVals <- depthMat[, j]
 
-            ## colour maps 
+            ## colour maps
             cols_depth <- colorRampPalette(c("navy", "gold"))(100)[
                 cut(depthVals, 100)]
             cols_mean  <- colorRampPalette(c("navy", "gold"))(100)[
                 cut(meanVals, 100)]
-            
+
             ## global fitted lines
-            avgInvDepth <- mean(1 / depthVals, na.rm=TRUE)
-            avgMean     <- mean(meanVals, na.rm=TRUE)
-            
+            avgInvDepth <- mean(1 / depthVals, na.rm = TRUE)
+            avgMean <- mean(meanVals, na.rm = TRUE)
+
             int1 <- cf["intercept"] + cf["slopeInvDepth"] * avgInvDepth
             slo1 <- cf["slopeMean"]
             int2 <- cf["intercept"] + cf["slopeMean"] * avgMean
             slo2 <- cf["slopeInvDepth"]
-            
+
             ## panel 1: noise ~ mean
             plot(meanVals, noiseVals,
                  pch = 19, col = cols_depth,
                  main = colnames(sePos)[j],
                  xlab = "Window meanmod.", ylab = "Noise variance")
             abline(a = int1, b = slo1, lwd = 2); grid()
-            
+
             ## panel 2: noise ~ 1/coverage
             plot(1 / depthVals, noiseVals,
                  pch = 19, col = cols_mean,
@@ -847,7 +861,7 @@ estimateNoiseParsWindows <- function(bamfiles,
 #' For each genomic window in \code{gr} the function aggregates a continuous
 #' per-position assay (default \code{"FracMod"}) and estimates
 #' (i) total variance, (ii) noise variance
-#' and (iii) signal variance as \code{total - noise}.  
+#' and (iii) signal variance as \code{total - noise}.
 #' The \eqn{\log_2(\text{signal}/\text{noise})} is returned as SNR.
 #'
 #' @param se A per-position \code{RangedSummarizedExperiment}, typically the
@@ -869,22 +883,22 @@ estimateNoiseParsWindows <- function(bamfiles,
 #' @details
 #' Noise variance estimation can be performed in two ways:
 #'
-#' 1. **Parametric estimation**:  
-#'    If noise parameters (`noise_pars`) are supplied (typically estimated using 
-#'    \code{estimateNoiseParsWindows()}, which fits a linear regression model to 
-#'    relate noise variance to average methylation level and coverage across random genomic windows), 
-#'    the noise variance returned is the expected noise given the window's average methylation 
+#' 1. **Parametric estimation**:
+#'    If noise parameters (`noise_pars`) are supplied (typically estimated using
+#'    \code{estimateNoiseParsWindows()}, which fits a linear regression model to
+#'    relate noise variance to average methylation level and coverage across random genomic windows),
+#'    the noise variance returned is the expected noise given the window's average methylation
 #'    and coverage.
 #'
-#' 2. **Non-parametric (raw) estimation**:  
-#'    If noise parameters are not supplied, the function estimates noise directly from the data, 
-#'    based on short-range variation between neighboring positions. While unbiased for random signals, 
-#'    this method can *overestimate* noise—and thus underestimate the true SNR—if the biological signal 
-#'    is strongly correlated across reads (e.g., due to systematic accessibility patterns), because the 
+#' 2. **Non-parametric (raw) estimation**:
+#'    If noise parameters are not supplied, the function estimates noise directly from the data,
+#'    based on short-range variation between neighboring positions. While unbiased for random signals,
+#'    this method can *overestimate* noise—and thus underestimate the true SNR—if the biological signal
+#'    is strongly correlated across reads (e.g., due to systematic accessibility patterns), because the
 #'    structured variation is incorrectly interpreted as random noise.
-#'    
+#'
 #' @seealso \code{\link{estimateNoiseParsWindows}} for estimation of the global noise model parameters.
-#' 
+#'
 #' @return A \code{SummarizedExperiment} with assays
 #'   \code{"TotalVar"}, \code{"SignalVar"}, \code{"NoiseVar"} and
 #'   \code{"SNR"} (\eqn{\log_2} signal/noise).
@@ -908,8 +922,8 @@ estimateNoiseParsWindows <- function(bamfiles,
 #'                    level    = "summary",
 #'                    trim     = TRUE) |>
 #'    filterPositions(filters="coverage",
-#'                    minCov=2, assayNameNA=NULL) 
-#' se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation 
+#'                    minCov=2, assayNameNA=NULL)
+#' se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation
 #' se_snr_scores2 <- snrScoreWindows(se, gr = gr_tiles) # non-parametric noise estimation
 #'
 #' @importFrom SummarizedExperiment assay assayNames SummarizedExperiment colData
@@ -926,18 +940,18 @@ snrScoreWindows <- function(se, gr,
     .assertVector(se, "RangedSummarizedExperiment")
     .assertVector(gr, "GRanges")
     .assertScalar(assayNameAgg, "character", validValues = assayNames(se))
-    
+
     if (!"Nvalid" %in% assayNames(se))
         cli::cli_abort("{.arg se} must contain an assay {.code Nvalid}.")
     .assertScalar(k,         "numeric", rngIncl = c(1L, Inf))
     if (!is.null(min_diffs)) .assertScalar(min_diffs, "numeric", rngIncl=c(1L,Inf))
-    
+
     if (!is.null(noise_pars))
         .assertVector(noise_pars, "numeric", len = 3)
     if (is.null(noise_pars) && !is.null(metadata(se)$NoisePars))
         noise_pars <- metadata(se)$NoisePars
-    
-    
+
+
     # empty input
     if (nrow(se) == 0 || length(gr) == 0) {
         return(SummarizedExperiment(
@@ -950,42 +964,42 @@ snrScoreWindows <- function(se, gr,
             colData   = colData(se),
             metadata  = metadata(se)))
     }
-    
-    # overlaps 
+
+    # overlaps
     ov   <- findOverlaps(rowRanges(se), gr, ignore.strand = TRUE)
     idxL <- split(queryHits(ov),
                   factor(subjectHits(ov), levels = seq_len(length(gr))),
                   drop = FALSE)
-    
+
     nWin <- length(gr); nSam <- ncol(se)
     totMat <-  matrix(NA_real_, nrow = nWin, ncol = nSam)
-    
+
     rowNames <- if (is.null(names(gr))) {
         as.character(seq_len(nWin))
     } else {
         names(gr)
     }
-    
+
     dimnames(totMat) <- list(rowNames, colnames(se))
-    
+
     sigMat <- noiseMat <- snrMat <- totMat
-    
-    
+
+
     signal  <- assay(se, assayNameAgg)
     depth   <- assay(se, "Nvalid")
     posVec  <- pos(rowRanges(se))
-    
+
     # main loop
     for (j in seq_len(nSam)) {
         resL <- lapply(seq_len(nWin), function(w) {
             ii <- idxL[[w]]
             if (length(ii) < 3L)
                 return(list(total = NA_real_, signal = NA_real_, noise = NA_real_))
-            
+
             x    <- signal[ii, j]
             offs <- posVec[ii] - start(gr)[w] + 1L
             dep  <- median(depth[ii, j])
-            
+
             .estimate_snr_vec(x, pos = offs,
                               depth      = dep,
                               k          = k,
@@ -993,14 +1007,14 @@ snrScoreWindows <- function(se, gr,
                               noise_pars = noise_pars,
                               eps=1e-3)
         })
-        
+
         totMat[, j]   <- vapply(resL, `[[`, numeric(1), "total")
         sigMat[, j]   <- vapply(resL, `[[`, numeric(1), "signal")
         noiseMat[, j] <- vapply(resL, `[[`, numeric(1), "noise")
         snrMat[, j]   <- log2(sigMat[, j] / pmax(noiseMat[, j],1e-3) )
     }
-    
-    #  return 
+
+    #  return
     SummarizedExperiment(
         assays = list(
             TotalVar = totMat,
