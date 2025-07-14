@@ -721,10 +721,9 @@ estimateNoiseParsWindows <- function(bamfiles,
     idxL <- split(queryHits(ov),
                   factor(subjectHits(ov), levels = seq_along(winGR)), drop=FALSE)
     
-    POS <- BiocGenerics::pos(rowRanges(sePos))               # genomic coordinates
-    FM <- assay(sePos, "FracMod")          # nPos × nSam
+    POS <- pos(rowRanges(sePos)) # genomic coordinates
+    FM <- assay(sePos, "FracMod")              # nPos × nSam
     NV <- assay(sePos, "Nvalid")
-    
     
     # per-sample regressions
     nWin <- length(winGR)
@@ -905,6 +904,7 @@ estimateNoiseParsWindows <- function(bamfiles,
 #'                    minCov=2, assayNameNA=NULL) 
 #' se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation 
 #' se_snr_scores2 <- snrScoreWindows(se, gr = gr_tiles) # non-parametric noise estimation
+#'
 #' @importFrom SummarizedExperiment assay assayNames SummarizedExperiment colData
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges findOverlaps
@@ -966,7 +966,7 @@ snrScoreWindows <- function(se, gr,
     
     signal  <- assay(se, assayNameAgg)
     depth   <- assay(se, "Nvalid")
-    posVec  <- BiocGenerics::pos(rowRanges(se))
+    posVec  <- pos(rowRanges(se))
     
     # main loop
     for (j in seq_len(nSam)) {
