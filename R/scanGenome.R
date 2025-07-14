@@ -638,7 +638,9 @@ estimateNRLwindows <- function(se, gr,
 #' gr0 <- GRanges("chr1", IRanges(6920000, 6950000))
 #' gr_tiles <- unlist(tile(gr0, width = 500))
 #' gr_tiles
-#' coef <- estimateNoiseParsWindows(modbamfiles,modbase="a",windows=gr_tiles, plot=TRUE)
+#' noisePars <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
+#'                                       windows = gr_tiles, plot = TRUE)
+#' noisePars
 #' 
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges IRanges findOverlaps
