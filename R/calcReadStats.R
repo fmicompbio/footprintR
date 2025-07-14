@@ -412,9 +412,8 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SparseArray rowSums nnawhich nnavals
 #' @importFrom IRanges subsetByOverlaps
-#' @importFrom BiocGenerics colnames
+#' @importFrom BiocGenerics colnames pos
 #' @importFrom BiocParallel bplapply MulticoreParam
-#' @importFrom BiocGenerics pos
 #'
 #' @export
 calcReadStats <- function(se,
