@@ -164,10 +164,13 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #'    (`quantile 0.1 – 0.9`) of noise ~ mean(x).  
 #' 4. **Signal variance** = `pmax(total - noise, eps)` with a small floor *eps*.  
 #' 5. **SNR**            =  `log2(signal / noise)`.
+#'
+#' @importFrom stats var quantile lm coef
+#' @importFrom dplyr between
+#' @importFrom cli cli_warn
+#'
 #' @noRd
 #' @keywords internal
-#' @importFrom stats  var quantile lm
-#' @importFrom dplyr  between
 .estimate_snr_probList <- function(probList, idxList,
                                    k          = 2L,
                                    min_diffs  = NULL,
@@ -203,7 +206,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
         
         if (sum(keep) < 16) {
             ## Fallback: keep raw noise variances, no floor – but warn the user
-            warning("Too few points to estimate noise floor; raw noise variances are used.")
+            cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
             floor_pars   <- c(NA_real_, NA_real_)        # returned for bookkeeping
             fitted_floor <- rep(-Inf, length(noise_v))   # pmax() leaves noise_v untouched
         } else {
