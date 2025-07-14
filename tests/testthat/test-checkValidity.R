@@ -14,7 +14,9 @@ test_that("validity checks work", {
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
                              BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
-    rme <- addReadStats(rme, BPPARAM = BiocParallel::SerialParam())
+    suppressWarnings(expect_warning(
+        rme <- addReadStats(rme, BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"))
     rme_withreads <- flattenReadLevelAssay(rme)
     rme_withoutreads <- flattenReadLevelAssay(rme, keepReads = FALSE)
 

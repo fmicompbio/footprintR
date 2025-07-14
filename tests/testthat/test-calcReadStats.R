@@ -124,9 +124,10 @@ test_that("calcReadStats works", {
                  "must be one of: mod_prob")
 
     ## No coverage requirement
-    rs <- calcReadStats(se, minNobsPpos = 1,
-                        stats = allReadStats,
-                        BPPARAM = BiocParallel::SerialParam())
+    expect_warning(rs <- calcReadStats(se, minNobsPpos = 1,
+                                       stats = allReadStats,
+                                       BPPARAM = BiocParallel::SerialParam()),
+                   "Too few points")
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -159,9 +160,10 @@ test_that("calcReadStats works", {
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
                          0.5 * stats::IQR(Nobs)), 1L)
     idx <- which(Nobs >= thr)
-    rs <- calcReadStats(se, verbose = TRUE, minNobsPpos = thr,
-                        stats = allReadStats,
-                        BPPARAM = BiocParallel::SerialParam())
+    expect_warning(rs <- calcReadStats(se, verbose = TRUE, minNobsPpos = thr,
+                                       stats = allReadStats,
+                                       BPPARAM = BiocParallel::SerialParam()),
+                   "Too few points")
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
@@ -190,14 +192,18 @@ test_that("calcReadStats works", {
                  ignore_attr = TRUE)
 
     ## Using `regions` and large LagRange
-    rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
-        "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
-        minNobsPpos = 5, stats = allReadStats,
-        BPPARAM = BiocParallel::SerialParam())
-    rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
-                         LagRange = c(200, 256), minNobsPpos = 5,
-                         stats = allReadStats,
-                         BPPARAM = BiocParallel::SerialParam())
+    expect_warning(
+        rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
+            "chr1", IRanges::IRanges(6935000, 6935100)), LagRange = c(200, 256),
+            minNobsPpos = 5, stats = allReadStats,
+            BPPARAM = BiocParallel::SerialParam()),
+        "Too few points")
+    expect_warning(
+        rs2 <- calcReadStats(se, regions = "chr1:6935000-6935100",
+                             LagRange = c(200, 256), minNobsPpos = 5,
+                             stats = allReadStats,
+                             BPPARAM = BiocParallel::SerialParam()),
+        "Too few points")
     expect_identical(rs1, rs2)
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 14L))
@@ -251,11 +257,15 @@ test_that("addReadStats works", {
                            package = "footprintR")
     se <- readModkitExtract(exfiles, modbase = "a",
                             BPPARAM = BiocParallel::SerialParam())
-    se2 <- addReadStats(se, name = "qc2", stats = allReadStats,
-                        BPPARAM = BiocParallel::SerialParam())
-    se3 <- addReadStats(se, minNobsPread = 2600, name = "qc2",
-                        stats = allReadStats,
-                        BPPARAM = BiocParallel::SerialParam())
+    expect_warning(expect_warning(
+        se2 <- addReadStats(se, name = "qc2", stats = allReadStats,
+                            BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"), "Too few points")
+    expect_warning(expect_warning(
+        se3 <- addReadStats(se, minNobsPread = 2600, name = "qc2",
+                            stats = allReadStats,
+                            BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"), "Too few points")
 
     # expected errors
     expect_error(addReadStats(se, name = -1,

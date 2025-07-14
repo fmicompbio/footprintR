@@ -32,8 +32,10 @@ test_that("filterReads works", {
                      modbase = "a", verbose = FALSE,
                      BPPARAM = BiocParallel::SerialParam())
     se <- flattenReadLevelAssay(se, keepReads = TRUE)
-    se <- addReadStats(se, name = "qcc", stats = allReadStats,
-                       BPPARAM = BiocParallel::SerialParam())
+    expect_warning(expect_warning(
+        se <- addReadStats(se, name = "qcc", stats = allReadStats,
+                           BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"), "Too few points")
 
     expect_error(filterReads(se = "error"),
                  ".se. must be of class .SummarizedExperiment.")
