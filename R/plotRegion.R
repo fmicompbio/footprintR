@@ -403,7 +403,7 @@ plotRegion <- function(
     ## assemble composite plot
     if (length(pL) > 1L) { # suppress x-axis labels for all but last plot
         for (i in seq.int(length(pL) - 1L)) {
-            pL[[i]] <- pL[[i]] + labs(x = element_blank())
+            pL[[i]] <- pL[[i]] + labs(x = NULL)
             if (suppressTickLabels) {
                 pL[[i]] <- pL[[i]] + theme(axis.text.x = element_blank())
             }
@@ -526,6 +526,7 @@ plotBigWig <- function(bwFiles,
                                 groupBy = "sample",
                                 colorBy = "sample",
                                 colors = colors,
+                                labelFill = TRUE,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
                                 yAxisLabel = yAxisLabel,
@@ -1068,6 +1069,7 @@ plotSummaryPointSmooth <- function(se,
                                 groupBy = groupBy,
                                 colorBy = colorBy,
                                 colors = colors,
+                                labelFill = doPoint,
                                 referenceCoordinate = referenceCoordinate,
                                 labelAccuracy = labelAccuracy,
                                 yAxisLabel = yAxisLabel,
@@ -1255,7 +1257,8 @@ plotGenomicRegions <- function(grl,
                                          "-" = "#c79e9d",
                                          "*" = "gray80"),
                               breaks = c("+", "-", "*"),
-                              labels = c("+", "-", ""))
+                              labels = c("+", "-", "")) +
+            labs(fill = ifelse(!is.null(legendTitle), legendTitle, "strand"))
     } else {
         gg <- gg +
             geom_rect(data = rangeParts,
@@ -1291,7 +1294,6 @@ plotGenomicRegions <- function(grl,
     }
     gg <- gg +
         labs(title = trackTitle,
-             fill = ifelse(!is.null(legendTitle), legendTitle, "strand"),
              x = ifelse(is.null(referenceCoordinate),
                         paste0("Position on ",
                                as.character(seqnames(region))),
@@ -1312,6 +1314,7 @@ plotGenomicRegions <- function(grl,
     if (is.null(labelAccuracy)) {
         labelAccuracy <- 10^round(log10((rng[2] - rng[1]) / max(abs(rng))))
     }
+
     gg <- gg + coord_cartesian(xlim = rng) +
         scale_x_continuous(
             expand = c(0, 0),
@@ -1683,6 +1686,9 @@ plotGenomicRegions <- function(grl,
 #' @param colors A named character vector of colors to use for the unique
 #'     values in the \code{colorBy} annotation column. If \code{NULL}
 #'     (default), the default \code{ggplot2} colors will be used.
+#' @param labelFill A logical scalar. If \code{TRUE}, \code{fill} will be set
+#'     in plot labels. Otherwise, only colour will be set, which is helpful to
+#'     avoid a warning in `ggplot2` (>=3.5.2.9001) about "ignoring unused labels".
 #' @param referenceCoordinate A numeric scalar providing the coordinate position
 #'     (on the reference sequence in \code{region}) used as an "anchor" to
 #'     display relative positions. If \code{NULL} (the default), absolute
@@ -1711,6 +1717,7 @@ plotGenomicRegions <- function(grl,
                                    groupBy,
                                    colorBy,
                                    colors,
+                                   labelFill,
                                    referenceCoordinate,
                                    labelAccuracy,
                                    yAxisLabel,
@@ -1740,12 +1747,15 @@ plotGenomicRegions <- function(grl,
                                levels(df$position)[nlevels(df$position)])),
              y = yAxisLabel,
              color = ifelse(!is.null(legendTitle), legendTitle, colorBy),
-             fill = ifelse(!is.null(legendTitle), legendTitle, colorBy),
              title = trackTitle) +
         theme_bw() +
         theme(legend.position = ifelse(showLegend, "right", "none"),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank())
+
+    if (labelFill) {
+        p0 <- p0 + labs(fill = ifelse(!is.null(legendTitle), legendTitle, colorBy))
+    }
 
     if (is.factor(df$position)) {
         p0 <- p0 + theme(axis.text.x = element_blank()) +
@@ -2048,6 +2058,8 @@ plotGenomicRegions <- function(grl,
 }
 
 #' Calculate distances between columns of matrix
+#'
+#' @importFrom stats dist
 #'
 #' @noRd
 #' @keywords internal

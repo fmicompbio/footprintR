@@ -33,9 +33,9 @@ test_that("calcModbaseSpacing(), estimateNRL() and calcAndCountDist() work prope
     ## check if the plotting function runs
     p1 <- plotModbaseSpacing(x = pg1comb, hide = FALSE, usePeaks = 2:4)
     p2 <- plotModbaseSpacing(x = pg1comb, detailedPlots = TRUE, usePeaks = 2:4)
-    expect_s3_class(p1, "ggplot")
+    expect_true(ggplot2::is_ggplot(p1))
     expect_identical(dim(p1$data), c(2722L, 3L))
-    expect_s3_class(p2, "ggplot")
+    expect_true(ggplot2::is_ggplot(p2))
     expect_identical(dim(p2$data), c(3L, 2L))
     tf <- tempfile(fileext = ".pdf")
     pdf(file = tf)

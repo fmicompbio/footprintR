@@ -14,11 +14,11 @@ test_that("plotReadStats works", {
     rm(setmp)
 
     gg <- plotReadStats(se)
-    expect_s3_class(gg, "ggplot")
+    expect_true(ggplot2::is_ggplot(gg))
 
     gg <- plotReadStats(se, readInfoCol = NULL)
-    expect_s3_class(gg, "ggplot")
+    expect_true(ggplot2::is_ggplot(gg))
 
     gg <- plotReadStats(se, qcCol = NULL)
-    expect_s3_class(gg, "ggplot")
+    expect_true(ggplot2::is_ggplot(gg))
 })
