@@ -458,7 +458,7 @@ phasingScoreFourier <- function(se, gr, numCoef = 5) {
 #' @importFrom GenomicRanges GRanges
 #' @importFrom IRanges findOverlaps
 #' @importFrom S4Vectors queryHits subjectHits
-#' @importFrom BiocParallel bplapply
+#' @importFrom BiocParallel bplapply MulticoreParam
 #'
 #' @export
 estimateNRLwindows <- function(se, gr,
@@ -651,6 +651,8 @@ estimateNRLwindows <- function(se, gr,
 #' @importFrom cli cli_abort
 #' @importFrom BiocGenerics pos
 #' @importFrom grDevices colorRampPalette
+#' @importFrom BiocParallel MulticoreParam
+#'
 #' @export
 estimateNoiseParsWindows <- function(bamfiles,
                                      modbase,
