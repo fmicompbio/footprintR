@@ -7,6 +7,8 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "ACModProb", "PACModProb","SNR", "SignalVar", "NoiseVar")
 # global vector with all available read stats functions
 allReadStats <- c(defaultReadStats, "SEntrModProb")
+# global vector with available signal-to-noise read stats functions
+SNRstats <- c("SNR", "SignalVar", "NoiseVar")
 
 # -- Helper functions to Individual read statistics ----------------------------
 # the helper functions
@@ -492,16 +494,12 @@ calcReadStats <- function(se,
                 param_names <- defaultReadStats
             }
             
-            SNRstats <- c("SNR", "SignalVar", "NoiseVar")
-            needSNRstats <- any(param_names %in% SNRstats )
-            
-            if (needSNRstats) {
+            if (any(param_names %in% SNRstats)) {
                 snr_res <- .estimate_snr_probList(
                     probList = NNAvals_byCol,
                     idxList  = idxPos_byCol
                 )
             }
-            
             
             # Iterate over param_names and add columns to stats_res
             do.call(
