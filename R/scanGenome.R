@@ -552,9 +552,9 @@ estimateNRLwindows <- function(se, gr,
                               k          = 2L,
                               min_diffs  = NULL,
                               noise_pars = NULL,
-                              eps        = 1e-3) {
-    
-    stopifnot(length(x) == length(pos))
+    ## check arguments
+    .assertVector(x = x, type = "numeric", len = length(pos))
+    .assertVector(x = pos, type = "numeric")
     
     ## need at least three data points
     if (length(x) < 3L)
