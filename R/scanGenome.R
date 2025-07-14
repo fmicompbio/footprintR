@@ -586,47 +586,52 @@ estimateNRLwindows <- function(se, gr,
 
 
 
-#' Estimate noise ~ methylation, coverage fit from randomly sampled windows
+#' Estimate noise ~ f(methylation, coverage) fit from randomly sampled windows
 #'
-#' Either
-#' 1. *sample* `nWindows` windows of width `windowSize` across the chromosomes
-#'    in `chromosomeLengths`, **or**
-#' 2. *use* a user‑supplied set of genomic windows (`windows`).
+#' Estimations are performed on one of the following two sets of regions:
+#' \enumerate{
+#'     \item *sample* \code{nWindows} windows of width \code{windowSize} across
+#'         the chromosomes in \code{chromosomeLengths}
+#'     \item *use* a user‑supplied set of genomic windows (\code{windows})
+#' }
 #'
 #' For every window the function retrieves per‑position *summary* data with
-#' `readModBam(level = "summary")`, runs `.estimate_snr_vec()` and
-#' regresses the resulting noise variances on window means and coverage.  Optionally it
-#' plots the (mean, noise) cloud together with the fitted line.
+#' \code{readModBam(level = "summary")}, runs \code{.estimate_snr_vec()} and
+#' regresses the resulting noise variances on window means and coverage.
+#' Optionally it plots the (mean, noise) cloud together with the fitted line.
 #'
 #' @param bamfiles Character vector with one or several modBam file names.
-#'  When several files are supplied, the noise model 
-#'  is fitted **independently for each sample**. The final
-#'  coefficients returned are the arithmetic mean
-#'  of the per-sample coefficient vectors.
-#' @param modbase  Character scalar giving the modified base (as understood by
-#'                 `readModBam()`).
+#'     When several files are supplied, the noise model
+#'     is fitted **independently for each sample**. The final
+#'     coefficients returned are the arithmetic mean
+#'     of the per-sample coefficient vectors.
+#' @param modbase Character scalar giving the modified base (as understood by
+#'     \code{readModBam()}).
 #' @param chromosomeLengths *Named* numeric vector with chromosome sizes
-#'                 (e.g. `seqlengths(BSgenome)`).  *Ignored* when `windows` is
-#'                 supplied.
-#' @param windowSize Integer; width of the windows (bp).  Ignored when
-#'                 `windows` is supplied.
-#' @param nWindows  Integer; how many windows to sample *per chromosome* in
-#'                 total.  Ignored when `windows` is supplied.
-#' @param k Integer (default 2L).  Two measurements are considered “adjacent”
-#'   if they are at most \code{k} bases apart when estimating the noise.
-#' @param windows   A `GRanges` object with *explicit* windows to analyse.  When
-#'                  not `NULL`, the function uses these windows for estimation and the
-#'                  arguments `chromosomeLengths`, `windowSize` and
-#'                  `nWindows` are ignored.
-#' @param minCov    Integer; lowest acceptable coverage in order to keep a
-#'                  position.  Recommended > 1 to remove spurious positions.
-#' @param plot      Logical; draw diagnostic scatter + fit.
-#' @param BPPARAM   A `BiocParallelParam` object (set an `RNGseed` for
-#'                  reproducibility).
+#'     (e.g. \code{seqlengths(BSgenome)}). *Ignored* when \code{windows} is
+#'     supplied.
+#' @param windowSize Integer scalar with the width of the windows in base pairs.
+#'     Ignored when \code{windows} is supplied.
+#' @param nWindows Integer scalar defining how many windows to sample
+#'     *per chromosome* in total. Ignored when \code{windows} is supplied.
+#' @param k Integer scalar (default 2L). Two measurements are considered
+#'     “adjacent” if they are at most \code{k} bases apart when estimating the
+#'     noise.
+#' @param windows A \code{\link[GenomicRanges]{GRanges}} object with *explicit*
+#'     windows to analyse. When not \code{NULL}, the function uses these windows
+#'     for estimation and the arguments \code{chromosomeLengths},
+#'     \code{windowSize} and \code{nWindows} are ignored.
+#' @param minCov Integer scalar giving the lowest acceptable coverage in order
+#'     to keep a position. A value greater than one is recommended to remove
+#'     spurious positions.
+#' @param plot Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
+#'     with the fit.
+#' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object (set
+#'     a the \code{RNGseed} argument for reproducibility in sampling).
 #'
-#' @return Numeric vector `c(intercept = a, slopeMean = b, slopeInvDepth = c)`
-#'         suitable for `snrScoreWindows()` (store it in
-#'         `metadata(se)$NoisePars`).
+#' @return Numeric vector
+#'     \code{c(intercept = a, slopeMean = b, slopeInvDepth = c)} suitable for
+#'     \code{snrScoreWindows()} (store it in \code{metadata(se)$NoisePars}).
 #'
 #' @author Panagiotis Papasaikas
 #'
