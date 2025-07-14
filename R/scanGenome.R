@@ -542,10 +542,8 @@ estimateNRLwindows <- function(se, gr,
 
 #' Internal: core SNR estimator for one numeric vector
 #'
-#' Adapted from `.estimate_snr_probList()` but acting on a *single*, already
-#' aggregated signal.  The noise parameters are **not estimated here** –
-#' they are supplied (typically pre-computed by
-#' [\code{estimateSNRfloorPars()}]).
+#'
+#' @importFrom stats var
 #'
 #' @keywords internal
 #' @noRd
@@ -1123,6 +1121,7 @@ snrScoreWindows <- function(se, gr,
 #' @importFrom IRanges IRanges start end findOverlaps overlapsAny
 #' @importFrom S4Vectors queryHits subjectHits metadata
 #' @importFrom cli cli_abort
+#' @importFrom BiocParallel MulticoreParam
 #'
 #' @export
 quantifyWindowsInRegion <- function(bamfiles,
