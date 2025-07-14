@@ -2,7 +2,7 @@
 % Please edit documentation in R/scanGenome.R
 \name{estimateNoiseParsWindows}
 \alias{estimateNoiseParsWindows}
-\title{Estimate noise ~ methylation, coverage fit from randomly sampled windows}
+\title{Estimate noise ~ f(methylation, coverage) fit from randomly sampled windows}
 \usage{
 estimateNoiseParsWindows(
   bamfiles,
@@ -14,7 +14,7 @@ estimateNoiseParsWindows(
   minCov = 3L,
   windows = NULL,
   plot = FALSE,
-  BPPARAM = BiocParallel::MulticoreParam(4L, RNGseed = 42L)
+  BPPARAM = MulticoreParam(4L, RNGseed = 42L)
 )
 }
 \arguments{
@@ -28,49 +28,52 @@ of the per-sample coefficient vectors.}
 \code{readModBam()}).}
 
 \item{chromosomeLengths}{\emph{Named} numeric vector with chromosome sizes
-(e.g. \code{seqlengths(BSgenome)}).  \emph{Ignored} when \code{windows} is
+(e.g. \code{seqlengths(BSgenome)}). \emph{Ignored} when \code{windows} is
 supplied.}
 
-\item{windowSize}{Integer; width of the windows (bp).  Ignored when
-\code{windows} is supplied.}
+\item{windowSize}{Integer scalar with the width of the windows in base pairs.
+Ignored when \code{windows} is supplied.}
 
-\item{nWindows}{Integer; how many windows to sample \emph{per chromosome} in
-total.  Ignored when \code{windows} is supplied.}
+\item{nWindows}{Integer scalar defining how many windows to sample
+\emph{per chromosome} in total. Ignored when \code{windows} is supplied.}
 
-\item{k}{Integer (default 2L).  Two measurements are considered “adjacent”
-if they are at most \code{k} bases apart when estimating the noise.}
+\item{k}{Integer scalar (default 2L). Two measurements are considered
+“adjacent” if they are at most \code{k} bases apart when estimating the
+noise.}
 
-\item{minCov}{Integer; lowest acceptable coverage in order to keep a
-position.  Recommended > 1 to remove spurious positions.}
+\item{minCov}{Integer scalar giving the lowest acceptable coverage in order
+to keep a position. A value greater than one is recommended to remove
+spurious positions.}
 
-\item{windows}{A \code{GRanges} object with \emph{explicit} windows to analyse.  When
-not \code{NULL}, the function uses these windows for estimation and the
-arguments \code{chromosomeLengths}, \code{windowSize} and
-\code{nWindows} are ignored.}
+\item{windows}{A \code{\link[GenomicRanges]{GRanges}} object with \emph{explicit}
+windows to analyse. When not \code{NULL}, the function uses these windows
+for estimation and the arguments \code{chromosomeLengths},
+\code{windowSize} and \code{nWindows} are ignored.}
 
-\item{plot}{Logical; draw diagnostic scatter + fit.}
+\item{plot}{Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
+with the fit.}
 
-\item{BPPARAM}{A \code{BiocParallelParam} object (set an \code{RNGseed} for
-reproducibility).}
+\item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object (set
+a the \code{RNGseed} argument for reproducibility in sampling).}
 }
 \value{
-Numeric vector \code{c(intercept = a, slopeMean = b, slopeInvDepth = c)}
-suitable for \code{snrScoreWindows()} (store it in
-\code{metadata(se)$NoisePars}).
+Numeric vector
+\code{c(intercept = a, slopeMean = b, slopeInvDepth = c)} suitable for
+\code{snrScoreWindows()} (store it in \code{metadata(se)$NoisePars}).
 }
 \description{
-Either
+Estimations are performed on one of the following two sets of regions:
 \enumerate{
-\item \emph{sample} \code{nWindows} windows of width \code{windowSize} across the chromosomes
-in \code{chromosomeLengths}, \strong{or}
-\item \emph{use} a user‑supplied set of genomic windows (\code{windows}).
+\item \emph{sample} \code{nWindows} windows of width \code{windowSize} across
+the chromosomes in \code{chromosomeLengths}
+\item \emph{use} a user‑supplied set of genomic windows (\code{windows})
 }
 }
 \details{
 For every window the function retrieves per‑position \emph{summary} data with
 \code{readModBam(level = "summary")}, runs \code{.estimate_snr_vec()} and
-regresses the resulting noise variances on window means and coverage.  Optionally it
-plots the (mean, noise) cloud together with the fitted line.
+regresses the resulting noise variances on window means and coverage.
+Optionally it plots the (mean, noise) cloud together with the fitted line.
 }
 \examples{
 library(GenomicRanges)
@@ -80,7 +83,9 @@ modbamfiles <- system.file("extdata",
 gr0 <- GRanges("chr1", IRanges(6920000, 6950000))
 gr_tiles <- unlist(tile(gr0, width = 500))
 gr_tiles
-coef <- estimateNoiseParsWindows(modbamfiles,modbase="a",windows=gr_tiles, plot=TRUE)
+noisePars <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
+                                      windows = gr_tiles, plot = TRUE)
+noisePars
 
 }
 \author{

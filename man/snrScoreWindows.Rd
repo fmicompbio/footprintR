@@ -82,9 +82,10 @@ se <- readModBam(bamfiles = modbamfiles,
                    level    = "summary",
                    trim     = TRUE) |>
    filterPositions(filters="coverage",
-                   minCov=2, assayNameNA=NULL) 
-se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation 
+                   minCov=2, assayNameNA=NULL)
+se_snr_scores1 <- snrScoreWindows(se, gr = gr_tiles,noise_pars = coef) # parametric noise estimation
 se_snr_scores2 <- snrScoreWindows(se, gr = gr_tiles) # non-parametric noise estimation
+
 }
 \seealso{
 \code{\link{estimateNoiseParsWindows}} for estimation of the global noise model parameters.

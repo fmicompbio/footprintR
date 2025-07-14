@@ -13,7 +13,7 @@ countStatePairs(
   windowSize = 200,
   minMapQ = 0,
   minAlignedLength = 0,
-  BPPARAM = BiocParallel::MulticoreParam(4L),
+  BPPARAM = MulticoreParam(4L),
   verbose = FALSE
 )
 }
