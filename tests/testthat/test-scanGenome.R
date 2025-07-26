@@ -459,8 +459,8 @@ test_that("genome scanning works (wrapper function)", {
                                c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
                                  "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
-    annotdf <- data.frame(sample = c("s1","s2","s3","s4"),
-                          group = c("A","A","B","B"))
+    annotdf <- data.frame(sample = c("s1", "s2", "s3", "s4"),
+                          group = c("A", "A", "B", "B"))
     chrlen <- c(chr1 = 6955000)
 
     expect_error(scanForHighScoringRegions(bamfiles = modbamfiles,

@@ -733,9 +733,9 @@ estimateNoiseParsWindows <- function(bamfiles,
                         minCov = minCov, assayNameNA = NULL,
                         minNbrSamples = length(bamfiles))
 
-    if (!all(c("FracMod","Nvalid","Nmod") %in% assayNames(sePos))) {
+    if (!all(c("FracMod", "Nvalid", "Nmod") %in% assayNames(sePos))) {
         return(setNames(rep(NA_real_, 3),
-                        c("intercept","slopeMean","slopeInvDepth")))
+                        c("intercept", "slopeMean", "slopeInvDepth")))
     }
 
     ov   <- findOverlaps(rowRanges(sePos), winGR, ignore.strand = TRUE)
@@ -806,7 +806,7 @@ estimateNoiseParsWindows <- function(bamfiles,
 
     # Average per sample coefficients:
     cf  <- setNames(rowMeans(coefMat, na.rm = TRUE),
-                    c("intercept","slopeMean","slopeInvDepth"))
+                    c("intercept", "slopeMean", "slopeInvDepth"))
 
     ##  Plotting
     if (plot) {
@@ -1756,8 +1756,8 @@ processWindowScores <- function(
 #'                            package = "footprintR")
 #' gr <- scanForHighScoringRegions(
 #'     bamfiles = modbamfiles,
-#'     sampleAnnot = data.frame(sample = c("s1","s2","s3","s4"),
-#'                              group = c("A","A","B","B")),
+#'     sampleAnnot = data.frame(sample = c("s1", "s2", "s3", "s4"),
+#'                              group = c("A", "A", "B", "B")),
 #'     chromosomeLengths = c(chr1 = 6955000),
 #'     modbase = "a", BPPARAM = BiocParallel::SerialParam())
 #' gr

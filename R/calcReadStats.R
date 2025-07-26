@@ -4,7 +4,7 @@
 # exclude "SEntrModProb"
 defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
-                      "ACModProb", "PACModProb","SNR", "SignalVar", "NoiseVar")
+                      "ACModProb", "PACModProb", "SNR", "SignalVar", "NoiseVar")
 # global vector with all available read stats functions
 allReadStats <- c(defaultReadStats, "SEntrModProb")
 # global vector with available signal-to-noise read stats functions

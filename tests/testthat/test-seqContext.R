@@ -16,10 +16,10 @@ test_that("extractSeqContext works", {
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     regions <- GenomicRanges::GRanges(seqnames = "chr1",
                                       ranges = IRanges::IRanges(start = 6957060 - c(4, 2, 0),
-                                                                width = 1, names = c("x","y","z")))
+                                                                width = 1, names = c("x", "y", "z")))
     regions2 <- GenomicRanges::GRanges(seqnames = "chr1",
                                        ranges = IRanges::IRanges(start = 1 + c(0, 2, 4),
-                                                                 width = 3, names = c("a","b","c")))
+                                                                 width = 3, names = c("a", "b", "c")))
     se <- SummarizedExperiment(assays = matrix(1:3, ncol = 1), rowRanges = regions)
 
     # temporarily install custom BSgenome package
@@ -77,7 +77,7 @@ test_that("addSeqContext works", {
     ref <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     regions <- GenomicRanges::GRanges(seqnames = "chr1",
                                       ranges = IRanges::IRanges(start = 6957060 - c(4, 2, 0),
-                                                                width = 1, names = c("x","y","z")))
+                                                                width = 1, names = c("x", "y", "z")))
     se <- SummarizedExperiment(assays = matrix(1:3, ncol = 1), rowRanges = regions)
 
     # invalid arguments

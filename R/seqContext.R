@@ -39,7 +39,7 @@
 #' # define some regions at the end of the reference sequence
 #' regions <- GenomicRanges::GRanges(
 #'     "chr1", IRanges::IRanges(start = 6957060 - c(4, 2, 0),
-#'     width = 1, names = c("a","b","c")))
+#'     width = 1, names = c("a", "b", "c")))
 #'
 #' # extract sequence context (note the padding with N's)
 #' extractSeqContext(regions, 7, reffile)
@@ -161,7 +161,7 @@ extractSeqContext <- function(x,
 #'           assays = matrix(1:3, ncol=1),
 #'           rowRanges = GRanges(
 #'               "chr1", IRanges(start = 6957060 - c(4, 2, 0),
-#'               width = 1, names = c("a","b","c")),
+#'               width = 1, names = c("a", "b", "c")),
 #'               strand = "-"))
 #'
 #' # add sequence context (note the padding with N's)

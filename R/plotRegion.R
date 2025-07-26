@@ -1526,8 +1526,8 @@ plotGenomicRegions <- function(grl,
     assaydat <- assay(x, assayName)
     i <- which(is.finite(assaydat), arr.ind = TRUE)
     df <- data.frame(
-        position = start(x)[i[,"row"]],
-        sample = colnames(x)[i[,"col"]],
+        position = start(x)[i[, "row"]],
+        sample = colnames(x)[i[, "col"]],
         value = assaydat[i])
     if (modbaseSpace) {
         df$position <- factor(df$position,

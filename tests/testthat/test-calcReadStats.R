@@ -43,7 +43,7 @@ test_that("read statistic functions work", {
     resL <- lapply(allReadStats, function(param) {
         res <- do.call(param, argL)
         expect_length(res, nreads)
-        if (param %in% c("ACModProb","PACModProb")) {
+        if (param %in% c("ACModProb", "PACModProb")) {
             expect_type(res, "list")
             expect_identical(unname(lengths(res)), rep(length(lagvals), nreads))
             expect_equal(
