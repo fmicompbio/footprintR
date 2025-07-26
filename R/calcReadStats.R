@@ -156,8 +156,8 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 
 
 #' Internal: estimate per-read SNR, signal and noise  (NA-gap aware)
-#' 1. **Total variance**  = `var(x, na.rm = TRUE)`
-#' 2. **Noise variance**  ≈ `0.5 * Var(Δx)` where Δx are lag-1 differences that may skip
+#' 1. **Total variance** = `var(x, na.rm = TRUE)`
+#' 2. **Noise variance** ≈ `0.5 * Var(Δx)` where Δx are lag-1 differences that may skip
 #'    up to *k* missing values. This follows from error propagation and the assumption
 #'    of low varying x in nearby measurements: Var(Δx)≈2*Var(x)
 #' 3. A **noise floor** is imposed:
@@ -165,7 +165,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #'    where *b0*, *b1* are obtained from a robust linear fit
 #'    (`quantile 0.1 – 0.9`) of noise ~ mean(x).
 #' 4. **Signal variance** = `pmax(total - noise, eps)` with a small floor *eps*.
-#' 5. **SNR**            =  `log2(signal / noise)`.
+#' 5. **SNR** = `log2(signal / noise)`.
 #'
 #' @importFrom stats var quantile lm coef
 #' @importFrom dplyr between
@@ -173,13 +173,8 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #'
 #' @noRd
 #' @keywords internal
-.estimate_snr_probList <- function(probList, idxList,
-                                   k          = 2L,
-                                   min_diffs  = NULL,
-                                   floor_pars = NULL,
-                                   eps        = 1e-3,
-                                   ...)
-{
+.estimate_snr_probList <- function(probList, idxList, k = 2L, min_diffs = NULL,
+                                   floor_pars = NULL, eps = 1e-3, ...) {
     nReads <- length(probList)
     if (is.null(min_diffs))
         min_diffs <- max(16L, floor(0.05 * median(lengths(idxList))))
@@ -190,17 +185,23 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 
     ## noise variance: lag-1 diffs that jump ≤ k NAs ---------------------------
     noise_v <- vapply(seq_len(nReads), function(i) {
-        x   <- probList[[i]]
+        x <- probList[[i]]
         idx <- idxList[[i]]
-        if (length(idx) < 2L) return(NA_real_)
-        gaps  <- diff(idx) - 1L
-        d     <- diff(x)[gaps <= k]
-        if (length(d) >= min_diffs) var(d) / 2 else NA_real_
+        if (length(idx) < 2L) {
+            return(NA_real_)
+        }
+        gaps <- diff(idx) - 1L
+        d <- diff(x)[gaps <= k]
+        if (length(d) >= min_diffs) {
+            var(d) / 2
+        } else {
+            NA_real_
+        }
     }, numeric(1))
 
     ## robust noise floor ------------------------------------------------------
     if (is.null(floor_pars)) {
-        keep <- dplyr::between(
+        keep <- between(
             m_means,
             quantile(m_means, .10, na.rm = TRUE),
             quantile(m_means, .90, na.rm = TRUE)) &
@@ -209,10 +210,10 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
         if (sum(keep) < 16) {
             ## Fallback: keep raw noise variances, no floor – but warn the user
             cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
-            floor_pars   <- c(NA_real_, NA_real_)        # returned for bookkeeping
-            fitted_floor <- rep(-Inf, length(noise_v))   # pmax() leaves noise_v untouched
+            floor_pars <- c(NA_real_, NA_real_) # returned for bookkeeping
+            fitted_floor <- rep(-Inf, length(noise_v)) # pmax() leaves noise_v untouched
         } else {
-            floor_pars   <- coef(lm(noise_v[keep] ~ m_means[keep]))
+            floor_pars <- coef(lm(noise_v[keep] ~ m_means[keep]))
             fitted_floor <- floor_pars[1] + floor_pars[2] * m_means
         }
     } else {
@@ -223,22 +224,20 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 
     ## signal + SNR -----------------------------------------------------------
     signal_v <- pmax(total_v - noise_v, eps)
-    snr_v    <- log2(signal_v / noise_v)
+    snr_v <- log2(signal_v / noise_v)
 
     list(snr = snr_v,
          signal = signal_v,
-         noise  = noise_v,
+         noise = noise_v,
          floor_pars = setNames(floor_pars, c("intercept", "slope")))
 }
-
-
 
 #' @noRd
 #' @keywords internal
 SNR <- function(probList, idxList, useReads, ...) {
-    snr_res  <- .estimate_snr_probList(probList = probList,
-                                       idxList  = idxList, ...)
-    out      <- rep(NA_real_, length(probList))
+    snr_res <- .estimate_snr_probList(probList = probList,
+                                      idxList = idxList, ...)
+    out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$snr[useReads]
     out
 }
@@ -246,9 +245,9 @@ SNR <- function(probList, idxList, useReads, ...) {
 #' @noRd
 #' @keywords internal
 SignalVar <- function(probList, idxList, useReads, ...) {
-    snr_res  <- .estimate_snr_probList(probList = probList,
-                                       idxList  = idxList, ...)
-    out      <- rep(NA_real_, length(probList))
+    snr_res <- .estimate_snr_probList(probList = probList,
+                                      idxList  = idxList, ...)
+    out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$signal[useReads]
     out
 }
@@ -256,16 +255,12 @@ SignalVar <- function(probList, idxList, useReads, ...) {
 #' @noRd
 #' @keywords internal
 NoiseVar <- function(probList, idxList, useReads, ...) {
-    snr_res  <- .estimate_snr_probList(probList = probList,
-                                       idxList  = idxList, ...)
-    out      <- rep(NA_real_, length(probList))
+    snr_res <- .estimate_snr_probList(probList = probList,
+                                      idxList  = idxList, ...)
+    out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$noise[useReads]
     out
 }
-
-
-
-
 
 # -- Main function to calculate read statistics or add them to an SE -----------
 
@@ -468,7 +463,7 @@ calcReadStats <- function(se,
             NNAind <- nnawhich(mat, arr.ind = TRUE)
 
             # Positions of observed measurements
-            idxPos_byCol <- split(POS[NNAind[,1]], NNAind[,2])
+            idxPos_byCol <- split(POS[NNAind[, 1]], NNAind[, 2])
             names(idxPos_byCol) <- colnames(mat)[as.numeric(names(idxPos_byCol))]
 
             # Create list of non-NA row indices per column (i.e per read)
@@ -508,20 +503,21 @@ calcReadStats <- function(se,
 
                         stats_res <- make_zero_col_DFrame(nrow = length(colnames(mat)))
                         row.names(stats_res) <- colnames(mat)
-                        vec <- rep(NA_real_, length(colnames(mat))); names(vec) <- colnames(mat)
+                        vec <- rep(NA_real_, length(colnames(mat)))
+                        names(vec) <- colnames(mat)
 
                         if (param %in% SNRstats) {
                             src <- switch(param,
-                                          SNR       = snr_res$snr,
+                                          SNR = snr_res$snr,
                                           SignalVar = snr_res$signal,
-                                          NoiseVar  = snr_res$noise)
+                                          NoiseVar = snr_res$noise)
                             vec[useReads] <- src[useReads]
                         } else {
                             helper_args <- list(probList = NNAvals_byCol,
-                                                idxList  = idxPos_byCol,
+                                                idxList = idxPos_byCol,
                                                 useReads = useReads,
-                                                lowConf  = LowConf,
-                                                xrange   = LagRangeValues)
+                                                lowConf = LowConf,
+                                                xrange = LagRangeValues)
                             vec[names(NNAvals_byCol)] <- do.call(param, helper_args)
                         }
 
