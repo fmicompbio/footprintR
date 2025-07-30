@@ -63,13 +63,14 @@ read-level Qscore. Reads with Qscore below this value will be filtered
 out.}
 
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
-fraction of low-confidence modified base calls in a read. Reads with
-a fraction of low confidence calls greater than this value will be
-filtered out.}
+fraction of low-confidence modified base calls in a read. Reads without
+modified-base calls or with a fraction of low confidence calls greater
+than this value will be filtered out.}
 
 \item{maxEntropy}{A numeric scalar representing the largest acceptable
-read-level entropy. Reads with entropy above this value will be filtered
-out. A value of \code{Inf} deactivates the entropy filter.}
+read-level entropy. Reads without modified-base calls or with entropy
+above this value will be filtered out. A value of \code{Inf} deactivates
+the entropy filter.}
 
 \item{LowConf}{A numeric scalar with the minimum call confidence below which
 calls are considered "low confidence".}

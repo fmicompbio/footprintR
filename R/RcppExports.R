@@ -75,8 +75,8 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #' filter, the remaining filters will not be examined and the processing
 #' continues with the next record.
 #' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
-#' minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxEntropy,
-#' maxFracLowConf.
+#' minReadLength, minAlignedLength, minAlignedFraction, minQscore,
+#' maxFracLowConf, maxEntropy.
 #' The output file format will be determined based on the extension of
 #' \code{outfile} (sam format for ".sam" and bam format for ".bam").
 #'
@@ -108,11 +108,12 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 #'     out.
 #' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 #'     fraction of low-confidence modified base calls in a read. Reads with
-#'     a fraction of low confidence calls greater than this value will be
-#'     filtered out.
+#'     no modified-base calls or a fraction of low confidence calls greater
+#'     than this value will be filtered out.
 #' @param maxEntropy A numeric scalar representing the largest acceptable
-#'     read-level entropy. Reads with entropy above this value will be filtered
-#'     out. A negative value deactivates the entropy filter.
+#'     read-level entropy. Reads with no modified-base calls or an entropy
+#'     above this value will be filtered out. A negative value deactivates the
+#'     entropy filter.
 #' @param LowConf A numeric scalar with the minimum call confidence below which
 #'     calls are considered "low confidence".
 #' @param nThreads Numeric scalar defining the number of threads to
