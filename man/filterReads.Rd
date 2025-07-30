@@ -44,17 +44,17 @@ read-level Qscore. Reads with Qscore below this value will be filtered
 out.}
 
 \item{maxEntropy}{A numeric scalar representing the largest acceptable
-read-level entropy. Reads with entropy above this value will be filtered
-out.}
+read-level entropy. Reads without modified-base calls or with entropy
+above this value will be filtered out.}
 
 \item{minSNR}{A numeric scalar representing the smallest acceptable
 read Signal to Noise ratio (SNR). Reads with SNR below this value will
 be filtered out.}
 
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
-fraction of low-confidence modified base calls in a read. Reads with
-a fraction of low confidence calls greater than this value will be
-filtered out.}
+fraction of low-confidence modified base calls in a read. Reads without
+modified-base calls or with a fraction of low confidence calls greater
+than this value will be filtered out.}
 
 \item{minReadLength}{A numeric scalar representing the smallest acceptable
 read length. Reads that are shorter than this value will be filtered

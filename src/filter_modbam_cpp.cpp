@@ -18,8 +18,8 @@
 //' filter, the remaining filters will not be examined and the processing
 //' continues with the next record.
 //' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
-//' minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxEntropy,
-//' maxFracLowConf.
+//' minReadLength, minAlignedLength, minAlignedFraction, minQscore,
+//' maxFracLowConf, maxEntropy.
 //' The output file format will be determined based on the extension of
 //' \code{outfile} (sam format for ".sam" and bam format for ".bam").
 //'
@@ -51,11 +51,12 @@
 //'     out.
 //' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 //'     fraction of low-confidence modified base calls in a read. Reads with
-//'     a fraction of low confidence calls greater than this value will be
-//'     filtered out.
+//'     no modified-base calls or a fraction of low confidence calls greater
+//'     than this value will be filtered out.
 //' @param maxEntropy A numeric scalar representing the largest acceptable
-//'     read-level entropy. Reads with entropy above this value will be filtered
-//'     out. A negative value deactivates the entropy filter.
+//'     read-level entropy. Reads with no modified-base calls or an entropy
+//'     above this value will be filtered out. A negative value deactivates the
+//'     entropy filter.
 //' @param LowConf A numeric scalar with the minimum call confidence below which
 //'     calls are considered "low confidence".
 //' @param nThreads Numeric scalar defining the number of threads to
@@ -290,7 +291,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         if (maxFracLowConf < 1.0) {
             fracLowConf = Rcpp::sum(
                 Rcpp::abs(0.5 - mod_probs) < (LowConf - 0.5)) / (double)mod_probs.size();
-            if (fracLowConf > maxFracLowConf) {
+            if (mod_probs.size() == 0 || fracLowConf > maxFracLowConf) {
                 nMaxFracLowConf++;
                 continue;
             }
@@ -299,7 +300,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         // ... maxEntropy
         if (maxEntropy >= 0) {
             // calculate sample entropy
-            if (sampleEntropy(mod_probs, 2, 0.2) > maxEntropy) {
+            if (mod_probs.size() == 0 || sampleEntropy(mod_probs, 2, 0.2) > maxEntropy) {
                 nMaxEntropy++;
                 continue;
             }

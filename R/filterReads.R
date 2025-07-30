@@ -56,15 +56,15 @@
 #'     read-level Qscore. Reads with Qscore below this value will be filtered
 #'     out.
 #' @param maxEntropy A numeric scalar representing the largest acceptable
-#'     read-level entropy. Reads with entropy above this value will be filtered
-#'     out.
+#'     read-level entropy. Reads without modified-base calls or with entropy
+#'     above this value will be filtered out.
 #' @param minSNR A numeric scalar representing the smallest acceptable
 #'     read Signal to Noise ratio (SNR). Reads with SNR below this value will
 #'     be filtered out.
 #' @param maxFracLowConf A numeric scalar representing the maximally acceptable
-#'     fraction of low-confidence modified base calls in a read. Reads with
-#'     a fraction of low confidence calls greater than this value will be
-#'     filtered out.
+#'     fraction of low-confidence modified base calls in a read. Reads without
+#'     modified-base calls or with a fraction of low confidence calls greater
+#'     than this value will be filtered out.
 #' @param minReadLength A numeric scalar representing the smallest acceptable
 #'     read length. Reads that are shorter than this value will be filtered
 #'     out.
@@ -205,41 +205,50 @@ filterReads <- function(se, assayName = "mod_prob",
 
         ## Quality score
         if (!is.null(ri) && "qscore" %in% colnames(ri)) {
-            readsToRemove[[nm]][which(ri$qscore < minQscore), "Qscore"] <- TRUE
+            readsToRemove[[nm]][which(is.na(ri$qscore) |
+                                          ri$qscore < minQscore),
+                                "Qscore"] <- TRUE
         }
 
         ## KS entropy
         if (!is.null(qc) && "SEntrModProb" %in% colnames(qc)) {
-            readsToRemove[[nm]][which(qc$SEntrModProb > maxEntropy),
+            readsToRemove[[nm]][which(is.na(qc$SEntrModProb) |
+                                          qc$SEntrModProb > maxEntropy),
                                 "Entropy"] <- TRUE
         }
 
         ## SNR
         if (!is.null(qc) && "SNR" %in% colnames(qc)) {
-            readsToRemove[[nm]][which(qc$SNR < minSNR), "SNR"] <- TRUE
+            readsToRemove[[nm]][which(is.na(qc$SNR) |
+                                          qc$SNR < minSNR),
+                                "SNR"] <- TRUE
         }
 
         ## Fraction of low-confidence modification calls
         if (!is.null(qc) && "FracLowConf" %in% colnames(qc)) {
-            readsToRemove[[nm]][which(qc$FracLowConf > maxFracLowConf),
+            readsToRemove[[nm]][which(is.na(qc$FracLowConf) |
+                                          qc$FracLowConf > maxFracLowConf),
                                 "FracLowConf"] <- TRUE
         }
 
         ## Read length
         if (!is.null(ri) && "read_length" %in% colnames(ri)) {
-            readsToRemove[[nm]][which(ri$read_length < minReadLength),
+            readsToRemove[[nm]][which(is.na(ri$read_length) |
+                                          ri$read_length < minReadLength),
                                 "ReadLength"] <- TRUE
         }
 
         ## Aligned length
         if (!is.null(ri) && "aligned_length" %in% colnames(ri)) {
-            readsToRemove[[nm]][ which(ri$aligned_length < minAlignedLength),
-                                 "AlignedLength"] <- TRUE
+            readsToRemove[[nm]][which(is.na(ri$aligned_length) |
+                                          ri$aligned_length < minAlignedLength),
+                                "AlignedLength"] <- TRUE
         }
 
         ## Aligned fraction
         if (!is.null(ri) && "aligned_fraction" %in% colnames(ri)) {
-            readsToRemove[[nm]][which(ri$aligned_fraction < minAlignedFraction),
+            readsToRemove[[nm]][which(is.na(ri$aligned_fraction) |
+                                          ri$aligned_fraction < minAlignedFraction),
                                 "AlignedFraction"] <- TRUE
         }
 
