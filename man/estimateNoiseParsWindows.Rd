@@ -2,7 +2,7 @@
 % Please edit documentation in R/scanGenome.R
 \name{estimateNoiseParsWindows}
 \alias{estimateNoiseParsWindows}
-\title{Estimate noise ~ f(methylation, coverage) fit from randomly sampled windows}
+\title{Estimate a background noise model via a noise ~ f(methylation, coverage) fit from randomly sampled windows}
 \usage{
 estimateNoiseParsWindows(
   bamfiles,
@@ -10,9 +10,10 @@ estimateNoiseParsWindows(
   chromosomeLengths = NULL,
   windowSize = 500L,
   nWindows = 500L,
+  windows = NULL,
   k = 2L,
   minCov = 3L,
-  windows = NULL,
+  wfilter_param = NoiseFilterParam(),
   plot = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L)
 )
@@ -35,7 +36,13 @@ supplied.}
 Ignored when \code{windows} is supplied.}
 
 \item{nWindows}{Integer scalar defining how many windows to sample
-\emph{per chromosome} in total. Ignored when \code{windows} is supplied.}
+in total. These will be distributed uniformly in the chromosomes
+defined in \code{chromosomeLengths}. Ignored when \code{windows} is supplied.}
+
+\item{windows}{A \code{\link[GenomicRanges]{GRanges}} object with \emph{explicit}
+windows to use. When not \code{NULL}, the function uses these windows
+for estimation and the arguments \code{chromosomeLengths},
+\code{windowSize} and \code{nWindows} are ignored.}
 
 \item{k}{Integer scalar (default 2L). Two measurements are considered
 “adjacent” if they are at most \code{k} bases apart when estimating the
@@ -45,10 +52,10 @@ noise.}
 to keep a position. A value greater than one is recommended to remove
 spurious positions.}
 
-\item{windows}{A \code{\link[GenomicRanges]{GRanges}} object with \emph{explicit}
-windows to analyse. When not \code{NULL}, the function uses these windows
-for estimation and the arguments \code{chromosomeLengths},
-\code{windowSize} and \code{nWindows} are ignored.}
+\item{wfilter_param}{A \code{\link{NoiseFilterParam}} object specifying
+the quantile thresholds and depth cutoff rules used to filter windows
+prior to regression. Defaults to \code{NoiseFilterParam()}. Advanced users may supply a
+custom object to override these settings.}
 
 \item{plot}{Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
 with the fit.}

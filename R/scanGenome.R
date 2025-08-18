@@ -933,6 +933,7 @@ estimateNoiseParsWindows <- function(bamfiles,
                    c("intercept", "slopeMean", "slopeInvDepth"))
     attr(cf, "NoiseFilterParam") <- wfilter_param
     
+    ## Plotting
     if (plot) {
         plot.df <- data.frame(
             mean   = as.vector(meanMat),
@@ -941,9 +942,10 @@ estimateNoiseParsWindows <- function(bamfiles,
             sample = rep(colnames(sePos), each = nWin)
         )
         plot.df <- plot.df[complete.cases(plot.df), ]
-        plotNoisePars(list(coefficients = cf, data = df))
+        g <- plotNoisePars(list(coefficients = cf, data = plot.df))
+        print(g) 
     }
-    
+ 
     return(cf)
 }
 
@@ -954,33 +956,52 @@ estimateNoiseParsWindows <- function(bamfiles,
 #' @param fit Output from `estimateNoiseParsWindows()`.
 #' @return A ggplot object.
 #' @importFrom ggplot2 ggplot aes geom_point geom_abline facet_wrap scale_color_gradient theme_minimal
+#' @importFrom patchwork wrap_plots
 #' @export
 plotNoisePars <- function(fit) {
     stopifnot(is.list(fit), !is.null(fit$data), !is.null(fit$coefficients))
-    df <- fit$data
-    cf <- fit$coefficients
+    df <- fit$data; cf <- fit$coefficients
+    if (!is.factor(df$sample)) df$sample <- factor(df$sample, levels = unique(df$sample))
     
-    # panel 1: noise ~ mean
-    p1 <- ggplot(df, aes(x = mean, y = noise, color = depth)) +
-        geom_point(size = 1, alpha = 0.6) +
-        geom_abline(intercept = cf["intercept"], slope = cf["slopeMean"], color = "black") +
+    # Per-sample averages of the "other" predictor 
+    avg_mean   <- tapply(df$mean,      df$sample, function(x) mean(x, na.rm = TRUE))
+    avg_invdep <- tapply(1 / df$depth, df$sample, function(x) mean(x, na.rm = TRUE))
+    
+    lines1 <- data.frame(  # noise ~ mean (offset uses avg invdepth)
+        sample    = factor(names(avg_invdep), levels = levels(df$sample)),
+        intercept = cf["intercept"] + cf["slopeInvDepth"] * unname(as.numeric(avg_invdep)),
+        slope     = unname(rep(cf["slopeMean"], length(avg_invdep)))
+    )
+    
+    lines2 <- data.frame(  # noise ~ 1/depth (offset uses avg mean)
+        sample    = factor(names(avg_mean), levels = levels(df$sample)),
+        intercept = cf["intercept"] + cf["slopeMean"] * unname(as.numeric(avg_mean)),
+        slope     = unname(rep(cf["slopeInvDepth"], length(avg_mean)))
+    )
+    
+    p1 <- ggplot(df, aes(mean, noise, color = depth)) +
+        geom_point(size = 0.8, alpha = 0.6) +
+        geom_abline(data = lines1,
+                             aes(intercept = intercept, slope = slope),
+                             colour = "black") +
         scale_color_gradient(low = "navy", high = "gold") +
         labs(x = "Window mean", y = "Noise variance", color = "Depth") +
-        facet_wrap(~sample, scales = "free") +
+        facet_wrap(~ sample, scales = "free") +
         theme_minimal()
     
-    # panel 2: noise ~ 1/depth
-    p2 <- ggplot(df, aes(x = 1/depth, y = noise, color = mean)) +
-        geom_point(size = 1, alpha = 0.6) +
-        geom_abline(intercept = cf["intercept"], slope = cf["slopeInvDepth"], color = "black") +
+    p2 <- ggplot(df, aes(1 / depth, noise, color = mean)) +
+        geom_point(size = 0.8, alpha = 0.6) +
+        geom_abline(data = lines2,
+                             aes(intercept = intercept, slope = slope),
+                             colour = "black") +
         scale_color_gradient(low = "navy", high = "gold") +
         labs(x = "1/Window coverage", y = "Noise variance", color = "Mean") +
-        facet_wrap(~sample, scales = "free") +
+        facet_wrap(~ sample, scales = "free") +
         theme_minimal()
-    list(noise_vs_mean = p1, noise_vs_invdepth = p2)
+
+    # Combine
+    patchwork::wrap_plots(p1, p2, ncol = 1)
 }
-
-
 
 
 #' Quantify windows by estimating total, signal and noise variance (SNR)
