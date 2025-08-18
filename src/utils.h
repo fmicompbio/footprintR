@@ -15,3 +15,7 @@ int calculate_aligned_bases(bam1_t*);
 double extract_qscore(bam1_t*);
 int extract_forward_qseq(bam1_t*, char*&, int&);
 int extract_mod_probs(bam1_t*, char, char, Rcpp::NumericVector*, char*, hts_base_mod_state*, char*, int);
+
+// Overload: also fills on-read positions
+int extract_mod_probs(bam1_t*, char, char, Rcpp::NumericVector*, Rcpp::IntegerVector*,char*, hts_base_mod_state*, char*, int);
+                       

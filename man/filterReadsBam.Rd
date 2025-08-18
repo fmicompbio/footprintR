@@ -18,6 +18,7 @@ filterReadsBam(
   minAlignedLength = 0,
   minAlignedFraction = 0,
   minQscore = 0,
+  minSNR = -Inf,
   maxFracLowConf = 1,
   maxEntropy = Inf,
   LowConf = 0.7,
@@ -62,6 +63,14 @@ is smaller than this value will be filtered out.}
 read-level Qscore. Reads with Qscore below this value will be filtered
 out.}
 
+\item{minSNR}{Numeric scalar. Minimum acceptable read Signal-to-Noise Ratio (SNR).
+Reads with SNR below this value are filtered out. Set to \code{-Inf}
+to disable SNR filtering. The SNR is computed per read as
+\eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})} where
+\eqn{\mathrm{NoiseVar} \approx 0.5\,\mathrm{Var}(\Delta x)} using
+adjacent methylation differences that can jump up to \eqn{k=2} gaps, and
+\eqn{\mathrm{SignalVar} = \max(\mathrm{Var}(x) - \mathrm{NoiseVar}, \varepsilon)} with \eqn{\varepsilon=10^{-3}}.}
+
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
 fraction of low-confidence modified base calls in a read. Reads without
 modified-base calls or with a fraction of low confidence calls greater
@@ -100,7 +109,7 @@ continues with the next read.
 The filters are examined in this order: \code{keepUnmapped},
 \code{keepSecondary}, \code{keepSupplementary}, \code{minReadLength},
 \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
-\code{maxFracLowConf}, \code{maxEntropy}.
+\code{minSNR}, \code{maxFracLowConf}, \code{maxEntropy}.
 }
 \examples{
 modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
@@ -108,7 +117,7 @@ modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"
 filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                       modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
-                      minAlignedLength = 6896, minAlignedFraction = 0.56,
+                      minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.75,
                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
 res

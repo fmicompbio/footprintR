@@ -39,8 +39,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // filter_modbam_cpp
-Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
-RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
+Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double minSNR, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
+RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP minSNRSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,12 +56,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type minAlignedLength(minAlignedLengthSEXP);
     Rcpp::traits::input_parameter< double >::type minAlignedFraction(minAlignedFractionSEXP);
     Rcpp::traits::input_parameter< double >::type minQscore(minQscoreSEXP);
+    Rcpp::traits::input_parameter< double >::type minSNR(minSNRSEXP);
     Rcpp::traits::input_parameter< double >::type maxFracLowConf(maxFracLowConfSEXP);
     Rcpp::traits::input_parameter< double >::type maxEntropy(maxEntropySEXP);
     Rcpp::traits::input_parameter< double >::type LowConf(LowConfSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
+    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -204,7 +205,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
-    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 17},
+    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 18},
     {"_footprintR_index_bam_cpp", (DL_FUNC) &_footprintR_index_bam_cpp, 1},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},

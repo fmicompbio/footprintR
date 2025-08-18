@@ -66,69 +66,10 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
 }
 
 #' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
-#'
-#' Workhorse function for filterReadsBam. Parses records from a single
-#' \code{infile}, calculate read statistics and writes the record to
-#' a single \code{outfile} if the record passes all criteria defined by
-#' the filtering arguments.
-#' Filters are processed hierarchically: If a record does not pass a given
-#' filter, the remaining filters will not be examined and the processing
-#' continues with the next record.
-#' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
-#' minReadLength, minAlignedLength, minAlignedFraction, minQscore,
-#' maxFracLowConf, maxEntropy.
-#' The output file format will be determined based on the extension of
-#' \code{outfile} (sam format for ".sam" and bam format for ".bam").
-#'
-#' @param infile Character scalar with name of the input bam file.
-#' @param outfile Character scalar with name of the output sam or bam file.
-#' @param modbase Character scalar defining the modified base to analyze
-#'     (used by \code{maxEntropy} and \code{maxFracLowConf}).
-#' @param region Character scalar specifying the region for which
-#'     to extract overlapping reads, for example in the form
-#'     \code{"chr:start-end"} (genomic interval), \code{"chr"} (all records
-#'     on the given reference sequence) or \code{"."} (all records in the file).
-#' @param includeHeader Logical scalar. If \code{TRUE} (the default), the
-#'     bam header from \code{infile} will be read and written to \code{outfile}.
-#'     If \code{FALSE}, no header will be written to \code{outfile}.
-#' @param keepUnmapped,keepSecondary,keepSupplementary Logical scalars
-#'     indicating whether to keep unmapped, secondary or supplementary
-#'     alignments.
-#' @param minReadLength A numeric scalar representing the smallest acceptable
-#'     read length. Reads that are shorter than this value will be filtered
-#'     out.
-#' @param minAlignedLength A numeric scalar representing the smallest acceptable
-#'     aligned length. Reads with aligned length shorter than this value will
-#'     be filtered out.
-#' @param minAlignedFraction A numeric scalar representing the smallest
-#'     acceptable aligned fraction of a read. Reads where the aligned fraction
-#'     is smaller than this value will be filtered out.
-#' @param minQscore A numeric scalar representing the smallest acceptable
-#'     read-level Qscore. Reads with Qscore below this value will be filtered
-#'     out.
-#' @param maxFracLowConf A numeric scalar representing the maximally acceptable
-#'     fraction of low-confidence modified base calls in a read. Reads with
-#'     no modified-base calls or a fraction of low confidence calls greater
-#'     than this value will be filtered out.
-#' @param maxEntropy A numeric scalar representing the largest acceptable
-#'     read-level entropy. Reads with no modified-base calls or an entropy
-#'     above this value will be filtered out. A negative value deactivates the
-#'     entropy filter.
-#' @param LowConf A numeric scalar with the minimum call confidence below which
-#'     calls are considered "low confidence".
-#' @param nThreads Numeric scalar defining the number of threads to
-#'     use for (de-)compressing bam records.
-#' @param verbose Logical scalar. If \code{TRUE}, report on progress.
-#'
-#' @return A named \code{numeric} vector with the numbers of filtered out
-#'     records per reason for exclusion.
-#'
-#' @author Michael Stadler
-#'
-#' @noRd
-#' @keywords internal
-filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
+NULL
+
+filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, minSNR = -1e200, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
 #' Create an index for a given bam file
@@ -420,149 +361,25 @@ sampleEntropy <- function(data, m, r) {
     .Call(`_footprintR_sampleEntropy`, data, m, r)
 }
 
-#' Calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
-#'
-#' @param bamdata A \code{bam1_t*} with the alignment.
-#'
-#' @return An \code{int} giving the number of aligned bases.
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
-#' Extract quality score (qscore)
-#'
-#' @param bamdata A \code{bam1_t*} with the alignment.
-#'
-#' @return A \code{double} corresponding to the value extracted from the "qs"
-#'     tag, or in case that is missing, calculated as the mean of base quality
-#'     values.
-#'
-#' @author Michael Stadler
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
-#' Get the forward read sequence from an alignment
-#'
-#' Extract the read sequence from a bam1_t corresponding to the plus-strand
-#' of the read (thus reverse-complementing the read for an minus-strand
-#' alignment) and write it to the char* array at qseq, allocating memory of
-#' sufficient length if needed. The allocated space (without terminating null
-#' character) is stored in qseq_len.
-#'
-#' @param bamdata A \code{bam1_t*} with the alignment.
-#' @param qseq A \code{char**} (pointer to a character array) to which the
-#'     extracted sequence will be written.
-#' @param qseq_len A \code{int*} (pointer to int) in which the number of
-#'     allocated characters at \code{qseq} are stored (escluding the
-#'     terminating null character).
-#'
-#' @returns 0 if sucessful, -1 if memory allocation failed
-#'
-#' @author Michael Stadler
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
-#' Extract vector with modification probabilities from alignment
-#'
-#' Use htslib functions to parse the modification probabilities for
-#' `modbase`.
-#'
-#' @param bamdata A \code{bam1_t*} with the alignment.
-#' @param modbase A \code{char} with the modified base code for which to
-#'     extract modification probabilities.
-#' @param unmodbase A \code{char} with the unmodified base corresponding to
-#'     \code{modbase}.
-#' @param mod_probs A \code{Rcpp::NumericVector*} to which the extracted
-#'     modification probabilities will be appended at the end.
-#' @param qseq A \code{char*} pointing to the forward read sequence.
-#' @param ms A \code{hts_base_mod_state*} (modification state struct) expected
-#'     to be pre-initialized.
-#' @param buffer A \code{char*} pointing to a pre-allocated character array
-#'     to which an error message is written in case of a failure.
-#' @param buffer_len An \code{int} giving the pre-allocated size of the array
-#'     at \code{buffer} (excluding the terminating null).
-#'
-#' @returns An \code{int}, if greater or equal to zero giving the number of
-#'     extracted probabilities, or less than zero if something failed. In
-#'     that case, the error message is giving in \code{buffer}.
-#'
-#' @author Michael Stadler
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
 #' Concatenate files
-#'
-#' @param input_files Character vector with input file names to concatenate.
-#' @param output_file Character scalar with output file name to write to.
-#'
-#' @return The \code{output_file} as a character scalar.
-#' @noRd
-#' @keywords internal
+NULL
+
 concatenate_files <- function(input_files, output_file) {
     .Call(`_footprintR_concatenate_files`, input_files, output_file)
 }
 
-#' Concatenate input sam/bam files into a single output sam/bam file
-#'
-#' The idea of this function is to be a simpler replacement for merging
-#' pre-sorted sam or bam files given in the correct order to a single
-#' output file. The header of the first input file is used for the output
-#' file, and no checks are done if the input files have compatible headers,
-#' are sorted or are given in the correct order - use with caution.
-#'
-#' @param input_files Character vector with input sam or bam file names to
-#'     concatenate.
-#' @param output_file Character scalar with output sam or bam file name to
-#'     write to.
-#' @param ncpu Integer scalar giving the number of parallel threads used for
-#'     de-/compressing input and output file records.
-#'
-#' @return The \code{output_file} as a character scalar.
-#' @noRd
-#' @keywords internal
 concatenate_hts_files <- function(input_files, output_file, ncpu = 4L) {
     .Call(`_footprintR_concatenate_hts_files`, input_files, output_file, ncpu)
 }
 
-#' Get chromosome names for a bam file header
-#'
-#' @param bamfile Character scalar with name of bam file.
-#'
-#' @return A character vector with the chromosome (target sequence) names
-#'     extracted from the bam file header.
-#' @noRd
-#' @keywords internal
 getChromosomeNamesFromBam <- function(bamfile) {
     .Call(`_footprintR_getChromosomeNamesFromBam`, bamfile)
 }
 
-#' Get unmodified base corresponding to a modified base
-#'
-#' @param b Modified base as a char
-#'
-#' @return The upper-case unmodified base corresponding to \code{b} as a
-#'     \code{char}.
-#' @noRd
-#' @keywords internal
 get_unmodified_base <- function(b) {
     .Call(`_footprintR_get_unmodified_base`, b)
 }
 
-#' Create the complement of a base
-#'
-#' @param n single base as a char
-#'
-#' @return char (complement of \code{n})
-#'
-#' @noRd
-#' @keywords internal
 complement <- function(n) {
     .Call(`_footprintR_complement`, n)
 }

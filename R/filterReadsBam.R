@@ -10,7 +10,7 @@
 #' The filters are examined in this order: \code{keepUnmapped},
 #' \code{keepSecondary}, \code{keepSupplementary}, \code{minReadLength},
 #' \code{minAlignedLength}, \code{minAlignedFraction}, \code{minQscore},
-#' \code{maxFracLowConf}, \code{maxEntropy}.
+#' \code{minSNR}, \code{maxFracLowConf}, \code{maxEntropy}.
 #'
 #' @inheritParams filterReads
 #'
@@ -32,6 +32,13 @@
 #'     read-level entropy. Reads without modified-base calls or with entropy
 #'     above this value will be filtered out. A value of \code{Inf} deactivates
 #'     the entropy filter.
+#' @param minSNR Numeric scalar. Minimum acceptable read Signal-to-Noise Ratio (SNR).
+#'   Reads with SNR below this value are filtered out. Set to \code{-Inf}
+#'   to disable SNR filtering. The SNR is computed per read as
+#'   \eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})} where
+#'   \eqn{\mathrm{NoiseVar} \approx 0.5\,\mathrm{Var}(\Delta x)} using
+#'   adjacent methylation differences that can jump up to \eqn{k=2} gaps, and
+#'   \eqn{\mathrm{SignalVar} = \max(\mathrm{Var}(x) - \mathrm{NoiseVar}, \varepsilon)} with \eqn{\varepsilon=10^{-3}}.
 #' @param LowConf A numeric scalar with the minimum call confidence below which
 #'     calls are considered "low confidence".
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
@@ -53,7 +60,7 @@
 #' filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 #' res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
 #'                       modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
-#'                       minAlignedLength = 6896, minAlignedFraction = 0.56,
+#'                       minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.75,
 #'                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
 #'                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
 #' res
@@ -77,6 +84,7 @@ filterReadsBam <- function(infiles,
                            minAlignedLength = 0,
                            minAlignedFraction = 0,
                            minQscore = 0.0,
+                           minSNR = -Inf,
                            maxFracLowConf = 1.0,
                            maxEntropy = Inf,
                            LowConf = 0.7,
@@ -100,6 +108,7 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = minAlignedLength, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minQscore, type = "numeric")
+    .assertScalar(x = minSNR, type = "numeric")
     .assertScalar(x = maxEntropy, type = "numeric")
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0.5, 1))
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
@@ -151,6 +160,7 @@ filterReadsBam <- function(infiles,
                              myMinAlignedLength = as.integer(minAlignedLength),
                              myMinAlignedFraction = minAlignedFraction,
                              myMinQscore = minQscore,
+                             myMinSNR = minSNR,
                              myMaxFracLowConf = maxFracLowConf,
                              myMaxEntropy = ifelse(is.finite(maxEntropy), maxEntropy, -1.0),
                              myLowConf = LowConf,
@@ -168,6 +178,7 @@ filterReadsBam <- function(infiles,
                                           minAlignedLength = myMinAlignedLength,
                                           minAlignedFraction = myMinAlignedFraction,
                                           minQscore = myMinQscore,
+                                          minSNR = myMinSNR,
                                           maxFracLowConf = myMaxFracLowConf,
                                           maxEntropy = myMaxEntropy,
                                           LowConf = myLowConf,
