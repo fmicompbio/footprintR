@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <Rcpp.h>
+#include "utils.h" 
 
 #define CONCAT_BUFFER_SIZE 65536
 
@@ -467,8 +468,7 @@
                        int buffer_len) {
      // Backward-compatible wrapper: call the overload without collecting positions
      return extract_mod_probs(bamdata, modbase, unmodbase, mod_probs,
-                              nullptr,
-                              qseq, ms, buffer, buffer_len);
+                              nullptr, qseq, ms, buffer, buffer_len);
  }
  
  // Overload: also fills on-read positions

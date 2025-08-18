@@ -3,7 +3,6 @@
 #include <htslib/thread_pool.h>
 #include <cli/progress.h>
 #include <cmath>    // std::isfinite, std::isnan
-#include <limits>   // std::numeric_limits
 #include "utils.h"
 #include "sampleEntropy.h"
 #include "SNR.h"
@@ -12,7 +11,6 @@
 
 
 //' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
- //'
  //' Workhorse function for filterReadsBam. Parses records from a single
  //' \code{infile}, calculate read statistics and writes the record to
  //' a single \code{outfile} if the record passes all criteria defined by
@@ -25,7 +23,6 @@
  //' minSNR, maxFracLowConf, maxEntropy.
  //' The output file format will be determined based on the extension of
  //' \code{outfile} (sam format for ".sam" and bam format for ".bam").
- //'
  //' @param infile Character scalar with name of the input bam file.
  //' @param outfile Character scalar with name of the output sam or bam file.
  //' @param modbase Character scalar defining the modified base to analyze
@@ -68,12 +65,10 @@
  //' @param nThreads Numeric scalar defining the number of threads to
  //'     use for (de-)compressing bam records.
  //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
- //'
  //' @return A named \code{numeric} vector with the numbers of filtered out
  //'     records per reason for exclusion.
- //'
  //' @author Michael Stadler
- //'
+ //' @name filter_modbam_cpp
  //' @noRd
  //' @keywords internal
  // [[Rcpp::export]]
@@ -89,7 +84,7 @@
                                        int minAlignedLength = 0,
                                        double minAlignedFraction = 0,
                                        double minQscore = 0.0,
-                                       double minSNR = -std::numeric_limits<double>::infinity(),
+                                       double minSNR   = -1e200,
                                        double maxFracLowConf = 1.0,
                                        double maxEntropy = -1.0,
                                        double LowConf = 0.7,
@@ -245,7 +240,7 @@
              mod_probs = Rcpp::NumericVector(0);
              mod_pos   = Rcpp::IntegerVector(0);
              if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs, &mod_pos, qseq,
-                                       ms, buffer, buffer_len) < 0) {
+                                   ms, buffer, buffer_len) < 0) {
                  had_error = true; // # nocov start
                  goto end; // # nocov end
              }
@@ -298,16 +293,17 @@
          
          
          // ... minSNR
-         if (std::isfinite(minSNR)) {
-             const double snr_val = compute_snr_na_gap_aware(mod_probs, mod_pos, /*k=*/2, /*min_diffs=*/-1, /*eps=*/1e-3);
+         if (minSNR > -1e190) {  // treat as active if  threshold was overriden
+             const double snr_val = compute_snr_na_gap_aware(
+                 mod_probs, mod_pos,
+                 /*k=*/2, /*min_diffs=*/-1, /*eps=*/1e-3
+             );
              if (!std::isnan(snr_val) && snr_val < minSNR) {
                  nMinSNR++;
                  continue;
              }
              // If SNR cannot be computed (NaN), do not drop
          }
-         
-         
          
          
          // ... maxFracLowConf
