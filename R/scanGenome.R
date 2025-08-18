@@ -540,12 +540,119 @@ estimateNRLwindows <- function(se, gr,
 
 
 
+
+
+
+
+
+
+#' Create Filtering Parameters for SNR estimation
+#'
+#' Constructor for a simple parameter list controlling 
+#' thresholds used in \code{estimateNoiseParsWindows()} to filter
+#' windows based on mean methylation, coverage, and noise ratio.
+#'
+#' @param mean_probs Numeric length-2 vector. Lower and upper quantile
+#'   cutoffs for the mean methylation values. Default \code{c(0.05, 0.99)}.
+#' @param depth_probs Numeric length-2 vector. Lower and upper quantile
+#'   cutoffs for the coverage values. Default \code{c(0.01, 0.95)}.
+#' @param noise_ratio_probs Numeric length-2 vector. Lower and upper
+#'   quantile cutoffs for the noise-to-mean ratio. Default
+#'   \code{c(0.01, 0.70)}.
+#' @param dcut_min Numeric scalar. Minimum allowed depth cutoff
+#'   (floor). Default \code{10}.
+#' @param na.rm Logical; should \code{NA} values be removed before
+#'   computing quantiles? Default \code{TRUE}.
+#'
+#' @return An object of class \code{"NoiseFilterParam"}, which is just a
+#'   list with class attribute and a custom print method.
+#'
+#' @seealso \code{\link{estimateNoiseParsWindows}}
+#' @export
+NoiseFilterParam <- function(mean_probs = c(0.05, 0.99),
+                             depth_probs = c(0.01, 0.95),
+                             noise_ratio_probs = c(0.01, 0.70),
+                             dcut_min = 10,
+                             na.rm = TRUE) {
+    p <- list(
+        mean_probs = as.numeric(mean_probs),
+        depth_probs = as.numeric(depth_probs),
+        noise_ratio_probs = as.numeric(noise_ratio_probs),
+        dcut_min = as.numeric(dcut_min),
+        na.rm = isTRUE(na.rm)
+    )
+    .validate_NoiseFilterParam(p)
+    class(p) <- "NoiseFilterParam"
+    p
+}
+
+
+
+
+#' Validate a NoiseFilterParam object
+#'
+#' Internal helper to check that quantile cutoffs and parameters are
+#' correctly specified for \code{\link{NoiseFilterParam}}.
+#'
+#' @param p A list of class \code{"NoiseFilterParam"}.
+#'
+#' @return Invisibly returns the validated object, otherwise throws an
+#'   error.
+#'
+#' @importFrom cli cli_abort
+#' 
+#' @keywords internal
+#' @noRd
+.validate_NoiseFilterParam <- function(p) {
+    is_quantp <- function(x) is.numeric(x) && length(x) == 2L &&
+        all(is.finite(x)) && all(x >= 0 & x <= 1) && x[1] <= x[2]
+    if (!is_quantp(p$mean_probs))        cli_abort("{.arg mean_probs} must be length-2 min,max quantile probabilities")
+    if (!is_quantp(p$depth_probs))       cli_abort("{.arg depth_probs} must be length-2 min,max quantile probabilities")
+    if (!is_quantp(p$noise_ratio_probs)) cli_abort("{.arg noise_ratio_probs} must be length-2  min,max quantile probabilities")
+    .assertScalar(x = p$dcut_min, type = "numeric", rngIncl = c(1L, Inf))
+    .assertScalar(x = p$na.rm,   type = "logical")
+    invisible(p)
+}
+
+
+
+
 #' Internal: core SNR estimator for one numeric vector
 #'
 #' Adapted from \code{.estimate_snr_probList()} but acting on a *single*,
-#' already aggregated signal. The noise parameters are **not estimated here** –
-#' they are supplied (typically pre-computed by \code{estimateSNRfloorPars()}).
-#'
+#' already aggregated signal. Briefly the following variance decomposition is used:
+#' 1. **Total variance** = `var(x, na.rm = TRUE)`
+#' 2a. **Noise variance** ≈ `0.5 * Var(Δx)` where Δx are lag-1 differences that may skip
+#'    up to *k* missing values. This follows from error propagation and the assumption
+#'    of low varying x in adjacent measurements: Var(Δx)≈2*Var(x)
+#' 2b. Alternatively (and preferably)  **noise variance** is estimated from a background model as:
+#'    `noise = b0 + b1 * methylation + b2 * coverage `,
+#'    where *b0*, *b1* are obtained from a  linear fit of
+#'    `noise ~ f(methylation, coverage)`, on a large sample of windows 
+#'    after trimming the methylation upper and lower deciles. 
+#'    The background noise parameters are **not estimated here** –
+#'    they are supplied (typically pre-computed by \code{estimateNoiseParsWindows()}).
+#' 4. **Signal variance** = `pmax(total - noise, eps)` with a small floor *eps*.
+#' 
+#' @param x Numeric vector of methylation values
+#' @param pos Integer vector of indices corresponding to the positions of the measured methylation values
+#' @param depth Median read depth on the corresponding window
+#' @param k Integer scalar (default 2L). Two measurements are considered
+#'     “adjacent” if they are at most \code{k} bases apart when estimating the
+#'     noise.
+#' @param min_diffs Integer or \code{NULL}.  Minimal number of paired
+#'   differences to compute a reliable noise estimate.  If \code{NULL} the
+#'   value is set to \code{max(16, floor(0.05 * n))}, where \code{n} is the
+#'   number of valid positions in the window.
+#' @param noise_pars Numeric vector of coefficients for the background noise model.
+#'     Typically estimated by:  \code{estimateNoiseParsWindows()} 
+#' @param dcut_min Integer or \code{NULL}. Depth threshold used by the background
+#'     noise model. If \code{NULL}, the function tries to extract
+#'     \code{attr(noise_pars, "NoiseFilterParam")$dcut_min} (as attached by
+#'     \code{estimateNoiseParsWindows()}); if not available, it falls back to
+#'     \code{10L}.
+#' @param eps Small value enforced as floor for the Signal Variance
+#' 
 #' @importFrom stats var
 #'
 #' @keywords internal
@@ -556,11 +663,29 @@ estimateNRLwindows <- function(se, gr,
                               k = 2L,
                               min_diffs = NULL,
                               noise_pars = NULL,
+                              dcut_min = NULL,
                               eps = 1e-3) {
     ## check arguments
     .assertVector(x = x, type = "numeric", len = length(pos))
     .assertVector(x = pos, type = "numeric")
-
+    .assertScalar(x = k, type = "numeric", rngIncl = c(1L, Inf))
+    .assertScalar(x = min_diffs, type = "numeric", rngIncl = c(2L, Inf), allowNULL=TRUE)
+    .assertVector(x = noise_pars, type = "numeric", allowNULL=TRUE)
+    .assertScalar(x = dcut_min, type = "numeric", rngIncl = c(1L, Inf), allowNULL = TRUE)
+    .assertScalar(x = eps, type = "numeric", rngIncl = c(0, 1) )
+    
+    
+    ## resolve d_cut: prefer attribute from noise_pars, then argument, then 10L
+    if (is.null(dcut_min)) {
+        nfp <- attr(noise_pars, "NoiseFilterParam")
+        cand <- if (is.list(nfp)) nfp$dcut_min else NULL
+        if (is.null(cand) || !is.finite(cand) || cand < 1) {
+            dcut_min <- 10L
+        } else {
+            dcut_min <- as.numeric(cand)
+        }
+    }
+    
     ## need at least three data points
     if (length(x) < 3L) {
         return(list(total = NA_real_, signal = NA_real_, noise = NA_real_))
@@ -575,10 +700,8 @@ estimateNRLwindows <- function(se, gr,
 
         ## parametric vs non-parametric noise estimation:
         if (!is.null(noise_pars)) {
-            # depth threshold for including depth in the model
-            d_cut <- max(10, quantile(depth, 0.05, na.rm = TRUE))
             noise_v <- noise_pars[1] + noise_pars[2] * mean(x, na.rm = TRUE) +
-                noise_pars[3] * ((depth < d_cut) / depth)
+                noise_pars[3] * ((depth < dcut_min) / depth)
 
         } else {
             ## noise variance: 0.5 * var of lag-1 differences with gap ≤ k
@@ -598,7 +721,7 @@ estimateNRLwindows <- function(se, gr,
     }
 }
 
-#' Estimate noise ~ f(methylation, coverage) fit from randomly sampled windows
+#' Estimate a background noise model via a noise ~ f(methylation, coverage) fit from randomly sampled windows
 #'
 #' Estimations are performed on one of the following two sets of regions:
 #' \enumerate{
@@ -625,17 +748,22 @@ estimateNRLwindows <- function(se, gr,
 #' @param windowSize Integer scalar with the width of the windows in base pairs.
 #'     Ignored when \code{windows} is supplied.
 #' @param nWindows Integer scalar defining how many windows to sample
-#'     *per chromosome* in total. Ignored when \code{windows} is supplied.
+#'     in total. These will be distributed uniformly in the chromosomes
+#'     defined in \code{chromosomeLengths}. Ignored when \code{windows} is supplied.
+#' @param windows A \code{\link[GenomicRanges]{GRanges}} object with *explicit*
+#'     windows to use. When not \code{NULL}, the function uses these windows
+#'     for estimation and the arguments \code{chromosomeLengths},
+#'     \code{windowSize} and \code{nWindows} are ignored. 
 #' @param k Integer scalar (default 2L). Two measurements are considered
 #'     “adjacent” if they are at most \code{k} bases apart when estimating the
 #'     noise.
-#' @param windows A \code{\link[GenomicRanges]{GRanges}} object with *explicit*
-#'     windows to analyse. When not \code{NULL}, the function uses these windows
-#'     for estimation and the arguments \code{chromosomeLengths},
-#'     \code{windowSize} and \code{nWindows} are ignored.
 #' @param minCov Integer scalar giving the lowest acceptable coverage in order
 #'     to keep a position. A value greater than one is recommended to remove
 #'     spurious positions.
+#' @param wfilter_param A \code{\link{NoiseFilterParam}} object specifying
+#'   the quantile thresholds and depth cutoff rules used to filter windows
+#'   prior to regression. Defaults to \code{NoiseFilterParam()}. Advanced users may supply a
+#'   custom object to override these settings.
 #' @param plot Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
 #'     with the fit.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object (set
@@ -676,9 +804,10 @@ estimateNoiseParsWindows <- function(bamfiles,
                                      chromosomeLengths = NULL,
                                      windowSize = 500L,
                                      nWindows = 500L,
+                                     windows = NULL,
                                      k = 2L,
                                      minCov = 3L,
-                                     windows = NULL,
+                                     wfilter_param = NoiseFilterParam(),
                                      plot = FALSE,
                                      BPPARAM = MulticoreParam(4L, RNGseed = 42L)) {
     # check arguments
@@ -701,7 +830,10 @@ estimateNoiseParsWindows <- function(bamfiles,
     }
     .assertScalar(x = minCov,  type = "numeric", rngExcl = c(1, Inf))
     .assertScalar(x = plot, type = "logical")
-
+    # validate NoiseFilter parameters:
+    .validate_NoiseFilterParam(wfilter_param)
+    
+    
     # init empty result
     cf <- setNames(rep(NA_real_, 3),
                    c("intercept", "slopeMean", "slopeInvDepth"))
@@ -778,23 +910,21 @@ estimateNoiseParsWindows <- function(bamfiles,
             depthVals[w] <- dep
         }
 
-        #depth threshold for including depth in the model
-        d_cut <- max(10, quantile(depthVals, 0.05, na.rm = TRUE))
-
         # keep / filter
         keep <- is.finite(meanVals)  & is.finite(noiseVals) &
             is.finite(depthVals) & depthVals > 0
-        qMean  <- quantile(meanVals[keep], c(0.05, 0.99))
-        qDepth <- quantile(depthVals[keep], c(0.01, 0.95))
-        qNoise <- quantile(noiseVals[keep] / (meanVals[keep] + 0.01),
-                           c(0.01, 0.7))
+        
+        qMean  <- quantile(meanVals[keep], wfilter_param$mean_probs, na.rm = wfilter_param$na.rm)
+        qDepth <- quantile(depthVals[keep], wfilter_param$depth_probs, na.rm = wfilter_param$na.rm)
+        qNoise <- quantile(noiseVals[keep] / (meanVals[keep] + 0.01), wfilter_param$noise_ratio_probs, na.rm = wfilter_param$na.rm)
+        
         keep <- keep &
             between(meanVals , qMean[1], qMean[2]) &
             between(depthVals, qDepth[1], qDepth[2]) &
             between(noiseVals / (meanVals + 0.01), qNoise[1], qNoise[2])
 
         if (sum(keep) >= 10) {
-            z <- ifelse(depthVals[keep] <= d_cut, 1 / depthVals[keep], 0)
+            z <- ifelse(depthVals[keep] <= wfilter_param$dcut_min, 1 / depthVals[keep], 0)
             coefMat[, j] <- coef(lm(noiseVals[keep] ~ meanVals[keep] + z))
         }
 
@@ -804,10 +934,11 @@ estimateNoiseParsWindows <- function(bamfiles,
         depthMat[keep, j] <- depthVals[keep]
     }
 
-    # Average per sample coefficients:
-    cf  <- setNames(rowMeans(coefMat, na.rm = TRUE),
-                    c("intercept", "slopeMean", "slopeInvDepth"))
-
+    # Average the per sample coefficients and save the NoiseFiltParams:
+    cf <- setNames(rowMeans(coefMat, na.rm = TRUE),
+                   c("intercept", "slopeMean", "slopeInvDepth"))
+    attr(cf, "NoiseFilterParam") <- wfilter_param
+    
     ##  Plotting
     if (plot) {
         par(mfrow = c(nSam, 2))

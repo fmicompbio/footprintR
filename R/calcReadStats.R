@@ -159,8 +159,8 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' 1. **Total variance** = `var(x, na.rm = TRUE)`
 #' 2. **Noise variance** ≈ `0.5 * Var(Δx)` where Δx are lag-1 differences that may skip
 #'    up to *k* missing values. This follows from error propagation and the assumption
-#'    of low varying x in nearby measurements: Var(Δx)≈2*Var(x)
-#' 3. A **noise floor** is imposed:
+#'    of low varying x in adjacent measurements: Var(Δx)≈2*Var(x)
+#' 3. A **noise floor** is imposed by fitting a background noise model:
 #'    `noise = pmax(noise, b0 + b1 * mean(x))`,
 #'    where *b0*, *b1* are obtained from a robust linear fit
 #'    (`quantile 0.1 – 0.9`) of noise ~ mean(x).
@@ -211,7 +211,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
             ## Fallback: keep raw noise variances, no floor – but warn the user
             cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
             floor_pars <- c(NA_real_, NA_real_) # returned for bookkeeping
-            fitted_floor <- rep(-Inf, length(noise_v)) # pmax() leaves noise_v untouched
+            fitted_floor <- rep(-Inf, length(noise_v)) # Necessary, otherwise pmax() below leaves noise_v untouched
         } else {
             floor_pars <- coef(lm(noise_v[keep] ~ m_means[keep]))
             fitted_floor <- floor_pars[1] + floor_pars[2] * m_means
