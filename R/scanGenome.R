@@ -558,14 +558,15 @@ estimateNRLwindows <- function(se, gr,
 #'   cutoffs for the coverage values. Default \code{c(0.01, 0.95)}.
 #' @param noise_ratio_probs Numeric length-2 vector. Lower and upper
 #'   quantile cutoffs for the noise-to-mean ratio. Default
-#'   \code{c(0.01, 0.70)}.
+#'   \code{c(0.01, 0.70)}. Upper cutoff should typically be in 
+#'   the 0.2-0.4 range to ensure removal of windows with excess variance.
 #' @param dcut_min Numeric scalar. Minimum allowed depth cutoff
 #'   (floor). Default \code{10}.
-#' @param na.rm Logical; should \code{NA} values be removed before
+#' @param na.rm Logical. should \code{NA} values be removed before
 #'   computing quantiles? Default \code{TRUE}.
 #'
-#' @return An object of class \code{"NoiseFilterParam"}, which is just a
-#'   list with class attribute and a custom print method.
+#' @return A **named list** with elements \code{mean_probs}, \code{depth_probs},
+#'   \code{noise_ratio_probs}, \code{dcut_min}, \code{na.rm}.
 #'
 #' @seealso \code{\link{estimateNoiseParsWindows}}
 #' @export
@@ -582,37 +583,50 @@ NoiseFilterParam <- function(mean_probs = c(0.05, 0.99),
         na.rm = isTRUE(na.rm)
     )
     .validate_NoiseFilterParam(p)
-    class(p) <- "NoiseFilterParam"
     p
 }
 
 
 
 
-#' Validate a NoiseFilterParam object
+#' Validate a NoiseFilterParam list
 #'
 #' Internal helper to check that quantile cutoffs and parameters are
-#' correctly specified for \code{\link{NoiseFilterParam}}.
+#' correctly specified for a \emph{named list} as returned by \code{\link{NoiseFilterParam}}.
 #'
-#' @param p A list of class \code{"NoiseFilterParam"}.
+#' @param p Named list as returned by NoiseFilterParam().
 #'
-#' @return Invisibly returns the validated object, otherwise throws an
-#'   error.
+#' @return Invisibly returns the validated list, otherwise throws an error.
 #'
 #' @importFrom cli cli_abort
-#' 
 #' @keywords internal
 #' @noRd
 .validate_NoiseFilterParam <- function(p) {
-    is_quantp <- function(x) is.numeric(x) && length(x) == 2L &&
-        all(is.finite(x)) && all(x >= 0 & x <= 1) && x[1] <= x[2]
-    if (!is_quantp(p$mean_probs))        cli_abort("{.arg mean_probs} must be length-2 min,max quantile probabilities")
-    if (!is_quantp(p$depth_probs))       cli_abort("{.arg depth_probs} must be length-2 min,max quantile probabilities")
-    if (!is_quantp(p$noise_ratio_probs)) cli_abort("{.arg noise_ratio_probs} must be length-2  min,max quantile probabilities")
+    if (!is.list(p) || is.null(names(p))) {
+        cli::cli_abort("{.arg wfilter_param} must be a named list.")
+    }
+    
+    req <- c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm")
+    miss <- setdiff(req, names(p))
+    if (length(miss)) {
+        cli::cli_abort("Missing fields in {.arg wfilter_param}: {x}.",
+                       x = paste(miss, collapse = ", "))
+    }
+    
+    # Quant. probabilities: numeric length-2 in [0,1], non-decreasing
+    for (nm in c("mean_probs", "depth_probs", "noise_ratio_probs")) {
+        .assertVector(x = p[[nm]], type = "numeric", len = 2L, rngIncl = c(0, 1))
+        if (p[[nm]][1] > p[[nm]][2]) {
+            cli::cli_abort("{.arg {nm}} must be non-decreasing (min <= max)", nm = nm)
+        }
+    }
+    
     .assertScalar(x = p$dcut_min, type = "numeric", rngIncl = c(1L, Inf))
-    .assertScalar(x = p$na.rm,   type = "logical")
+    .assertScalar(x = p$na.rm, type = "logical")
+    
     invisible(p)
 }
+
 
 
 
@@ -758,10 +772,9 @@ NoiseFilterParam <- function(mean_probs = c(0.05, 0.99),
 #' @param minCov Integer scalar giving the lowest acceptable coverage in order
 #'     to keep a position. A value greater than one is recommended to remove
 #'     spurious positions.
-#' @param wfilter_param A \code{\link{NoiseFilterParam}} object specifying
-#'   the quantile thresholds and depth cutoff rules used to filter windows
-#'   prior to regression. Defaults to \code{NoiseFilterParam()}. Advanced users may supply a
-#'   custom object to override these settings.
+#' @param wfilter_param A **named list** as returned by \code{\link{NoiseFilterParam}},
+#'   specifying the quantile thresholds and depth cutoff rules used to filter windows
+#'   prior to regression. Defaults to \code{NoiseFilterParam()}.
 #' @param plot Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
 #'     with the fit.
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object (set
@@ -942,10 +955,10 @@ estimateNoiseParsWindows <- function(bamfiles,
             sample = rep(colnames(sePos), each = nWin)
         )
         plot.df <- plot.df[complete.cases(plot.df), ]
-        g <- plotNoisePars(list(coefficients = cf, data = plot.df))
-        print(g) 
+        p <- plotNoisePars(list(coefficients = cf, data = plot.df))
+        print(p) 
     }
- 
+    
     return(cf)
 }
 
@@ -982,8 +995,8 @@ plotNoisePars <- function(fit) {
     p1 <- ggplot(df, aes(mean, noise, color = depth)) +
         geom_point(size = 0.8, alpha = 0.6) +
         geom_abline(data = lines1,
-                             aes(intercept = intercept, slope = slope),
-                             colour = "black") +
+                    aes(intercept = intercept, slope = slope),
+                    colour = "black") +
         scale_color_gradient(low = "navy", high = "gold") +
         labs(x = "Window mean", y = "Noise variance", color = "Depth") +
         facet_wrap(~ sample, scales = "free") +
@@ -992,13 +1005,13 @@ plotNoisePars <- function(fit) {
     p2 <- ggplot(df, aes(1 / depth, noise, color = mean)) +
         geom_point(size = 0.8, alpha = 0.6) +
         geom_abline(data = lines2,
-                             aes(intercept = intercept, slope = slope),
-                             colour = "black") +
+                    aes(intercept = intercept, slope = slope),
+                    colour = "black") +
         scale_color_gradient(low = "navy", high = "gold") +
         labs(x = "1/Window coverage", y = "Noise variance", color = "Mean") +
         facet_wrap(~ sample, scales = "free") +
         theme_minimal()
-
+    
     # Combine
     patchwork::wrap_plots(p1, p2, ncol = 1)
 }
