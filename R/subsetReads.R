@@ -16,6 +16,14 @@
 #'     names are samples from \code{colnames(se)} and the elements are
 #'     index vectors (character, integer or logical) defining the reads for
 #'     each sample.
+#' @param randomSubset A numeric scalar, enabling sampling of a random set of
+#'     reads for each sample. If \code{randomSubset} is larger than or equal
+#'     to 1, it defines the number of reads that will be sampled for each
+#'     sample (if it is larger than the available number of reads, all reads
+#'     will be retained). If \code{randomSubset} is in [0, 1), it is
+#'     interpreted as the fraction of reads to retain for each sample. If both
+#'     \code{reads} and \code{randomSubset} are specified, \code{reads} takes
+#'     precedence and \code{randomSubset} will be ignored.
 #' @param prune A logical scalar. If \code{TRUE} (the default), samples for
 #'     which the subsetting retains none of the reads will be completely removed
 #'     from the returned \code{SummarizedExperiment} (also from \code{colData}
@@ -60,7 +68,8 @@
 #'
 #' @export
 subsetReads <- function(se,
-                        reads,
+                        reads = NULL,
+                        randomSubset = NULL,
                         prune = TRUE,
                         invert = FALSE,
                         removeAllNApos = FALSE,
@@ -75,12 +84,31 @@ subsetReads <- function(se,
         return(se)
     }
     rlAssayColnames <- lapply(assay(se, rlAssays[1]), colnames)
+    .assertScalar(x = randomSubset, type = "numeric", rngIncl = c(0, Inf),
+                  allowNULL = TRUE)
     .assertScalar(x = prune, type = "logical")
     .assertScalar(x = removeAllNApos, type = "logical")
     if (removeAllNApos) {
         .assertScalar(x = assayNameNA, type = "character",
                       validValues = rlAssays)
     }
+
+    ## create 'reads'
+    if (!is.null(randomSubset)) {
+        if (!is.null(reads)) {
+            cli_warn("{.arg reads} is set - ignoring {.arg randomSubset}")
+            randomSubset <- NULL
+        } else {
+            reads <- lapply(rlAssayColnames, function(x) {
+                if (randomSubset < 1) {
+                    sample(x, size = round(randomSubset * length(x)))
+                } else {
+                    sample(x, size = min(length(x), randomSubset))
+                }
+            })
+        }
+    }
+
 
     ## make sure that 'reads' is a named list with all samples and
     ## (possibly zero-length) character elements with read identifiers

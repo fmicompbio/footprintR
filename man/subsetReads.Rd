@@ -6,7 +6,8 @@
 \usage{
 subsetReads(
   se,
-  reads,
+  reads = NULL,
+  randomSubset = NULL,
   prune = TRUE,
   invert = FALSE,
   removeAllNApos = FALSE,
@@ -23,6 +24,15 @@ Either a character vector of read identifiers, or a named list in which
 names are samples from \code{colnames(se)} and the elements are
 index vectors (character, integer or logical) defining the reads for
 each sample.}
+
+\item{randomSubset}{A numeric scalar, enabling sampling of a random set of
+reads for each sample. If \code{randomSubset} is larger than or equal
+to 1, it defines the number of reads that will be sampled for each
+sample (if it is larger than the available number of reads, all reads
+will be retained). If \code{randomSubset} is in [0, 1), it is
+interpreted as the fraction of reads to retain for each sample. If both
+\code{reads} and \code{randomSubset} are specified, \code{reads} takes
+precedence and \code{randomSubset} will be ignored.}
 
 \item{prune}{A logical scalar. If \code{TRUE} (the default), samples for
 which the subsetting retains none of the reads will be completely removed
