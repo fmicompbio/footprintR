@@ -1,3 +1,8 @@
+# footprintR 0.3.7
+
+* Add argument `orderReverse` to allow reversing the order in which reads are displayed in read-level plots
+* Add argument `randomSubset` to `subsetReads` to allow random selection of a given number or fraction of reads
+
 # footprintR 0.3.6
 
 * Filter out reads without modified-base calls if `maxFracLowConf` or `maxEntropy` filters are set in `filterReads` or `filterReadsBam`

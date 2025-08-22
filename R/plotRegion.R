@@ -575,6 +575,9 @@ plotBigWig <- function(bwFiles,
 #'     window in which average modification probability is calculated to order
 #'     the reads in read-level plots. A \code{NULL} value indicates that the
 #'     entire plotted region should be used as the window.
+#' @param orderReverse Logical scalar. If \code{TRUE}, the order of the reads
+#'     is reversed in the plots (after applying the ordering defined by
+#'     \code{orderReads}).
 #' @param windowWidth A numeric scalar giving the window width for which
 #'     read-level data will be averaged before clustering. This should help
 #'     to reduce the noise and allows to compare reads without any common
@@ -648,6 +651,7 @@ plotReadsLollipop <- function(se,
                               drawRead = TRUE,
                               orderReads = "cluster",
                               orderRegion = NULL,
+                              orderReverse = FALSE,
                               clustDist = "euclidean",
                               windowWidth = 25,
                               modbaseSpace = FALSE,
@@ -667,9 +671,10 @@ plotReadsLollipop <- function(se,
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, orderRegion = orderRegion,
-        clustDist = clustDist, windowWidth = windowWidth,
-        modbaseSpace = modbaseSpace, trackTitle = trackTitle,
-        legendTitle = legendTitle, yAxisLabel = yAxisLabel,
+        orderReverse = orderReverse, clustDist = clustDist,
+        windowWidth = windowWidth, modbaseSpace = modbaseSpace,
+        trackTitle = trackTitle, legendTitle = legendTitle,
+        yAxisLabel = yAxisLabel,
         showLegend = showLegend, highlightRegions = highlightRegions,
         footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
@@ -683,6 +688,7 @@ plotReadsLollipop <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads,
                                 orderRegion = argL$orderRegion,
+                                orderReverse = orderReverse,
                                 clustDist = clustDist,
                                 windowWidth = windowWidth,
                                 facetBy = facetBy)
@@ -796,6 +802,7 @@ plotReadsHeatmap <- function(se,
                              linewidthTiles = 0,
                              orderReads = "cluster",
                              orderRegion = NULL,
+                             orderReverse = FALSE,
                              clustDist = "euclidean",
                              windowWidth = 25,
                              modbaseSpace = FALSE,
@@ -816,6 +823,7 @@ plotReadsHeatmap <- function(se,
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
         orderReads = orderReads, orderRegion = orderRegion,
+        orderReverse = orderReverse,
         clustDist = clustDist, windowWidth = windowWidth,
         modbaseSpace = modbaseSpace, trackTitle = trackTitle,
         legendTitle = legendTitle, yAxisLabel = yAxisLabel,
@@ -834,6 +842,7 @@ plotReadsHeatmap <- function(se,
                                 extraColAnnots = setdiff(facetBy, "sample"),
                                 orderReads = orderReads,
                                 orderRegion = argL$orderRegion,
+                                orderReverse = orderReverse,
                                 clustDist = clustDist,
                                 windowWidth = windowWidth,
                                 facetBy = facetBy)
@@ -1371,7 +1380,7 @@ plotGenomicRegions <- function(grl,
 #' @importFrom S4Vectors endoapply
 #' @importFrom cli cli_abort
 .checkArgsReadLevelPlots <- function(se, region, assayName, drawRead,
-                                     orderReads, orderRegion,
+                                     orderReads, orderRegion, orderReverse,
                                      clustDist, windowWidth, modbaseSpace,
                                      trackTitle, legendTitle, yAxisLabel,
                                      showLegend, highlightRegions,
@@ -1390,6 +1399,7 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = orderReads, type = "character", allowNULL = TRUE,
                   validValues = c("cluster", "squish", "regionAvg"))
     .assertScalar(x = orderRegion, type = "GRanges", allowNULL = TRUE)
+    .assertScalar(x = orderReverse, type = "logical")
     .assertScalar(x = clustDist, type = "character",
                   validValues = c("pearson", "euclidean"))
     .assertScalar(x = windowWidth, type = "numeric", rngExcl = c(0, Inf))
@@ -1587,6 +1597,7 @@ plotGenomicRegions <- function(grl,
                                   extraColAnnots = NULL,
                                   orderReads = "cluster",
                                   orderRegion = NULL,
+                                  orderReverse = FALSE,
                                   clustDist = "euclidean",
                                   windowWidth = 25,
                                   facetBy = NULL) {
@@ -1660,6 +1671,11 @@ plotGenomicRegions <- function(grl,
         df$plotRow <- factor(tmp[as.character(df$read)])
     } else if (is.null(orderReads)) {
         df$plotRow <- df$read
+    }
+
+    if (orderReverse) {
+        df$plotRow <- factor(df$plotRow, levels = rev(levels(df$plotRow)))
+        df$read <- factor(df$read, levels = rev(levels(df$read)))
     }
 
     return(df)

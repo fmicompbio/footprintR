@@ -402,7 +402,7 @@ int count_pairs_bam_record(
         char modbase,              // modified base to analyze
         const double thresh_unmod, // mod_prob <  thresh_unmod: unmodified
         const double thresh_mod,   // mod_prob >= thresh_unmod: modified
-        Rcpp::IntegerMatrix &pair_counts) { // matrix for counters
+        Rcpp::NumericMatrix &pair_counts) { // matrix for counters
 
     // allocate variable only used inside count_pairs_bam_record()
     int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
@@ -708,7 +708,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     Rcpp::CharacterVector df_variant_label;
 
     // ... return value for mode 3
-    Rcpp::IntegerMatrix pair_counts;
+    Rcpp::NumericMatrix pair_counts;
 
     // initialize bam data storage
     if (!(bamdata = bam_init1())) {
@@ -760,7 +760,7 @@ Rcpp::List read_modbam_cpp(std::string inname_str,
     if (windowSize > 0) {
         // Mode 3: counting of pairs of bases by distance and modification state
         // ---------------------------------------------------------------------
-        pair_counts = Rcpp::IntegerMatrix(windowSize, 4);
+        pair_counts = Rcpp::NumericMatrix(windowSize, 4);
 
         // convert regions to C arrays
         regcnt = (unsigned int) regions.size();

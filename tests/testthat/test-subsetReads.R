@@ -36,6 +36,8 @@ test_that("subsetReads works", {
                  "logical .reads. for sample .s1. must be of length 3")
     expect_error(subsetReads(se = se, reads = TRUE),
                  ".reads. must be either a .character. vector")
+    expect_error(subsetReads(se = se, reads = NULL, randomSubset = NULL),
+                 ".reads. must be either a .character. vector")
 
     # expected results
     # ... no read-level assay
@@ -76,6 +78,12 @@ test_that("subsetReads works", {
     seSub <- subsetReads(se, list(s1 = "s1-233e48a7-f379-4dcf-9270-958231125563",
                                   s2 = "s2-034b625e-6230-4f8d-a713-3a32cd96c298"))
     expect_identical(seSub2, seSub)
+    expect_warning(
+        seSub3 <- subsetReads(se, reads = list(s1 = "s1-233e48a7-f379-4dcf-9270-958231125563",
+                                               s2 = "s2-034b625e-6230-4f8d-a713-3a32cd96c298"),
+                              randomSubset = 1),
+        "ignoring")
+    expect_identical(seSub, seSub3)
 
     # ... add non-existing read names
     expect_warning(expect_warning(
@@ -125,4 +133,20 @@ test_that("subsetReads works", {
     expect_equal(nrow(seSub2), 6364L)
     expect_equal(nrow(seSub2),
                  sum(rowSums(is_nonna(as.matrix(assay(seSub, "mod_prob")))) > 0))
+
+    # ... select random subset
+    set.seed(42L)
+    seSub5 <- subsetReads(se, randomSubset = 1)
+    expect_equal(lapply(assay(seSub5, "mod_prob"), ncol),
+                 list(s1 = 1L, s2 = 1L))
+    set.seed(42L)
+    seSub6 <- subsetReads(se, randomSubset = 1)
+    expect_identical(seSub5, seSub6)
+
+    seSub7 <- subsetReads(se, randomSubset = 100)
+    expect_equal(lapply(assay(seSub7, "mod_prob"), ncol),
+                 list(s1 = 3L, s2 = 2L))
+    seSub8 <- subsetReads(se, randomSubset = 0.49)
+    expect_equal(lapply(assay(seSub8, "mod_prob"), ncol),
+                 list(s1 = 1L, s2 = 1L))
 })
