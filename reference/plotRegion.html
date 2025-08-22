@@ -21,7 +21,7 @@ and typically do not need to be directly called by the user."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,6 +100,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  drawRead <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  orderReads <span class="op">=</span> <span class="st">"cluster"</span>,</span>
 <span>  orderRegion <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  orderReverse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  clustDist <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
 <span>  windowWidth <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -125,6 +126,7 @@ and typically do not need to be directly called by the user.</p>
 <span>  linewidthTiles <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  orderReads <span class="op">=</span> <span class="st">"cluster"</span>,</span>
 <span>  orderRegion <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  orderReverse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  clustDist <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
 <span>  windowWidth <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  modbaseSpace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -371,6 +373,12 @@ If <code>orderReads = "regionAvg"</code>, the <code>GRanges</code> object define
 window in which average modification probability is calculated to order
 the reads in read-level plots. A <code>NULL</code> value indicates that the
 entire plotted region should be used as the window.</p></dd>
+
+
+<dt id="arg-orderreverse">orderReverse<a class="anchor" aria-label="anchor" href="#arg-orderreverse"></a></dt>
+<dd><p>Logical scalar. If <code>TRUE</code>, the order of the reads
+is reversed in the plots (after applying the ordering defined by
+<code>orderReads</code>).</p></dd>
 
 
 <dt id="arg-clustdist">clustDist<a class="anchor" aria-label="anchor" href="#arg-clustdist"></a></dt>
