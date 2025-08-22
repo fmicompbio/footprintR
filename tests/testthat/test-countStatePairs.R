@@ -59,5 +59,5 @@ test_that("countStatePairs works", {
     }
 
     expect_identical(res1, res2)
-    expect_identical(sum(as.matrix(res3[, -1])), 0L)
+    expect_identical(sum(as.matrix(res3[, -1])), 0)
 })

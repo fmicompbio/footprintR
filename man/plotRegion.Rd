@@ -44,6 +44,7 @@ plotReadsLollipop(
   drawRead = TRUE,
   orderReads = "cluster",
   orderRegion = NULL,
+  orderReverse = FALSE,
   clustDist = "euclidean",
   windowWidth = 25,
   modbaseSpace = FALSE,
@@ -69,6 +70,7 @@ plotReadsHeatmap(
   linewidthTiles = 0,
   orderReads = "cluster",
   orderRegion = NULL,
+  orderReverse = FALSE,
   clustDist = "euclidean",
   windowWidth = 25,
   modbaseSpace = FALSE,
@@ -255,6 +257,10 @@ If \code{orderReads = "regionAvg"}, the \code{GRanges} object defines the
 window in which average modification probability is calculated to order
 the reads in read-level plots. A \code{NULL} value indicates that the
 entire plotted region should be used as the window.}
+
+\item{orderReverse}{Logical scalar. If \code{TRUE}, the order of the reads
+is reversed in the plots (after applying the ordering defined by
+\code{orderReads}).}
 
 \item{clustDist}{A character scalar defining the distance measure to use
 for clustering. Should be one of \code{"pearson"} or

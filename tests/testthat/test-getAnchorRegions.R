@@ -566,4 +566,16 @@ test_that("getAnchorRegions works", {
     expect_equal(ar1$region_Nvalid$s1$region, "chr1:692911-692919:+")
     expect_equal(ar1$region_Nvalid$s2$id, "chr1:692911-692919:+-s2")
     expect_equal(ar1$region_Nvalid$s2$region, "chr1:692911-692919:+")
+
+    # subset anchor regions
+    ar <- getAnchorRegions(se,
+                           assayName = "FracMod",
+                           regionMidpoints = c("chr1:6929389:-", "chr1:6935630:-"),
+                           regionWidth = 5, prune = FALSE,
+                           anchorName = "anchor",
+                           ignore.strand = TRUE,
+                           verbose = interactive())
+    ar <- subsetReads(ar, list(s1 = 1))
+    expect_s4_class(ar, "SummarizedExperiment")
+    expect_equal(ncol(assay(ar)$s1), 1L)
 })

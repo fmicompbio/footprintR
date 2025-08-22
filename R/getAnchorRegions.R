@@ -225,7 +225,8 @@ getAnchorRegions <- function(se,
             DataFrame(
                 id = colnames(m),
                 region = sub("^([^:]+:[0-9]+-[0-9]+:([+]|[-]|[*])).*$",
-                             "\\1", colnames(m))
+                             "\\1", colnames(m)),
+                row.names = colnames(m)
             )
         }))
         cold[[paste0("region_", atp)]] <- regs
@@ -246,6 +247,7 @@ getAnchorRegions <- function(se,
                 colDataColumns = paste0("region_", names(assayL))
             ))
         )
+        rownames(seout) <- seq.int(nrow(seout))
     })
 
     # Drop samples without reads if prune=TRUE
