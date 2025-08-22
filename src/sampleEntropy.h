@@ -1,3 +1,6 @@
 #include <Rcpp.h>
 
-double sampleEntropy(Rcpp::NumericVector, unsigned int, double);
+double sampleEntropy(Rcpp::NumericVector data,
+                     unsigned int m,
+                     double r,
+                     int nThreads = 1);

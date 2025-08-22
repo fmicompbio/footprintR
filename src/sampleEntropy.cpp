@@ -1,5 +1,9 @@
 #include <Rcpp.h>
 #include <cmath>
+#include <numeric>
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 using namespace Rcpp;
 
 
@@ -19,6 +23,7 @@ using namespace Rcpp;
 //' @param data  Numeric vector
 //' @param m  Integer, the embedding dimension, as for chaotic time series; a preferred value is 2.
 //' @param r  Scaling parameter for the filtering factor. The filtering factor is r x standard deviation of the signal
+//' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 //'
 //' @return The Sample Entropy value of the time-series signal
 //'
@@ -31,45 +36,55 @@ using namespace Rcpp;
 //'
 //' @noRd
 //' @keywords internal
+// [[Rcpp::plugins(openmp)]]
 // [[Rcpp::export]]
- double sampleEntropy(NumericVector data, unsigned int m, double r) {
-     unsigned int N = data.size();
+double sampleEntropy(NumericVector data,
+                     unsigned int m,
+                     double r,
+                     int nThreads = 1) {
+    const unsigned int N = data.size();
+    if (N <= m + 1) return 0.0;
 
-     double ssum = std::accumulate(std::begin(data), std::end(data), 0.0);
-     double mm =  ssum / N;
-     double accum = 0.0;
-     std::for_each (std::begin(data), std::end(data), [&](const double d) {
-         accum += (d - mm) * (d - mm);
-     });
-     double sd = sqrt(accum / (N-1));
+    // Compute mean and stddev in one pass (serial, negligible cost compared to O(N^2))
+    double mean = 0.0, M2 = 0.0;
+    for (unsigned int i = 0; i < N; i++) {
+        double delta = data[i] - mean;
+        mean += delta / (i + 1);
+        M2   += delta * (data[i] - mean);
+    }
+    double sd = std::sqrt(M2 / (N - 1));
+    double err = sd * r;
 
-     int Cm = 0, Cm1 = 0;
-     double err = 0.0;
+    // Global counters
+    unsigned long long Cm  = 0;
+    unsigned long long Cm1 = 0;
 
-     err = sd * r;
+    // Parallelize the outer loop
+#pragma omp parallel for num_threads(nThreads) reduction(+:Cm,Cm1) schedule(dynamic)
+    for (unsigned int i = 0; i <= N - (m + 1); i++) {
+        for (unsigned int j = i + 1; j <= N - (m + 1); j++) {
+            const double* xi = &data[i];
+            const double* xj = &data[j];
+            bool eq = true;
 
-     for (unsigned int i = 0; i < N - (m + 1) + 1; i++) {
-         for (unsigned int j = i + 1; j < N - (m + 1) + 1; j++) {
-             bool eq = true;
-             //m - length series
-             for (unsigned int k = 0; k < m; k++) {
-                 if (std::abs(data[i+k] - data[j+k]) > err) {
-                     eq = false;
-                     break;
-                 }
-             }
-             if (eq) Cm++;
+            // Compare subsequences of length m
+            for (unsigned int k = 0; k < m; k++) {
+                if (std::fabs(xi[k] - xj[k]) > err) {
+                    eq = false;
+                    break;
+                }
+            }
 
-             //m+1 - length series
-             int k = m;
-             if (eq && std::abs(data[i+k] - data[j+k]) <= err)
-                 Cm1++;
-         }
-     }
+            if (eq) {
+                Cm++;
+                if (std::fabs(xi[m] - xj[m]) <= err)
+                    Cm1++;
+            }
+        }
+    }
 
-     if (Cm > 0 && Cm1 > 0)
-         return std::log((double)Cm / (double)Cm1);
-     else
-         return 0.0;
- }
-
+    if (Cm > 0 && Cm1 > 0)
+        return std::log(static_cast<double>(Cm) / Cm1);
+    else
+        return 0.0;
+}
