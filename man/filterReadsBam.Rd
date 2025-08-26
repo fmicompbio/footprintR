@@ -21,6 +21,7 @@ filterReadsBam(
   minSNR = -Inf,
   maxFracLowConf = 1,
   maxEntropy = Inf,
+  noiseCoef = c(NA_real_, NA_real_),
   LowConf = 0.7,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
@@ -80,6 +81,10 @@ than this value will be filtered out.}
 read-level entropy. Reads without modified-base calls or with entropy
 above this value will be filtered out. A value of \code{Inf} deactivates
 the entropy filter.}
+
+\item{noiseCoef}{Numeric vector of length 2 giving the background noise model
+coefficients \code{(b0, b1)}. If provided, these are used to impose a floor
+on the estimated per-read noise variance (see also \code{\link{calcReadStats}}).}
 
 \item{LowConf}{A numeric scalar with the minimum call confidence below which
 calls are considered "low confidence".}

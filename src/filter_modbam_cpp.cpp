@@ -10,7 +10,7 @@
 #define NMODS 5
 
 
-//' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
+ //' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
  //' Workhorse function for filterReadsBam. Parses records from a single
  //' \code{infile}, calculate read statistics and writes the record to
  //' a single \code{outfile} if the record passes all criteria defined by
@@ -52,6 +52,12 @@
  //' @param minSNR A numeric scalar representing the smallest acceptable
  //'     read-level Signal to Noise Ratio. Reads with SNR below this value will be filtered
  //'     out.
+ //' @param noiseCoefB0 Numeric scalar, intercept of the background noise model.
+ //'   If finite, used to impose a floor on the per-read noise variance
+ //'   (see also \code{calcReadStats}). Default \code{-1e200} disables the floor.
+ //' @param noiseCoefB1 Numeric scalar, slope of the background noise model.
+ //'   If finite, used together with \code{noiseCoefB0} to compute the floor
+ //'   as \eqn{b0 + b1 * mean(prob)}. Default \code{-1e200} disables the floor.
  //' @param maxFracLowConf A numeric scalar representing the maximally acceptable
  //'     fraction of low-confidence modified base calls in a read. Reads with
  //'     no modified-base calls or a fraction of low confidence calls greater
@@ -85,6 +91,8 @@
                                        double minAlignedFraction = 0,
                                        double minQscore = 0.0,
                                        double minSNR   = -1e200,
+                                       double noiseCoefB0 = -1e200,
+                                       double noiseCoefB1 = -1e200,
                                        double maxFracLowConf = 1.0,
                                        double maxEntropy = -1.0,
                                        double LowConf = 0.7,
@@ -292,11 +300,16 @@
          }
          
          
+
          // ... minSNR
-         if (minSNR > -1e190) {  // treat as active if  threshold was overriden
+         if (minSNR > -1e190) {  // SNR filter enabled
+             // Convert sentinel -1e200 to NA (so SNR uses the floor only if real coefs were passed)
+             const double b0 = (std::isfinite(noiseCoefB0) && noiseCoefB0 > -1e190) ? noiseCoefB0 : R_NaReal;
+             const double b1 = (std::isfinite(noiseCoefB1) && noiseCoefB1 > -1e190) ? noiseCoefB1 : R_NaReal;
              const double snr_val = compute_snr_na_gap_aware(
                  mod_probs, mod_pos,
-                 /*k=*/2, /*min_diffs=*/-1, /*eps=*/1e-3
+                 /*k=*/2, /*min_diffs=*/-1, /*eps=*/1e-3,
+                 /*b0=*/b0, /*b1=*/b1
              );
              if (!std::isnan(snr_val) && snr_val < minSNR) {
                  nMinSNR++;
@@ -304,6 +317,7 @@
              }
              // If SNR cannot be computed (NaN), do not drop
          }
+         
          
          
          // ... maxFracLowConf

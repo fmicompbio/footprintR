@@ -52,10 +52,9 @@ noise.}
 to keep a position. A value greater than one is recommended to remove
 spurious positions.}
 
-\item{wfilter_param}{A \code{\link{NoiseFilterParam}} object specifying
-the quantile thresholds and depth cutoff rules used to filter windows
-prior to regression. Defaults to \code{NoiseFilterParam()}. Advanced users may supply a
-custom object to override these settings.}
+\item{wfilter_param}{A \strong{named list} as returned by \code{\link{NoiseFilterParam}},
+specifying the quantile thresholds and depth cutoff rules used to filter windows
+prior to regression. Defaults to \code{NoiseFilterParam()}.}
 
 \item{plot}{Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
 with the fit.}

@@ -21,17 +21,18 @@ cutoffs for the coverage values. Default \code{c(0.01, 0.95)}.}
 
 \item{noise_ratio_probs}{Numeric length-2 vector. Lower and upper
 quantile cutoffs for the noise-to-mean ratio. Default
-\code{c(0.01, 0.70)}.}
+\code{c(0.01, 0.70)}. Upper cutoff should typically be in
+the 0.2-0.4 range to ensure removal of windows with excess variance.}
 
 \item{dcut_min}{Numeric scalar. Minimum allowed depth cutoff
 (floor). Default \code{10}.}
 
-\item{na.rm}{Logical; should \code{NA} values be removed before
+\item{na.rm}{Logical. should \code{NA} values be removed before
 computing quantiles? Default \code{TRUE}.}
 }
 \value{
-An object of class \code{"NoiseFilterParam"}, which is just a
-list with class attribute and a custom print method.
+A \strong{named list} with elements \code{mean_probs}, \code{depth_probs},
+\code{noise_ratio_probs}, \code{dcut_min}, \code{na.rm}.
 }
 \description{
 Constructor for a simple parameter list controlling

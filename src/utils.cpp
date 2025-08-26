@@ -8,7 +8,7 @@
 
 #define CONCAT_BUFFER_SIZE 65536
 
-//' Concatenate files
+ //' Concatenate files
  //'
  //' @param input_files Character vector with input file names to concatenate.
  //' @param output_file Character scalar with output file name to write to.
@@ -462,25 +462,12 @@
                        char modbase,
                        char unmodbase,
                        Rcpp::NumericVector *mod_probs,
-                       char* qseq,
-                       hts_base_mod_state *ms,
-                       char* buffer,
-                       int buffer_len) {
-     // Backward-compatible wrapper: call the overload without collecting positions
-     return extract_mod_probs(bamdata, modbase, unmodbase, mod_probs,
-                              nullptr, qseq, ms, buffer, buffer_len);
- }
- 
- // Overload: also fills on-read positions
- int extract_mod_probs(bam1_t *bamdata,
-                       char modbase,
-                       char unmodbase,
-                       Rcpp::NumericVector *mod_probs,
                        Rcpp::IntegerVector *mod_pos,   // may be NULL
                        char* qseq,
                        hts_base_mod_state *ms,
                        char* buffer,
                        int buffer_len) {
+
      // declare variables
      int i = 0, j = 0, strand = 0, impl = 0, pos = 0, r = 0;
      int this_read_len = bamdata->core.l_qseq, n_probs = 0;

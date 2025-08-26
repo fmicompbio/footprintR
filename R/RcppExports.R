@@ -65,11 +65,8 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
     .Call(`_footprintR_calcFootprintScoreForRead`, pos, pmod, wgt, minconf, minweight)
 }
 
-#' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
-NULL
-
-filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, minSNR = -1e200, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
-    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
+filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, minSNR = -1e200, noiseCoefB0 = -1e200, noiseCoefB1 = -1e200, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+    .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, noiseCoefB0, noiseCoefB1, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
 #' Create an index for a given bam file
@@ -360,9 +357,6 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 sampleEntropy <- function(data, m, r) {
     .Call(`_footprintR_sampleEntropy`, data, m, r)
 }
-
-#' Concatenate files
-NULL
 
 concatenate_files <- function(input_files, output_file) {
     .Call(`_footprintR_concatenate_files`, input_files, output_file)

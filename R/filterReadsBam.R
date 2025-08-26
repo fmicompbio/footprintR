@@ -39,6 +39,9 @@
 #'   \eqn{\mathrm{NoiseVar} \approx 0.5\,\mathrm{Var}(\Delta x)} using
 #'   adjacent methylation differences that can jump up to \eqn{k=2} gaps, and
 #'   \eqn{\mathrm{SignalVar} = \max(\mathrm{Var}(x) - \mathrm{NoiseVar}, \varepsilon)} with \eqn{\varepsilon=10^{-3}}.
+#' @param noiseCoef Numeric vector of length 2 giving the background noise model
+#'   coefficients \code{(b0, b1)}. If provided, these are used to impose a floor
+#'   on the estimated per-read noise variance (see also \code{\link{calcReadStats}}).
 #' @param LowConf A numeric scalar with the minimum call confidence below which
 #'     calls are considered "low confidence".
 #' @param BPPARAM A \code{\link[BiocParallel]{BiocParallelParam}} object that
@@ -87,6 +90,7 @@ filterReadsBam <- function(infiles,
                            minSNR = -Inf,
                            maxFracLowConf = 1.0,
                            maxEntropy = Inf,
+                           noiseCoef = c(NA_real_, NA_real_),
                            LowConf = 0.7,
                            BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                            verbose = FALSE) {
@@ -112,6 +116,8 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = maxEntropy, type = "numeric")
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0.5, 1))
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
+    .assertVector(x = noiseCoef, len=2, type = "numeric")
+    
 
     # determine the number of parallel threads to be used for
     # bam files (chromosomes) and decompression of bam records
@@ -182,6 +188,8 @@ filterReadsBam <- function(infiles,
                                           maxFracLowConf = myMaxFracLowConf,
                                           maxEntropy = myMaxEntropy,
                                           LowConf = myLowConf,
+                                          noiseCoefB0 = noiseCoef[1],
+                                          noiseCoefB1 = noiseCoef[2],
                                           nThreads = myNThreads,
                                           verbose = myverbose)
                     }, BPPARAM = BPPARAM)
@@ -214,3 +222,4 @@ filterReadsBam <- function(infiles,
 
     return(res)
 }
+
