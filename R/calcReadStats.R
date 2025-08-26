@@ -170,7 +170,8 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @importFrom stats var quantile lm coef
 #' @importFrom dplyr between
 #' @importFrom cli cli_warn
-#'
+#' @importFrom stats setNames
+#' 
 #' @noRd
 #' @keywords internal
 .estimate_snr_probList <- function(probList, idxList, k = 2L, min_diffs = NULL,
@@ -301,16 +302,14 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #'     coverage on individual positions for them to be included in the
 #'     calculations. In high coverage data this is an effective filter for
 #'     removing spurious modbases, typically the result of erroneous
-#'     basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
-#'     Q3 and IQR are the third quartile and interquartile range of the coverage
-#'     distribution estimated from the data in \code{se}.
+#'     basecalling.
 #' @param minNobsPread A numeric scalar with the minimum number of observed
 #'     modifiable bases per read for it to be included in the calculations.
 #'     \code{NA} values are returned for the reads that do not pass this
 #'     threshold.
 #' @param LowConf A numeric scalar with the minimum call confidence below which
 #'     calls are considered "low confidence".
-#' @param LagRange A numeric vector of two values (minimum and maxium) defining
+#' @param LagRange A numeric vector of two values (minimum and maximum) defining
 #'     the range of lags for the calculation of autocorrelation and partial
 #'     autocorrelation (see details section).
 #' @param name For \code{addReadStats} only: A character scalar specifying the
@@ -374,7 +373,11 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #'         \eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})}.}
 #'
 #'  }
-#'
+#'   When SNR-related statistics are requested,
+#'   a robust noise floor `b0 + b1 * mean(x)` is fitted per sample (see *NoiseVar*).
+#'   The fitted coefficients are stored in the result metadata (see below). If
+#'   SNR-related statistics are not computed, `NA`/`NA` placeholders are stored
+#'   for uniformity.
 #' @return
 #' For \code{calcReadStats}, a \code{SimpleList} object with summary statistics
 #' for the samples (columns) in \code{se}.
@@ -448,7 +451,10 @@ calcReadStats <- function(se,
 
     # Subset by sequenceContext
     se <- .keepPositionsBySequenceContext(se, sequenceContext = sequenceContext)
-
+    
+    noiseCoefs_by_sample <- list() # c(intercept=..., slope=...)
+    
+    
     # Calculate statistics for each sample
     out <- SimpleList(lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
@@ -492,6 +498,11 @@ calcReadStats <- function(se,
                     probList = NNAvals_byCol,
                     idxList  = idxPos_byCol
                 )
+                # always store a 2-length named vector
+                noiseCoefs_by_sample[[nm]] <<- snr_res$floor_pars # c(intercept=..., slope=...)
+            } else {
+                # uniform shape even when SNR stats were not computed
+                noiseCoefs_by_sample[[nm]] <<- c(intercept = NA_real_, slope = NA_real_)
             }
 
             # Iterate over param_names and add columns to stats_res
@@ -529,14 +540,24 @@ calcReadStats <- function(se,
     )
 
     # add filtering parameters to `out`
-    metadata(out) <- list(regions = regions,
-                          sequenceContext = sequenceContext,
-                          minNobsPpos = minNobsPpos,
-                          minNobsPread = minNobsPread,
-                          Lags = LagRangeValues)
+    metadata(out) <- list(
+        regions        = regions,
+        sequenceContext= sequenceContext,
+        minNobsPpos    = minNobsPpos,
+        minNobsPread   = minNobsPread,
+        Lags           = LagRangeValues,
+        snr_noise_coef = noiseCoefs_by_sample,          # named list: one c(intercept, slope) per sample
+        snr_config     = list(k = 2L, min_diffs = NULL, eps = 1e-3)
+    )
 
     return(out)
 }
+
+
+
+
+
+
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom S4Vectors metadata
