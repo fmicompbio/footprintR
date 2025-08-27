@@ -303,7 +303,7 @@
 
          // ... minSNR
          if (minSNR > -1e190) {  // SNR filter enabled
-             // Convert sentinel -1e200 to NA (so SNR uses the floor only if real coefs were passed)
+             // Set coefficients to NA when not passed
              const double b0 = (std::isfinite(noiseCoefB0) && noiseCoefB0 > -1e190) ? noiseCoefB0 : R_NaReal;
              const double b1 = (std::isfinite(noiseCoefB1) && noiseCoefB1 > -1e190) ? noiseCoefB1 : R_NaReal;
              const double snr_val = compute_snr_na_gap_aware(

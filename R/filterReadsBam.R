@@ -63,7 +63,7 @@
 #' filtbamfiles <- tempfile(fileext = rep(".bam", length(modbamfiles)))
 #' res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
 #'                       modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
-#'                       minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.75,
+#'                       minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.768,
 #'                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
 #'                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
 #' res

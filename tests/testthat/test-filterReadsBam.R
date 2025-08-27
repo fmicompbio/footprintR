@@ -26,7 +26,7 @@ test_that("filterReadsBam works", {
                                         modbase = "a", region = ".",
                                         includeHeader = TRUE,
                                         verbose = TRUE),
-                      11L)
+                      12L)
     })
     unlink(filtbamfiles[1])
 
@@ -58,7 +58,7 @@ test_that("filterReadsBam works", {
         expect_message(
             res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                                   modbase = "a", indexOutfiles = TRUE, minReadLength = 6746,
-                                  minAlignedLength = 6896, minAlignedFraction = 0.56,
+                                  minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.768,
                                   minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
                                   BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
         )
@@ -66,7 +66,7 @@ test_that("filterReadsBam works", {
     expect_true(all(file.exists(filtbamfiles)))
     expect_true(all(file.exists(paste0(filtbamfiles, ".bai"))))
     expect_s3_class(res, "data.frame")
-    expect_identical(dim(res), c(2L, 14L))
+    expect_identical(dim(res), c(2L, 15L))
     expect_identical(colnames(res), c("sample", "infile", "outfile", "total",
                                       "retained", "filtered_unmapped",
                                       "filtered_secondary", "filtered_supplementary",
@@ -74,13 +74,14 @@ test_that("filterReadsBam works", {
                                       "filtered_minAlignedLength",
                                       "filtered_minAlignedFraction",
                                       "filtered_minQscore",
+                                      "filtered_minSNR",
                                       "filtered_maxFracLowConf",
                                       "filtered_maxEntropy"))
     expect_identical(res$sample, c("s1", "s2"))
     expect_identical(res$infile, modbamfiles)
     expect_identical(res$outfile, filtbamfiles)
     expect_identical(res$total, c(10, 10))
-    expect_identical(res$retained, c(7, 7))
+    expect_identical(res$retained, c(6, 7))
     expect_identical(res$filtered_unmapped, c(0, 0))
     expect_identical(res$filtered_secondary, c(0, 0))
     expect_identical(res$filtered_supplementary, c(0, 0))
@@ -88,6 +89,7 @@ test_that("filterReadsBam works", {
     expect_identical(res$filtered_minAlignedLength, c(1, 0))
     expect_identical(res$filtered_minAlignedFraction, c(1, 0))
     expect_identical(res$filtered_minQscore, c(0, 1))
+    expect_identical(res$filtered_minSNR, c(1, 0))
     expect_identical(res$filtered_maxFracLowConf, c(0, 1))
     expect_identical(res$filtered_maxEntropy, c(1, 0))
 
@@ -98,7 +100,7 @@ test_that("filterReadsBam works", {
     res0 <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                            modbase = "a", indexOutfiles = FALSE,
                            overwriteOutfiles = TRUE, minReadLength = 6746,
-                           minAlignedLength = 6896, minAlignedFraction = 0.56,
+                           minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.768,
                            minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
                            BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     expect_identical(res, res0)
@@ -113,7 +115,7 @@ test_that("filterReadsBam works", {
     expect_true(all(file.exists(filtbamfiles)))
     expect_true(all(!file.exists(paste0(filtbamfiles, ".bai"))))
     expect_s3_class(res2, "data.frame")
-    expect_identical(dim(res2), c(2L, 14L))
+    expect_identical(dim(res2), c(2L, 15L))
     expect_identical(colnames(res2), colnames(res))
     expect_identical(res2$sample, c("s1", "s2"))
     expect_identical(res2$infile, modbamfiles)
@@ -124,12 +126,18 @@ test_that("filterReadsBam works", {
     expect_identical(res2$filtered_minAlignedLength, c(0, 0))
     expect_identical(res2$filtered_minAlignedFraction, c(0, 0))
     expect_identical(res2$filtered_minQscore, c(0, 0))
+    expect_identical(res2$filtered_minSNR, c(0, 0))
     expect_identical(res2$filtered_maxFracLowConf, c(0, 0))
     expect_identical(res2$filtered_maxEntropy, c(0, 0))
     expect_identical(unname(tools::md5sum(modbamfiles)),
                      unname(tools::md5sum(filtbamfiles)))
     unlink(filtbamfiles)
 
+    
+    
+    
+    
+    
     # non-primary alignments
     inbam <- system.file("extdata", "6mA_nonPrimary.bam", package = "footprintR")
     outbam <- tempfile(fileext = ".bam")
@@ -155,4 +163,23 @@ test_that("filterReadsBam works", {
     tmp4 <- Rsamtools::scanBam(file = outbam)
     expect_length(tmp4[[1]]$qname, 0L)
     unlink(outbam)
+    
+    
+    # expected results (passing precalculated noiseCoefs that result in stricter filtering)
+    suppressMessages(
+        expect_message(
+            res5 <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
+                                  modbase = "a", indexOutfiles = TRUE, minReadLength = 6746,
+                                  minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.768, noiseCoef=c(0,0.29),
+                                  minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
+                                  BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
+        )
+    )
+    expect_true(all(file.exists(filtbamfiles)))
+    expect_true(all(file.exists(paste0(filtbamfiles, ".bai"))))
+    expect_s3_class(res5, "data.frame")
+    expect_identical(dim(res5), c(2L, 15L))
+    expect_identical(res5$total, c(10, 10))
+    expect_identical(res5$retained, c(5, 7))
+    expect_identical(res5$filtered_minSNR, c(2, 1))
 })
