@@ -131,10 +131,10 @@ test_that("calcReadStats works", {
     expect_s4_class(rs, "SimpleList")
     expect_length(rs, 1)
     expect_named(rs, "s1")
-    expect_length(S4Vectors::metadata(rs), 5L)
+    expect_length(S4Vectors::metadata(rs), 7L)
     expect_named(S4Vectors::metadata(rs),
                  c("regions", "sequenceContext", "minNobsPpos",
-                   "minNobsPread", "Lags"))
+                   "minNobsPread", "Lags", 'snr_noise_coef', 'snr_config'))
     expect_equal(S4Vectors::metadata(rs)$minNobsPpos, 1L)
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")
@@ -168,10 +168,10 @@ test_that("calcReadStats works", {
     expect_length(rs, 1)
     expect_named(rs, "s1")
     expect_type(S4Vectors::metadata(rs), "list")
-    expect_length(S4Vectors::metadata(rs), 5L)
+    expect_length(S4Vectors::metadata(rs), 7L)
     expect_named(S4Vectors::metadata(rs),
                  c("regions", "sequenceContext", "minNobsPpos",
-                   "minNobsPread", "Lags"))
+                   "minNobsPread", "Lags", 'snr_noise_coef', 'snr_config'))
     expect_equal(S4Vectors::metadata(rs)$minNobsPpos, thr)
     qc <- rs[["s1"]]
     expect_s4_class(qc, "DFrame")

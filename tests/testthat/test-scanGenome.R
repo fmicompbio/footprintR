@@ -487,3 +487,170 @@ test_that("genome scanning works (wrapper function)", {
     expect_length(gr2$dirNegLog10PValue, 38L)
     expect_identical(gr, gr2$dirNegLog10PValue)
 })
+
+
+
+
+
+
+
+### SNR and related functions:
+
+
+test_that("NoiseFilterParam and its validator work", {
+    ## Returns a named list with expected fields and types
+    p <- NoiseFilterParam()
+    expect_type(p, "list")
+    expect_named(p, c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm"))
+    expect_type(p$mean_probs, "double")
+    expect_type(p$depth_probs, "double")
+    expect_type(p$noise_ratio_probs, "double")
+    expect_type(p$dcut_min, "double")
+    expect_type(p$na.rm, "logical")
+    expect_length(p$mean_probs, 2L)
+    expect_length(p$depth_probs, 2L)
+    expect_length(p$noise_ratio_probs, 2L)
+    
+    ## .validate_NoiseFilterParam common errors (that use checks other that assert)
+    expect_error(.validate_NoiseFilterParam(list(1,2,3)), "must be a named list") #Unnamed list
+    expect_error(.validate_NoiseFilterParam(list(mean_probs = c(0.05, 0.99), #Missing fields
+                                                 depth_probs = c(0.01, 0.95))),"Missing fields")
+    expect_error(.validate_NoiseFilterParam(list(mean_probs = c(0.9, 0.1), #Decreasing probs
+                                                 depth_probs = c(0.01, 0.95),
+                                                 noise_ratio_probs = c(0.01, 0.7),
+                                                 dcut_min = 10, na.rm = TRUE)),"must be non-decreasing")
+})
+
+
+
+test_that(".estimate_snr_vec works in parametric and raw mode", {
+    ## Too few points -> NAs
+    out0 <- .estimate_snr_vec(x = c(0.1, 0.2), pos = c(1, 2))
+    expect_true(all(is.na(unlist(out0))))
+    
+    ## small example
+    x   <- c(0.1, 0.3, 0.2, 0.25, 0.35, 0.2, 0.4, 0.6, 0.1, 0.25)
+    pos <- c(1, 2, 4, 5, 7, 8, 11, 15, 20, 21)
+    out_raw <- .estimate_snr_vec(x = x, pos = pos, k = 2L, min_diffs=6)
+    expect_named(out_raw, c("total", "signal", "noise"))
+    expect_equal(out_raw, list("total"=0.02236111,"signal"=0.01248016,"noise"=0.00988095), tolerance=1e-6 )
+    # Decrease k so that now there is not enough data for noise estimation:
+    out_raw2 <- .estimate_snr_vec(x = x, pos = pos, k = 0L, min_diffs=5)
+    expect_equal(out_raw$total, out_raw2$total, tolerance=1e-6 )
+    expect_true(is.na(out_raw2$signal) && is.na(out_raw2$signal))
+    
+    ## Parametric mode
+    mn <- mean(x)
+    depth_hi <- 100
+    depth_lo <- 5
+    coefs <- c(intercept = 0.01, slopeMean = 0.2, slopeInvDepth = 0.05)
+    
+    # depth >= dcut_min -> 1/depth term is 0
+    out_par_hi <- .estimate_snr_vec(x, pos, depth = depth_hi,
+                                    noise_pars = coefs, dcut_min = 10)
+    noise_hi <- coefs[1] + coefs[2] * mn + coefs[3] * 0
+    expect_equal(out_par_hi$noise, noise_hi)
+
+    # depth < dcut_min -> 1/depth term present
+    out_par_lo <- .estimate_snr_vec(x, pos, depth = depth_lo,
+                                    noise_pars = coefs, dcut_min = 10)
+    noise_lo <- coefs[1] + coefs[2] * mn + coefs[3] * 1/depth_lo
+    expect_equal(out_par_lo$noise, noise_lo)
+
+})
+
+
+
+
+
+test_that("estimateNoiseParsWindows fit", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    gr0 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6920000, 6950000))
+    win <- unlist(GenomicRanges::tile(gr0, width = 500))
+    
+    ## Basic run
+    cf <- estimateNoiseParsWindows(bamfiles = modbamfiles,
+                                   modbase = "a",
+                                   windows = win,
+                                   plot = FALSE,
+                                   BPPARAM = BiocParallel::SerialParam())
+    expect_named(cf, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_length(cf, 3L)
+    expect_equal(as.vector(cf), c(0.001517852,0.15729864,-0.00841949 ), tolerance=1e-6 )
+    ## carries NoiseFilterParam as attribute
+    expect_true(!is.null(attr(cf, "NoiseFilterParam")))
+    expect_named(attr(cf, "NoiseFilterParam"),
+                 c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm"))
+    
+})
+
+
+
+
+
+test_that("snrScoreWindows computes SNR (parametric and raw)", {
+    ## Prepare per-position data
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    gr0 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6920000, 6950000))
+    gr_tiles <- unlist(GenomicRanges::tile(gr0, width = 500))
+    
+    ## Estimate noise parameters (parametric mode)
+    coef <- estimateNoiseParsWindows(bamfiles = modbamfiles,
+                                     modbase = "a",
+                                     windows = gr_tiles,
+                                     plot = FALSE,
+                                     BPPARAM = BiocParallel::SerialParam())
+    
+    ## Per-position summary data for the same windows
+    se_pos <- readModBam(bamfiles = modbamfiles,
+                         regions = gr_tiles,
+                         modbase = "a",
+                         level = "summary",
+                         trim = TRUE,
+                         BPPARAM = BiocParallel::SerialParam()) |>
+        filterPositions(filters = "coverage", minCov = 2, assayNameNA = NULL)
+    
+    ## Sanity
+    expect_true(all(c("FracMod", "Nvalid") %in% SummarizedExperiment::assayNames(se_pos)))
+    
+    ## Parametric SNR
+    se_snr_par <- snrScoreWindows(se = se_pos, gr = gr_tiles, noise_pars = coef)
+    expect_s4_class(se_snr_par, "SummarizedExperiment")
+    expect_identical(dim(se_snr_par), c(length(gr_tiles), ncol(se_pos)))
+    expect_identical(SummarizedExperiment::assayNames(se_snr_par),
+                     c("TotalVar", "SignalVar", "NoiseVar", "SNR"))
+    expect_true(all(is.finite(SummarizedExperiment::assay(se_snr_par, "TotalVar")) | is.na(SummarizedExperiment::assay(se_snr_par, "TotalVar"))))
+    expect_true(all(is.finite(SummarizedExperiment::assay(se_snr_par, "NoiseVar"))  | is.na(SummarizedExperiment::assay(se_snr_par, "NoiseVar"))))
+    expect_true(all(is.finite(SummarizedExperiment::assay(se_snr_par, "SignalVar")) | is.na(SummarizedExperiment::assay(se_snr_par, "SignalVar"))))
+    
+    ## Raw (non-parametric) SNR
+    se_snr_raw <- snrScoreWindows(se = se_pos, gr = gr_tiles)
+    expect_s4_class(se_snr_raw, "SummarizedExperiment")
+    expect_identical(dim(se_snr_raw), c(length(gr_tiles), ncol(se_pos)))
+    expect_identical(SummarizedExperiment::assayNames(se_snr_raw),
+                     c("TotalVar", "SignalVar", "NoiseVar", "SNR"))
+    
+    ## Compare the two modes
+    v1 <- as.vector(SummarizedExperiment::assay(se_snr_par, "TotalVar"))
+    v2 <- as.vector(SummarizedExperiment::assay(se_snr_raw, "TotalVar"))
+    expect_identical(v1,v2) # Total Variance should be identical
+    
+    n1 <- as.vector(SummarizedExperiment::assay(se_snr_par, "NoiseVar"))
+    n2 <- as.vector(SummarizedExperiment::assay(se_snr_raw, "NoiseVar"))
+    ok <- is.finite(n1) & is.finite(n2)
+    if (any(ok)) {
+        expect_true(stats::cor(n1[ok], n2[ok]) > 0.3) # Noise Variance estimates should broadly agree
+    }
+    
+    ## Empty input handling
+    se_empty <- se_pos[numeric(0), ]
+    res_empty <- snrScoreWindows(se_empty, gr_tiles)
+    expect_s4_class(res_empty, "SummarizedExperiment")
+    expect_identical(dim(res_empty), c(0L, ncol(se_pos)))
+    expect_identical(SummarizedExperiment::assayNames(res_empty),
+                     c("TotalVar", "SignalVar", "NoiseVar", "SNR"))
+})
