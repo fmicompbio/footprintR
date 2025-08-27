@@ -682,7 +682,7 @@ NoiseFilterParam <- function(mean_probs = c(0.05, 0.99),
     ## check arguments
     .assertVector(x = x, type = "numeric", len = length(pos))
     .assertVector(x = pos, type = "numeric")
-    .assertScalar(x = k, type = "numeric", rngIncl = c(1L, Inf))
+    .assertScalar(x = k, type = "numeric", rngIncl = c(0L, Inf))
     .assertScalar(x = min_diffs, type = "numeric", rngIncl = c(2L, Inf), allowNULL=TRUE)
     .assertVector(x = noise_pars, type = "numeric", allowNULL=TRUE)
     .assertScalar(x = dcut_min, type = "numeric", rngIncl = c(1L, Inf), allowNULL = TRUE)
