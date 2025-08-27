@@ -392,6 +392,10 @@ sampleEntropy <- function(data, m, r, nThreads = 1L) {
     .Call(`_footprintR_sampleEntropy`, data, m, r, nThreads)
 }
 
+sampleEntropy2 <- function(data, m, r, nThreads = 1L) {
+    .Call(`_footprintR_sampleEntropy2`, data, m, r, nThreads)
+}
+
 #' Calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)
 #'
 #' @param bamdata A \code{bam1_t*} with the alignment.
