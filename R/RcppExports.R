@@ -388,8 +388,44 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
     .Call(`_footprintR_read_modbam_cpp`, inname_str, regions, modbase, n_alns_to_sample, tnames_for_sampling, variantRefNames, variantRefPositions, threshUnmod, threshMod, windowSize, minMapQ, minAlignedLength, n_threads, verbose)
 }
 
-sampleEntropy <- function(data, m, r, nThreads = 1L) {
-    .Call(`_footprintR_sampleEntropy`, data, m, r, nThreads)
+#' @title Sample Entropy of Time series signal
+#'
+#' @description
+#' \code{sampleEntropy} returns the sample entropy of a time-series signal
+#' see also https://en.wikipedia.org/wiki/Sample_entropy
+#'
+#' @details
+#' This function calculates the Sample Entropy of a time-series vector
+#' given as argument. Sample Entropy is  used to assess the complexity of physiological
+#' time-series signals.
+#' This C++  implementation is a modified version of:
+#' https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6
+#'
+#' @param data  Numeric vector
+#' @param m Integer. The pattern (embedding) length: Larger m captures
+#'     finer structure but sharply reduces the number of matches,
+#'     so it requires longer data and increases variance. Common
+#'     choices are m = 2 or 3 for physiological time series.
+#' @param r  Scaling parameter for the filtering factor. The filtering factor
+#'     is r x standard deviation of the signal
+#' @param maxStarts Integer giving the maximum number of signal start positions
+#'        to consider when computing sample entropy. If the time
+#'        series is longer than this, a random subset of starts is chosen. Use
+#'        \code{-1} (the default) to include all possible starts.
+#' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
+#'
+#' @return The Sample Entropy value of the time-series signal
+#'
+#' @examples
+#' ts <- runif(100,0,1)
+#' sampleEntropy(ts, m=2L, r=0.2)
+#'
+#' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
+#' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
+#'
+#' @keywords internal
+sampleEntropy <- function(data, m, r, maxStarts = -1L, nThreads = 1L) {
+    .Call(`_footprintR_sampleEntropy`, data, m, r, maxStarts, nThreads)
 }
 
 #' Calculate aligned bases (sum of 'M', '=', or 'X' operation lengths)

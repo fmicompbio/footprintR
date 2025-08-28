@@ -130,16 +130,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleEntropy
-double sampleEntropy(NumericVector data, unsigned int m, double r, int nThreads);
-RcppExport SEXP _footprintR_sampleEntropy(SEXP dataSEXP, SEXP mSEXP, SEXP rSEXP, SEXP nThreadsSEXP) {
+double sampleEntropy(NumericVector data, unsigned int m, double r, int maxStarts, int nThreads);
+RcppExport SEXP _footprintR_sampleEntropy(SEXP dataSEXP, SEXP mSEXP, SEXP rSEXP, SEXP maxStartsSEXP, SEXP nThreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type data(dataSEXP);
     Rcpp::traits::input_parameter< unsigned int >::type m(mSEXP);
     Rcpp::traits::input_parameter< double >::type r(rSEXP);
+    Rcpp::traits::input_parameter< int >::type maxStarts(maxStartsSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleEntropy(data, m, r, nThreads));
+    rcpp_result_gen = Rcpp::wrap(sampleEntropy(data, m, r, maxStarts, nThreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -210,7 +211,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},
     {"_footprintR_read_modbam_cpp", (DL_FUNC) &_footprintR_read_modbam_cpp, 14},
-    {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 4},
+    {"_footprintR_sampleEntropy", (DL_FUNC) &_footprintR_sampleEntropy, 5},
     {"_footprintR_concatenate_files", (DL_FUNC) &_footprintR_concatenate_files, 2},
     {"_footprintR_concatenate_hts_files", (DL_FUNC) &_footprintR_concatenate_hts_files, 3},
     {"_footprintR_getChromosomeNamesFromBam", (DL_FUNC) &_footprintR_getChromosomeNamesFromBam, 1},

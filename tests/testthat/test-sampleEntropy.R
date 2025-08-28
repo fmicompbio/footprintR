@@ -22,9 +22,9 @@ test_that("sampleEntropy works", {
 
     # expected results
     #   calculated using pracma::sample_entropy, e.g.
-    #   pracma::sample_entropy(ts = x, edim = 2, r = 0.5 * sd(x))
-    expect_equal(sampleEntropy(x, 2, 0.5), 1.27978397948638)
-    expect_equal(sampleEntropy(y, 3, 0.2), 0.496944555201614)
-    expect_equal(sampleEntropy(z, 2, 0.2), 0.014575909171002, tolerance = 1e-2)
-    expect_identical(sampleEntropy(allNA, 2, 0.2), 0)
+    #   pracma::sample_entropy(ts = x, edim = 2, r = 0.5 * sd(x), maxStarts = -1)
+    expect_equal(sampleEntropy(x, 2, 0.5, -1), 1.27978397948638)
+    expect_equal(sampleEntropy(y, 3, 0.2, -1), 0.496944555201614)
+    expect_equal(sampleEntropy(z, 2, 0.2, -1), 0.014575909171002, tolerance = 1e-2)
+    expect_identical(sampleEntropy(allNA, 2, 0.2, -1), 0)
 })

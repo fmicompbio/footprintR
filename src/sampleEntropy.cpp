@@ -2,11 +2,12 @@
 #include <cmath>
 #include <numeric>
 #include <algorithm>
+#include <random>
 #ifdef _OPENMP
   #include <omp.h>
+// [[Rcpp::plugins(openmp)]]
 #endif
 using namespace Rcpp;
-
 
 //' @title Sample Entropy of Time series signal
 //'
@@ -28,6 +29,10 @@ using namespace Rcpp;
 //'     choices are m = 2 or 3 for physiological time series.
 //' @param r  Scaling parameter for the filtering factor. The filtering factor
 //'     is r x standard deviation of the signal
+//' @param maxStarts Integer giving the maximum number of signal start positions
+//'        to consider when computing sample entropy. If the time
+//'        series is longer than this, a random subset of starts is chosen. Use
+//'        \code{-1} (the default) to include all possible starts.
 //' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 //'
 //' @return The Sample Entropy value of the time-series signal
@@ -39,13 +44,12 @@ using namespace Rcpp;
 //' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 //' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 //'
-//' @noRd
 //' @keywords internal
-// [[Rcpp::plugins(openmp)]]
 // [[Rcpp::export]]
 double sampleEntropy(NumericVector data,
                      unsigned int m,
                      double r,
+                     int maxStarts = -1,
                      int nThreads = 1) {
     const unsigned int N = data.size();
     if (N <= m + 1) return 0.0;
@@ -59,12 +63,31 @@ double sampleEntropy(NumericVector data,
     }
     double sd = std::sqrt(M2 / (N - 1));
     double err = sd * r;
-
+    
     // Number of possible Starting positions.
     // Each subsequence is of length m, so the last possible start is at index N - m.
     const unsigned int S = N - m;
     if (S <= 1) return 0.0;
-
+    
+    // Determine how many starting positions to use.
+    // If maxStarts is Inf or <=0, use all starts.
+    unsigned int maxI;
+    if (!std::isfinite(maxStarts) || maxStarts <= 0) {
+        maxI = S;  // use all starts
+    } else {
+        maxI = std::min(S, static_cast<unsigned int>(maxStarts));
+    }
+    
+    // Build list of all start indices [0..S-1]
+    std::vector<unsigned int> starts(S);
+    std::iota(starts.begin(), starts.end(), 0);
+    
+    // If capped, shuffle and keep only the first maxI
+    if (maxI < S) {
+        std::mt19937 rng(42);
+        std::shuffle(starts.begin(), starts.end(), rng);
+    }
+    
     // Build an array of (data[index], index) pairs (vals),
     // where value = first value of the subsequence.
     std::vector<std::pair<double, unsigned int>> vals;
@@ -88,7 +111,8 @@ double sampleEntropy(NumericVector data,
 
     // Parallelize the outer loop
 #pragma omp parallel for num_threads(nThreads) reduction(+:Cm,Cm1) schedule(dynamic)
-    for (unsigned int i = 0; i < S; i++) {
+    for (unsigned int t = 0; t < maxI; t++) {
+        const unsigned int i = starts[t];   // pick a sampled start index
         const double* xi = &data[i];
 
         // Find all candidates j, i.e. those with values between data[i]-err and
