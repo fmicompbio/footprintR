@@ -2,7 +2,7 @@
 % Please edit documentation in R/scanGenome.R
 \name{snrScoreWindows}
 \alias{snrScoreWindows}
-\title{Quantify windows by estimating total, signal and noise variance (SNR)}
+\title{Quantify footprint coherence in windows by estimating total, signal and noise variance (SNR)}
 \usage{
 snrScoreWindows(
   se,
@@ -42,11 +42,9 @@ A \code{SummarizedExperiment} with assays
 \code{"SNR"} (\eqn{\log_2} signal/noise).
 }
 \description{
-For each genomic window in \code{gr} the function aggregates a continuous
-per-position assay (default \code{"FracMod"}) and estimates
-(i) total variance, (ii) noise variance
-and (iii) signal variance as \code{total - noise}.
-The \eqn{\log_2(\text{signal}/\text{noise})} is returned as SNR.
+Calculate a measure of footprint coherence and window "structureness" by decomposing
+total aggregate signal variance into (i) noise and (ii) signal variance components
+and returning \eqn{\log_2(\text{signal}/\text{noise})} as SNR.
 }
 \details{
 Noise variance estimation can be performed in two ways:

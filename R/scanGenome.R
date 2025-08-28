@@ -1016,13 +1016,12 @@ plotNoisePars <- function(fit) {
 }
 
 
-#' Quantify windows by estimating total, signal and noise variance (SNR)
+#' Quantify footprint coherence in windows by estimating total, signal and noise variance (SNR)
 #'
-#' For each genomic window in \code{gr} the function aggregates a continuous
-#' per-position assay (default \code{"FracMod"}) and estimates
-#' (i) total variance, (ii) noise variance
-#' and (iii) signal variance as \code{total - noise}.
-#' The \eqn{\log_2(\text{signal}/\text{noise})} is returned as SNR.
+#' Calculate a measure of footprint coherence and window "structureness" by decomposing
+#' total aggregate signal variance into (i) noise and (ii) signal variance components
+#' and returning \eqn{\log_2(\text{signal}/\text{noise})} as SNR.
+#'
 #'
 #' @param se A per-position \code{RangedSummarizedExperiment}, typically the
 #'   output of \code{readModBam(..., level = "summary")}.

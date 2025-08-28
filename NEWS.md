@@ -1,3 +1,8 @@
+# footprintR 0.3.8
+
+* Add Signal to Noise Ratio read-level statistics and filtering options to `calcReadStats`, `filterReads` and `filterReadsBam` 
+* Add Signal to Noise Ratio window aggregate statistics for quantifying footprint coherence with `snrScoreWindows`  
+
 # footprintR 0.3.7
 
 * Add argument `orderReverse` to allow reversing the order in which reads are displayed in read-level plots
