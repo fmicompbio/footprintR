@@ -15,6 +15,7 @@ calcReadStats(
   minNobsPread = 0,
   LowConf = 0.7,
   LagRange = c(12, 64),
+  EntrControl = NULL,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L),
   verbose = FALSE
 )
@@ -69,6 +70,11 @@ calls are considered "low confidence".}
 \item{LagRange}{A numeric vector of two values (minimum and maxium) defining
 the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).}
+
+\item{EntrControl}{Optional named list with elements
+\code{m}, \code{r}, \code{maxStarts}, \code{nThreads} to control
+Sample Entropy calculation. Missing elements use defaults: m=2L, r=0.2,
+maxStarts=-1, nThreads=1L. See also \code{\link{sampleEntropy}}}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for calculating
