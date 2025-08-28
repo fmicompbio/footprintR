@@ -410,7 +410,7 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 #'     is r x standard deviation of the signal
 #' @param maxStarts Integer giving the maximum number of signal start positions
 #'        to consider when computing sample entropy. If the time
-#'        series is longer than this, a random subset of starts is chosen. Use
+#'        series is longer than this, an evenly spaced subset of starts is chosen. Use
 #'        \code{-1} (the default) to include all possible starts.
 #' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 #'

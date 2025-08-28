@@ -19,7 +19,7 @@ is r x standard deviation of the signal}
 
 \item{maxStarts}{Integer giving the maximum number of signal start positions
 to consider when computing sample entropy. If the time
-series is longer than this, a random subset of starts is chosen. Use
+series is longer than this, an evenly spaced subset of starts is chosen. Use
 \code{-1} (the default) to include all possible starts.}
 
 \item{nThreads}{Integer giving the number of parallel OpenMP threads to use for calculation.}

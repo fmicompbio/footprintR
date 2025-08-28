@@ -2,7 +2,6 @@
 #include <cmath>
 #include <numeric>
 #include <algorithm>
-#include <random>
 #ifdef _OPENMP
   #include <omp.h>
 // [[Rcpp::plugins(openmp)]]
@@ -31,7 +30,7 @@ using namespace Rcpp;
 //'     is r x standard deviation of the signal
 //' @param maxStarts Integer giving the maximum number of signal start positions
 //'        to consider when computing sample entropy. If the time
-//'        series is longer than this, a random subset of starts is chosen. Use
+//'        series is longer than this, an evenly spaced subset of starts is chosen. Use
 //'        \code{-1} (the default) to include all possible starts.
 //' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 //'
@@ -83,10 +82,15 @@ double sampleEntropy(NumericVector data,
     std::vector<unsigned int> starts(S);
     std::iota(starts.begin(), starts.end(), 0);
     
-    // If capped, shuffle and keep only the first maxI
+    // If maxStarts capped pick evenly spaced start positions:
     if (maxI < S) {
-        std::mt19937 rng(42);
-        std::shuffle(starts.begin(), starts.end(), rng);
+        std::vector<unsigned int> subset;
+        subset.reserve(maxI);
+        for (size_t t = 0; t < static_cast<size_t>(maxI); ++t) {
+            size_t idx = (t * static_cast<size_t>(S)) / static_cast<size_t>(maxI);
+            subset.push_back(static_cast<unsigned int>(idx));
+        }
+        starts.swap(subset);
     }
     
     // Build an array of (data[index], index) pairs (vals),
