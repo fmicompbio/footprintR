@@ -58,7 +58,7 @@ test_that("filterReadsBam works", {
             res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                                   modbase = "a", indexOutfiles = TRUE, minReadLength = 6746,
                                   minAlignedLength = 6896, minAlignedFraction = 0.56,
-                                  minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
+                                  minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.28,
                                   BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
         )
     )
@@ -98,7 +98,7 @@ test_that("filterReadsBam works", {
                            modbase = "a", indexOutfiles = FALSE,
                            overwriteOutfiles = TRUE, minReadLength = 6746,
                            minAlignedLength = 6896, minAlignedFraction = 0.56,
-                           minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
+                           minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.28,
                            BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     expect_identical(res, res0)
     unlink(filtbamfiles)
