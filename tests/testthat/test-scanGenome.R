@@ -563,7 +563,7 @@ test_that(".estimate_snr_vec works in parametric and raw mode", {
 
 
 
-test_that("estimateNoiseParsWindows fit", {
+test_that("estimateNoiseParsWindows works", {
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -583,7 +583,6 @@ test_that("estimateNoiseParsWindows fit", {
     expect_true(!is.null(attr(cf, "NoiseFilterParam")))
     expect_named(attr(cf, "NoiseFilterParam"),
                  c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm"))
-    
 })
 
 
@@ -653,4 +652,50 @@ test_that("snrScoreWindows computes SNR (parametric and raw)", {
     expect_identical(dim(res_empty), c(0L, ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(res_empty),
                      c("TotalVar", "SignalVar", "NoiseVar", "SNR"))
+})
+
+
+
+
+
+
+
+test_that("plotNoisePars works", {
+    ## minimal input
+    df <- data.frame(
+        mean   = c(0.1, 0.3, 0.2, 0.4),
+        noise  = c(0.02, 0.05, 0.03, 0.06),
+        depth  = c(10, 20, 15, 30),
+        sample = c("s1", "s1", "s2", "s2"),
+        stringsAsFactors = FALSE
+    )
+    cf <- c(intercept = 0.01, slopeMean = 0.2, slopeInvDepth = 0.05)
+    gg1 <- plotNoisePars(list(coefficients = cf, data = df))
+    expect_true(ggplot2::is_ggplot(gg1))
+    
+    ## sample already a factor 
+    df2<- df
+    df2$sample <- factor(df$sample, levels = unique(df$sample))
+    gg2 <- plotNoisePars(list(coefficients = cf, data = df2))
+    expect_true(ggplot2::is_ggplot(gg2))
+})
+
+
+
+test_that("estimateNoiseParsWindows(plot=TRUE) works", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    
+    cf <- estimateNoiseParsWindows(
+        bamfiles = modbamfiles,
+        modbase  = "a",
+        chromosomeLengths = c(chr1 = 7000000),  
+        windowSize = 500L,
+        nWindows   = 40L,
+        plot = TRUE,
+        BPPARAM = BiocParallel::SerialParam()
+    )
+    expect_named(cf, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_length(cf, 3L)
 })
