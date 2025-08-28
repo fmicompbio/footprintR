@@ -39,9 +39,10 @@ This C++  implementation is a modified version of:
 https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6
 }
 \examples{
-ts <- runif(100,0,1)
-sampleEntropy(ts, m=2L, r=0.2)
-
+\dontrun{
+ts <- runif(100, 0, 1)
+footprintR:::sampleEntropy(ts, m = 2L, r = 0.2)
+}
 }
 \seealso{
 \href{https://en.wikipedia.org/wiki/Sample_entropy}{wikipedia:Sample_entropy}

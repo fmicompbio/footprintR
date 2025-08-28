@@ -417,9 +417,10 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 #' @return The Sample Entropy value of the time-series signal
 #'
 #' @examples
-#' ts <- runif(100,0,1)
-#' sampleEntropy(ts, m=2L, r=0.2)
-#'
+#' \dontrun{
+#' ts <- runif(100, 0, 1)
+#' footprintR:::sampleEntropy(ts, m = 2L, r = 0.2)
+#' }
 #' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 #' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 #'
