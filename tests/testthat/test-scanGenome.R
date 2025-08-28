@@ -7,47 +7,47 @@ test_that(".calcDirChiSqP works", {
 test_that("genome scanning works (helper functions)", {
     ## example data
     modbamfiles <- system.file("extdata",
-                            c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
-                              "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
-                            package = "footprintR")
+                               c("6mA_1_10reads.bam", "6mA_1_10reads.bam",
+                                 "6mA_2_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
     gnmfasta <- system.file("extdata", "reference.fa.gz", package = "footprintR")
     se0 <- readModBam(bamfiles = modbamfiles, regions = "chr1:6940000-6955000",
                       modbase = "a", level = "summary",
                       modProbThreshold = 0.5,
                       BPPARAM = BiocParallel::SerialParam(),
                       verbose = FALSE)
-
+    
     ## .tileChromosome
     rg <- .tileChromosome(tileSize = 40, windowSize = 12,
                           windowStep = 1, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 41, 81))
     expect_equal(width(rg), rep(51, 3))
-
+    
     rg <- .tileChromosome(tileSize = 40, windowSize = 12,
                           windowStep = 3, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 40, 79))
     expect_equal(width(rg), rep(48, 3))
-
+    
     rg <- .tileChromosome(tileSize = 40, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 37, 73))
     expect_equal(width(rg), rep(42, 3))
-
+    
     rg <- .tileChromosome(tileSize = 20, windowSize = 12,
                           windowStep = 6, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 19, 37, 55, 73, 91))
     expect_equal(width(rg), rep(24, 6))
-
+    
     rg <- .tileChromosome(tileSize = 20, windowSize = 12,
                           windowStep = 12, chromName = "chr1", chromLength = 100)
     expect_s4_class(rg, "GRanges")
     expect_equal(start(rg), c(1, 13, 25, 37, 49, 61, 73, 85, 97))
     expect_equal(width(rg), rep(12, 9))
-
+    
     ## strandDiffFracMod
     se1 <- se0
     SummarizedExperiment::assayNames(se1) <- c("a", "b", "c")
@@ -80,7 +80,7 @@ test_that("genome scanning works (helper functions)", {
     res <- strandDiffFracMod(se0[numeric(0), ], rg)
     expect_s4_class(res, "RangedSummarizedExperiment")
     expect_identical(dim(res), c(0L, ncol(se0)))
-
+    
     ## sumNmodNvalid
     rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
                           windowStep = 1e6, chromName = "chr1",
@@ -93,7 +93,7 @@ test_that("genome scanning works (helper functions)", {
                      colSums(SummarizedExperiment::assay(se0, "Nmod")))
     expect_identical(SummarizedExperiment::assay(res, "Nvalid")[1, ],
                      colSums(SummarizedExperiment::assay(se0, "Nvalid")))
-
+    
     # ... includeEmpty = TRUE
     rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
                           windowStep = 1e6, chromName = "chr1",
@@ -105,7 +105,7 @@ test_that("genome scanning works (helper functions)", {
                      colSums(SummarizedExperiment::assay(se0, "Nmod")))
     expect_identical(SummarizedExperiment::assay(res, "Nvalid")[7, ],
                      colSums(SummarizedExperiment::assay(se0, "Nvalid")))
-
+    
     ## phasingScoreFourier
     rg <- .tileChromosome(tileSize = 1e6, windowSize = 1e6,
                           windowStep = 1e6, chromName = "chr1",
@@ -160,7 +160,7 @@ test_that("genome scanning works (helper functions)", {
     expect_equal(which.max(corr1[, 1]), 1L, ignore_attr = TRUE)
     expect_equal(which.max(corr1[, 2]), 2L, ignore_attr = TRUE)
     se4 <- res1
-
+    
     ## estimateNRLwindows
     rng <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6930000, 6940000))
     windowSize <- 2000
@@ -192,7 +192,7 @@ test_that("genome scanning works (helper functions)", {
     expect_true(all(assay(seNRL, "NRL") > 100))
     expect_true(all(assay(seNRL, "NRL") < 300))
     expect_true(all(assay(seNRL, "NRL.CI95low") < assay(seNRL, "NRL.CI95high")))
-
+    
     ## quantifyWindowsInRegion
     expect_error(quantifyWindowsInRegion(bamfiles = "error",
                                          region = "chr1:6940000-6955000",
@@ -210,7 +210,7 @@ test_that("genome scanning works (helper functions)", {
                                                  modbase = "a",
                                                  BPPARAM = BiocParallel::SerialParam())),
                      c(0L, 4L))
-
+    
     # sumNmodNvalid, includeEmpty = FALSE
     suppressMessages(expect_message(
         se1 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
@@ -244,7 +244,7 @@ test_that("genome scanning works (helper functions)", {
                                                colSums(Nmod[i, , drop = FALSE])
                                            }))
     expect_identical(manualWindows, SummarizedExperiment::assay(se1, "Nmod"))
-
+    
     # sumNmodNvalid, includeEmpty = TRUE
     suppressMessages(expect_message(
         se1b <- quantifyWindowsInRegion(bamfiles = modbamfiles,
@@ -281,7 +281,7 @@ test_that("genome scanning works (helper functions)", {
                                            }))
     rownames(manualWindows) <- seq.int(nrow(manualWindows))
     expect_identical(manualWindows, SummarizedExperiment::assay(se1b, "Nmod"))
-
+    
     # filter by sequence context
     se2 <- quantifyWindowsInRegion(bamfiles = modbamfiles,
                                    region = "chr1:6940000-6955000", modbase = "a",
@@ -306,7 +306,7 @@ test_that("genome scanning works (helper functions)", {
     expect_true(all(SummarizedExperiment::assay(se1, "Nvalid")[i,] >= SummarizedExperiment::assay(se2, "Nvalid")))
     expect_identical(SummarizedExperiment::colData(se1),
                      SummarizedExperiment::colData(se2))
-
+    
     # predefined windows
     set.seed(1L)
     selwindows <- sample(nrow(se2), 40)
@@ -321,8 +321,8 @@ test_that("genome scanning works (helper functions)", {
                                    sequenceContext = "A",
                                    BPPARAM = BiocParallel::SerialParam())
     expect_identical(se2[selwindows,], se3)
-
-
+    
+    
     ## getDifferentiallyModifiedWindows
     expect_error(getDifferentiallyModifiedWindows(se = "error"))
     expect_error(getDifferentiallyModifiedWindows(se = se1, assayNameMod = "error"))
@@ -332,7 +332,7 @@ test_that("genome scanning works (helper functions)", {
     se1$group <- c("group1", "group2", "group3", "group4")
     expect_error(getDifferentiallyModifiedWindows(se1, groupCol = "group"))
     se1$group <- c("group1", "group1", "group2", "group2")
-
+    
     suppressMessages(expect_message(
         gr1 <- getDifferentiallyModifiedWindows(se1, groupCol = "group", verbose = TRUE)
     ))
@@ -342,7 +342,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(colnames(GenomicRanges::mcols(gr1)),
                      c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue",
                        "FracMod_group1", "FracMod_group2", "DeltaFracMod"))
-
+    
     gr2 <- getDifferentiallyModifiedWindows(se2, groupCol = "group")
     expect_s4_class(gr2, "GRanges")
     expect_length(gr2, 136L)
@@ -353,7 +353,7 @@ test_that("genome scanning works (helper functions)", {
     i <- GenomicRanges::match(gr2, gr1)
     expect_true(!any(is.na(i)))
     expect_true(cor(gr1$logFC[i], gr2$logFC) > 0.98)
-
+    
     ## getDifferentialWindows
     se4$group <- c("cond1", "cond1", "cond2", "cond2")
     dsgn <- stats::model.matrix(~ group, data = SummarizedExperiment::colData(se4))
@@ -393,7 +393,7 @@ test_that("genome scanning works (helper functions)", {
     expect_named(GenomicRanges::mcols(res1b),
                  c("logFC", "logCPM", "LR", "PValue", "FDR", "dirNegLog10PValue"))
     expect_true(cor(res1a$logFC, res1b$logFC) > 0.9)
-
+    
     ## getRangesWithAssayValues
     resL <- list(getRangesWithAssayValues(se0),
                  getRangesWithAssayValues(se0, "Nmod"),
@@ -415,26 +415,26 @@ test_that("genome scanning works (helper functions)", {
     colnames(tmpFracMod) <- paste0("FracMod.", colnames(tmpFracMod))
     expect_identical(as.matrix(GenomicRanges::mcols(resL[[3]])),
                      tmpFracMod)
-
+    
     ## processWindowScores
     expect_error(processWindowScores(x = "error"))
     expect_error(processWindowScores(x = gr1, scoreCol = "error"))
     expect_length(processWindowScores(x = gr1[numeric(0)]), 0L)
-
+    
     # ... pass
     expect_identical(processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "pass"), gr1)
-
+    
     # ... select
     grs <- processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "select")
     expect_identical(gr1$logFC, grs$logFC)
     expect_identical(colnames(mcols(grs)), "logFC")
-
+    
     # ... smooth
     gr1smooth <- processWindowScores(x = gr1, scoreCol = "logFC", scoreAction = "smooth")
     expect_identical(IRanges::ranges(gr1), IRanges::ranges(gr1smooth))
     expect_identical(GenomicRanges::mcols(gr1)[, -1], GenomicRanges::mcols(gr1smooth)[, -1])
     expect_true(cor(GenomicRanges::mcols(gr1)[, 1], GenomicRanges::mcols(gr1smooth)[, 1]) > 0.9)
-
+    
     # ... smoothFuse
     suppressMessages(expect_message(
         gr1Fused <- processWindowScores(x = gr1, scoreCol = "logFC", thresh = 5.0, verbose = TRUE)
@@ -444,7 +444,7 @@ test_that("genome scanning works (helper functions)", {
     expect_identical(colnames(GenomicRanges::mcols(gr1Fused)),
                      c("logFCThresh", "numWindowsThresh", "direction", "logFC", "numWindows"))
     expect_identical(sum(width(gr1Fused)), 732L)
-
+    
     gr2Fused <- processWindowScores(x = gr2, scoreCol = "logFC", thresh = 5.0)
     expect_s4_class(gr2Fused, "GRanges")
     expect_length(gr2Fused, 5L)
@@ -462,7 +462,7 @@ test_that("genome scanning works (wrapper function)", {
     annotdf <- data.frame(sample = c("s1", "s2", "s3", "s4"),
                           group = c("A", "A", "B", "B"))
     chrlen <- c(chr1 = 6955000)
-
+    
     expect_error(scanForHighScoringRegions(bamfiles = modbamfiles,
                                            sampleAnnot = annotdf,
                                            chromosomeLengths = 1e6))
@@ -470,14 +470,14 @@ test_that("genome scanning works (wrapper function)", {
                                            sampleAnnot = annotdf,
                                            chromosomeLengths = chrlen,
                                            scoreFunction = "error"))
-
+    
     gr <- scanForHighScoringRegions(bamfiles = modbamfiles,
                                     sampleAnnot = annotdf,
                                     chromosomeLengths = chrlen,
                                     modbase = "a", BPPARAM = BiocParallel::SerialParam())
     expect_s4_class(gr, "GRanges")
     expect_length(gr, 38L)
-
+    
     gr2 <- scanForHighScoringRegions(bamfiles = modbamfiles,
                                      sampleAnnot = annotdf,
                                      chromosomeLengths = chrlen,
@@ -550,13 +550,13 @@ test_that(".estimate_snr_vec works in parametric and raw mode", {
                                     noise_pars = coefs, dcut_min = 10)
     noise_hi <- coefs[1] + coefs[2] * mn + coefs[3] * 0
     expect_equal(out_par_hi$noise, noise_hi)
-
+    
     # depth < dcut_min -> 1/depth term present
     out_par_lo <- .estimate_snr_vec(x, pos, depth = depth_lo,
                                     noise_pars = coefs, dcut_min = 10)
     noise_lo <- coefs[1] + coefs[2] * mn + coefs[3] * 1/depth_lo
     expect_equal(out_par_lo$noise, noise_lo)
-
+    
 })
 
 
@@ -588,9 +588,60 @@ test_that("estimateNoiseParsWindows works", {
 
 
 
+test_that("estimateNoiseParsWindows(plot=TRUE) works", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    gr0 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6920000, 6950000))
+    win <- unlist(GenomicRanges::tile(gr0, width = 500))
+    
+    expect_silent({
+        cf_plot <- estimateNoiseParsWindows(
+            bamfiles = modbamfiles,
+            modbase  = "a",
+            windows  = win,         
+            plot     = TRUE,
+            BPPARAM  = BiocParallel::SerialParam()
+        )
+    })
+    expect_named(cf_plot, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_length(cf_plot, 3L)
+})
 
-test_that("snrScoreWindows computes SNR (parametric and raw)", {
-    ## Prepare per-position data
+
+
+
+
+test_that("estimateNoiseParsWindows works with sampling", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    
+    ## chromosomeLengths should be named
+    expect_error(
+        estimateNoiseParsWindows(bamfiles = modbamfiles,
+                                 modbase  = "a",
+                                 chromosomeLengths = c(7000000), # no name
+                                 windowSize = 500L, nWindows = 20L,
+                                 plot = FALSE,
+                                 BPPARAM = BiocParallel::SerialParam()),
+        "must be a \\*named\\* vector"
+    )
+    
+    ## sampling
+    cf_samp <- estimateNoiseParsWindows(bamfiles = modbamfiles,
+                                        modbase  = "a",
+                                        chromosomeLengths = c(chr1 = 7000000),
+                                        windowSize = 500L, nWindows = 20L,
+                                        plot = FALSE,
+                                        BPPARAM = BiocParallel::SerialParam())
+    expect_named(cf_samp, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_length(cf_samp, 3L)
+})
+
+
+
+test_that("snrScoreWindows works (parametric and raw)", {
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -604,7 +655,6 @@ test_that("snrScoreWindows computes SNR (parametric and raw)", {
                                      plot = FALSE,
                                      BPPARAM = BiocParallel::SerialParam())
     
-    ## Per-position summary data for the same windows
     se_pos <- readModBam(bamfiles = modbamfiles,
                          regions = gr_tiles,
                          modbase = "a",
@@ -613,7 +663,6 @@ test_that("snrScoreWindows computes SNR (parametric and raw)", {
                          BPPARAM = BiocParallel::SerialParam()) |>
         filterPositions(filters = "coverage", minCov = 2, assayNameNA = NULL)
     
-    ## Sanity
     expect_true(all(c("FracMod", "Nvalid") %in% SummarizedExperiment::assayNames(se_pos)))
     
     ## Parametric SNR
@@ -657,6 +706,37 @@ test_that("snrScoreWindows computes SNR (parametric and raw)", {
 
 
 
+test_that("snrScoreWindows correctly handles missing Nvalid, noise_pars", {
+    modbamfiles <- system.file("extdata",
+                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    gr0 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(6920000, 6950000))
+    gr_tiles <- unlist(GenomicRanges::tile(gr0, width = 500))
+    
+    se_pos <- readModBam(bamfiles = modbamfiles,
+                         regions = gr_tiles, modbase = "a",
+                         level = "summary", trim = TRUE,
+                         BPPARAM = BiocParallel::SerialParam()) |>
+        filterPositions(filters = "coverage", minCov = 2, assayNameNA = NULL)
+    
+    ## Must contain Nvalid assay
+    se_bad <- se_pos
+    SummarizedExperiment::assays(se_bad) <-
+        SummarizedExperiment::assays(se_bad)[setdiff(names(SummarizedExperiment::assays(se_bad)), "Nvalid")]
+    expect_error(snrScoreWindows(se_bad, gr_tiles),
+                 "must contain an assay `Nvalid`")
+    
+    ## noise_pars vector vs fallback to metadata
+    ok_pars <- c(intercept = 0.01, slopeMean = 0.2, slopeInvDepth = 0.05)
+    out1 <- snrScoreWindows(se_pos, gr_tiles, noise_pars = ok_pars)
+    expect_s4_class(out1, "SummarizedExperiment")
+    
+    metadata(se_pos)$NoisePars <- ok_pars
+    out2 <- snrScoreWindows(se_pos, gr_tiles)  # use metadata
+    expect_s4_class(out2, "SummarizedExperiment")
+    
+})
+
 
 
 
@@ -682,20 +762,3 @@ test_that("plotNoisePars works", {
 
 
 
-test_that("estimateNoiseParsWindows(plot=TRUE) works", {
-    modbamfiles <- system.file("extdata",
-                               c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
-                               package = "footprintR")
-    
-    cf <- estimateNoiseParsWindows(
-        bamfiles = modbamfiles,
-        modbase  = "a",
-        chromosomeLengths = c(chr1 = 7000000),  
-        windowSize = 500L,
-        nWindows   = 40L,
-        plot = TRUE,
-        BPPARAM = BiocParallel::SerialParam()
-    )
-    expect_named(cf, c("intercept", "slopeMean", "slopeInvDepth"))
-    expect_length(cf, 3L)
-})
