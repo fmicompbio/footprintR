@@ -54,7 +54,7 @@
 #' res <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
 #'                       modbase = "a", indexOutfiles = FALSE, minReadLength = 6746,
 #'                       minAlignedLength = 6896, minAlignedFraction = 0.56,
-#'                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
+#'                       minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.28,
 #'                       BPPARAM = BiocParallel::SerialParam(), verbose = TRUE)
 #' res
 #' unlink(filtbamfiles)
