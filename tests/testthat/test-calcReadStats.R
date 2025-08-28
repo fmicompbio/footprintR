@@ -81,7 +81,7 @@ test_that("read statistic functions work", {
                     "SEntrModProb" = unlist(lapply(
                         useReads, \(i) {
                             if (length(probList[[i]]) > 64) {
-                                sampleEntropy(probList[[i]], 2L, 0.2)
+                                sampleEntropy(probList[[i]], 2L, 0.2, -1L)
                             } else {
                                 NA
                             }})),
