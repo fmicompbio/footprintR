@@ -180,11 +180,11 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     if (is.null(min_diffs))
         min_diffs <- max(16L, floor(0.05 * median(lengths(idxList))))
 
-    ## means + total variances -------------------------------------------------
+    ## means + total variances
     m_means <- vapply(probList, mean, numeric(1), na.rm = TRUE)
     total_v <- vapply(probList, var , numeric(1), na.rm = TRUE)
 
-    ## noise variance: lag-1 diffs that jump ≤ k NAs ---------------------------
+    ## noise variance: lag-1 diffs that jump ≤ k NAs
     noise_v <- vapply(seq_len(nReads), function(i) {
         x <- probList[[i]]
         idx <- idxList[[i]]
@@ -194,13 +194,13 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
         gaps <- diff(idx) - 1L
         d <- diff(x)[gaps <= k]
         if (length(d) >= min_diffs) {
-            var(d) / 2
+            var(d, na.rm=TRUE) / 2
         } else {
             NA_real_
         }
     }, numeric(1))
 
-    ## robust noise floor ------------------------------------------------------
+    ## robust noise floor 
     if (is.null(floor_pars)) {
         keep <- between(
             m_means,
@@ -221,7 +221,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
         fitted_floor <- floor_pars[1] + floor_pars[2] * m_means
     }
 
-    noise_v <- pmax(noise_v, fitted_floor, na.rm = TRUE)
+    noise_v <- pmax(noise_v, fitted_floor)
 
     ## signal + SNR -----------------------------------------------------------
     signal_v <- pmax(total_v - noise_v, eps)
