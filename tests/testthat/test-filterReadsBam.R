@@ -183,3 +183,34 @@ test_that("filterReadsBam works", {
     expect_identical(res5$retained, c(5, 7))
     expect_identical(res5$filtered_minSNR, c(2, 1))
 })
+
+
+
+test_that("compute_snr_na_gap_aware NA guard works", {
+    # Case 1: n < 2  
+    v1 <- compute_snr_na_gap_aware(
+        c(0.5),       
+        as.integer(5),
+        2L,
+        -1L,
+        1e-3,
+        0, 0
+    )
+    expect_true(is.na(v1))
+    
+    # Case 2: mismatched lengths
+    v2 <- compute_snr_na_gap_aware(
+        c(0.2, 0.3, 0.4),
+        as.integer(c(10, 20)),
+        2L, -1L, 1e-3, 0, 0
+    )
+    expect_true(is.na(v2))
+    
+    # valid small input
+    v_ok <- compute_snr_na_gap_aware(
+        c(0.1, 0.2, 0.3, 0.4),           
+        as.integer(c(1, 2, 3 ,4)),
+        2L, 0L, 1e-3, 0.1, 0
+    )
+    expect_true(is.finite(v_ok))
+})
