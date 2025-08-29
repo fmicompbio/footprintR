@@ -1,8 +1,47 @@
-#include <algorithm>  // std::max
-#include <cmath>      // std::floor, std::log2
-#include <limits>     // std::numeric_limits
-#include <Rcpp.h>     // Rcpp::NumericVector / IntegerVector
+#include <algorithm> // std::max
+#include <cmath>     // std::floor, std::log2
+#include <limits>    // std::numeric_limits
+#include <Rcpp.h>    // Rcpp::NumericVector / IntegerVector
+using namespace Rcpp;
 
+//' @title Internal: compute per-read SNR (NA-gap aware)
+//'
+//' @description
+//' \code{compute_snr_na_gap_aware} estimates signal-to-noise ratio (SNR),
+//' signal variance, and noise variance from a vector of modification
+//' probabilities, allowing for missing values.
+//'
+//' @details
+//' Implements a gap-aware estimate of SNR:
+//' \enumerate{
+//'   \item **Total variance** = \code{var(x, na.rm = TRUE)}
+//'   \item **Noise variance** ≈ \code{0.5 * Var(Δx)}, where Δx are lag-1
+//'         differences that may skip up to \code{k} missing values
+//'   \item A noise floor is imposed: \code{noise = pmax(noise, b0 + b1 * mean(x))},
+//'         with \code{b0}, \code{b1} from a robust linear fit
+//'   \item **Signal variance** = \code{pmax(total - noise, eps)}
+//'   \item **SNR** = \code{log2(signal / noise)}
+//' }
+//'
+//'
+//' @param probs Numeric vector of modification probabilities per read position.
+//' @param read_pos Integer vector of read positions (same length as \code{probs}).
+//' @param k Integer, maximum gap size tolerated when computing Δx.
+//' @param min_diffs Integer, minimum number of differences required (default -1 = no requirement).
+//' @param eps Numeric, small positive floor for signal variance.
+//' @param b0 Numeric intercept for noise floor.
+//' @param b1 Numeric slope for noise floor.
+//'
+//' @return A numeric scalar giving the estimated SNR (log2 scale).
+//' Returns \code{NaN} if input length < 2 or lengths do not match.
+//'
+//' @examples
+//' ## returns NaN because input length < 2
+//' compute_snr_na_gap_aware(0.5, 1L, k=2L, min_diffs=-1L, eps=1e-3, b0=0, b1=0)
+//'
+//' @noRd
+//' @keywords internal
+// [[Rcpp::export]]
 double compute_snr_na_gap_aware(const Rcpp::NumericVector& probs,
                                 const Rcpp::IntegerVector& read_pos,
                                 int k,
