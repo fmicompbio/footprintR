@@ -583,8 +583,8 @@ test_that("estimateNoiseParsWindows works", {
     expect_true(!is.null(attr(cf, "NoiseFilterParam")))
     expect_named(attr(cf, "NoiseFilterParam"),
                  c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm"))
+    
 })
-
 
 
 
@@ -650,6 +650,20 @@ test_that("estimateNoiseParsWindows works with sampling", {
     )
     expect_named(cf_empty, c("intercept", "slopeMean", "slopeInvDepth"))
     expect_true(all(is.na(cf_empty)))
+    
+    # Use windows with no coverage to force nrow(sePos) == 0 
+    win_empty <- GenomicRanges::GRanges("chr2", IRanges::IRanges(1:10, width = 10))
+    cf_na2 <- estimateNoiseParsWindows(
+        bamfiles = modbamfiles,
+        modbase  = "a",
+        windows  = win_empty,
+        plot     = FALSE,
+        BPPARAM  = BiocParallel::SerialParam()
+    )
+    expect_named(cf_na2, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_true(all(is.na(cf_na2)))
+    
+    
 })
 
 
