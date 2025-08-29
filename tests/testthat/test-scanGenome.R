@@ -637,6 +637,19 @@ test_that("estimateNoiseParsWindows works with sampling", {
                                         BPPARAM = BiocParallel::SerialParam())
     expect_named(cf_samp, c("intercept", "slopeMean", "slopeInvDepth"))
     expect_length(cf_samp, 3L)
+    
+    ## maxStart < 1L -> empty sampling -> returns named NA coefficients
+    cf_empty <- estimateNoiseParsWindows(
+        bamfiles = modbamfiles,
+        modbase  = "a",
+        chromosomeLengths = c(chr1 = 100L),  # shorter than windowSize
+        windowSize = 500L,                    # forces maxStart < 1
+        nWindows   = 20L,
+        plot = FALSE,
+        BPPARAM = BiocParallel::SerialParam()
+    )
+    expect_named(cf_empty, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_true(all(is.na(cf_empty)))
 })
 
 
@@ -676,7 +689,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     expect_true(all(is.finite(SummarizedExperiment::assay(se_snr_par, "SignalVar")) | is.na(SummarizedExperiment::assay(se_snr_par, "SignalVar"))))
     
     ## Raw (non-parametric) SNR
-    se_snr_raw <- snrScoreWindows(se = se_pos, gr = gr_tiles)
+    se_snr_raw <- snrScoreWindows(se = se_pos, gr = gr_tiles, min_diffs=3)
     expect_s4_class(se_snr_raw, "SummarizedExperiment")
     expect_identical(dim(se_snr_raw), c(length(gr_tiles), ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(se_snr_raw),
@@ -701,6 +714,13 @@ test_that("snrScoreWindows works (parametric and raw)", {
     expect_identical(dim(res_empty), c(0L, ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(res_empty),
                      c("TotalVar", "SignalVar", "NoiseVar", "SNR"))
+    
+    ## Named GRanges -> check rownames
+    gr_named <- gr_tiles
+    names(gr_named) <- paste0("C", seq_len(length(gr_named)))
+    se_named <- snrScoreWindows(se = se_pos, gr = gr_named)
+    expect_identical(rownames(se_named), names(gr_named))
+    
 })
 
 

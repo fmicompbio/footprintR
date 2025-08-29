@@ -856,11 +856,23 @@ estimateNoiseParsWindows <- function(bamfiles,
             if (maxStart < 1L) return(integer(0))
             sample.int(maxStart, nPerChr, replace = TRUE)
         })
-        winGR <- GRanges(seqnames = rep(seqnamesToSampleFrom, each = nPerChr),
-                         ranges   = IRanges(unlist(starts), width = windowSize))
+        valid_idx <- lengths(starts) > 0
+        seqnamesToSampleFrom <- seqnamesToSampleFrom[valid_idx]
+        starts <- starts[valid_idx]
+        
+        if (!length(seqnamesToSampleFrom)) {
+            return(setNames(rep(NA_real_, 3),
+                            c("intercept", "slopeMean", "slopeInvDepth")))
+        }
+        
+        lens <- lengths(starts)
+        winGR <- GRanges(
+            seqnames = rep(seqnamesToSampleFrom, times = lens),
+            ranges   = IRanges(unlist(starts), width = windowSize)
+        )
         winGR <- winGR[seq_len(min(length(winGR), nWindows))]
     } else {
-        winGR <- windows # keep original order/names
+        winGR <- windows
     }
 
     ## 2. fetch per-position summary data
