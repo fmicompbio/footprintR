@@ -886,7 +886,8 @@ estimateNoiseParsWindows <- function(bamfiles,
                         minCov = minCov, assayNameNA = NULL,
                         minNbrSamples = length(bamfiles))
 
-    if (!all(c("FracMod", "Nvalid", "Nmod") %in% assayNames(sePos))) {
+    if (nrow(sePos) == 0L ||
+        !all(c("FracMod", "Nvalid", "Nmod") %in% assayNames(sePos))) {
         return(setNames(rep(NA_real_, 3),
                         c("intercept", "slopeMean", "slopeInvDepth")))
     }
