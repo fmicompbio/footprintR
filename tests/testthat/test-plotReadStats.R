@@ -23,7 +23,7 @@ test_that("plotReadStats works", {
     expect_true(ggplot2::is_ggplot(gg))
     
     #SE is not normally part of the defaults:
-    seSE <- addReadStats(se,stats="SEntrModProb", BPPARAM = BiocParallel::SerialParam())
+    seSE <- addReadStats(se,stats=c("SEntrModProb","FracMod"), BPPARAM = BiocParallel::SerialParam())
     gg <- plotReadStats(se, qcCol = NULL)
     expect_true(ggplot2::is_ggplot(gg))
 })
