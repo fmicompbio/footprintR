@@ -38,8 +38,8 @@ using namespace Rcpp;
 //'
 //' @examples
 //' ts <- runif(100, 0, 1)
-//' footprintR:::sampleEntropy(ts, m = 2L, r = 0.2)
-//' 
+//' sampleEntropy(ts, m = 2L, r = 0.2)
+//'
 //' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 //' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 //'
@@ -62,12 +62,12 @@ double sampleEntropy(NumericVector data,
     }
     double sd = std::sqrt(M2 / (N - 1));
     double err = sd * r;
-    
+
     // Number of possible Starting positions.
     // Each subsequence is of length m, so the last possible start is at index N - m.
     const unsigned int S = N - m;
     if (S <= 1) return 0.0;
-    
+
     // Determine how many starting positions to use.
     // If maxStarts is Inf or <=0, use all starts.
     unsigned int maxI;
@@ -76,11 +76,11 @@ double sampleEntropy(NumericVector data,
     } else {
         maxI = std::min(S, static_cast<unsigned int>(maxStarts));
     }
-    
+
     // Build list of all start indices [0..S-1]
     std::vector<unsigned int> starts(S);
     std::iota(starts.begin(), starts.end(), 0);
-    
+
     // If maxStarts capped pick evenly spaced start positions:
     if (maxI < S) {
         std::vector<unsigned int> subset;
@@ -91,7 +91,7 @@ double sampleEntropy(NumericVector data,
         }
         starts.swap(subset);
     }
-    
+
     // Build an array of (data[index], index) pairs (vals),
     // where value = first value of the subsequence.
     std::vector<std::pair<double, unsigned int>> vals;

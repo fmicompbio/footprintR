@@ -40,7 +40,7 @@ https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6
 }
 \examples{
 ts <- runif(100, 0, 1)
-footprintR:::sampleEntropy(ts, m = 2L, r = 0.2)
+sampleEntropy(ts, m = 2L, r = 0.2)
 
 }
 \seealso{
