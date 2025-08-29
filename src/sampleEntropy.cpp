@@ -28,10 +28,10 @@ using namespace Rcpp;
 //'     choices are m = 2 or 3 for physiological time series.
 //' @param r  Scaling parameter for the filtering factor. The filtering factor
 //'     is r x standard deviation of the signal
-//' @param maxStarts Integer giving the maximum number of signal start positions
-//'        to consider when computing sample entropy. If the time
-//'        series is longer than this, an evenly spaced subset of starts is chosen. Use
-//'        \code{-1} (the default) to include all possible starts.
+//' @param maxStarts Integer specifying the maximum number of signal start
+//'     positions to evaluate (default \code{1000}). If the time series has more
+//'     possible starts, an evenly spaced subset of size \code{maxStarts} is used.
+//'     Use \code{-1} to include all possible starts.
 //' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 //'
 //' @return The Sample Entropy value of the time-series signal
@@ -44,12 +44,12 @@ using namespace Rcpp;
 //' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 //' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 //'
-//' @keywords internal
+//' @export
 // [[Rcpp::export]]
 double sampleEntropy(NumericVector data,
                      unsigned int m,
                      double r,
-                     int maxStarts = -1,
+                     int maxStarts = 1000,
                      int nThreads = 1) {
     const unsigned int N = data.size();
     if (N <= m + 1) return 0.0;

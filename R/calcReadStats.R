@@ -108,7 +108,7 @@ sdModProb <- function(probList, useReads, ...) {
 #' @noRd
 #' @keywords internal
 SEntrModProb <- function(probList, useReads,
-                         sampen_m=2, sampen_r=0.2, sampen_maxStarts=-1, sampen_nThreads=1, ...) {
+                         sampen_m=2, sampen_r=0.2, sampen_maxStarts=1000, sampen_nThreads=1, ...) {
     stats_res <- rep(NA_real_, length(probList))
     stats_res[useReads] <- vapply(useReads, function(r) {
         if (length(probList[[r]]) > 64) {
@@ -218,7 +218,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @param EntrControl Optional named list with elements
 #'   \code{m}, \code{r}, \code{maxStarts}, \code{nThreads} to control
 #'   Sample Entropy calculation. Missing elements use defaults: m=2L, r=0.2,
-#'   maxStarts=-1, nThreads=1L. See also \code{\link{sampleEntropy}}
+#'   maxStarts=1000, nThreads=1L. See also \code{\link{sampleEntropy}}
 #' @param name For \code{addReadStats} only: A character scalar specifying the
 #'     name to be used to store the result in the
 #'     \code{\link[SummarizedExperiment]{colData}} of the output.
@@ -346,7 +346,7 @@ calcReadStats <- function(se,
     }
     
     SEctrl <- modifyList(
-        list(m = 2L, r = 0.2, maxStarts = -1, nThreads = 1L),
+        list(m = 2L, r = 0.2, maxStarts = 1000, nThreads = 1L),
         EntrControl
     )
     

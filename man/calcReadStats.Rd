@@ -74,7 +74,7 @@ autocorrelation (see details section).}
 \item{EntrControl}{Optional named list with elements
 \code{m}, \code{r}, \code{maxStarts}, \code{nThreads} to control
 Sample Entropy calculation. Missing elements use defaults: m=2L, r=0.2,
-maxStarts=-1, nThreads=1L. See also \code{\link{sampleEntropy}}}
+maxStarts=1000, nThreads=1L. See also \code{\link{sampleEntropy}}}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object that
 controls the number of parallel CPU threads to use for calculating

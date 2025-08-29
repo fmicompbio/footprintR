@@ -4,7 +4,7 @@
 \alias{sampleEntropy}
 \title{Sample Entropy of Time series signal}
 \usage{
-sampleEntropy(data, m, r, maxStarts = -1L, nThreads = 1L)
+sampleEntropy(data, m, r, maxStarts = 1000L, nThreads = 1L)
 }
 \arguments{
 \item{data}{Numeric vector}
@@ -17,10 +17,10 @@ choices are m = 2 or 3 for physiological time series.}
 \item{r}{Scaling parameter for the filtering factor. The filtering factor
 is r x standard deviation of the signal}
 
-\item{maxStarts}{Integer giving the maximum number of signal start positions
-to consider when computing sample entropy. If the time
-series is longer than this, an evenly spaced subset of starts is chosen. Use
-\code{-1} (the default) to include all possible starts.}
+\item{maxStarts}{Integer specifying the maximum number of signal start
+positions to evaluate (default \code{1000}). If the time series has more
+possible starts, an evenly spaced subset of size \code{maxStarts} is used.
+Use \code{-1} to include all possible starts.}
 
 \item{nThreads}{Integer giving the number of parallel OpenMP threads to use for calculation.}
 }
