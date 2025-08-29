@@ -424,7 +424,7 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 #' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 #' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 #'
-#' @keywords internal
+#' @export
 sampleEntropy <- function(data, m, r, maxStarts = 1000L, nThreads = 1L) {
     .Call(`_footprintR_sampleEntropy`, data, m, r, maxStarts, nThreads)
 }
