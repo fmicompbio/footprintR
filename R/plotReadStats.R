@@ -61,41 +61,36 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
                   allowNULL = TRUE)
     .assertScalar(x = minSNR, type = "numeric", allowNULL = TRUE)
     
+    if (is.null(readInfoCol) && is.null(qcCol)) {
+        cli::cli_abort("Provide at least one of {.code readInfoCol} or {.code qcCol}. Both are NULL.")
+    }
+    
     # prepare main plotdata
     dfL <- list()
-    # ... from readInfoCol
+    
+    # readInfoCol
     if (!is.null(readInfoCol)) {
-        x <- se[[readInfoCol]]
-        tmp <- do.call(rbind, lapply(seq_along(x), function(i) {
-            cbind(
-                group = i,
-                group_name = names(x)[i],
-                as.data.frame(x[[i]], stringsAsFactors = FALSE)
-            )
-        }))
-        rownames(tmp) <- NULL
+        tmp <- do.call(rbind, unname(lapply(se[[readInfoCol]], function(d) as.data.frame(d, stringsAsFactors = FALSE))))
         tmp <- tmp[, !grepl("^variant_label$", names(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
-    # ... from qcCol
+    
+    # qcCol
     if (!is.null(qcCol)) {
-        x <- se[[qcCol]]
-        tmp <- do.call(rbind, lapply(seq_along(x), function(i) {
-            cbind(
-                group = i,
-                group_name = names(x)[i],
-                as.data.frame(x[[i]], stringsAsFactors = FALSE)
-            )
-        }))
-        tmp <- tmp[, !grepl("AC", colnames(tmp))]
+        tmp <- do.call(rbind, unname(lapply(se[[qcCol]], function(d) as.data.frame(d, stringsAsFactors = FALSE))))
+        tmp <- tmp[, !grepl("AC", names(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
     
-    if (!all(unlist(lapply(dfL, \(x) identical(x$group_name, dfL[[1]]$group_name))))) {
+    if (!is.null(readInfoCol) && !is.null(qcCol) &&
+        !identical(names(se[[readInfoCol]]), names(se[[qcCol]]))) {
         cli_abort("names of {.code se${readInfoCol}} and {.code se${qcCol}} are not identical")
     }
-    df <- do.call(cbind, lapply(dfL, \(x) x[, !colnames(x) %in% c("group", "group_name"),drop=FALSE]))
-    df$sample <- dfL[[1]]$group_name
+    
+    df <- do.call(cbind, lapply(dfL, function(x) x[, , drop = FALSE]))
+    
+    sample_se <- if (!is.null(readInfoCol)) se[[readInfoCol]] else se[[qcCol]]
+    df$sample <- rep(names(sample_se), sapply(sample_se, nrow))
     
     # helper functions for automatic thresholds -----------------------------
     calc_min <- function(x) median(x, na.rm = TRUE) - 3 * mad(x, na.rm = TRUE)
