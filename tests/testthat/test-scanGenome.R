@@ -496,48 +496,33 @@ test_that("genome scanning works (wrapper function)", {
 
 ### SNR and related functions:
 
-
-test_that("NoiseFilterParam and its validator work", {
-    ## Returns a named list with expected fields and types
-    p <- NoiseFilterParam()
-    expect_type(p, "list")
-    expect_named(p, c("mean_probs", "depth_probs", "noise_ratio_probs", "dcut_min", "na.rm"))
-    expect_type(p$mean_probs, "double")
-    expect_type(p$depth_probs, "double")
-    expect_type(p$noise_ratio_probs, "double")
-    expect_type(p$dcut_min, "double")
-    expect_type(p$na.rm, "logical")
-    expect_length(p$mean_probs, 2L)
-    expect_length(p$depth_probs, 2L)
-    expect_length(p$noise_ratio_probs, 2L)
-    
-    ## .validate_NoiseFilterParam common errors (that use checks other that assert)
-    expect_error(.validate_NoiseFilterParam(list(1,2,3)), "must be a named list") #Unnamed list
-    expect_error(.validate_NoiseFilterParam(list(mean_probs = c(0.05, 0.99), #Missing fields
+test_that("NoiseFilterParam validator works", {
+    ## .validateNoiseFilterParam common errors (that use checks other that assert)
+    expect_error(.validateNoiseFilterParam(list(1,2,3)), "must be a named list") #Unnamed list
+    expect_error(.validateNoiseFilterParam(list(mean_probs = c(0.05, 0.99), #Missing fields
                                                  depth_probs = c(0.01, 0.95))),"Missing fields")
-    expect_error(.validate_NoiseFilterParam(list(mean_probs = c(0.9, 0.1), #Decreasing probs
+    expect_error(.validateNoiseFilterParam(list(mean_probs = c(0.9, 0.1), #Decreasing probs
                                                  depth_probs = c(0.01, 0.95),
                                                  noise_ratio_probs = c(0.01, 0.7),
                                                  dcut_min = 10, na.rm = TRUE)),"must be non-decreasing")
 })
 
 
-
-test_that(".estimate_snr_vec works in parametric and raw mode", {
+test_that(".estimateSNRvec works in parametric and raw mode", {
     ## Too few points -> NAs
-    out0 <- .estimate_snr_vec(x = c(0.1, 0.2), pos = c(1, 2))
+    out0 <- .estimateSNRvec(x = c(0.1, 0.2), pos = c(1, 2))
     expect_true(all(is.na(unlist(out0))))
     
     ## small example
     x   <- c(0.1, 0.3, 0.2, 0.25, 0.35, 0.2, 0.4, 0.6, 0.1, 0.25)
     pos <- c(1, 2, 4, 5, 7, 8, 11, 15, 20, 21)
-    out_raw <- .estimate_snr_vec(x = x, pos = pos, k = 2L, min_diffs=6)
+    out_raw <- .estimateSNRvec(x = x, pos = pos, k = 2L, min_diffs=6)
     expect_named(out_raw, c("total", "signal", "noise"))
     expect_equal(out_raw, list("total"=0.02236111,"signal"=0.01248016,"noise"=0.00988095), tolerance=1e-6 )
     # Decrease k so that now there is not enough data for noise estimation:
-    out_raw2 <- .estimate_snr_vec(x = x, pos = pos, k = 0L, min_diffs=5)
+    out_raw2 <- .estimateSNRvec(x = x, pos = pos, k = 0L, min_diffs=5)
     expect_equal(out_raw$total, out_raw2$total, tolerance=1e-6 )
-    expect_true(is.na(out_raw2$signal) && is.na(out_raw2$signal))
+    expect_true(is.na(out_raw2$signal) && is.na(out_raw2$noise))
     
     ## Parametric mode
     mn <- mean(x)
@@ -546,16 +531,16 @@ test_that(".estimate_snr_vec works in parametric and raw mode", {
     coefs <- c(intercept = 0.01, slopeMean = 0.2, slopeInvDepth = 0.05)
     
     # depth >= dcut_min -> 1/depth term is 0
-    out_par_hi <- .estimate_snr_vec(x, pos, depth = depth_hi,
+    out_par_hi <- .estimateSNRvec(x, pos, depth = depth_hi,
                                     noise_pars = coefs, dcut_min = 10)
     noise_hi <- coefs[1] + coefs[2] * mn + coefs[3] * 0
-    expect_equal(out_par_hi$noise, noise_hi)
+    expect_equal(out_par_hi$noise, unname(noise_hi))
     
     # depth < dcut_min -> 1/depth term present
-    out_par_lo <- .estimate_snr_vec(x, pos, depth = depth_lo,
+    out_par_lo <- .estimateSNRvec(x, pos, depth = depth_lo,
                                     noise_pars = coefs, dcut_min = 10)
     noise_lo <- coefs[1] + coefs[2] * mn + coefs[3] * 1/depth_lo
-    expect_equal(out_par_lo$noise, noise_lo)
+    expect_equal(out_par_lo$noise, unname(noise_lo))
     
 })
 
@@ -574,11 +559,12 @@ test_that("estimateNoiseParsWindows works", {
     cf <- estimateNoiseParsWindows(bamfiles = modbamfiles,
                                    modbase = "a",
                                    windows = win,
-                                   plot = FALSE,
+                                   return_data = FALSE,
                                    BPPARAM = BiocParallel::SerialParam())
-    expect_named(cf, c("intercept", "slopeMean", "slopeInvDepth"))
-    expect_length(cf, 3L)
-    expect_equal(as.vector(cf), c(0.001517852,0.15729864,-0.00841949 ), tolerance=1e-6 )
+    expect_length(cf, 1L)
+    expect_length(cf$coefficients, 3L)
+    expect_named(cf$coefficients, c("intercept", "slopeMean", "slopeInvDepth"))
+    expect_equal(as.vector(cf$coefficients), c(0.001517852,0.15729864,-0.00841949 ), tolerance=1e-6 )
     ## carries NoiseFilterParam as attribute
     expect_true(!is.null(attr(cf, "NoiseFilterParam")))
     expect_named(attr(cf, "NoiseFilterParam"),
@@ -588,7 +574,7 @@ test_that("estimateNoiseParsWindows works", {
 
 
 
-test_that("estimateNoiseParsWindows(plot=TRUE) works", {
+test_that("estimateNoiseParsWindows(return_data=TRUE) works", {
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -600,12 +586,13 @@ test_that("estimateNoiseParsWindows(plot=TRUE) works", {
             bamfiles = modbamfiles,
             modbase  = "a",
             windows  = win,         
-            plot     = TRUE,
+            return_data = TRUE,
             BPPARAM  = BiocParallel::SerialParam()
         )
     })
-    expect_named(cf_plot, c("intercept", "slopeMean", "slopeInvDepth"))
-    expect_length(cf_plot, 3L)
+    expect_length(cf_plot, 2L)
+    expect_length(cf_plot$coefficients, 3L)
+    expect_named(cf_plot$coefficients, c("intercept", "slopeMean", "slopeInvDepth"))
 })
 
 
@@ -623,7 +610,7 @@ test_that("estimateNoiseParsWindows works with sampling", {
                                  modbase  = "a",
                                  chromosomeLengths = c(7000000), # no name
                                  windowSize = 500L, nWindows = 20L,
-                                 plot = FALSE,
+                                 return_data = FALSE,
                                  BPPARAM = BiocParallel::SerialParam()),
         "must be a \\*named\\* vector"
     )
@@ -633,7 +620,7 @@ test_that("estimateNoiseParsWindows works with sampling", {
                                         modbase  = "a",
                                         chromosomeLengths = c(chr1 = 7000000),
                                         windowSize = 500L, nWindows = 20L,
-                                        plot = FALSE,
+                                        return_data = FALSE,
                                         BPPARAM = BiocParallel::SerialParam())
     expect_named(cf_samp, c("intercept", "slopeMean", "slopeInvDepth"))
     expect_length(cf_samp, 3L)
@@ -645,7 +632,7 @@ test_that("estimateNoiseParsWindows works with sampling", {
         chromosomeLengths = c(chr1 = 100L),  # shorter than windowSize
         windowSize = 500L,                    # forces maxStart < 1
         nWindows   = 20L,
-        plot = FALSE,
+        return_data = FALSE,
         BPPARAM = BiocParallel::SerialParam()
     )
     expect_named(cf_empty, c("intercept", "slopeMean", "slopeInvDepth"))
@@ -657,7 +644,7 @@ test_that("estimateNoiseParsWindows works with sampling", {
         bamfiles = modbamfiles,
         modbase  = "a",
         windows  = win_empty,
-        plot     = FALSE,
+        return_data =  FALSE,
         BPPARAM  = BiocParallel::SerialParam()
     )
     expect_named(cf_na2, c("intercept", "slopeMean", "slopeInvDepth"))
@@ -668,7 +655,7 @@ test_that("estimateNoiseParsWindows works with sampling", {
 
 
 
-test_that("snrScoreWindows works (parametric and raw)", {
+test_that("estimateSNRwindows works (parametric and raw)", {
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -679,7 +666,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     coef <- estimateNoiseParsWindows(bamfiles = modbamfiles,
                                      modbase = "a",
                                      windows = gr_tiles,
-                                     plot = FALSE,
+                                     return_data = FALSE,
                                      BPPARAM = BiocParallel::SerialParam())
     
     se_pos <- readModBam(bamfiles = modbamfiles,
@@ -693,7 +680,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     expect_true(all(c("FracMod", "Nvalid") %in% SummarizedExperiment::assayNames(se_pos)))
     
     ## Parametric SNR
-    se_snr_par <- snrScoreWindows(se = se_pos, gr = gr_tiles, noise_pars = coef)
+    se_snr_par <- estimateSNRwindows(se = se_pos, gr = gr_tiles, noise_pars = coef$coefficients)
     expect_s4_class(se_snr_par, "SummarizedExperiment")
     expect_identical(dim(se_snr_par), c(length(gr_tiles), ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(se_snr_par),
@@ -703,7 +690,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     expect_true(all(is.finite(SummarizedExperiment::assay(se_snr_par, "SignalVar")) | is.na(SummarizedExperiment::assay(se_snr_par, "SignalVar"))))
     
     ## Raw (non-parametric) SNR
-    se_snr_raw <- snrScoreWindows(se = se_pos, gr = gr_tiles, min_diffs=3)
+    se_snr_raw <- estimateSNRwindows(se = se_pos, gr = gr_tiles, min_diffs=3)
     expect_s4_class(se_snr_raw, "SummarizedExperiment")
     expect_identical(dim(se_snr_raw), c(length(gr_tiles), ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(se_snr_raw),
@@ -723,7 +710,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     
     ## Empty input handling
     se_empty <- se_pos[numeric(0), ]
-    res_empty <- snrScoreWindows(se_empty, gr_tiles)
+    res_empty <- estimateSNRwindows(se_empty, gr_tiles)
     expect_s4_class(res_empty, "SummarizedExperiment")
     expect_identical(dim(res_empty), c(0L, ncol(se_pos)))
     expect_identical(SummarizedExperiment::assayNames(res_empty),
@@ -732,7 +719,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
     ## Named GRanges -> check rownames
     gr_named <- gr_tiles
     names(gr_named) <- paste0("C", seq_len(length(gr_named)))
-    se_named <- snrScoreWindows(se = se_pos, gr = gr_named)
+    se_named <- estimateSNRwindows(se = se_pos, gr = gr_named)
     expect_identical(rownames(se_named), names(gr_named))
     
 })
@@ -740,7 +727,7 @@ test_that("snrScoreWindows works (parametric and raw)", {
 
 
 
-test_that("snrScoreWindows correctly handles missing Nvalid, noise_pars", {
+test_that("estimateSNRwindows correctly handles missing Nvalid, noise_pars", {
     modbamfiles <- system.file("extdata",
                                c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -757,16 +744,16 @@ test_that("snrScoreWindows correctly handles missing Nvalid, noise_pars", {
     se_bad <- se_pos
     SummarizedExperiment::assays(se_bad) <-
         SummarizedExperiment::assays(se_bad)[setdiff(names(SummarizedExperiment::assays(se_bad)), "Nvalid")]
-    expect_error(snrScoreWindows(se_bad, gr_tiles),
+    expect_error(estimateSNRwindows(se_bad, gr_tiles),
                  "must contain an assay `Nvalid`")
     
     ## noise_pars vector vs fallback to metadata
     ok_pars <- c(intercept = 0.01, slopeMean = 0.2, slopeInvDepth = 0.05)
-    out1 <- snrScoreWindows(se_pos, gr_tiles, noise_pars = ok_pars)
+    out1 <- estimateSNRwindows(se_pos, gr_tiles, noise_pars = ok_pars)
     expect_s4_class(out1, "SummarizedExperiment")
     
     metadata(se_pos)$NoisePars <- ok_pars
-    out2 <- snrScoreWindows(se_pos, gr_tiles)  # use metadata
+    out2 <- estimateSNRwindows(se_pos, gr_tiles)  # use metadata
     expect_s4_class(out2, "SummarizedExperiment")
     
 })

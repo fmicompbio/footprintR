@@ -1,7 +1,7 @@
 # footprintR 0.3.8
 
 * Add Signal to Noise Ratio read-level statistics and filtering options to `calcReadStats`, `filterReads` and `filterReadsBam` 
-* Add Signal to Noise Ratio window aggregate statistics for quantifying footprint coherence with `snrScoreWindows`  
+* Add Signal to Noise Ratio window aggregate statistics for quantifying footprint coherence with `estimateSNRwindows`  
 
 # footprintR 0.3.7
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/scanGenome.R
 \name{estimateNoiseParsWindows}
 \alias{estimateNoiseParsWindows}
-\title{Estimate a background noise model via a noise ~ f(methylation, coverage) fit from randomly sampled windows}
+\title{Estimate a background noise model}
 \usage{
 estimateNoiseParsWindows(
   bamfiles,
@@ -13,8 +13,12 @@ estimateNoiseParsWindows(
   windows = NULL,
   k = 2L,
   minCov = 3L,
-  wfilter_param = NoiseFilterParam(),
-  plot = FALSE,
+  mean_probs = c(0.05, 0.99),
+  depth_probs = c(0.01, 0.95),
+  noise_ratio_probs = c(0.01, 0.7),
+  dcut_min = 10,
+  na_rm = TRUE,
+  return_data = FALSE,
   BPPARAM = MulticoreParam(4L, RNGseed = 42L)
 )
 }
@@ -52,35 +56,60 @@ noise.}
 to keep a position. A value greater than one is recommended to remove
 spurious positions.}
 
-\item{wfilter_param}{A \strong{named list} as returned by \code{\link{NoiseFilterParam}},
-specifying the quantile thresholds and depth cutoff rules used to filter windows
-prior to regression. Defaults to \code{NoiseFilterParam()}.}
+\item{mean_probs, depth_probs, noise_ratio_probs, dcut_min, na_rm}{Advanced filtering parameters controlling thresholds used to filter windows;
+see \strong{Filtering parameters} below.}
 
-\item{plot}{Logical scalar. If \code{TRUE}, draw a diagnostic scatter plot
-with the fit.}
+\item{return_data}{= FALSE, Logical scalar. If \code{TRUE}, include in the output
+data that can be used to draw a diagnostic scatter plot with the fit.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object (set
 a the \code{RNGseed} argument for reproducibility in sampling).}
 }
 \value{
-Numeric vector
-\code{c(intercept = a, slopeMean = b, slopeInvDepth = c)} suitable for
-\code{snrScoreWindows()} (store it in \code{metadata(se)$NoisePars}).
+A list with components:
+\describe{
+\item{\code{coefficients}}{Named numeric vector
+\code{c(intercept = a, slopeMean = b, slopeInvDepth = c)} giving
+the fitted background noise model.}
+\item{\code{data}}{(Optional) Only present if
+\code{return_data = TRUE}. A \code{data.frame} with columns
+\code{mean}, \code{noise}, \code{depth}, and \code{sample},
+containing per-window statistics useful for diagnostics or plotting.}
+}
+
+The returned list also carries the attribute
+\code{"NoiseFilterParam"} that records the filtering thresholds used
+during model fitting.
 }
 \description{
+Estimate a background noise model via a noise ~ f(methylation, coverage) fit from randomly sampled windows
 Estimations are performed on one of the following two sets of regions:
 \enumerate{
 \item \emph{sample} \code{nWindows} windows of width \code{windowSize} across
 the chromosomes in \code{chromosomeLengths}
 \item \emph{use} a user‑supplied set of genomic windows (\code{windows})
 }
-}
-\details{
 For every window the function retrieves per‑position \emph{summary} data with
-\code{readModBam(level = "summary")}, runs \code{.estimate_snr_vec()} and
+\code{readModBam(level = "summary")}, runs \code{.estimateSNRvec()} and
 regresses the resulting noise variances on window means and coverage.
 Optionally it plots the (mean, noise) cloud together with the fitted line.
 }
+\section{Filtering parameters}{
+
+\describe{
+\item{\code{mean_probs}}{Numeric length-2. Lower/upper quantiles for window mean methylation.
+Default \code{c(0.05, 0.99)}.}
+\item{\code{depth_probs}}{Numeric length-2. Lower/upper quantiles for window depth coverage.
+Default \code{c(0.01, 0.95)}.}
+\item{\code{noise_ratio_probs}}{Numeric length-2. Lower/upper quantiles for
+noise-to-mean ratio. Default \code{c(0.01, 0.70)}. Upper cutoff typically
+0.60–0.80 to ensure removal of windows with excess variance.}
+\item{\code{dcut_min}}{Numeric scalar. Minimum allowed depth cutoff.
+Default \code{10}.}
+\item{\code{na_rm}}{Logical. Remove \code{NA}s when computing quantiles? Default \code{TRUE}.}
+}
+}
+
 \examples{
 library(GenomicRanges)
 modbamfiles <- system.file("extdata",
@@ -90,9 +119,13 @@ gr0 <- GRanges("chr1", IRanges(6920000, 6950000))
 gr_tiles <- unlist(tile(gr0, width = 500))
 gr_tiles
 noisePars <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
-                                      windows = gr_tiles, plot = TRUE)
+                                      windows = gr_tiles, return_data = TRUE)
 noisePars
+plotNoisePars(noisePars)
 
+}
+\seealso{
+\code{\link{plotNoisePars}} for plotting the fitted model(s).
 }
 \author{
 Panagiotis Papasaikas
