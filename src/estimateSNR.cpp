@@ -59,9 +59,14 @@ static inline std::string to_lower(const std::string& s) {
      NumericVector out(4, NA_REAL);
      out.names() = CharacterVector::create("snr", "signal", "noise", "baseline");
      
-     if (!R_finite(totalVar) || !R_finite(noiseRaw)) return out;
-     
      const std::string mode = to_lower(noise_mode);
+     
+     if (!R_finite(totalVar)) return out;
+     
+     // For raw mode, both totalVar and noiseRaw must be finite
+     if (mode == "raw" && !R_finite(noiseRaw)) {
+         return out;
+     }
      
      // Compute baseline if needed
      double baseline = std::numeric_limits<double>::quiet_NaN();

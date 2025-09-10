@@ -70,14 +70,14 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     
     # readInfoCol
     if (!is.null(readInfoCol)) {
-        tmp <- do.call(rbind, unname(lapply(se[[readInfoCol]], function(d) as.data.frame(d, stringsAsFactors = FALSE))))
+        tmp <- do.call(rbind, unname(lapply(se[[readInfoCol]], function(d) as.data.frame(d))))
         tmp <- tmp[, !grepl("^variant_label$", names(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
     
     # qcCol
     if (!is.null(qcCol)) {
-        tmp <- do.call(rbind, unname(lapply(se[[qcCol]], function(d) as.data.frame(d, stringsAsFactors = FALSE))))
+        tmp <- do.call(rbind, unname(lapply(se[[qcCol]], function(d) as.data.frame(d))))
         tmp <- tmp[, !grepl("AC", names(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }

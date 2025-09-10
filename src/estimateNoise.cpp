@@ -50,6 +50,8 @@ using namespace Rcpp;
      for (int i = 0; i < n; ++i) { sumx += probs[i]; sumx2 += probs[i]*probs[i]; }
      const double meanx  = sumx / (double)n;
      const double totalV = (sumx2 - (double)n * meanx * meanx) / (double)(n - 1);
+     out[0] = meanx;
+     out[1] = totalV;
      
      // 0.5 * Var(diff) over gaps <= k
      int nd = 0; double sumd = 0.0, sumd2 = 0.0;
@@ -65,8 +67,6 @@ using namespace Rcpp;
      const double diffVar = (sumd2 - (double)nd * meand * meand) / (double)(nd - 1);
      const double noise_raw = 0.5 * diffVar;
      
-     out[0] = meanx;
-     out[1] = totalV;
      out[2] = noise_raw;
      out[3] = (double)nd;
      return out;
