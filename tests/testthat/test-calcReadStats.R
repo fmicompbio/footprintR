@@ -34,7 +34,7 @@ test_that("read statistic functions work", {
     }
     
     # pre-compute SNR, Signal, Noise
-    snr_res <- .estimate_snr_probList(probList, idxList)
+    snr_res <- .estimateSNRprobList(probList, idxList)
     
     # expected values
     argL <- list(probList = probList, idxList = idxList, useReads = useReads,
@@ -303,23 +303,23 @@ test_that("addReadStats works", {
 
 
 
-test_that(".estimate_snr_probList works", {
+test_that(".estimateSNRprobList works", {
     probList <- list( round(seq(0.01, 0.9, length.out = 10)^1.3, 3) )
     idxList <- list(c(1:10))
     suppressWarnings(
-        res0 <- .estimate_snr_probList(probList, idxList, min_diffs = 5)
+        res0 <- .estimateSNRprobList(probList, idxList, min_diffs = 5)
     )
     expect_true(all(is.finite( c(res0$snr,res0$signal,res0$noise) ) ) )
     
     suppressWarnings(
-        res1 <- .estimate_snr_probList(probList, idxList, min_diffs = 5,floor_pars = c(0,0.2))
+        res1 <- .estimateSNRprobList(probList, idxList, min_diffs = 5,floor_pars = c(0,0.2))
     )
     expect_true(all(is.finite( c(res0$snr,res0$signal,res0$noise) ) ) )
     
     probList <- list( 0.1)
     idxList <- list(1)
     suppressWarnings(
-        res2 <- .estimate_snr_probList(probList, idxList, min_diffs = 5)
+        res2 <- .estimateSNRprobList(probList, idxList, min_diffs = 5)
     )
     expect_true(all(is.na( c(res2$snr,res2$signal,res2$noise) ) ) )
     

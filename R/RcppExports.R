@@ -106,7 +106,15 @@ calcFootprintScoreForRead <- function(pos, pmod, wgt, minconf = 0.7, minweight =
     .Call(`_footprintR_calcFootprintScoreForRead`, pos, pmod, wgt, minconf, minweight)
 }
 
-filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, minSNR = -1e200, noiseCoefB0 = -1e200, noiseCoefB1 = -1e200, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
+estimateNoise <- function(probs, read_pos, k, min_diffs) {
+    .Call(`_footprintR_estimateNoise`, probs, read_pos, k, min_diffs)
+}
+
+estimateSNR <- function(totalVar, noiseRaw, eps, betas, features, noise_mode = "floor") {
+    .Call(`_footprintR_estimateSNR`, totalVar, noiseRaw, eps, betas, features, noise_mode)
+}
+
+filter_modbam_cpp <- function(infile, outfile, modbase, region = ".", includeHeader = TRUE, keepUnmapped = TRUE, keepSecondary = TRUE, keepSupplementary = TRUE, minReadLength = 0L, minAlignedLength = 0L, minAlignedFraction = 0, minQscore = 0.0, minSNR = NA_real_, noiseCoefB0 = NA_real_, noiseCoefB1 = NA_real_, maxFracLowConf = 1.0, maxEntropy = -1.0, LowConf = 0.7, nThreads = 2L, verbose = FALSE) {
     .Call(`_footprintR_filter_modbam_cpp`, infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, noiseCoefB0, noiseCoefB1, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose)
 }
 
@@ -135,7 +143,7 @@ index_bam_cpp <- function(infile) {
 #' @description
 #' \code{labelDists} returns all pairwise distances among a set of strings
 #'    (read labels) of identical length, consisting of A, C, G, T and -
-#'    letters. The distance is in [0, 1] and corresponds to the fraction of
+#'    letters. The distance is in \code{[0, 1]} and corresponds to the fraction of
 #'    differences in the overlap range, defined as the range excluding the
 #'    maximal number of leading and trailing - letters in any of the two
 #'    compared labels.

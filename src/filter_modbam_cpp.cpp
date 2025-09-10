@@ -5,7 +5,8 @@
 #include <cmath>    // std::isfinite, std::isnan
 #include "utils.h"
 #include "sampleEntropy.h"
-#include "SNR.h"
+#include "estimateNoise.h"
+#include "estimateSNR.h"
 
 #define NMODS 5
 
@@ -90,9 +91,9 @@
                                        int minAlignedLength = 0,
                                        double minAlignedFraction = 0,
                                        double minQscore = 0.0,
-                                       double minSNR   = -1e200,
-                                       double noiseCoefB0 = -1e200,
-                                       double noiseCoefB1 = -1e200,
+                                       double minSNR   = NA_REAL,
+                                       double noiseCoefB0 = NA_REAL,
+                                       double noiseCoefB1 = NA_REAL,
                                        double maxFracLowConf = 1.0,
                                        double maxEntropy = -1.0,
                                        double LowConf = 0.7,
@@ -300,23 +301,57 @@
          }
          
          
-
+         
          // ... minSNR
-         if (minSNR > -1e190) {  // SNR filter enabled
-             // Set coefficients to NA when not passed
-             const double b0 = (std::isfinite(noiseCoefB0) && noiseCoefB0 > -1e190) ? noiseCoefB0 : R_NaReal;
-             const double b1 = (std::isfinite(noiseCoefB1) && noiseCoefB1 > -1e190) ? noiseCoefB1 : R_NaReal;
-             const double snr_val = compute_snr_na_gap_aware(
-                 mod_probs, mod_pos,
-                 /*k=*/2, /*min_diffs=*/-1, /*eps=*/1e-3,
-                 /*b0=*/b0, /*b1=*/b1
-             );
-             if (!std::isnan(snr_val) && snr_val < minSNR) {
+         if (R_finite(minSNR))  {  // SNR filter enabled
+             
+             // At least 2 calls and matching vectors probs, pos vectors
+             if (mod_probs.size() < 2 || mod_pos.size() != mod_probs.size()) {
                  nMinSNR++;
                  continue;
              }
-             // If SNR cannot be computed (NaN), do not drop
+             
+             Rcpp::NumericVector comp = estimateNoise(mod_probs, mod_pos, 2, -1);
+             
+             const double totalVar = comp["total"];
+             const double noiseRaw = comp["noise_raw"];
+             const double meanProb = comp["mean"];
+             // total and noise variance must be finite
+             if (!R_finite(totalVar) || !R_finite(noiseRaw)) {
+                 nMinSNR++;
+                 continue;
+             }
+             
+             // decide if we have a usable floor model
+             const bool have_b0 = !R_IsNA(noiseCoefB0);
+             const bool have_b1 = !R_IsNA(noiseCoefB1);
+             const bool use_floor = have_b0 && have_b1;
+             
+             Rcpp::NumericVector betas, feats;
+             std::string noise_mode = "raw";
+             if (use_floor) {
+                 // meanProb may be NA for pathological reads
+                 if (!R_finite(meanProb)) {
+                     nMinSNR++;
+                     continue;
+                 }
+                 betas = Rcpp::NumericVector::create(noiseCoefB0, noiseCoefB1);
+                 feats = Rcpp::NumericVector::create(1.0, meanProb); // intercept + mean
+                 noise_mode = "floor";
+             }
+             
+             Rcpp::NumericVector snr_res = estimateSNR(
+                 totalVar, noiseRaw, 1e-3,
+                 betas, feats, noise_mode
+             );
+             const double snr_val = snr_res["snr"];
+             
+             if (!R_finite(snr_val) || snr_val < minSNR) {
+                 nMinSNR++;
+                 continue;
+             }
          }
+         
          
          
          

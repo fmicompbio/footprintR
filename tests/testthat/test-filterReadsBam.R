@@ -206,11 +206,39 @@ test_that("compute_snr_na_gap_aware NA guard works", {
     )
     expect_true(is.na(v2))
     
-    # valid small input
+    # valid small input (does not use floor)
     v_ok <- compute_snr_na_gap_aware(
-        c(0.1, 0.2, 0.3, 0.4),           
-        as.integer(c(1, 2, 3 ,4)),
-        2L, 0L, 1e-3, 0.1, 0
+        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7),           
+        as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
+        2L, 0L, 1e-3, 0.0001, 0
     )
+
     expect_true(is.finite(v_ok))
+    expect_equal(v_ok, 4.01636614, tolerance = 1e-8)
+    
+    # compare to results of noiseEstimate+estimateSNR function
+    nest <- estimateNoise( 
+        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7), 
+        as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
+        2L, 1 )
+    v2 <- estimateSNR( nest[2], nest[3],1e-3,0,0,"raw" )
+    expect_equal(unname(v2["snr"]), v_ok, tolerance = 1e-8)
+    
+    
+    # valid small input with b0 that forces floor
+    betas <- c(0.1,0)
+    v_ok <- compute_snr_na_gap_aware(
+        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7),           
+        as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
+        2L, 0L, 1e-3, betas[1], betas[2]
+    )
+    v2 <- estimateSNR( nest[2], nest[3],1e-3,betas,c(1,nest[1]) , "floor" )
+    expect_equal(unname(v2["snr"]), v_ok, tolerance = 1e-8)
+    
+    expect_true(is.finite(v_ok))
+    expect_equal(v_ok, -6.64385619, tolerance = 1e-8)
+    
+    
+    
+    
 })

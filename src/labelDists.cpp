@@ -8,7 +8,7 @@
 //' @description
 //' \code{labelDists} returns all pairwise distances among a set of strings
 //'    (read labels) of identical length, consisting of A, C, G, T and -
-//'    letters. The distance is in [0, 1] and corresponds to the fraction of
+//'    letters. The distance is in \code{[0, 1]} and corresponds to the fraction of
 //'    differences in the overlap range, defined as the range excluding the
 //'    maximal number of leading and trailing - letters in any of the two
 //'    compared labels.

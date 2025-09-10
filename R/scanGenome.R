@@ -632,7 +632,7 @@ NoiseFilterParam <- function(mean_probs = c(0.05, 0.99),
 
 #' Internal: core SNR estimator for one numeric vector
 #'
-#' Adapted from \code{.estimate_snr_probList()} but acting on a *single*,
+#' Adapted from \code{.estimateSNRprobList()} but acting on a *single*,
 #' already aggregated signal. Briefly the following variance decomposition is used:
 #' 1. **Total variance** = `var(x, na.rm = TRUE)`
 #' 2a. **Noise variance** ≈ `0.5 * Var(Δx)` where Δx are lag-1 differences that may skip
