@@ -472,11 +472,8 @@ calcReadStats <- function(se,
     # Subset by sequenceContext
     se <- .keepPositionsBySequenceContext(se, sequenceContext = sequenceContext)
     
-    noiseCoefs_by_sample <- list() # c(intercept=..., slope=...)
-    
-    
     # Calculate statistics for each sample
-    out <- SimpleList(lapply(
+    sample_out <- lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
                 se[, nm], assayName = assayName, minCov = minNobsPpos,
@@ -513,20 +510,22 @@ calcReadStats <- function(se,
                 param_names <- defaultReadStats
             }
             
+            # get snr_res / floor_pars 
             if (any(param_names %in% SNRstats)) {
                 snr_res <- .estimateSNRprobList(
                     probList = NNAvals_byCol,
                     idxList  = idxPos_byCol
                 )
                 # always store a 2-length named vector
-                noiseCoefs_by_sample[[nm]] <<- snr_res$floor_pars # c(intercept=..., slope=...)
+                floor_pars <- snr_res$floor_pars  # c(intercept=..., slope=...)
             } else {
+                snr_res <- NULL
                 # uniform shape even when SNR stats were not computed
-                noiseCoefs_by_sample[[nm]] <<- c(intercept = NA_real_, slope = NA_real_)
+                floor_pars <- c(intercept = NA_real_, slope = NA_real_)
             }
             
             # Iterate over param_names and add columns to stats_res
-            do.call(
+            stats_df <- do.call(
                 cbind,
                 bplapply(
                     param_names,
@@ -556,8 +555,17 @@ calcReadStats <- function(se,
                         stats_res
                     },
                     BPPARAM = BPPARAM))
+            
+            list(stats = stats_df, floor_pars = floor_pars)
         })
-    )
+    
+    # Assemble stats output from the sample_out lapply returns:
+    out <- SimpleList(lapply(sample_out, `[[`, "stats"))
+    names(out) <- colnames(se)
+    
+    # Assemble floor_pars output from the sample_out lapply returns:
+    noiseCoefs_by_sample <- lapply(sample_out, `[[`, "floor_pars")
+    names(noiseCoefs_by_sample) <- colnames(se)
     
     # add filtering parameters to `out`
     metadata(out) <- list(
@@ -572,7 +580,6 @@ calcReadStats <- function(se,
     
     return(out)
 }
-
 
 
 
