@@ -304,39 +304,19 @@
          
          // ... minSNR
          if (R_finite(minSNR))  {  // SNR filter enabled
-             
-             // At least 2 calls and matching vectors probs, pos vectors
-             if (mod_probs.size() < 2 || mod_pos.size() != mod_probs.size()) {
-                 nMinSNR++;
-                 continue;
-             }
-             
              Rcpp::NumericVector comp = estimateNoise(mod_probs, mod_pos, 2, -1);
              
              const double totalVar = comp["total"];
              const double noiseRaw = comp["noise_raw"];
              const double meanProb = comp["mean"];
-             // total and noise variance must be finite
-             if (!R_finite(totalVar) || !R_finite(noiseRaw)) {
-                 nMinSNR++;
-                 continue;
-             }
-             
-             // decide if we have a usable floor model
-             const bool have_b0 = !R_IsNA(noiseCoefB0);
-             const bool have_b1 = !R_IsNA(noiseCoefB1);
-             const bool use_floor = have_b0 && have_b1;
              
              Rcpp::NumericVector betas, feats;
              std::string noise_mode = "raw";
-             if (use_floor) {
-                 // meanProb may be NA for pathological reads
-                 if (!R_finite(meanProb)) {
-                     nMinSNR++;
-                     continue;
-                 }
+             
+             // decide if we have a usable floor model
+             if (R_finite(noiseCoefB0) && R_finite(noiseCoefB1)) {
                  betas = Rcpp::NumericVector::create(noiseCoefB0, noiseCoefB1);
-                 feats = Rcpp::NumericVector::create(1.0, meanProb); // intercept + mean
+                 feats = Rcpp::NumericVector::create(1.0, meanProb); // may be NA; handled in estimateSNR
                  noise_mode = "floor";
              }
              

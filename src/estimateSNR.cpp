@@ -42,10 +42,11 @@ static inline std::string to_lower(const std::string& s) {
  //'        - \code{"floor"} → use \code{max(noise_raw, baseline)}
  //'
  //' @return Named numeric vector with elements:
- //'         - snr      (log2 scale)
+ //'         - snr (log2 scale)
  //'         - signal
- //'         - noise
- //'         - baseline (sum(betas * features); NA if not applied)
+ //'         - noise final estimate used for signal and snr calculation
+ //'         - noise baseline (sum(betas * features); NA if not applied)
+ //'         - noise raw
  //'
  //' @noRd
  //' @keywords internal
@@ -56,8 +57,8 @@ static inline std::string to_lower(const std::string& s) {
                                  const Rcpp::NumericVector& betas,
                                  const Rcpp::NumericVector& features,
                                  const std::string& noise_mode = "floor") {
-     NumericVector out(4, NA_REAL);
-     out.names() = CharacterVector::create("snr", "signal", "noise", "baseline");
+     NumericVector out(5, NA_REAL);
+     out.names() = CharacterVector::create("snr", "signal", "noise", "baseline", "raw");
      
      const std::string mode = to_lower(noise_mode);
      
@@ -76,17 +77,25 @@ static inline std::string to_lower(const std::string& s) {
          if (betas.size() != features.size() || betas.size() == 0) {
              stop("For noise_mode='%s', 'betas' and 'features' must be the same non-zero length.", mode.c_str());
          }
-         double accum = 0.0;
+         
+         // Fail on misconfigured betas
          for (int i = 0; i < betas.size(); ++i) {
-             const double b = betas[i];
-             const double z = features[i];
-             if (!R_finite(b) || !R_finite(z)) {
-                 baseline = std::numeric_limits<double>::quiet_NaN();
-                 break;
+             if (!R_finite(betas[i])) {
+                 stop("Non-finite value in 'betas' for noise_mode='%s'.", mode.c_str());
              }
-             accum += b * z;
          }
+         
+         // In case of non-finite features return NA vector
+         for (int i = 0; i < features.size(); ++i) {
+             if (!R_finite(features[i])) {
+                 return out;  // baseline required but cannot be computed 
+             }
+         }
+         
+         double accum = 0.0;
+         for (int i = 0; i < betas.size(); ++i) accum += betas[i] * features[i];
          baseline = accum;
+         
          if (!R_finite(baseline)) {
              // cannot proceed if baseline required but not finite
              return out;
@@ -100,7 +109,11 @@ static inline std::string to_lower(const std::string& s) {
      } else if (mode == "model") {
          noiseV = baseline;
      } else if (mode == "floor") {
-         noiseV = std::max(noiseRaw, baseline);
+         if (!R_finite(noiseRaw)) {
+             noiseV = baseline;
+         } else {
+             noiseV = std::max(noiseRaw, baseline);
+         }
      } else {
          stop("Invalid noise_mode: '%s'. Use 'raw', 'model', or 'floor'.", noise_mode.c_str());
      }
@@ -120,5 +133,6 @@ static inline std::string to_lower(const std::string& s) {
      out[1] = signalV;
      out[2] = noiseV;
      out[3] = need_baseline ? baseline : NA_REAL;
+     out[4] = noiseRaw;
      return out;
  }

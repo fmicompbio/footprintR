@@ -186,59 +186,78 @@ test_that("filterReadsBam works", {
 
 
 
-test_that("compute_snr_na_gap_aware NA guard works", {
+test_that("estimateNoise and estimateSNR work", {
     # Case 1: n < 2  
-    v1 <- compute_snr_na_gap_aware(
+    v1 <- estimateNoise(
         c(0.5),       
         as.integer(5),
         2L,
-        -1L,
-        1e-3,
-        0, 0
+        -1L
     )
-    expect_true(is.na(v1))
+    expect_true(all(is.na(v1)))
     
     # Case 2: mismatched lengths
-    v2 <- compute_snr_na_gap_aware(
+    v2 <- estimateNoise(
         c(0.2, 0.3, 0.4),
         as.integer(c(10, 20)),
-        2L, -1L, 1e-3, 0, 0
+        2L, -1L
     )
-    expect_true(is.na(v2))
+    expect_true(all(is.na(v1)))
     
     # valid small input (does not use floor)
-    v_ok <- compute_snr_na_gap_aware(
-        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7),           
-        as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
-        2L, 0L, 1e-3, 0.0001, 0
-    )
-
-    expect_true(is.finite(v_ok))
-    expect_equal(v_ok, 4.01636614, tolerance = 1e-8)
-    
-    # compare to results of noiseEstimate+estimateSNR function
     nest <- estimateNoise( 
         c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7), 
         as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
         2L, 1 )
-    v2 <- estimateSNR( nest[2], nest[3],1e-3,0,0,"raw" )
-    expect_equal(unname(v2["snr"]), v_ok, tolerance = 1e-8)
-    
+    v_ok <- estimateSNR( nest[2], nest[3],1e-3,0,0,"raw" )
+    expect_true(all(is.finite(v_ok[c("snr","signal","noise","raw")])))
+    expect_true(is.na(v_ok["baseline"]))
+    expect_equal(unname(v_ok["snr"]), 4.01636614, tolerance = 1e-8)
     
     # valid small input with b0 that forces floor
     betas <- c(0.1,0)
-    v_ok <- compute_snr_na_gap_aware(
-        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7),           
-        as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
-        2L, 0L, 1e-3, betas[1], betas[2]
+    v2_ok <- estimateSNR( nest[2], nest[3],1e-3,betas,c(1,nest[1]) , "floor" )
+    expect_true(all(is.finite(v2_ok)))
+    expect_equal(unname(v2_ok["snr"]), -6.64385619, tolerance = 1e-8)
+    
+    # betas, features length mismatch
+    expect_error(
+        estimateSNR(1, 0.1, 1e-3,
+                    betas = c(0.5), features = c(1, 0.2),
+                    noise_mode = "model"),
+        "same non-zero length"
     )
-    v2 <- estimateSNR( nest[2], nest[3],1e-3,betas,c(1,nest[1]) , "floor" )
-    expect_equal(unname(v2["snr"]), v_ok, tolerance = 1e-8)
+    # zero length
+    expect_error(
+        estimateSNR(1, 0.1, 1e-3,
+                    betas = numeric(), features = numeric(),
+                    noise_mode = "floor"),
+        "same non-zero length"
+    )
     
-    expect_true(is.finite(v_ok))
-    expect_equal(v_ok, -6.64385619, tolerance = 1e-8)
+    # NA feature makes baseline non-finite -> function returns all NA
+    res1 <- estimateSNR(1, 0.05, 1e-3,
+                        betas = c(0.01, 0.5), features = c(1, NA_real_),
+                        noise_mode = "model")
+    expect_true(all(is.na(res1)))
     
-    
-    
-    
+    # Baseline needed but not finite betas:
+    expect_error(
+        estimateSNR(1, 0.05, 1e-3,
+                        betas = c(0.01, NA), features = c(1, NA_real_),
+                        noise_mode = "floor"),
+        "Non-finite value"
+    )
+  
+    #Invalid noise mode
+    expect_error(
+        estimateSNR(1, 0.1, 1e-3,
+                    betas = numeric(), features = numeric(),
+                    noise_mode = "azarenka"),
+        "Invalid noise_mode"
+    )
+
 })
+
+
+
