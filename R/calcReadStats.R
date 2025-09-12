@@ -8,7 +8,7 @@ defaultReadStats <- c("MeanModProb", "FracMod", "MeanConf", "MeanConfUnm",
 # global vector with all available read stats functions
 allReadStats <- c(defaultReadStats, "SEntrModProb")
 # global vector with available signal-to-noise read stats functions
-SNRstats <- c("SNR", "SignalVar", "NoiseVar")
+snrStats <- c("SNR", "SignalVar", "NoiseVar")
 
 # -- Helper functions to Individual read statistics ----------------------------
 # the helper functions
@@ -24,70 +24,70 @@ SNRstats <- c("SNR", "SignalVar", "NoiseVar")
 #' @noRd
 #' @keywords internal
 MeanModProb <- function(probList, useReads, ...) {
-    stats_res <- vapply(probList, mean, numeric(1), USE.NAMES = FALSE)
-    stats_res[setdiff(seq_along(stats_res), useReads)] <- NA
-    stats_res
+    statsRes <- vapply(probList, mean, numeric(1L), USE.NAMES = FALSE)
+    statsRes[setdiff(seq_along(statsRes), useReads)] <- NA
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 FracMod <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         mean(probList[[r]] >= 0.5)
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 MeanConf <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         mean(pmax(probList[[r]], 1 - probList[[r]]))
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 MeanConfUnm <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         mean((1 - probList[[r]])[probList[[r]] < 0.5])
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 MeanConfMod <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         mean(probList[[r]][probList[[r]] >= 0.5])
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 FracLowConf <- function(probList, useReads, lowConf = 0.7, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         sum(abs(0.5 - probList[[r]]) < (lowConf - 0.5)) / length(probList[[r]])
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 #' @importFrom stats IQR
 IQRModProb <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         IQR(probList[[r]])
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
@@ -97,25 +97,25 @@ IQRModProb <- function(probList, useReads, ...) {
 #         would spead up things (about 2-fold), thanks to the SparseArray::colSds
 #         but for consistency we keep the list-of-mod_prob version
 sdModProb <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         sqrt(var(probList[[r]]))
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 #' @noRd
 #' @keywords internal
 SEntrModProb <- function(probList, useReads, ...) {
-    stats_res <- rep(NA, length(probList))
-    stats_res[useReads] <- vapply(useReads, function(r) {
+    statsRes <- rep(NA, length(probList))
+    statsRes[useReads] <- vapply(useReads, function(r) {
         if (length(probList[[r]]) > 64) {
             sampleEntropy(probList[[r]], 2L, 0.2)
         } else {
             NA
         }
     }, numeric(1))
-    stats_res
+    statsRes
 }
 
 
@@ -125,8 +125,8 @@ SEntrModProb <- function(probList, useReads, ...) {
 #' @importFrom stats acf na.pass
 ACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     lagMax <- max(xrange)
-    stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
-    stats_res[useReads] <- lapply(useReads, function(r) {
+    statsRes <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+    statsRes[useReads] <- lapply(useReads, function(r) {
         if (length(probList[[r]]) > lagMax) {
             acf(probList[[r]], na.action = na.pass, lag.max = lagMax,
                 plot = FALSE)$acf[xrange]
@@ -134,7 +134,7 @@ ACModProb <- function(probList, useReads, xrange = 12:64, ...) {
             rep(0, length(xrange))
         }
     })
-    stats_res
+    statsRes
 }
 
 #' @noRd
@@ -142,8 +142,8 @@ ACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @importFrom stats pacf na.pass
 PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     lagMax <- max(xrange)
-    stats_res <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
-    stats_res[useReads] <- lapply(useReads, function(r) {
+    statsRes <- lapply(lengths(probList), function(i) rep(NA, length(xrange)))
+    statsRes[useReads] <- lapply(useReads, function(r) {
         if (length(probList[[r]]) > lagMax) {
             pacf(probList[[r]], na.action = na.pass, lag.max = lagMax,
                  plot = FALSE)$acf[xrange]
@@ -151,7 +151,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
             rep(0, length(xrange))
         }
     })
-    stats_res
+    statsRes
 }
 
 
@@ -171,13 +171,13 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @importFrom dplyr between
 #' @importFrom cli cli_warn
 #' @importFrom stats setNames
-#' 
+#'
 #' @noRd
 #' @keywords internal
 .estimateSNRprobList <- function(probList, idxList, k = 2L, min_diffs = -1L,
                                    floor_pars = NULL, eps = 1e-3, ...) {
     nReads <- length(probList)
-    
+
     #Noise estimation using cpp function:
     comps <- lapply(seq_len(nReads), function(i) {
         estimateNoise(
@@ -190,7 +190,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     m_means <- vapply(comps, function(v) v[["mean"]],      numeric(1))
     noise_r <- vapply(comps, function(v) v[["noise_raw"]], numeric(1))
     ndiffs  <- vapply(comps, function(v) v[["ndiffs"]],    numeric(1))
-    
+
     # Robust noise floor fit (if not provided)
     if (is.null(floor_pars)) {
         keep <- dplyr::between(
@@ -198,7 +198,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
             stats::quantile(m_means, .10, na.rm = TRUE),
             stats::quantile(m_means, .90, na.rm = TRUE)
         ) & !is.na(noise_r)
-        
+
         if (sum(keep, na.rm = TRUE) < 16L) {
             cli::cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
             floor_pars   <- c(NA_real_, NA_real_)  # bookkeeping
@@ -212,7 +212,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     } else {
         use_mode <- if (all(is.finite(floor_pars))) "floor" else "raw"
     }
-    
+
     # Per-read noise/signal/SNR in C++
     # Build betas/features for the chosen model (intercept + mean)
     if (all(!is.na(floor_pars))) {
@@ -220,7 +220,7 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     } else {
         betas <- numeric(0)  # raw mode
     }
-    
+
     # run .estimateSNR per read
     snr_sig_noise <- lapply(seq_len(nReads), function(i) {
         ci <- comps[[i]]
@@ -238,11 +238,11 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
         )
         c(snr = res[["snr"]], signal = res[["signal"]], noise = res[["noise"]])
     })
-    
+
     snr_v    <- vapply(snr_sig_noise, `[[`, numeric(1), "snr")
     signal_v <- vapply(snr_sig_noise, `[[`, numeric(1), "signal")
     noise_v  <- vapply(snr_sig_noise, `[[`, numeric(1), "noise")
-    
+
     list(
         snr        = snr_v,
         signal     = signal_v,
@@ -463,55 +463,55 @@ calcReadStats <- function(se,
     LagRangeValues <- seq(LagRange[1], LagRange[2])
     .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
-    
+
     # Subset se by region
     if (!is.null(regions)) {
         se <- subsetByOverlaps(x = se, ranges = regions)
     }
-    
+
     # Subset by sequenceContext
     se <- .keepPositionsBySequenceContext(se, sequenceContext = sequenceContext)
-    
+
     # Calculate statistics for each sample
     sample_out <- lapply(
         structure(colnames(se), names = colnames(se)), function(nm) {
             sesub <- .filterPositionsByCoverage(
                 se[, nm], assayName = assayName, minCov = minNobsPpos,
                 minNbrSamples = NULL)
-            
+
             mat <- assay(sesub, assayName)[[nm]]
             POS <- pos(rowRanges(sesub))
-            
+
             # Non-NA indices
             NNAind <- nnawhich(mat, arr.ind = TRUE)
-            
+
             # Positions of observed measurements
             idxPos_byCol <- split(POS[NNAind[, 1]], NNAind[, 2])
             names(idxPos_byCol) <- colnames(mat)[as.numeric(names(idxPos_byCol))]
-            
+
             # Create list of non-NA row indices per column (i.e per read)
             NNAind_byCol <- split(NNAind[, 1], NNAind[, 2])
             names(NNAind_byCol) <- colnames(mat)[as.numeric(names(NNAind_byCol))]
-            
+
             # List of non-zero observations by column (i.e by read):
             NNAvals <- nnavals(mat)
             NNAvals_byCol <- split(NNAvals, NNAind[, 2])
             names(NNAvals_byCol) <- colnames(mat)[as.numeric(names(NNAvals_byCol))]
-            
+
             # Number of (valid) observations per read:
             NobsReads <- lengths(NNAind_byCol)
-            
+
             # Include in calculations only reads with sufficient Number of observations
             useReads <- which(NobsReads >= minNobsPread)
-            
+
             if (!is.null(stats)) {
                 param_names <- stats
             } else {
                 param_names <- defaultReadStats
             }
-            
-            # get snr_res / floor_pars 
-            if (any(param_names %in% SNRstats)) {
+
+            # get snr_res / floor_pars
+            if (any(param_names %in% snrStats)) {
                 snr_res <- .estimateSNRprobList(
                     probList = NNAvals_byCol,
                     idxList  = idxPos_byCol
@@ -523,20 +523,20 @@ calcReadStats <- function(se,
                 # uniform shape even when SNR stats were not computed
                 floor_pars <- c(intercept = NA_real_, slope = NA_real_)
             }
-            
-            # Iterate over param_names and add columns to stats_res
+
+            # Iterate over param_names and add columns to statsRes
             stats_df <- do.call(
                 cbind,
                 bplapply(
                     param_names,
                     function(param) {
-                        
-                        stats_res <- make_zero_col_DFrame(nrow = length(colnames(mat)))
-                        row.names(stats_res) <- colnames(mat)
+
+                        statsRes <- make_zero_col_DFrame(nrow = length(colnames(mat)))
+                        row.names(statsRes) <- colnames(mat)
                         vec <- rep(NA_real_, length(colnames(mat)))
                         names(vec) <- colnames(mat)
-                        
-                        if (param %in% SNRstats) {
+
+                        if (param %in% snrStats) {
                             src <- switch(param,
                                           SNR = snr_res$snr,
                                           SignalVar = snr_res$signal,
@@ -550,23 +550,23 @@ calcReadStats <- function(se,
                                                 xrange = LagRangeValues)
                             vec[names(NNAvals_byCol)] <- do.call(param, helper_args)
                         }
-                        
-                        stats_res[[param]] <- vec
-                        stats_res
+
+                        statsRes[[param]] <- vec
+                        statsRes
                     },
                     BPPARAM = BPPARAM))
-            
+
             list(stats = stats_df, floor_pars = floor_pars)
         })
-    
+
     # Assemble stats output from the sample_out lapply returns:
     out <- SimpleList(lapply(sample_out, `[[`, "stats"))
     names(out) <- colnames(se)
-    
+
     # Assemble floor_pars output from the sample_out lapply returns:
     noiseCoefs_by_sample <- lapply(sample_out, `[[`, "floor_pars")
     names(noiseCoefs_by_sample) <- colnames(se)
-    
+
     # add filtering parameters to `out`
     metadata(out) <- list(
         regions        = regions,
@@ -577,7 +577,7 @@ calcReadStats <- function(se,
         snr_noise_coef = noiseCoefs_by_sample,          # named list: one c(intercept, slope) per sample
         snr_config     = list(k = 2L, min_diffs = NULL, eps = 1e-3)
     )
-    
+
     return(out)
 }
 
@@ -592,9 +592,9 @@ calcReadStats <- function(se,
 #' @export
 #' @rdname calcReadStats
 addReadStats <- function(se, ..., name = "QC") {
-    
+
     .assertScalar(x = name, type = "character")
-    
+
     colData(se)[[name]] <- calcReadStats(se = se, ...)
     metadata(se)$readLevelData$colDataColumns <- c(
         metadata(se)$readLevelData$colDataColumns, name
