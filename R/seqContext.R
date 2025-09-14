@@ -171,7 +171,7 @@ extractSeqContext <- function(x,
 #'
 #' @seealso \code{\link{extractSeqContext}}
 #'
-#' @importFrom SummarizedExperiment rowRanges
+#' @importFrom SummarizedExperiment rowRanges rowData<-
 #'
 #' @export
 addSeqContext <- function(x,

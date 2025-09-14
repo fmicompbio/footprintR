@@ -54,7 +54,7 @@
 #'     returned object type, \code{\link{readModkitExtract}} for the function
 #'     used to read the input files.
 #'
-#' @importFrom SummarizedExperiment assays assayNames assay assays
+#' @importFrom SummarizedExperiment assays assayNames assay assays assays<-
 #' @importFrom S4Vectors endoapply metadata
 #' @importFrom SparseArray pmax nnavals nnavals<- rowSums is_nonna
 #' @importFrom methods is

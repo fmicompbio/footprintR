@@ -171,12 +171,12 @@ defaultFootprintColors <- c("#FBB4AE", "#B3CDE3", "#CCEBC5", "#DECBE4",
 #'     \code{\link{readBedMethyl}} for reading read-level and summarized
 #'     footprinting data.
 #'
-#' @importFrom SummarizedExperiment assay assayNames rowRanges assays
+#' @importFrom SummarizedExperiment assay assayNames rowRanges assays assays<-
 #' @importFrom GenomicRanges GRanges
 #' @importFrom GenomeInfoDb seqlevels seqnames
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics nrow ncol
-#' @import ggplot2
+#' @importFrom ggplot2 theme labs
 #' @importFrom patchwork wrap_plots
 #' @importFrom cli cli_abort cli_warn
 #' @importFrom methods as
@@ -430,6 +430,8 @@ plotRegion <- function(
 #' @importFrom cli cli_abort
 #' @importFrom dplyr bind_rows mutate group_by group_modify ungroup select
 #' @importFrom BiocGenerics setdiff
+#' @importFrom ggplot2 geom_area facet_wrap theme element_blank element_text
+#'     element_line margin
 #'
 #' @export
 #' @rdname plotRegion
@@ -638,7 +640,7 @@ plotBigWig <- function(bwFiles,
 #'                   assayName = "mod_prob",
 #'                   highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 geom_segment aes geom_tile geom_segment geom_point
 #' @importFrom rlang .data
 #' @importFrom dplyr filter
 #' @importFrom cli cli_warn
@@ -790,7 +792,7 @@ plotReadsLollipop <- function(se,
 #'                  assayName = "mod_prob",
 #'                  highlightRegion = GRanges("chr1", IRanges(6935420, 6935430)))
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 geom_segment aes geom_tile
 #' @importFrom rlang .data
 #' @importFrom dplyr filter
 #' @importFrom cli cli_warn
@@ -968,7 +970,7 @@ plotReadsHeatmap <- function(se,
 #' plotSummaryPointSmooth(seA, region = as("chr1:6940000-6955000", "GRanges"),
 #'                        assayName = "Nvalid", doPoint = FALSE)
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 geom_point geom_line aes
 #' @importFrom dplyr group_by ungroup group_modify across all_of
 #' @importFrom rlang .data
 #' @importFrom stats smooth.spline
@@ -1174,7 +1176,9 @@ plotSummaryPointSmooth <- function(se,
 #'     labelPosition = "inside",
 #'     labelSize = 5)
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot geom_segment aes geom_rect scale_fill_manual
+#'     labs geom_text theme_bw theme element_text element_blank element_line
+#'     coord_cartesian scale_x_continuous
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics unlist start end
 #' @importFrom S4Vectors mcols
@@ -1719,7 +1723,9 @@ plotGenomicRegions <- function(grl,
 #'     to on the y-axis. If \code{NULL} (default), will be determined from the
 #'     data.
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes labs theme_bw theme element_blank
+#'     coord_cartesian scale_x_discrete scale_color_manual scale_fill_manual
+#'     geom_rect expansion
 #' @importFrom rlang .data
 #'
 #' @noRd
@@ -1843,7 +1849,8 @@ plotGenomicRegions <- function(grl,
 #'     it is assumed to be a vector of colors to pass to the \code{colors}
 #'     argument of \code{\link[ggplot2]{scale_fill_gradientn}}.
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes labs theme_bw theme element_blank
+#'     element_text facet_wrap geom_rect margin
 #' @importFrom rlang .data
 #' @importFrom ggforce facet_col
 #'
@@ -2114,7 +2121,7 @@ plotGenomicRegions <- function(grl,
 #'     to on the y-axis. If \code{NULL} (default), will be determined from the
 #'     data.
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 coord_cartesian scale_x_continuous
 #' @importFrom scales label_number
 #'
 #' @noRd

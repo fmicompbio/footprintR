@@ -31,7 +31,8 @@
 #' se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' plotReadStats(se)
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes geom_histogram geom_vline facet_wrap labs
+#'     theme_bw
 #' @importFrom tidyr pivot_longer
 #' @importFrom tibble rownames_to_column
 #' @importFrom BiocGenerics as.data.frame colnames
