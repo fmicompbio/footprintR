@@ -10,23 +10,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// compute_snr_na_gap_aware
-double compute_snr_na_gap_aware(const Rcpp::NumericVector& probs, const Rcpp::IntegerVector& read_pos, int k, int min_diffs, double eps, double b0, double b1);
-RcppExport SEXP _footprintR_compute_snr_na_gap_aware(SEXP probsSEXP, SEXP read_posSEXP, SEXP kSEXP, SEXP min_diffsSEXP, SEXP epsSEXP, SEXP b0SEXP, SEXP b1SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type probs(probsSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type read_pos(read_posSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type min_diffs(min_diffsSEXP);
-    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
-    Rcpp::traits::input_parameter< double >::type b0(b0SEXP);
-    Rcpp::traits::input_parameter< double >::type b1(b1SEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_snr_na_gap_aware(probs, read_pos, k, min_diffs, eps, b0, b1));
-    return rcpp_result_gen;
-END_RCPP
-}
 // calcAndCountDist
 Rcpp::NumericVector calcAndCountDist(std::vector<int> query, std::vector<unsigned int> reference, Rcpp::NumericVector cnt);
 RcppExport SEXP _footprintR_calcAndCountDist(SEXP querySEXP, SEXP referenceSEXP, SEXP cntSEXP) {
@@ -252,7 +235,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_footprintR_compute_snr_na_gap_aware", (DL_FUNC) &_footprintR_compute_snr_na_gap_aware, 7},
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
     {"_footprintR_estimateNoise", (DL_FUNC) &_footprintR_estimateNoise, 4},

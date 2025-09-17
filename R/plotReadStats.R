@@ -61,42 +61,41 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1),
                   allowNULL = TRUE)
     .assertScalar(x = minSNR, type = "numeric", allowNULL = TRUE)
-    
+
     if (is.null(readInfoCol) && is.null(qcCol)) {
-        cli::cli_abort("Provide at least one of {.code readInfoCol} or {.code qcCol}. Both are NULL.")
+        cli_abort("Provide at least one of {.code readInfoCol} or {.code qcCol}. Both are NULL.")
     }
-    
+
     # prepare main plotdata
     dfL <- list()
-    
+
     # readInfoCol
     if (!is.null(readInfoCol)) {
-        tmp <- do.call(rbind, unname(lapply(se[[readInfoCol]], function(d) as.data.frame(d))))
-        tmp <- tmp[, !grepl("^variant_label$", names(tmp)), drop = FALSE]
+        tmp <- as.data.frame(se[[readInfoCol]],
+                             value.name = colnames(se[[readInfoCol]][[1]])[1])
+        tmp <- tmp[, !grepl("^variant_label$", colnames(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
-    
+
     # qcCol
     if (!is.null(qcCol)) {
-        tmp <- do.call(rbind, unname(lapply(se[[qcCol]], function(d) as.data.frame(d))))
-        tmp <- tmp[, !grepl("AC", names(tmp)), drop = FALSE]
+        tmp <- as.data.frame(se[[qcCol]],
+                             value.name = colnames(se[[qcCol]][[1]])[1])
+        tmp <- tmp[, !grepl("AC", colnames(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
-    
-    if (!is.null(readInfoCol) && !is.null(qcCol) &&
-        !identical(names(se[[readInfoCol]]), names(se[[qcCol]]))) {
+
+    if (!all(unlist(lapply(dfL, \(x) identical(x$group_name, dfL[[1]]$group_name))))) {
         cli_abort("names of {.code se${readInfoCol}} and {.code se${qcCol}} are not identical")
     }
-    
-    df <- do.call(cbind, lapply(dfL, function(x) x[, , drop = FALSE]))
-    
-    sample_se <- if (!is.null(readInfoCol)) se[[readInfoCol]] else se[[qcCol]]
-    df$sample <- rep(names(sample_se), sapply(sample_se, nrow))
-    
+
+    df <- do.call(cbind, lapply(dfL, \(x) x[, !colnames(x) %in% c("group", "group_name")]))
+    df$sample <- dfL[[1]]$group_name
+
     # helper functions for automatic thresholds -----------------------------
     calc_min <- function(x) median(x, na.rm = TRUE) - 3 * mad(x, na.rm = TRUE)
     calc_max <- function(x) median(x, na.rm = TRUE) + 3 * mad(x, na.rm = TRUE)
-    
+
     # derive thresholds when not provided
     # min thresholds
     if ("qscore" %in% colnames(df) && is.null(minQscore)) {
@@ -114,7 +113,7 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     if ("SNR" %in% colnames(df) && is.null(minSNR)) {
         minSNR <- calc_min(df$SNR)
     }
-    
+
     # max thresholds
     if ("SEntrModProb" %in% colnames(df) && is.null(maxEntropy)) {
         maxEntropy <- calc_max(df$SEntrModProb)
@@ -122,17 +121,17 @@ plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
     if ("MeanConf" %in% colnames(df) && is.null(maxFracLowConf)) {
         maxFracLowConf <- min(1, calc_max(df$MeanConf))
     }
-    
+
     # prepare plotdata for thresholds
     map2thresh <- c(qscore = minQscore, read_length = minReadLength,
                     aligned_length = minAlignedLength,
                     aligned_fraction = minAlignedFraction,
                     MeanConf = maxFracLowConf, SEntrModProb = maxEntropy,
                     SNR = minSNR)
-    
+
     threshnms <- intersect(names(map2thresh), colnames(df))
     df2 <- data.frame(key = threshnms, value = map2thresh[threshnms])
-    
+
     # generate plot
     ggplot(pivot_longer(df, names_to = "key",
                         values_to = "value", -sample),

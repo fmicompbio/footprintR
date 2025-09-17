@@ -33,8 +33,9 @@ value is set to \code{max(16, floor(0.05 * n))}, where \code{n} is the
 number of valid positions in the window.}
 
 \item{noise_pars}{Numeric vector as returned by the \code{coefficients} slot
-of the \code{estimateNoiseParsWindows()} result.  If \code{NULL} the function looks
-for \code{metadata(se)$NoisePars}.  If still \code{NULL} raw noise estimates are used}
+of the \code{estimateNoiseParsWindows()} result.
+If \code{NULL} the function looks for \code{metadata(se)$NoisePars}.
+If still \code{NULL} raw noise estimates are used.}
 }
 \value{
 A \code{SummarizedExperiment} with assays
@@ -42,9 +43,10 @@ A \code{SummarizedExperiment} with assays
 \code{"SNR"} (\eqn{\log_2} signal/noise).
 }
 \description{
-Calculate a measure of footprint coherence and window "structureness" by decomposing
-total aggregate signal variance into (i) \code{noise} and (ii) \code{signal} variance components
-and returning \eqn{\log_2(\text{signal}/\text{noise})} as the SNR.
+Calculate a measure of footprint coherence and window "structureness" by
+decomposing total aggregate signal variance into (i) \code{noise} and (ii)
+\code{signal} variance components and returning
+\eqn{\log_2(\text{signal}/\text{noise})} as the SNR.
 }
 \details{
 Noise variance estimation can be performed in two ways:
@@ -52,14 +54,16 @@ Noise variance estimation can be performed in two ways:
 \item \strong{Parametric estimation}:
 If noise parameters (\code{noise_pars}) are supplied (typically estimated using
 \code{estimateNoiseParsWindows()}, which fits a linear regression model to
-relate noise variance to average methylation level and coverage across random genomic windows),
-the noise variance returned is the expected noise given the window's average methylation
-and coverage.
+relate noise variance to average methylation level and coverage across
+random genomic windows), the noise variance returned is the expected
+noise given the window's average methylation and coverage.
 \item \strong{Non-parametric (raw) estimation}:
-If noise parameters are not supplied, the function estimates noise directly from the data,
-based on short-range variation between neighboring positions. While unbiased for random signals,
-this method can \emph{overestimate} noise—and thus underestimate the true SNR—if the biological signal
-is strongly correlated across reads (e.g., due to systematic accessibility patterns), because the
+If noise parameters are not supplied, the function estimates noise
+directly from the data, based on short-range variation between
+neighboring positions. While unbiased for random signals, this method
+can \emph{overestimate} noise—and thus underestimate the true SNR—if the
+biological signal is strongly correlated across reads (e.g., due to
+systematic accessibility patterns), because the
 structured variation is incorrectly interpreted as random noise.
 }
 }
@@ -71,22 +75,32 @@ modbamfiles <- system.file("extdata",
 gr0 <- GRanges("chr1", IRanges(6920000, 6950000))
 gr_tiles <- unlist(tile(gr0, width = 500))
 gr_tiles
-#Estimate noise parameters (typically should be performed on a larger, independent sample of genomic windows)
-resNoiseEst <- estimateNoiseParsWindows(modbamfiles,modbase="a",windows=gr_tiles, return_data=FALSE)
+
+# estimate noise parameters (typically should be performed on a larger,
+# independent sample of genomic windows)
+resNoiseEst <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
+                                        windows = gr_tiles,
+                                        return_data = FALSE,
+                                        BPPARAM = BiocParallel::SerialParam())
 
 se <- readModBam(bamfiles = modbamfiles,
-                   regions  = gr_tiles,
-                   modbase  = "a",
-                   level    = "summary",
-                   trim     = TRUE) |>
-   filterPositions(filters="coverage",
-                   minCov=2, assayNameNA=NULL)
-se_snr_scores1 <- estimateSNRwindows(se, gr = gr_tiles,noise_pars = resNoiseEst$coefficients) # parametric noise estimation
-se_snr_scores2 <- estimateSNRwindows(se, gr = gr_tiles) # non-parametric noise estimation
+                 regions = gr_tiles,
+                 modbase = "a",
+                 level = "summary",
+                 trim = TRUE,
+                 BPPARAM = BiocParallel::SerialParam()) |>
+   filterPositions(filters = "coverage",
+                   minCov=2, assayNameNA = NULL)
+# parametric noise estimation
+se_snr_scores1 <- estimateSNRwindows(se, gr = gr_tiles,
+                                     noise_pars = resNoiseEst$coefficients)
+# non-parametric noise estimation
+se_snr_scores2 <- estimateSNRwindows(se, gr = gr_tiles)
 
 }
 \seealso{
-\code{\link{estimateNoiseParsWindows}} for estimation of the global noise model parameters.
+\code{\link{estimateNoiseParsWindows}} for estimation of the
+global noise model parameters.
 }
 \author{
 Panagiotis Papasaikas

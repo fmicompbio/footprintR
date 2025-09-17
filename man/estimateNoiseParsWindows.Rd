@@ -56,14 +56,15 @@ noise.}
 to keep a position. A value greater than one is recommended to remove
 spurious positions.}
 
-\item{mean_probs, depth_probs, noise_ratio_probs, dcut_min, na_rm}{Advanced filtering parameters controlling thresholds used to filter windows;
-see \strong{Filtering parameters} below.}
+\item{mean_probs, depth_probs, noise_ratio_probs, dcut_min, na_rm}{Advanced filtering parameters controlling thresholds used to filter
+windows; see \strong{Filtering parameters} below.}
 
-\item{return_data}{= FALSE, Logical scalar. If \code{TRUE}, include in the output
-data that can be used to draw a diagnostic scatter plot with the fit.}
+\item{return_data}{= FALSE, Logical scalar. If \code{TRUE}, include in the
+output data that can be used to draw a diagnostic scatter plot with the
+fit.}
 
 \item{BPPARAM}{A \code{\link[BiocParallel]{BiocParallelParam}} object (set
-a the \code{RNGseed} argument for reproducibility in sampling).}
+the \code{RNGseed} argument for reproducibility in sampling).}
 }
 \value{
 A list with components:
@@ -82,7 +83,8 @@ The returned list also carries the attribute
 during model fitting.
 }
 \description{
-Estimate a background noise model via a noise ~ f(methylation, coverage) fit from randomly sampled windows
+Estimate a background noise model via a noise ~ f(methylation, coverage)
+fit from randomly sampled windows.
 Estimations are performed on one of the following two sets of regions:
 \enumerate{
 \item \emph{sample} \code{nWindows} windows of width \code{windowSize} across
@@ -92,7 +94,6 @@ the chromosomes in \code{chromosomeLengths}
 For every window the function retrieves per‑position \emph{summary} data with
 \code{readModBam(level = "summary")}, runs \code{.estimateSNRvec()} and
 regresses the resulting noise variances on window means and coverage.
-Optionally it plots the (mean, noise) cloud together with the fitted line.
 }
 \section{Filtering parameters}{
 
@@ -119,7 +120,8 @@ gr0 <- GRanges("chr1", IRanges(6920000, 6950000))
 gr_tiles <- unlist(tile(gr0, width = 500))
 gr_tiles
 noisePars <- estimateNoiseParsWindows(modbamfiles, modbase = "a",
-                                      windows = gr_tiles, return_data = TRUE)
+                                      windows = gr_tiles, return_data = TRUE,
+                                      BPPARAM = BiocParallel::SerialParam())
 noisePars
 plotNoisePars(noisePars)
 

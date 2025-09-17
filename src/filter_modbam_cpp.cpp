@@ -2,7 +2,6 @@
 #include <htslib/sam.h>
 #include <htslib/thread_pool.h>
 #include <cli/progress.h>
-#include <cmath>    // std::isfinite, std::isnan
 #include "utils.h"
 #include "sampleEntropy.h"
 #include "estimateNoise.h"
@@ -24,6 +23,7 @@
 //' minSNR, maxFracLowConf, maxEntropy.
 //' The output file format will be determined based on the extension of
 //' \code{outfile} (sam format for ".sam" and bam format for ".bam").
+//'
 //' @param infile Character scalar with name of the input bam file.
 //' @param outfile Character scalar with name of the output sam or bam file.
 //' @param modbase Character scalar defining the modified base to analyze
@@ -54,11 +54,11 @@
 //'     read-level Signal to Noise Ratio. Reads with SNR below this value will be filtered
 //'     out.
 //' @param noiseCoefB0 Numeric scalar, intercept of the background noise model.
-//'   If finite, used to impose a floor on the per-read noise variance
-//'   (see also \code{calcReadStats}). Default \code{-1e200} disables the floor.
+//'     If finite, used to impose a floor on the per-read noise variance
+//'     (see also \code{calcReadStats}). Default \code{-1e200} disables the floor.
 //' @param noiseCoefB1 Numeric scalar, slope of the background noise model.
-//'   If finite, used together with \code{noiseCoefB0} to compute the floor
-//'   as \eqn{b0 + b1 * mean(prob)}. Default \code{-1e200} disables the floor.
+//'     If finite, used together with \code{noiseCoefB0} to compute the floor
+//'     as \eqn{b0 + b1 * mean(prob)}. Default \code{-1e200} disables the floor.
 //' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 //'     fraction of low-confidence modified base calls in a read. Reads with
 //'     no modified-base calls or a fraction of low confidence calls greater
@@ -72,10 +72,11 @@
 //' @param nThreads Numeric scalar defining the number of threads to
 //'     use for (de-)compressing bam records.
 //' @param verbose Logical scalar. If \code{TRUE}, report on progress.
+//'
 //' @return A named \code{numeric} vector with the numbers of filtered out
 //'     records per reason for exclusion.
-//' @author Michael Stadler
-//' @name filter_modbam_cpp
+//'
+//' @author Michael Stadler, Panagiotis Papasaikas, Charlotte Soneson
 //' @noRd
 //' @keywords internal
 // [[Rcpp::export]]
@@ -91,7 +92,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                                       int minAlignedLength = 0,
                                       double minAlignedFraction = 0,
                                       double minQscore = 0.0,
-                                      double minSNR   = NA_REAL,
+                                      double minSNR = NA_REAL,
                                       double noiseCoefB0 = NA_REAL,
                                       double noiseCoefB1 = NA_REAL,
                                       double maxFracLowConf = 1.0,
@@ -113,7 +114,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     char *qseq = NULL;
     int qseq_len = 0;
     Rcpp::NumericVector mod_probs = Rcpp::NumericVector(0);
-    Rcpp::IntegerVector mod_pos   = Rcpp::IntegerVector(0);
+    Rcpp::IntegerVector mod_pos = Rcpp::IntegerVector(0);
     double fracLowConf = 0.0;
     const char *outmode = NULL;
 
@@ -247,9 +248,9 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
 
             // extract modification probabilities for read
             mod_probs = Rcpp::NumericVector(0);
-            mod_pos   = Rcpp::IntegerVector(0);
-            if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs, &mod_pos, qseq,
-                                  ms, buffer, buffer_len) < 0) {
+            mod_pos = Rcpp::IntegerVector(0);
+            if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs,
+                                  &mod_pos, qseq, ms, buffer, buffer_len) < 0) {
                 had_error = true; // # nocov start
                 goto end; // # nocov end
             }
@@ -300,8 +301,6 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
             continue;
         }
 
-
-
         // ... minSNR
         if (R_finite(minSNR))  {  // SNR filter enabled
             Rcpp::NumericVector comp = estimateNoise(mod_probs, mod_pos, 2, -1);
@@ -331,9 +330,6 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                 continue;
             }
         }
-
-
-
 
         // ... maxFracLowConf
         if (maxFracLowConf < 1.0) {
@@ -379,59 +375,59 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         goto end; // # nocov end
     }
 
-    end:
-        //clean up
-        if (qseq) {
-            free((void*) qseq);
-            qseq = NULL;
-        }
-        if (inbamhdr) {
-            sam_hdr_destroy(inbamhdr);
-        }
-        if (inbamfile) {
-            sam_close(inbamfile);
-        }
-        if (outhtsfile) {
-            sam_close(outhtsfile);
-        }
-        if (bamdata) {
-            bam_destroy1(bamdata);
-        }
-        if (ms) {
-            hts_base_mod_state_free(ms);
-        }
-        if (iter) {
-            sam_itr_destroy(iter);
-        }
-        if (idx) {
-            hts_idx_destroy(idx);
-        }
-        if (tpool.pool) {
-            hts_tpool_destroy(tpool.pool);
-        }
+end:
+    // clean up
+    if (qseq) {
+        free((void*) qseq);
+        qseq = NULL;
+    }
+    if (inbamhdr) {
+        sam_hdr_destroy(inbamhdr);
+    }
+    if (inbamfile) {
+        sam_close(inbamfile);
+    }
+    if (outhtsfile) {
+        sam_close(outhtsfile);
+    }
+    if (bamdata) {
+        bam_destroy1(bamdata);
+    }
+    if (ms) {
+        hts_base_mod_state_free(ms);
+    }
+    if (iter) {
+        sam_itr_destroy(iter);
+    }
+    if (idx) {
+        hts_idx_destroy(idx);
+    }
+    if (tpool.pool) {
+        hts_tpool_destroy(tpool.pool);
+    }
 
-        if (had_error) {
-            // we encountered an error (message in `buffer`) --> stop
-            // # nocov start
-            Rcpp::stop(buffer);
-            // # nocov end
+    if (had_error) {
+        // we encountered an error (message in `buffer`) --> stop
+        // # nocov start
+        Rcpp::stop(buffer);
+        // # nocov end
 
-        } else {
-            // create return value
-            Rcpp::NumericVector res = Rcpp::NumericVector::create(
-                Rcpp::_["total"] = alncnt,
-                Rcpp::_["retained"] = outcnt,
-                Rcpp::_["filtered_unmapped"] = nUnmapped,
-                Rcpp::_["filtered_secondary"] = nSecondary,
-                Rcpp::_["filtered_supplementary"] = nSupplementary,
-                Rcpp::_["filtered_minReadLength"] = nMinReadLength,
-                Rcpp::_["filtered_minAlignedLength"] = nMinAlignedLength,
-                Rcpp::_["filtered_minAlignedFraction"] = nMinAlignedFraction,
-                Rcpp::_["filtered_minQscore"] = nMinQscore,
-                Rcpp::_["filtered_minSNR"] = nMinSNR,
-                Rcpp::_["filtered_maxFracLowConf"] = nMaxFracLowConf,
-                Rcpp::_["filtered_maxEntropy"] = nMaxEntropy);
+    } else {
+        // create return value
+        Rcpp::NumericVector res = Rcpp::NumericVector::create(
+            Rcpp::_["total"] = alncnt,
+            Rcpp::_["retained"] = outcnt,
+            Rcpp::_["filtered_unmapped"] = nUnmapped,
+            Rcpp::_["filtered_secondary"] = nSecondary,
+            Rcpp::_["filtered_supplementary"] = nSupplementary,
+            Rcpp::_["filtered_minReadLength"] = nMinReadLength,
+            Rcpp::_["filtered_minAlignedLength"] = nMinAlignedLength,
+            Rcpp::_["filtered_minAlignedFraction"] = nMinAlignedFraction,
+            Rcpp::_["filtered_minQscore"] = nMinQscore,
+            Rcpp::_["filtered_minSNR"] = nMinSNR,
+            Rcpp::_["filtered_maxFracLowConf"] = nMaxFracLowConf,
+            Rcpp::_["filtered_maxEntropy"] = nMaxEntropy);
 
-            return res;
-        }
+        return res;
+    }
 }

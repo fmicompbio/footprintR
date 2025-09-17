@@ -170,47 +170,51 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
 #' @importFrom stats var quantile lm coef
 #' @importFrom dplyr between
 #' @importFrom cli cli_warn
-#' @importFrom stats setNames
+#' @importFrom stats setNames quantile lm coef
 #'
 #' @noRd
 #' @keywords internal
 .estimateSNRprobList <- function(probList, idxList, k = 2L, min_diffs = -1L,
-                                   floor_pars = NULL, eps = 1e-3, ...) {
+                                 floor_pars = NULL, eps = 1e-3, ...) {
     nReads <- length(probList)
 
-    #Noise estimation using cpp function:
+    # Noise estimation using cpp function:
     comps <- lapply(seq_len(nReads), function(i) {
         estimateNoise(
-            probs     = probList[[i]],
-            read_pos  = idxList[[i]],
-            k         = as.integer(k),
+            probs = probList[[i]],
+            read_pos = idxList[[i]],
+            k = as.integer(k),
             min_diffs = as.integer(min_diffs)  # -1 triggers C++ auto per-read
         )
     })
-    m_means <- vapply(comps, function(v) v[["mean"]],      numeric(1))
-    noise_r <- vapply(comps, function(v) v[["noise_raw"]], numeric(1))
-    ndiffs  <- vapply(comps, function(v) v[["ndiffs"]],    numeric(1))
+    m_means <- vapply(comps, `[[`, numeric(1), "mean")
+    noise_r <- vapply(comps, `[[`, numeric(1), "noise_raw")
+    ndiffs <- vapply(comps, `[[`, numeric(1), "ndiffs")
 
     # Robust noise floor fit (if not provided)
     if (is.null(floor_pars)) {
-        keep <- dplyr::between(
+        keep <- between(
             m_means,
-            stats::quantile(m_means, .10, na.rm = TRUE),
-            stats::quantile(m_means, .90, na.rm = TRUE)
+            quantile(m_means, 0.10, na.rm = TRUE),
+            quantile(m_means, 0.90, na.rm = TRUE)
         ) & !is.na(noise_r)
 
         if (sum(keep, na.rm = TRUE) < 16L) {
-            cli::cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
-            floor_pars   <- c(NA_real_, NA_real_)  # bookkeeping
-            use_mode     <- "raw"
+            cli_warn("Too few points to estimate noise floor ({sum(keep)}); raw noise variances are used.")
+            floor_pars <- c(NA_real_, NA_real_)  # bookkeeping
+            use_mode <- "raw"
         } else {
             # noise_raw ~ mean
-            fit <- stats::lm(noise_r[keep] ~ m_means[keep])
-            floor_pars <- stats::coef(fit)         # c(b0, b1)
-            use_mode   <- "floor"
+            fit <- lm(noise_r[keep] ~ m_means[keep])
+            floor_pars <- coef(fit) # c(b0, b1)
+            use_mode <- "floor"
         }
     } else {
-        use_mode <- if (all(is.finite(floor_pars))) "floor" else "raw"
+        if (all(is.finite(floor_pars))) {
+            use_mode <- "floor"
+        } else {
+            use_mode <- "raw"
+        }
     }
 
     # Per-read noise/signal/SNR in C++
@@ -218,46 +222,49 @@ PACModProb <- function(probList, useReads, xrange = 12:64, ...) {
     if (all(!is.na(floor_pars))) {
         betas <- floor_pars
     } else {
-        betas <- numeric(0)  # raw mode
+        betas <- numeric(0L)  # raw mode
     }
 
-    # run .estimateSNR per read
+    # run estimateSNR per read
     snr_sig_noise <- lapply(seq_len(nReads), function(i) {
         ci <- comps[[i]]
-        if (length(ci) < 3L || !is.finite(ci[1]) || !is.finite(ci[2]) || !is.finite(ci[3]) || ndiffs[i] < 2) {
+        if (length(ci) < 3L || !is.finite(ci[1]) || !is.finite(ci[2]) ||
+            !is.finite(ci[3]) || ndiffs[i] < 2) {
             return(c(snr = NA_real_, signal = NA_real_, noise = NA_real_))
         }
-        feats <- if (length(betas)) c(1, m_means[i]) else numeric(0)
+        if (length(betas)) {
+            feats <- c(1, m_means[i])
+        } else {
+            feats <- numeric(0L)
+        }
         res <- estimateSNR(
             totalVar = ci[["total"]],
             noiseRaw = ci[["noise_raw"]],
-            eps        = eps,
-            betas      = betas,
-            features   = feats,
+            eps = eps,
+            betas = betas,
+            features = feats,
             noise_mode = use_mode # "raw" (fallback) or "floor"
         )
         c(snr = res[["snr"]], signal = res[["signal"]], noise = res[["noise"]])
     })
 
-    snr_v    <- vapply(snr_sig_noise, `[[`, numeric(1), "snr")
+    snr_v <- vapply(snr_sig_noise, `[[`, numeric(1), "snr")
     signal_v <- vapply(snr_sig_noise, `[[`, numeric(1), "signal")
-    noise_v  <- vapply(snr_sig_noise, `[[`, numeric(1), "noise")
+    noise_v <- vapply(snr_sig_noise, `[[`, numeric(1), "noise")
 
     list(
-        snr        = snr_v,
-        signal     = signal_v,
-        noise      = noise_v,
-        floor_pars = stats::setNames(floor_pars, c("intercept", "slope"))
+        snr = snr_v,
+        signal = signal_v,
+        noise = noise_v,
+        floor_pars = setNames(floor_pars, c("intercept", "slope"))
     )
 }
-
-
 
 #' @noRd
 #' @keywords internal
 SNR <- function(probList, idxList, useReads, ...) {
     snr_res <- .estimateSNRprobList(probList = probList,
-                                      idxList = idxList, ...)
+                                    idxList = idxList, ...)
     out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$snr[useReads]
     out
@@ -267,7 +274,7 @@ SNR <- function(probList, idxList, useReads, ...) {
 #' @keywords internal
 SignalVar <- function(probList, idxList, useReads, ...) {
     snr_res <- .estimateSNRprobList(probList = probList,
-                                      idxList  = idxList, ...)
+                                    idxList  = idxList, ...)
     out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$signal[useReads]
     out
@@ -277,7 +284,7 @@ SignalVar <- function(probList, idxList, useReads, ...) {
 #' @keywords internal
 NoiseVar <- function(probList, idxList, useReads, ...) {
     snr_res <- .estimateSNRprobList(probList = probList,
-                                      idxList  = idxList, ...)
+                                    idxList  = idxList, ...)
     out <- rep(NA_real_, length(probList))
     out[useReads] <- snr_res$noise[useReads]
     out
@@ -393,11 +400,12 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #'         \eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})}.}
 #'
 #'  }
-#'   When SNR-related statistics are requested,
-#'   a robust noise floor `b0 + b1 * mean(x)` is fitted per sample (see *NoiseVar*).
-#'   The fitted coefficients are stored in the result metadata (see below). If
-#'   SNR-related statistics are not computed, `NA`/`NA` placeholders are stored
-#'   for uniformity.
+#' When SNR-related statistics are requested,
+#' a robust noise floor `b0 + b1 * mean(x)` is fitted per sample (see *NoiseVar*).
+#' The fitted coefficients are stored in the result metadata (see below). If
+#' SNR-related statistics are not computed, `NA`/`NA` placeholders are stored
+#' for uniformity.
+#'
 #' @return
 #' For \code{calcReadStats}, a \code{SimpleList} object with summary statistics
 #' for the samples (columns) in \code{se}.
@@ -514,7 +522,7 @@ calcReadStats <- function(se,
             if (any(param_names %in% snrStats)) {
                 snr_res <- .estimateSNRprobList(
                     probList = NNAvals_byCol,
-                    idxList  = idxPos_byCol
+                    idxList = idxPos_byCol
                 )
                 # always store a 2-length named vector
                 floor_pars <- snr_res$floor_pars  # c(intercept=..., slope=...)
@@ -561,30 +569,23 @@ calcReadStats <- function(se,
 
     # Assemble stats output from the sample_out lapply returns:
     out <- SimpleList(lapply(sample_out, `[[`, "stats"))
-    names(out) <- colnames(se)
 
     # Assemble floor_pars output from the sample_out lapply returns:
     noiseCoefs_by_sample <- lapply(sample_out, `[[`, "floor_pars")
-    names(noiseCoefs_by_sample) <- colnames(se)
 
     # add filtering parameters to `out`
     metadata(out) <- list(
-        regions        = regions,
-        sequenceContext= sequenceContext,
-        minNobsPpos    = minNobsPpos,
-        minNobsPread   = minNobsPread,
-        Lags           = LagRangeValues,
-        snr_noise_coef = noiseCoefs_by_sample,          # named list: one c(intercept, slope) per sample
-        snr_config     = list(k = 2L, min_diffs = NULL, eps = 1e-3)
+        regions = regions,
+        sequenceContext = sequenceContext,
+        minNobsPpos = minNobsPpos,
+        minNobsPread = minNobsPread,
+        Lags = LagRangeValues,
+        snr_noise_coef = noiseCoefs_by_sample, # named list: one c(intercept, slope) per sample
+        snr_config = list(k = 2L, min_diffs = NULL, eps = 1e-3)
     )
 
     return(out)
 }
-
-
-
-
-
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom S4Vectors metadata
