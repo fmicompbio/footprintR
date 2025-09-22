@@ -9,7 +9,7 @@ number of pairs at a given distance with a given modification state."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ number of pairs at a given distance with a given modification state.</p>
 <span>  windowSize <span class="op">=</span> <span class="fl">200</span>,</span>
 <span>  minMapQ <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minAlignedLength <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/MulticoreParam-class.html" class="external-link">MulticoreParam</a></span><span class="op">(</span><span class="fl">4L</span><span class="op">)</span>,</span>
+<span>  BPPARAM <span class="op">=</span> <span class="fu">MulticoreParam</span><span class="op">(</span><span class="fl">4L</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -131,7 +131,8 @@ bam records.</p></dd>
 <span class="r-in"><span>                          package <span class="op">=</span> <span class="st">"footprintR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">countStatePairs</span><span class="op">(</span>bamfile <span class="op">=</span> <span class="va">modbamfile</span>,</span></span>
 <span class="r-in"><span>                       regions <span class="op">=</span> <span class="st">"chr1"</span>,</span></span>
-<span class="r-in"><span>                       modbase <span class="op">=</span> <span class="st">"a"</span>, windowSize <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                       modbase <span class="op">=</span> <span class="st">"a"</span>, windowSize <span class="op">=</span> <span class="fl">300</span>,</span></span>
+<span class="r-in"><span>                       BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> DataFrame with 300 rows and 5 columns</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             S unmod_unmod unmod_mod mod_unmod   mod_mod</span>

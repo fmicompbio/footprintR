@@ -8,7 +8,7 @@ continues with the next read.
 The filters are examined in this order: keepUnmapped,
 keepSecondary, keepSupplementary, minReadLength,
 minAlignedLength, minAlignedFraction, minQscore,
-maxFracLowConf, maxEntropy."><meta property="og:description" content="For each bam file in infiles, parse alignments, calculate read
+minSNR, maxFracLowConf, maxEntropy."><meta property="og:description" content="For each bam file in infiles, parse alignments, calculate read
 statistics and write the alignment to the corresponding output file from
 outfiles if the read passes all criteria defined by the filtering
 arguments. Filters are processed hierarchically: If a read does not pass a
@@ -17,7 +17,7 @@ continues with the next read.
 The filters are examined in this order: keepUnmapped,
 keepSecondary, keepSupplementary, minReadLength,
 minAlignedLength, minAlignedFraction, minQscore,
-maxFracLowConf, maxEntropy."></head><body>
+minSNR, maxFracLowConf, maxEntropy."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -25,7 +25,7 @@ maxFracLowConf, maxEntropy."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ continues with the next read.
 The filters are examined in this order: <code>keepUnmapped</code>,
 <code>keepSecondary</code>, <code>keepSupplementary</code>, <code>minReadLength</code>,
 <code>minAlignedLength</code>, <code>minAlignedFraction</code>, <code>minQscore</code>,
-<code>maxFracLowConf</code>, <code>maxEntropy</code>.</p>
+<code>minSNR</code>, <code>maxFracLowConf</code>, <code>maxEntropy</code>.</p>
     </div>
 
     <div class="section level2">
@@ -84,8 +84,10 @@ The filters are examined in this order: <code>keepUnmapped</code>,
 <span>  minAlignedLength <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minAlignedFraction <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minQscore <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  minSNR <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span>  maxFracLowConf <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  maxEntropy <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  noiseCoef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="cn">NA_real_</span><span class="op">)</span>,</span>
 <span>  LowConf <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  BPPARAM <span class="op">=</span> <span class="fu">MulticoreParam</span><span class="op">(</span><span class="fl">4L</span>, RNGseed <span class="op">=</span> <span class="fl">42L</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -152,6 +154,16 @@ read-level Qscore. Reads with Qscore below this value will be filtered
 out.</p></dd>
 
 
+<dt id="arg-minsnr">minSNR<a class="anchor" aria-label="anchor" href="#arg-minsnr"></a></dt>
+<dd><p>Numeric scalar. Minimum acceptable read Signal-to-Noise Ratio (SNR).
+Reads with SNR below this value are filtered out. Set to <code>-Inf</code>
+to disable SNR filtering. The SNR is computed per read as
+\(\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})\) where
+\(\mathrm{NoiseVar} \approx 0.5\,\mathrm{Var}(\Delta x)\) using
+adjacent methylation differences that can jump up to \(k=2\) gaps, and
+\(\mathrm{SignalVar} = \max(\mathrm{Var}(x) - \mathrm{NoiseVar}, \varepsilon)\) with \(\varepsilon=10^{-3}\).</p></dd>
+
+
 <dt id="arg-maxfraclowconf">maxFracLowConf<a class="anchor" aria-label="anchor" href="#arg-maxfraclowconf"></a></dt>
 <dd><p>A numeric scalar representing the maximally acceptable
 fraction of low-confidence modified base calls in a read. Reads without
@@ -164,6 +176,12 @@ than this value will be filtered out.</p></dd>
 read-level entropy. Reads without modified-base calls or with entropy
 above this value will be filtered out. A value of <code>Inf</code> deactivates
 the entropy filter.</p></dd>
+
+
+<dt id="arg-noisecoef">noiseCoef<a class="anchor" aria-label="anchor" href="#arg-noisecoef"></a></dt>
+<dd><p>Numeric vector of length 2 giving the background noise model
+coefficients <code>(b0, b1)</code>. If provided, these are used to impose a floor
+on the estimated per-read noise variance (see also <code><a href="calcReadStats.html">calcReadStats</a></code>).</p></dd>
 
 
 <dt id="arg-lowconf">LowConf<a class="anchor" aria-label="anchor" href="#arg-lowconf"></a></dt>
@@ -203,37 +221,40 @@ the <code>outfiles</code> and that were filtered-out by reason of exclusion.</p>
 <span class="r-in"><span><span class="va">filtbamfiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">".bam"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">modbamfiles</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">filterReadsBam</span><span class="op">(</span>infiles <span class="op">=</span> <span class="va">modbamfiles</span>, outfiles <span class="op">=</span> <span class="va">filtbamfiles</span>,</span></span>
 <span class="r-in"><span>                      modbase <span class="op">=</span> <span class="st">"a"</span>, indexOutfiles <span class="op">=</span> <span class="cn">FALSE</span>, minReadLength <span class="op">=</span> <span class="fl">6746</span>,</span></span>
-<span class="r-in"><span>                      minAlignedLength <span class="op">=</span> <span class="fl">6896</span>, minAlignedFraction <span class="op">=</span> <span class="fl">0.56</span>,</span></span>
+<span class="r-in"><span>                      minAlignedLength <span class="op">=</span> <span class="fl">6896</span>, minAlignedFraction <span class="op">=</span> <span class="fl">0.56</span>, minSNR<span class="op">=</span><span class="op">-</span><span class="fl">0.768</span>,</span></span>
 <span class="r-in"><span>                      minQscore <span class="op">=</span> <span class="fl">9.7</span>, maxFracLowConf <span class="op">=</span> <span class="fl">0.11</span>, maxEntropy <span class="op">=</span> <span class="fl">0.29</span>,</span></span>
 <span class="r-in"><span>                      BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> start filtering of <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span> using 1 thread</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> merging 1 filtered chunks</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> done filtering: retained 7 of 10 records (70%)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> done filtering: retained 6 of 10 records (60%)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> start filtering of <span style="color: #0000BB;">/Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam</span> using 1 thread</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> merging 1 filtered chunks</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> done filtering: retained 7 of 10 records (70%)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-in"><span><span class="va">res</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sample                                                                infile</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1     s1 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     s2 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                             outfile</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /var/folders/y6/nj790rtn62lfktb1sh__79hc0000gn/T//Rtmp8zXAdS/file3aaa6c4fa4fe.bam</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 /var/folders/y6/nj790rtn62lfktb1sh__79hc0000gn/T//Rtmp8zXAdS/file3aaa60d9573f.bam</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 /var/folders/y6/nj790rtn62lfktb1sh__79hc0000gn/T//Rtmpe6mVao/file863162d2d9d6.bam</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   /var/folders/y6/nj790rtn62lfktb1sh__79hc0000gn/T//Rtmpe6mVao/file8631dba34a.bam</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   total retained filtered_unmapped filtered_secondary filtered_supplementary</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    10        7                 0                  0                      0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    10        6                 0                  0                      0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2    10        7                 0                  0                      0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   filtered_minReadLength filtered_minAlignedLength filtered_minAlignedFraction</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1                      0                         1                           1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                      1                         0                           0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   filtered_minQscore filtered_maxFracLowConf filtered_maxEntropy</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                  0                       0                   1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                  1                       1                   0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   filtered_minQscore filtered_minSNR filtered_maxFracLowConf</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                  0               1                       0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                  1               0                       1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   filtered_maxEntropy</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                   1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                   0</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">filtbamfiles</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

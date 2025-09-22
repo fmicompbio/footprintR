@@ -15,6 +15,8 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/countStatePairs.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNRL.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNRLwindows.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/estimateNoiseParsWindows.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/estimateSNRwindows.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/extractSeqContext.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterPositions.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/filterReads.html</loc></url>
@@ -28,6 +30,7 @@
 <url><loc>https://fmicompbio.github.io/footprintR/reference/index.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/phasingScoreFourier.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotModbaseSpacing.html</loc></url>
+<url><loc>https://fmicompbio.github.io/footprintR/reference/plotNoisePars.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotReadStats.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/plotRegion.html</loc></url>
 <url><loc>https://fmicompbio.github.io/footprintR/reference/processWindowScores.html</loc></url>

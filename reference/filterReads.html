@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,7 @@
 <span>  qcCol <span class="op">=</span> <span class="st">"QC"</span>,</span>
 <span>  minQscore <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  maxEntropy <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  minSNR <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span>  maxFracLowConf <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  minReadLength <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  minAlignedLength <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -100,6 +101,12 @@ out.</p></dd>
 <dd><p>A numeric scalar representing the largest acceptable
 read-level entropy. Reads without modified-base calls or with entropy
 above this value will be filtered out.</p></dd>
+
+
+<dt id="arg-minsnr">minSNR<a class="anchor" aria-label="anchor" href="#arg-minsnr"></a></dt>
+<dd><p>A numeric scalar representing the smallest acceptable
+read Signal to Noise ratio (SNR). Reads with SNR below this value will
+be filtered out.</p></dd>
 
 
 <dt id="arg-maxfraclowconf">maxFracLowConf<a class="anchor" aria-label="anchor" href="#arg-maxfraclowconf"></a></dt>
@@ -184,17 +191,18 @@ If <code>onlyStats</code> is <code>TRUE</code>, only this table is returned.</p>
 <span class="r-in"><span>                 modbase <span class="op">=</span> <span class="st">"a"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> extracting base modifications from modBAM files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[18ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[26ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> collapsed 29545 positions to 8439 unique ones</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 29545 positions to 8439 unique ones <span style="color: #B2B2B2;">[111ms]</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> collapsed 29545 positions to 8439 unique ones <span style="color: #B2B2B2;">[244ms]</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]</span>
 <span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="calcReadStats.html">addReadStats</a></span><span class="op">(</span><span class="va">se</span>, name <span class="op">=</span> <span class="st">"QC"</span>,</span></span>
 <span class="r-in"><span>                   BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Too few points to estimate noise floor (8); raw noise variances are used.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Filter se</span></span></span>
 <span class="r-in"><span><span class="co">## ... by quality score and aligned length</span></span></span>
@@ -207,7 +215,7 @@ If <code>onlyStats</code> is <code>TRUE</code>, only this table is returned.</p>
 <span class="r-in"><span>                         onlyStats <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">filtstats</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $s1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;7 x 8 SparseMatrix&gt; of type "logical" [nzcount=11 (20%)]:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;7 x 9 SparseMatrix&gt; of type "logical" [nzcount=11 (17%)]:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                          Qscore Entropy ...   AllNA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-fc4646ce-66f9-401f-b968-e9b0cda14d61   FALSE   FALSE   .   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> s1-6cf74134-e550-4c02-bd2b-91385422ee25   FALSE   FALSE   .   FALSE</span>
@@ -224,6 +232,11 @@ If <code>onlyStats</code> is <code>TRUE</code>, only this table is returned.</p>
 <span class="r-in"><span>                        intersect <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/row_colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">filtstats</span><span class="op">$</span><span class="va">s1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: ComplexUpset</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Please use `linewidth` instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">ComplexUpset</span> package.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   Please report the issue at</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>   <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/krassowski/complex-upset/issues&gt;</span>.</span>
 <span class="r-plt img"><img src="filterReads-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
