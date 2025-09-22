@@ -345,7 +345,9 @@ estimateNRL <- function(x,
 #' @importFrom IRanges IRanges start end
 #' @importFrom methods as
 #' @importFrom dplyr filter
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes geom_line labs scale_color_manual
+#'     scale_linewidth_manual scale_x_continuous scale_y_continuous theme_bw
+#'     theme element_blank geom_rect geom_point geom_hline geom_abline geom_text
 #' @importFrom patchwork wrap_plots
 #' @importFrom rlang .data
 #'
@@ -367,8 +369,9 @@ plotModbaseSpacing <- function(x,
     nrl <- estimateNRL(x, ...)
 
     # prepare plot data
-    if (is.null(xlim))
+    if (is.null(xlim)) {
         xlim <- c(0, length(x))
+    }
     if (hide) {
         x[seq.int(nrl$minDist - 1)] <- NA
         xlim[1] <- nrl$minDist
@@ -445,13 +448,13 @@ plotModbaseSpacing <- function(x,
             geom_abline(intercept = slmfit$coefficients[1,1],
                         slope = slmfit$coefficients[2,1]) +
             geom_text(data = data.frame(
-                          peak = -Inf, pos = Inf,
-                          label = sprintf("%1g (%1g-%1g)",
-                                          signif(nrl$nrl,3),
-                                          signif(nrl$nrl.CI95[1],3),
-                                          signif(nrl$nrl.CI95[2],3))),
-                      mapping = aes(label = .data[["label"]]),
-                      hjust = -0.3, vjust = 1.1) +
+                peak = -Inf, pos = Inf,
+                label = sprintf("%1g (%1g-%1g)",
+                                signif(nrl$nrl,3),
+                                signif(nrl$nrl.CI95[1],3),
+                                signif(nrl$nrl.CI95[2],3))),
+                mapping = aes(label = .data[["label"]]),
+                hjust = -0.3, vjust = 1.1) +
             geom_text(data = data.frame(
                 peak = Inf, pos = -Inf,
                 label = c(paste0("Adj. R-squared: ", signif(slmfit$adj.r.squared, 3), "\n",

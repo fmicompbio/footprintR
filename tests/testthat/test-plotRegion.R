@@ -141,7 +141,7 @@ test_that("plotRegion works", {
                                                  trackType = "Smooth",
                                                  smoothMethod = "smoothSpline")))
     p4 <- plotRegion(se = se, sequenceContext = c("GCH"), modbaseSpace = TRUE)
-    p5 <- plotRegion(se = se, sequenceContext = c("GCA","GCC","GCT"), modbaseSpace = TRUE)
+    p5 <- plotRegion(se = se, sequenceContext = c("GCA", "GCC", "GCT"), modbaseSpace = TRUE)
     p6 <- plotRegion(se = seR,
                      tracks = list(list(trackData = "mod_prob",
                                         trackType = "Lollipop"),

@@ -8,7 +8,9 @@ test_that("read regrouping works", {
                      variantPositions = GPos(seqnames = "chr1",
                                              pos = c(6940000, 6940500)),
                      BPPARAM = BiocParallel::SerialParam())
-    se <- addReadStats(se, name = "QC", BPPARAM = BiocParallel::SerialParam())
+    expect_warning(expect_warning(
+        se <- addReadStats(se, name = "QC", BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"), "Too few points")
     wgt <- rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), c(15, 140, 15))
     se <- addFootprints(se, wgt, thresh = 0.05, name = "nucl", verbose = FALSE)
     # define read groups

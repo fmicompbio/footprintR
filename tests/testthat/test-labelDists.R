@@ -17,7 +17,7 @@ test_that("labelDists works", {
     nrand <- 100
     randlabs <- do.call(c, lapply(
         seq.int(nrand),
-        \(i) paste(sample(c("A","C","G","T","-"), 50, TRUE), collapse = "")))
+        \(i) paste(sample(c("A", "C", "G", "T", "-"), 50, TRUE), collapse = "")))
     randlabs <- c(randlabs, randlabs)
 
     # faulty arguments

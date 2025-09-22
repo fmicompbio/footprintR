@@ -54,9 +54,7 @@ or by adding it using \code{\link{addSeqContext}}.}
 coverage on individual positions for them to be included in the
 calculations. In high coverage data this is an effective filter for
 removing spurious modbases, typically the result of erroneous
-basecalling. The default \code{NULL} sets its value to Q3-0.5*IQR, where
-Q3 and IQR are the third quartile and interquartile range of the coverage
-distribution estimated from the data in \code{se}.}
+basecalling.}
 
 \item{minNobsPread}{A numeric scalar with the minimum number of observed
 modifiable bases per read for it to be included in the calculations.
@@ -66,7 +64,7 @@ threshold.}
 \item{LowConf}{A numeric scalar with the minimum call confidence below which
 calls are considered "low confidence".}
 
-\item{LagRange}{A numeric vector of two values (minimum and maxium) defining
+\item{LagRange}{A numeric vector of two values (minimum and maximum) defining
 the range of lags for the calculation of autocorrelation and partial
 autocorrelation (see details section).}
 
@@ -133,16 +131,28 @@ one-dimensional physiological signals. The higher the sample entropy,
 the more irregular, unpredictable and therefore complex the signal.
 See \href{https://en.wikipedia.org/wiki/Sample_entropy}{wikipedia:Sample_entropy}
 for more details.}
-\item{Lag1DModProb}{: Mean Lag1 differences of modification calls,
-defined as: \code{mean(Mod[i]-Mod[i-1])}, where \code{Mod} is a
-\code{{0,1}} modification call.}
 \item{ACModProb}{: Autocorrelation of the modification probability values
 for lags in the range \code{LagRange}. This range typically covers
 the signal of nucleosome periodicity.}
 \item{PACModProb}{: Partial autocorrelation of the modification
 probability values for lags in the range \code{LagRange}. This range
 typically covers the signal of nucleosome periodicity.}
+\item{NoiseVar}{: raw \strong{Read Noise variance} estimated as
+\eqn{0.5\,\mathrm{Var}(\Delta x)}, where \eqn{\Delta x} are
+lag-1 differences that may skip up to \eqn{k} consecutive NAs.
+A floor is applied: \eqn{\mathrm{noise} =
+        \max(\mathrm{rawNoise},\, b_0 + b_1 \bar{x})}.}
+\item{SignalVar}{: \strong{Read Signal variance}
+\eqn{\max(\mathrm{totalVar}-\mathrm{NoiseVar},\,\varepsilon)}.}
+\item{SNR}{: \strong{Read Signal-to-Noise Ratio}
+\eqn{\log_2(\mathrm{SignalVar}/\mathrm{NoiseVar})}.}
+
 }
+When SNR-related statistics are requested,
+a robust noise floor \code{b0 + b1 * mean(x)} is fitted per sample (see \emph{NoiseVar}).
+The fitted coefficients are stored in the result metadata (see below). If
+SNR-related statistics are not computed, \code{NA}/\code{NA} placeholders are stored
+for uniformity.
 }
 \examples{
 # load example data

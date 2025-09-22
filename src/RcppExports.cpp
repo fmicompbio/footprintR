@@ -38,9 +38,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// estimateNoise
+Rcpp::NumericVector estimateNoise(const Rcpp::NumericVector& probs, const Rcpp::IntegerVector& read_pos, int k, int min_diffs);
+RcppExport SEXP _footprintR_estimateNoise(SEXP probsSEXP, SEXP read_posSEXP, SEXP kSEXP, SEXP min_diffsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type probs(probsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type read_pos(read_posSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type min_diffs(min_diffsSEXP);
+    rcpp_result_gen = Rcpp::wrap(estimateNoise(probs, read_pos, k, min_diffs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// estimateSNR
+Rcpp::NumericVector estimateSNR(double totalVar, double noiseRaw, double eps, const Rcpp::NumericVector& betas, const Rcpp::NumericVector& features, const std::string& noise_mode);
+RcppExport SEXP _footprintR_estimateSNR(SEXP totalVarSEXP, SEXP noiseRawSEXP, SEXP epsSEXP, SEXP betasSEXP, SEXP featuresSEXP, SEXP noise_modeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type totalVar(totalVarSEXP);
+    Rcpp::traits::input_parameter< double >::type noiseRaw(noiseRawSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type betas(betasSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type features(featuresSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type noise_mode(noise_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(estimateSNR(totalVar, noiseRaw, eps, betas, features, noise_mode));
+    return rcpp_result_gen;
+END_RCPP
+}
 // filter_modbam_cpp
-Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
-RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
+Rcpp::NumericVector filter_modbam_cpp(std::string infile, std::string outfile, char modbase, std::string region, bool includeHeader, bool keepUnmapped, bool keepSecondary, bool keepSupplementary, int minReadLength, int minAlignedLength, double minAlignedFraction, double minQscore, double minSNR, double noiseCoefB0, double noiseCoefB1, double maxFracLowConf, double maxEntropy, double LowConf, int nThreads, bool verbose);
+RcppExport SEXP _footprintR_filter_modbam_cpp(SEXP infileSEXP, SEXP outfileSEXP, SEXP modbaseSEXP, SEXP regionSEXP, SEXP includeHeaderSEXP, SEXP keepUnmappedSEXP, SEXP keepSecondarySEXP, SEXP keepSupplementarySEXP, SEXP minReadLengthSEXP, SEXP minAlignedLengthSEXP, SEXP minAlignedFractionSEXP, SEXP minQscoreSEXP, SEXP minSNRSEXP, SEXP noiseCoefB0SEXP, SEXP noiseCoefB1SEXP, SEXP maxFracLowConfSEXP, SEXP maxEntropySEXP, SEXP LowConfSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,12 +86,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type minAlignedLength(minAlignedLengthSEXP);
     Rcpp::traits::input_parameter< double >::type minAlignedFraction(minAlignedFractionSEXP);
     Rcpp::traits::input_parameter< double >::type minQscore(minQscoreSEXP);
+    Rcpp::traits::input_parameter< double >::type minSNR(minSNRSEXP);
+    Rcpp::traits::input_parameter< double >::type noiseCoefB0(noiseCoefB0SEXP);
+    Rcpp::traits::input_parameter< double >::type noiseCoefB1(noiseCoefB1SEXP);
     Rcpp::traits::input_parameter< double >::type maxFracLowConf(maxFracLowConfSEXP);
     Rcpp::traits::input_parameter< double >::type maxEntropy(maxEntropySEXP);
     Rcpp::traits::input_parameter< double >::type LowConf(LowConfSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
+    rcpp_result_gen = Rcpp::wrap(filter_modbam_cpp(infile, outfile, modbase, region, includeHeader, keepUnmapped, keepSecondary, keepSupplementary, minReadLength, minAlignedLength, minAlignedFraction, minQscore, minSNR, noiseCoefB0, noiseCoefB1, maxFracLowConf, maxEntropy, LowConf, nThreads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -204,7 +237,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_footprintR_calcAndCountDist", (DL_FUNC) &_footprintR_calcAndCountDist, 3},
     {"_footprintR_calcFootprintScoreForRead", (DL_FUNC) &_footprintR_calcFootprintScoreForRead, 5},
-    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 17},
+    {"_footprintR_estimateNoise", (DL_FUNC) &_footprintR_estimateNoise, 4},
+    {"_footprintR_estimateSNR", (DL_FUNC) &_footprintR_estimateSNR, 6},
+    {"_footprintR_filter_modbam_cpp", (DL_FUNC) &_footprintR_filter_modbam_cpp, 20},
     {"_footprintR_index_bam_cpp", (DL_FUNC) &_footprintR_index_bam_cpp, 1},
     {"_footprintR_labelDists", (DL_FUNC) &_footprintR_labelDists, 2},
     {"_footprintR_pileup_modbam_cpp", (DL_FUNC) &_footprintR_pileup_modbam_cpp, 7},

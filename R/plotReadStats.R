@@ -12,7 +12,7 @@
 #' @param qcCol A character scalar providing the name of the column in
 #'     \code{colData} that contains quality metrics (calculated by
 #'     \code{calcReadStats}). Can be \code{NULL} if no such column exists.
-#' @param minQscore,maxEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction
+#' @param minQscore,maxEntropy,maxFracLowConf,minReadLength,minAlignedLength,minAlignedFraction,minSNR
 #'     Numeric scalars representing possible threshold values used in
 #'     \code{\link{filterReads}}, for illustration in the plot panels.
 #'
@@ -31,57 +31,104 @@
 #' se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #' plotReadStats(se)
 #'
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes geom_histogram geom_vline facet_wrap labs
+#'     theme_bw
 #' @importFrom tidyr pivot_longer
 #' @importFrom tibble rownames_to_column
 #' @importFrom BiocGenerics as.data.frame colnames
 #' @importFrom SummarizedExperiment colData
 #' @importFrom cli cli_abort
+#' @importFrom stats median mad
 #'
 #' @export
 plotReadStats <- function(se, readInfoCol = "readInfo", qcCol = "QC",
-                          minQscore = 0, maxEntropy = Inf,
-                          maxFracLowConf = 1, minReadLength = 0,
-                          minAlignedLength = 0, minAlignedFraction = 0) {
+                          minQscore = NULL, maxEntropy = NULL,
+                          maxFracLowConf = NULL, minReadLength = NULL,
+                          minAlignedLength = NULL, minAlignedFraction = NULL,
+                          minSNR = NULL) {
     # check arguments
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertScalar(x = readInfoCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
     .assertScalar(x = qcCol, type = "character", allowNULL = TRUE,
                   validValues = colnames(colData(se)))
-    .assertScalar(x = minQscore, type = "numeric")
-    .assertScalar(x = maxEntropy, type = "numeric")
-    .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
-    .assertScalar(x = minReadLength, type = "numeric")
-    .assertScalar(x = minAlignedLength, type = "numeric")
-    .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1))
+    .assertScalar(x = minQscore, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = maxEntropy, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1),
+                  allowNULL = TRUE)
+    .assertScalar(x = minReadLength, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minAlignedLength, type = "numeric", allowNULL = TRUE)
+    .assertScalar(x = minAlignedFraction, type = "numeric", rngIncl = c(0, 1),
+                  allowNULL = TRUE)
+    .assertScalar(x = minSNR, type = "numeric", allowNULL = TRUE)
+
+    if (is.null(readInfoCol) && is.null(qcCol)) {
+        cli_abort("Provide at least one of {.code readInfoCol} or {.code qcCol}. Both are NULL.")
+    }
 
     # prepare main plotdata
     dfL <- list()
-    # ... from readInfoCol
+
+    # readInfoCol
     if (!is.null(readInfoCol)) {
-        tmp <- as.data.frame(se[[readInfoCol]])
-        tmp <- tmp[, !grepl("variant_label", colnames(tmp))]
+        tmp <- as.data.frame(se[[readInfoCol]],
+                             value.name = colnames(se[[readInfoCol]][[1]])[1])
+        tmp <- tmp[, !grepl("^variant_label$", colnames(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
-    # ... from qcCol
+
+    # qcCol
     if (!is.null(qcCol)) {
-        tmp <- as.data.frame(se[[qcCol]])
-        tmp <- tmp[, !grepl("AC", colnames(tmp))]
+        tmp <- as.data.frame(se[[qcCol]],
+                             value.name = colnames(se[[qcCol]][[1]])[1])
+        tmp <- tmp[, !grepl("AC", colnames(tmp)), drop = FALSE]
         dfL[[length(dfL) + 1]] <- tmp
     }
 
     if (!all(unlist(lapply(dfL, \(x) identical(x$group_name, dfL[[1]]$group_name))))) {
         cli_abort("names of {.code se${readInfoCol}} and {.code se${qcCol}} are not identical")
     }
+
     df <- do.call(cbind, lapply(dfL, \(x) x[, !colnames(x) %in% c("group", "group_name")]))
     df$sample <- dfL[[1]]$group_name
+
+    # helper functions for automatic thresholds -----------------------------
+    calc_min <- function(x) median(x, na.rm = TRUE) - 3 * mad(x, na.rm = TRUE)
+    calc_max <- function(x) median(x, na.rm = TRUE) + 3 * mad(x, na.rm = TRUE)
+
+    # derive thresholds when not provided
+    # min thresholds
+    if ("qscore" %in% colnames(df) && is.null(minQscore)) {
+        minQscore <- max(0, calc_min(df$qscore))
+    }
+    if ("read_length" %in% colnames(df) && is.null(minReadLength)) {
+        minReadLength <- max(0, calc_min(df$read_length))
+    }
+    if ("aligned_length" %in% colnames(df) && is.null(minAlignedLength)) {
+        minAlignedLength <- max(0, calc_min(df$aligned_length))
+    }
+    if ("aligned_fraction" %in% colnames(df) && is.null(minAlignedFraction)) {
+        minAlignedFraction <- max(0, calc_min(df$aligned_fraction))
+    }
+    if ("SNR" %in% colnames(df) && is.null(minSNR)) {
+        minSNR <- calc_min(df$SNR)
+    }
+
+    # max thresholds
+    if ("SEntrModProb" %in% colnames(df) && is.null(maxEntropy)) {
+        maxEntropy <- calc_max(df$SEntrModProb)
+    }
+    if ("MeanConf" %in% colnames(df) && is.null(maxFracLowConf)) {
+        maxFracLowConf <- min(1, calc_max(df$MeanConf))
+    }
 
     # prepare plotdata for thresholds
     map2thresh <- c(qscore = minQscore, read_length = minReadLength,
                     aligned_length = minAlignedLength,
                     aligned_fraction = minAlignedFraction,
-                    MeanConf = maxFracLowConf, SEntrModProb = maxEntropy)
+                    MeanConf = maxFracLowConf, SEntrModProb = maxEntropy,
+                    SNR = minSNR)
+
     threshnms <- intersect(names(map2thresh), colnames(df))
     df2 <- data.frame(key = threshnms, value = map2thresh[threshnms])
 

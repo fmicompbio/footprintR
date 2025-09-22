@@ -37,11 +37,12 @@
 #'                           package = "footprintR")
 #' res <- countStatePairs(bamfile = modbamfile,
 #'                        regions = "chr1",
-#'                        modbase = "a", windowSize = 300)
+#'                        modbase = "a", windowSize = 300,
+#'                        BPPARAM = BiocParallel::SerialParam())
 #' res
 #'
 #' @importFrom S4Vectors DataFrame
-#' @importFrom BiocParallel bpnworkers
+#' @importFrom BiocParallel bpnworkers MulticoreParam
 #' @importFrom cli cli_abort
 #'
 #' @export
@@ -53,7 +54,7 @@ countStatePairs <- function(bamfile,
                             windowSize = 200,
                             minMapQ = 0,
                             minAlignedLength = 0,
-                            BPPARAM = BiocParallel::MulticoreParam(4L),
+                            BPPARAM = MulticoreParam(4L),
                             verbose = FALSE) {
     .assertScalar(x = bamfile, type = "character")
     if (!file.exists(bamfile)) {

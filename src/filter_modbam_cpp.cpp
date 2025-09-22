@@ -4,9 +4,10 @@
 #include <cli/progress.h>
 #include "utils.h"
 #include "sampleEntropy.h"
+#include "estimateNoise.h"
+#include "estimateSNR.h"
 
 #define NMODS 5
-
 
 //' Write records from \code{infile} to \code{outfile} if they pass filter criteria.
 //'
@@ -19,7 +20,7 @@
 //' continues with the next record.
 //' The filter order is: keepUnmapped, keepSecondary, keepSupplementary,
 //' minReadLength, minAlignedLength, minAlignedFraction, minQscore,
-//' maxFracLowConf, maxEntropy.
+//' minSNR, maxFracLowConf, maxEntropy.
 //' The output file format will be determined based on the extension of
 //' \code{outfile} (sam format for ".sam" and bam format for ".bam").
 //'
@@ -49,6 +50,15 @@
 //' @param minQscore A numeric scalar representing the smallest acceptable
 //'     read-level Qscore. Reads with Qscore below this value will be filtered
 //'     out.
+//' @param minSNR A numeric scalar representing the smallest acceptable
+//'     read-level Signal to Noise Ratio. Reads with SNR below this value will be filtered
+//'     out.
+//' @param noiseCoefB0 Numeric scalar, intercept of the background noise model.
+//'     If finite, used to impose a floor on the per-read noise variance
+//'     (see also \code{calcReadStats}). Default \code{-1e200} disables the floor.
+//' @param noiseCoefB1 Numeric scalar, slope of the background noise model.
+//'     If finite, used together with \code{noiseCoefB0} to compute the floor
+//'     as \eqn{b0 + b1 * mean(prob)}. Default \code{-1e200} disables the floor.
 //' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 //'     fraction of low-confidence modified base calls in a read. Reads with
 //'     no modified-base calls or a fraction of low confidence calls greater
@@ -66,8 +76,7 @@
 //' @return A named \code{numeric} vector with the numbers of filtered out
 //'     records per reason for exclusion.
 //'
-//' @author Michael Stadler
-//'
+//' @author Michael Stadler, Panagiotis Papasaikas, Charlotte Soneson
 //' @noRd
 //' @keywords internal
 // [[Rcpp::export]]
@@ -83,6 +92,9 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
                                       int minAlignedLength = 0,
                                       double minAlignedFraction = 0,
                                       double minQscore = 0.0,
+                                      double minSNR = NA_REAL,
+                                      double noiseCoefB0 = NA_REAL,
+                                      double noiseCoefB1 = NA_REAL,
                                       double maxFracLowConf = 1.0,
                                       double maxEntropy = -1.0,
                                       double LowConf = 0.7,
@@ -102,6 +114,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     char *qseq = NULL;
     int qseq_len = 0;
     Rcpp::NumericVector mod_probs = Rcpp::NumericVector(0);
+    Rcpp::IntegerVector mod_pos = Rcpp::IntegerVector(0);
     double fracLowConf = 0.0;
     const char *outmode = NULL;
 
@@ -117,7 +130,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     // ... return values
     unsigned int nUnmapped = 0, nSecondary = 0, nSupplementary = 0,
         nMinReadLength = 0, nMinAlignedLength = 0, nMinAlignedFraction = 0,
-        nMinQscore = 0, nMaxFracLowConf = 0, nMaxEntropy = 0;
+        nMinQscore = 0, nMinSNR = 0, nMaxFracLowConf = 0, nMaxEntropy = 0;
 
     // ... cli progress bar
     Rcpp::RObject bar;
@@ -222,7 +235,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
 
         // extract read information
         this_read_len = bamdata->core.l_qseq;
-        if (maxEntropy >= 0 || maxFracLowConf < 1.0) {
+        if (maxEntropy >= 0 || maxFracLowConf < 1.0 || std::isfinite(minSNR)) {
             // extract *forward* read sequence (qseq)
             //     (populates qseq and qseq_len)
             if (extract_forward_qseq(bamdata, qseq, qseq_len) != 0) {
@@ -235,8 +248,9 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
 
             // extract modification probabilities for read
             mod_probs = Rcpp::NumericVector(0);
-            if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs, qseq,
-                                  ms, buffer, buffer_len) < 0) {
+            mod_pos = Rcpp::IntegerVector(0);
+            if (extract_mod_probs(bamdata, modbase, unmodbase, &mod_probs,
+                                  &mod_pos, qseq, ms, buffer, buffer_len) < 0) {
                 had_error = true; // # nocov start
                 goto end; // # nocov end
             }
@@ -287,6 +301,36 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
             continue;
         }
 
+        // ... minSNR
+        if (R_finite(minSNR))  {  // SNR filter enabled
+            Rcpp::NumericVector comp = estimateNoise(mod_probs, mod_pos, 2, -1);
+
+            const double totalVar = comp["total"];
+            const double noiseRaw = comp["noise_raw"];
+            const double meanProb = comp["mean"];
+
+            Rcpp::NumericVector betas, feats;
+            std::string noise_mode = "raw";
+
+            // decide if we have a usable floor model
+            if (R_finite(noiseCoefB0) && R_finite(noiseCoefB1)) {
+                betas = Rcpp::NumericVector::create(noiseCoefB0, noiseCoefB1);
+                feats = Rcpp::NumericVector::create(1.0, meanProb); // may be NA; handled in estimateSNR
+                noise_mode = "floor";
+            }
+
+            Rcpp::NumericVector snr_res = estimateSNR(
+                totalVar, noiseRaw, 1e-3,
+                betas, feats, noise_mode
+            );
+            const double snr_val = snr_res["snr"];
+
+            if (!R_finite(snr_val) || snr_val < minSNR) {
+                nMinSNR++;
+                continue;
+            }
+        }
+
         // ... maxFracLowConf
         if (maxFracLowConf < 1.0) {
             fracLowConf = Rcpp::sum(
@@ -332,7 +376,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
     }
 
 end:
-    //clean up
+    // clean up
     if (qseq) {
         free((void*) qseq);
         qseq = NULL;
@@ -380,10 +424,10 @@ end:
             Rcpp::_["filtered_minAlignedLength"] = nMinAlignedLength,
             Rcpp::_["filtered_minAlignedFraction"] = nMinAlignedFraction,
             Rcpp::_["filtered_minQscore"] = nMinQscore,
+            Rcpp::_["filtered_minSNR"] = nMinSNR,
             Rcpp::_["filtered_maxFracLowConf"] = nMaxFracLowConf,
             Rcpp::_["filtered_maxEntropy"] = nMaxEntropy);
 
         return res;
     }
 }
-

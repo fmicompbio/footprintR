@@ -45,6 +45,8 @@ reference:
   - strandDiffFracMod
   - phasingScoreFourier
   - estimateNRLwindows
+  - estimateNoiseParsWindows
+  - estimateSNRwindows
   - getDifferentiallyModifiedWindows
   - getDifferentialWindows
   - getRangesWithAssayValues
@@ -53,6 +55,7 @@ reference:
 - title: Visualization
   contents:
   - plotReadStats
+  - plotNoisePars
   - plotRegion
 - title: Helper functions
   contents:
