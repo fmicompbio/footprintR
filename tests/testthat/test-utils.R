@@ -261,7 +261,7 @@ test_that(".assertPackagesAvailable works", {
 ## Checks, .assertValidModbase
 ## -------------------------------------------------------------------------- ##
 test_that(".assertValidModbase works", {
-    good <- c("m","h","f","c","C","g","e","b","T","U","a","A","o","G","n","N")
+    good <- c("m", "h", "f", "c", "C", "g", "e", "b", "T", "U", "a", "A", "o", "G", "n", "N")
     bad <- setdiff(c(letters, LETTERS), good)
     expect_true(.assertValidModbase(good))
     for (modbase in good) {

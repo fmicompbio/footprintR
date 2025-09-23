@@ -35,16 +35,20 @@ test_that("countStatePairs works", {
                                  modbase = "a", BPPARAM = "error"),
                  "must be of class .BiocParallelParam.")
     expect_error(countStatePairs(bamfile = modbamfile, regions = ".",
-                                 modbase = "a", verbose = "error"),
+                                 modbase = "a", verbose = "error",
+                                 BPPARAM = BiocParallel::SerialParam()),
                  "must be of class .logical.")
 
     res1 <- countStatePairs(bamfile = modbamfile,
                             regions = GenomicRanges::GRanges("chr1:1-100000000"),
-                            modbase = "a", windowSize = 300)
+                            modbase = "a", windowSize = 300,
+                            BPPARAM = BiocParallel::SerialParam())
     res2 <- countStatePairs(bamfile = modbamfile, regions = ".",
-                            modbase = "a", windowSize = 300)
+                            modbase = "a", windowSize = 300,
+                            BPPARAM = BiocParallel::SerialParam())
     res3 <- countStatePairs(bamfile = modbamfile, regions = ".",
-                            modbase = "h", windowSize = 300)
+                            modbase = "h", windowSize = 300,
+                            BPPARAM = BiocParallel::SerialParam())
 
     resL <- list(res1, res2, res3)
     for (i in seq_along(resL)) {

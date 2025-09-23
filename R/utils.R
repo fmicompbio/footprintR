@@ -223,8 +223,8 @@
 .assertValidModbase <- function(modbase) {
     # for valid values of `modbase`, see
     # https://samtools.github.io/hts-specs/SAMtags.pdf (section 1.7)
-    if (any(i <- !modbase %in% c("m","h","f","c","C","g","e","b","T",
-                                 "U","a","A","o","G","n","N"))) {
+    if (any(i <- !modbase %in% c("m", "h", "f", "c", "C", "g", "e", "b", "T",
+                                 "U", "a", "A", "o", "G", "n", "N"))) {
         cli_abort("invalid {.arg modbase} values: {unique(modbase[i])}")
     }
 

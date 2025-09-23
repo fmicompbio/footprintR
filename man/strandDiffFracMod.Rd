@@ -41,7 +41,8 @@ se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6940000-6940500",
                  BPPARAM = BiocParallel::SerialParam())
 s <- seq(6940000, 6940400, by = 100)
 windowgr <- GRanges(seqnames = "chr1",
-                    ranges = IRanges(start = s, width = 100, names = letters[1:5]))
+                    ranges = IRanges(start = s, width = 100,
+                                     names = letters[1:5]))
 seStrandDiff <- strandDiffFracMod(se = se, gr = windowgr)
 seStrandDiff
 assayNames(seStrandDiff)

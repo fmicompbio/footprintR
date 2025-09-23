@@ -11,6 +11,7 @@ filterReads(
   qcCol = "QC",
   minQscore = 0,
   maxEntropy = Inf,
+  minSNR = -Inf,
   maxFracLowConf = 1,
   minReadLength = 0,
   minAlignedLength = 0,
@@ -45,6 +46,10 @@ out.}
 \item{maxEntropy}{A numeric scalar representing the largest acceptable
 read-level entropy. Reads without modified-base calls or with entropy
 above this value will be filtered out.}
+
+\item{minSNR}{A numeric scalar representing the smallest acceptable
+read Signal to Noise ratio (SNR). Reads with SNR below this value will
+be filtered out.}
 
 \item{maxFracLowConf}{A numeric scalar representing the maximally acceptable
 fraction of low-confidence modified base calls in a read. Reads without

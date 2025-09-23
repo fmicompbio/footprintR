@@ -61,7 +61,7 @@
 #'     \code{\link[data.table]{fread}} for the function used to read the input files,
 #'     \code{\link{addSeqContext}} used to add the sequence context.
 #'
-#' @import SummarizedExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom data.table fread
 #' @importFrom GenomicRanges GPos match resize trim
 #' @importFrom GenomeInfoDb seqlengths seqlengths<-

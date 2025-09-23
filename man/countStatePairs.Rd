@@ -13,7 +13,7 @@ countStatePairs(
   windowSize = 200,
   minMapQ = 0,
   minAlignedLength = 0,
-  BPPARAM = BiocParallel::MulticoreParam(4L),
+  BPPARAM = MulticoreParam(4L),
   verbose = FALSE
 )
 }
@@ -63,7 +63,8 @@ modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
                           package = "footprintR")
 res <- countStatePairs(bamfile = modbamfile,
                        regions = "chr1",
-                       modbase = "a", windowSize = 300)
+                       modbase = "a", windowSize = 300,
+                       BPPARAM = BiocParallel::SerialParam())
 res
 
 }

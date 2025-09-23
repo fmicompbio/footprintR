@@ -58,6 +58,9 @@
 #' @param maxEntropy A numeric scalar representing the largest acceptable
 #'     read-level entropy. Reads without modified-base calls or with entropy
 #'     above this value will be filtered out.
+#' @param minSNR A numeric scalar representing the smallest acceptable
+#'     read Signal to Noise ratio (SNR). Reads with SNR below this value will
+#'     be filtered out.
 #' @param maxFracLowConf A numeric scalar representing the maximally acceptable
 #'     fraction of low-confidence modified base calls in a read. Reads without
 #'     modified-base calls or with a fraction of low confidence calls greater
@@ -136,7 +139,7 @@
 #'
 filterReads <- function(se, assayName = "mod_prob",
                         readInfoCol = "readInfo", qcCol = "QC",
-                        minQscore = 0, maxEntropy = Inf,
+                        minQscore = 0, maxEntropy = Inf, minSNR = -Inf,
                         maxFracLowConf = 1, minReadLength = 0,
                         minAlignedLength = 0, minAlignedFraction = 0,
                         minCoveredFraction = 0, region = NULL,
@@ -153,6 +156,7 @@ filterReads <- function(se, assayName = "mod_prob",
                   validValues = colnames(colData(se)))
     .assertScalar(x = minQscore, type = "numeric")
     .assertScalar(x = maxEntropy, type = "numeric")
+    .assertScalar(x = minSNR, type = "numeric")
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
     .assertScalar(x = minReadLength, type = "numeric")
     .assertScalar(x = minAlignedLength, type = "numeric")
@@ -169,7 +173,7 @@ filterReads <- function(se, assayName = "mod_prob",
     ## Initialize sparse logical array for each sample, which will be TRUE
     ## for reads that are filtered out with respect to the different criteria
     ## Remark: Could move this to a global constant
-    filterNames <- c("Qscore", "Entropy", "FracLowConf", "ReadLength",
+    filterNames <- c("Qscore", "Entropy", "FracLowConf", "SNR", "ReadLength",
                      "AlignedLength", "AlignedFraction", "CoveredFraction",
                      "AllNA")
     readsToRemove <- lapply(
@@ -211,6 +215,13 @@ filterReads <- function(se, assayName = "mod_prob",
             readsToRemove[[nm]][which(is.na(qc$SEntrModProb) |
                                           qc$SEntrModProb > maxEntropy),
                                 "Entropy"] <- TRUE
+        }
+
+        ## SNR
+        if (!is.null(qc) && "SNR" %in% colnames(qc)) {
+            readsToRemove[[nm]][which(is.na(qc$SNR) |
+                                          qc$SNR < minSNR),
+                                "SNR"] <- TRUE
         }
 
         ## Fraction of low-confidence modification calls

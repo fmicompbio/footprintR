@@ -14,7 +14,9 @@ test_that("validity checks work", {
                              filter = c(`m` = 0.6, `a` = 0.4, `-` = 0.3),
                              nrows = Inf, seqinfo = NULL,
                              BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
-    rme <- addReadStats(rme, BPPARAM = BiocParallel::SerialParam())
+    suppressWarnings(expect_warning(
+        rme <- addReadStats(rme, BPPARAM = BiocParallel::SerialParam()),
+        "Too few points"))
     rme_withreads <- flattenReadLevelAssay(rme)
     rme_withoutreads <- flattenReadLevelAssay(rme, keepReads = FALSE)
 
@@ -64,7 +66,7 @@ test_that("validity checks work", {
         "Read-level column data found, checking consistency"), "Read-level column data found, checking consistency"))
 
     rme1 <- rme_withreads
-    assayNames(rme1) <- c("", "", "", "")
+    SummarizedExperiment::assayNames(rme1) <- c("", "", "", "")
     expect_error(.checkSEValidity(rme1),
                  '!is.null(assayNames(se)) && all(assayNames(se) != "") && !any(duplicated(assayNames(se))) is not TRUE', fixed = TRUE)
 
