@@ -20,8 +20,8 @@ jobs:
       matrix:
         config:
           - { os: windows-latest, bioc: 'devel', deploy: 'no'}
-          - { os: macOS-13, bioc: 'devel', deploy: 'no'}
-          - { os: macOS-14, bioc: 'devel', deploy: 'yes'}
+          - { os: macos-15-intel, bioc: 'devel', deploy: 'no'}
+          - { os: macos-latest, bioc: 'devel', deploy: 'yes'}
           #- { os: ubuntu-latest, image: 'bioconductor/bioconductor_docker:devel', deploy: 'no'}
           - { os: ubuntu-latest, bioc: 'devel', deploy: 'no'}
 
