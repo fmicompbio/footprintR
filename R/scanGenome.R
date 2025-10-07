@@ -1841,7 +1841,7 @@ getRangesWithAssayValues <- function(se, assayName) {
 #' @importFrom BiocGenerics sort
 #' @importFrom S4Vectors mcols mcols<- subjectHits queryHits DataFrame
 #' @importFrom dplyr mutate filter group_by ungroup group_split
-#' @importFrom IRanges reduce findOverlaps
+#' @importFrom IRanges findOverlaps
 #' @importFrom cli cli_abort
 #' @importFrom rlang .data
 #'
@@ -1909,8 +1909,10 @@ processWindowScores <- function(
                 group_by(.data$direction) |>
                 group_split() |>
                 lapply(function(x) {
+                    # use IRanges::reduce explicitly here to avoid
+                    # collision with purrr::reduce
                     gr1 <- as(x, "GRanges") |>
-                        reduce(min.gapwidth = maxGap)
+                        IRanges::reduce(min.gapwidth = maxGap)
                     ov1 <- findOverlaps(query = as(x, "GRanges"),
                                         subject = gr1, type = "within")
                     mcols(gr1)[[paste0(scoreCol, "Thresh")]] <- as.vector(
