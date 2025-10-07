@@ -37,6 +37,7 @@ Imports:
     ggplot2,
     IRanges,
     methods,
+    nomeR,
     patchwork,
     Rcpp,
     rlang,
@@ -76,3 +77,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 SystemRequirements: GNU make
+Remotes: nomeR=fmi-basel/compbio-nomeR
