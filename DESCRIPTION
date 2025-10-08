@@ -38,6 +38,7 @@ Imports:
     IRanges,
     methods,
     patchwork,
+    purrr,
     Rcpp,
     rlang,
     S4Vectors,
