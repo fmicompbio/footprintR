@@ -11,6 +11,8 @@ filterPositions(
   assayNameCov = "Nvalid",
   minCov = 1,
   minNbrSamples = NULL,
+  regions = NULL,
+  seqinfo = NULL,
   assayNameAmbig = "Nvalid",
   assayNameNA = "mod_prob"
 )
@@ -19,9 +21,9 @@ filterPositions(
 \item{se}{A \code{SummarizedExperiment} object.}
 
 \item{filters}{A character vector. All values must be one of
-\code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"}
-and \code{"all.na"}. Filters are applied in the order specified by
-this vector.}
+\code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"},
+\code{"regions"} and \code{"all.na"}. Filters are applied in the order
+specified by this vector.}
 
 \item{sequenceContext}{A character vector with sequence contexts to
 retain. To apply this filter, the \code{"sequenceContext"} column must
@@ -39,6 +41,19 @@ coverage in order to keep a position.}
 coverage across all samples) is used for the coverage filtering. If
 not \code{NULL}, a position is required to have at least \code{minCov}
 coverage in at least \code{minNbrSamples} to be retained.}
+
+\item{regions}{A \code{\link[GenomicRanges]{GRanges}} object specifying the
+genomic regions to restrict the output to. Alternatively, regions can be
+specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+"chrM") that will be coerced into a \code{GRanges} object. If the end
+coordinate is not provided (for example in "chr1:10-", which means "to
+the end of chr1"), it will be obtained from \code{seqinfo} or default
+to a large value if \code{seqinfo} is not provided.}
+
+\item{seqinfo}{\code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
+containing information about the set of genomic sequences (chromosomes).
+Alternatively, a named numeric vector with genomic sequence names and
+lengths.}
 
 \item{assayNameAmbig}{A character scalar indicating the assay to use to
 decide which row to retain if multiple rows represent the same
