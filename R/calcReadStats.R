@@ -482,6 +482,7 @@ calcReadStats <- function(se,
     if (is.null(EntrControl)) {
         EntrControl <- list()
     }
+    .assertVector(x = EntrControl, type = "list")
 
     SEctrl <- modifyList(
         list(m = 2L, r = 0.2, maxStarts = 1000, nThreads = 1L),
