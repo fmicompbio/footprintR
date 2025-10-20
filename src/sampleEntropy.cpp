@@ -66,7 +66,6 @@ double sampleEntropy(NumericVector data,
     // Number of possible Starting positions.
     // Each subsequence is of length m, so the last possible start is at index N - m.
     const unsigned int S = N - m;
-    if (S <= 1) return 0.0;
 
     // Determine how many starting positions to use.
     // If maxStarts is Inf or <=0, use all starts.
