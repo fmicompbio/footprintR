@@ -84,7 +84,7 @@ double sampleEntropy(NumericVector data,
     if (maxI < S) {
         std::vector<unsigned int> subset;
         subset.reserve(maxI);
-        for (size_t t = 0; t < (size_t) maxI; ++t) {
+        for (size_t t = 0; t < (size_t) maxI; t++) {
             size_t idx = (t * (size_t) S) / (size_t) maxI;
             subset.push_back((unsigned int) idx);
         }
@@ -95,7 +95,7 @@ double sampleEntropy(NumericVector data,
     // where value = first value of the subsequence.
     std::vector<std::pair<double, unsigned int>> vals;
     vals.reserve(S);
-    for (unsigned int i = 0; i < S; ++i) {
+    for (unsigned int i = 0; i < S; i++) {
         vals.emplace_back(data[i], i);
     }
     // Sort this array (by value) so later we can quickly find all subsequences
@@ -104,7 +104,7 @@ double sampleEntropy(NumericVector data,
               [](const auto& a, const auto& b){ return a.first < b.first; });
     // Keep in a separe array (sorted_values) just the  sorted *values*
     std::vector<double> sorted_values(S);
-    for (unsigned int p = 0; p < S; ++p) {
+    for (unsigned int p = 0; p < S; p++) {
         sorted_values[p] = vals[p].first;
     }
 
@@ -131,7 +131,7 @@ double sampleEntropy(NumericVector data,
         const unsigned int hi = (unsigned int) (hi_it - sorted_values.begin());
 
         // Scan ONLY the j indices with values in range that are also > i
-        for (unsigned int p = lo; p < hi; ++p) {
+        for (unsigned int p = lo; p < hi; p++) {
             const unsigned int j = vals[p].second;
             if (j <= i || j >= S) continue; // need j > i
 
