@@ -73,7 +73,7 @@ double sampleEntropy(NumericVector data,
     if (!std::isfinite(maxStarts) || maxStarts <= 0) {
         maxI = S;  // use all starts
     } else {
-        maxI = std::min(S, static_cast<unsigned int>(maxStarts));
+        maxI = std::min(S, (unsigned int) maxStarts);
     }
 
     // Build list of all start indices [0..S-1]
@@ -84,9 +84,9 @@ double sampleEntropy(NumericVector data,
     if (maxI < S) {
         std::vector<unsigned int> subset;
         subset.reserve(maxI);
-        for (size_t t = 0; t < static_cast<size_t>(maxI); ++t) {
-            size_t idx = (t * static_cast<size_t>(S)) / static_cast<size_t>(maxI);
-            subset.push_back(static_cast<unsigned int>(idx));
+        for (size_t t = 0; t < (size_t) maxI; ++t) {
+            size_t idx = (t * (size_t) S) / (size_t) maxI;
+            subset.push_back((unsigned int) idx);
         }
         starts.swap(subset);
     }
@@ -125,10 +125,10 @@ double sampleEntropy(NumericVector data,
 
         // Find the index (lo) in sorted_values whose start value is >= (data[i] - err).
         auto lo_it = std::lower_bound(sorted_values.begin(), sorted_values.end(), lo_val);
-        const unsigned int lo = static_cast<unsigned int>(lo_it - sorted_values.begin());
+        const unsigned int lo = (unsigned int) (lo_it - sorted_values.begin());
         // Find the index (hi) in sorted_values whose start value is <= (data[i] + err).
         auto hi_it = std::upper_bound(sorted_values.begin(), sorted_values.end(), hi_val);
-        const unsigned int hi = static_cast<unsigned int>(hi_it - sorted_values.begin());
+        const unsigned int hi = (unsigned int) (hi_it - sorted_values.begin());
 
         // Scan ONLY the j indices with values in range that are also > i
         for (unsigned int p = lo; p < hi; ++p) {
@@ -157,7 +157,7 @@ double sampleEntropy(NumericVector data,
     }
 
     if (Cm > 0 && Cm1 > 0) {
-        return std::log(static_cast<double>(Cm) / Cm1);
+        return std::log((double) Cm / Cm1);
     } else {
         return 0.0;
     }
