@@ -211,6 +211,7 @@
 #'
 #' @importFrom SparseArray colSums is_nonna
 #' @importFrom SummarizedExperiment assay
+#' @importFrom GenomeInfoDb seqinfo
 filterPositions <- function(se,
                             filters = c("sequenceContext", "coverage",
                                         "all.na"),
@@ -230,6 +231,9 @@ filterPositions <- function(se,
     .assertScalar(x = assayNameNA, type = "character",
                   validValues = .getReadLevelAssayNames(se),
                   allowNULL = TRUE)
+    if (is.null(seqinfo)) {
+        seqinfo <- seqinfo(se)
+    }
 
     for (f in filters) {
         if (f == "sequenceContext") {
