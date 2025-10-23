@@ -117,7 +117,7 @@ filterReadsBam <- function(infiles,
     .assertScalar(x = LowConf, type = "numeric", rngIncl = c(0.5, 1))
     .assertScalar(x = maxFracLowConf, type = "numeric", rngIncl = c(0, 1))
     .assertVector(x = noiseCoef, len=2, type = "numeric")
-    
+
 
     # determine the number of parallel threads to be used for
     # bam files (chromosomes) and decompression of bam records

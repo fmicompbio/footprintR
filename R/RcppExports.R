@@ -482,22 +482,30 @@ read_modbam_cpp <- function(inname_str, regions, modbase, n_alns_to_sample, tnam
 #' https://gist.github.com/schochastics/e3684645763e93cbc2ed7d1b70ee5fe6
 #'
 #' @param data  Numeric vector
-#' @param m  Integer, the embedding dimension, as for chaotic time series; a preferred value is 2.
-#' @param r  Scaling parameter for the filtering factor. The filtering factor is r x standard deviation of the signal
+#' @param m Integer. The pattern (embedding) length: Larger m captures
+#'     finer structure but sharply reduces the number of matches,
+#'     so it requires longer data and increases variance. Common
+#'     choices are m = 2 or 3 for physiological time series.
+#' @param r  Scaling parameter for the filtering factor. The filtering factor
+#'     is r x standard deviation of the signal
+#' @param maxStarts Integer specifying the maximum number of signal start
+#'     positions to evaluate (default \code{1000}). If the time series has more
+#'     possible starts, an evenly spaced subset of size \code{maxStarts} is used.
+#'     Use \code{-1} to include all possible starts.
+#' @param nThreads Integer giving the number of parallel OpenMP threads to use for calculation.
 #'
 #' @return The Sample Entropy value of the time-series signal
 #'
 #' @examples
-#' ts <- runif(100,0,1)
-#' sampleEntropy(ts, m=2L, r=0.2)
+#' ts <- runif(100, 0, 1)
+#' sampleEntropy(ts, m = 2L, r = 0.2)
 #'
 #' @seealso [wikipedia:Sample_entropy](https://en.wikipedia.org/wiki/Sample_entropy)
 #' [Multiscale entropy of biological signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 #'
-#' @noRd
-#' @keywords internal
-sampleEntropy <- function(data, m, r) {
-    .Call(`_footprintR_sampleEntropy`, data, m, r)
+#' @export
+sampleEntropy <- function(data, m, r, maxStarts = 1000L, nThreads = 1L) {
+    .Call(`_footprintR_sampleEntropy`, data, m, r, maxStarts, nThreads)
 }
 
 concatenate_files <- function(input_files, output_file) {

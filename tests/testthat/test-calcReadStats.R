@@ -20,7 +20,7 @@ test_that("read statistic functions work", {
     ind <- nnawhich(mat, arr.ind = TRUE)
     probList <- split(nnavals(mat), colnames(mat)[ind[, 2]])[colnames(mat)]
     idxList <- split(ind[, 1], colnames(mat)[ind[, 2]])[colnames(mat)]
-    
+
     expect_identical(lengths(probList), rlens)
     # ... reads to include
     useReads <- sort(sample(nreads, size = nreads - 3L))
@@ -32,14 +32,14 @@ test_that("read statistic functions work", {
     .callConf <- function(x) {
         pmax(as.matrix(x), 1 - as.matrix(x))
     }
-    
+
     # pre-compute SNR, Signal, Noise
     snr_res <- .estimateSNRprobList(probList, idxList)
-    
+
     # expected values
     argL <- list(probList = probList, idxList = idxList, useReads = useReads,
                  lowConf = 0.7, xrange = lagvals)
-    
+
     resL <- lapply(allReadStats, function(param) {
         res <- do.call(param, argL)
         expect_length(res, nreads)
@@ -87,7 +87,7 @@ test_that("read statistic functions work", {
                        "SEntrModProb" = unlist(lapply(
                            useReads, \(i) {
                                if (length(probList[[i]]) > 64) {
-                                   sampleEntropy(probList[[i]], 2L, 0.2)
+                                   sampleEntropy(probList[[i]], 2L, 0.2, -1L)
                                } else {
                                    NA
                                }})),
@@ -117,12 +117,12 @@ test_that("calcReadStats works", {
     mp$s1[, 2:3] <- NA
     mp$s1 <- SparseArray::NaArray(mp$s1)
     SummarizedExperiment::assays(seNA, withDimnames = FALSE) <- list(mod_prob = mp)
-    
+
     ## Expected errors
     expect_error(calcReadStats(se, assayName = "error",
                                BPPARAM = BiocParallel::SerialParam()),
                  "must be one of: mod_prob")
-    
+
     ## No coverage requirement
     expect_warning(rs <- calcReadStats(se, minNobsPpos = 1,
                                        stats = allReadStats,
@@ -144,7 +144,7 @@ test_that("calcReadStats works", {
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1, na.rm = TRUE) /
                      colSums(assay(se)$s1 >= 0, na.rm = TRUE),
@@ -154,7 +154,7 @@ test_that("calcReadStats works", {
                      colSums(assay(se)$s1 >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
     expect_type(S4Vectors::metadata(qc), "list")
-    
+
     ## Default coverage requirement
     Nobs <- rowSums(SummarizedExperiment::assay(se)[["s1"]] >= 0, na.rm = TRUE)
     thr <- max(floor(stats::quantile(Nobs, 0.75) -
@@ -181,7 +181,7 @@ test_that("calcReadStats works", {
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_equal(qc$MeanModProb,
                  colSums(assay(se)$s1[idx, ], na.rm = TRUE) /
                      colSums(assay(se)$s1[idx, ] >= 0, na.rm = TRUE),
@@ -190,7 +190,7 @@ test_that("calcReadStats works", {
                  colSums(assay(se)$s1[idx, ] >= 0.5, na.rm = TRUE) /
                      colSums(assay(se)$s1[idx, ] >= 0, na.rm = TRUE),
                  ignore_attr = TRUE)
-    
+
     ## Using `regions` and large LagRange
     expect_warning(
         rs1 <- calcReadStats(se, regions = GenomicRanges::GRanges(
@@ -210,7 +210,7 @@ test_that("calcReadStats works", {
     expect_equal(sum(rs1$s1$MeanModProb), 1.400375383766)
     expect_true(all(vapply(rs1$s1$ACModProb, function(x) all(x == 0), TRUE)))
     expect_true(all(vapply(rs1$s1$PACModProb, function(x) all(x == 0), TRUE)))
-    
+
     ## Using `sequenceContext`, `minNobsPread` and `stats`
     expect_error(calcReadStats(se, regions = "chr1:6935000-6935100",
                                sequenceContext = c("TAA", "AAA"),
@@ -236,7 +236,7 @@ test_that("calcReadStats works", {
     expect_s4_class(rs1$s1, "DFrame")
     expect_identical(dim(rs1$s1), c(10L, 1L))
     expect_equal(sum(rs1$s1$MeanModProb), 0.4934760681446542)
-    
+
     ## Using input with all-NA reads
     rs1 <- calcReadStats(se = seNA, stats = c("MeanModProb", "ACModProb"),
                          BPPARAM = BiocParallel::SerialParam())
@@ -266,7 +266,7 @@ test_that("addReadStats works", {
                             stats = allReadStats,
                             BPPARAM = BiocParallel::SerialParam()),
         "Too few points"), "Too few points")
-    
+
     # expected errors
     expect_error(addReadStats(se, name = -1,
                               BPPARAM = BiocParallel::SerialParam()),
@@ -274,7 +274,7 @@ test_that("addReadStats works", {
     expect_error(addReadStats(se, name = c("a", "b"),
                               BPPARAM = BiocParallel::SerialParam()),
                  "must have length 1")
-    
+
     # expected results
     expect_s4_class(se2, "SummarizedExperiment")
     expect_equal(dim(se), dim(se2))
@@ -291,7 +291,7 @@ test_that("addReadStats works", {
                       "MeanConfMod", "FracLowConf", "IQRModProb", "sdModProb",
                       "SEntrModProb", "ACModProb", "PACModProb",
                       "SignalVar", "NoiseVar", "SNR") %in% colnames(qc)))
-    
+
     expect_identical(metadata(se2$qc2)$minNobsPread, 0)
     expect_identical(metadata(se3$qc2)$minNobsPread, 2600)
     na_rows <- lapply(endoapply(assay(se), function(x) colSums(is_nonna(x))),
@@ -310,18 +310,18 @@ test_that(".estimateSNRprobList works", {
         res0 <- .estimateSNRprobList(probList, idxList, min_diffs = 5)
     )
     expect_true(all(is.finite( c(res0$snr,res0$signal,res0$noise) ) ) )
-    
+
     suppressWarnings(
         res1 <- .estimateSNRprobList(probList, idxList, min_diffs = 5,floor_pars = c(0,0.2))
     )
     expect_true(all(is.finite( c(res0$snr,res0$signal,res0$noise) ) ) )
-    
+
     probList <- list( 0.1)
     idxList <- list(1)
     suppressWarnings(
         res2 <- .estimateSNRprobList(probList, idxList, min_diffs = 5)
     )
     expect_true(all(is.na( c(res2$snr,res2$signal,res2$noise) ) ) )
-    
+
 })
 

@@ -134,6 +134,19 @@
     se
 }
 
+#' @keywords internal
+#' @noRd
+#'
+.keepPositionsInRegions <- function(se, regions, seqinfo) {
+    if (is.character(regions)) {
+        regions <- .regionStringToGRanges(regions = regions,
+                                          seqinfo = seqinfo)
+    }
+    .assertVector(x = regions, type = "GRanges")
+    # regions can be stranded or not - leave the choice to the user
+    subsetByOverlaps(se, regions)
+}
+
 #' Filter positions
 #'
 #' Filter positions based on any combination of sequence context,
@@ -143,9 +156,9 @@
 #'
 #' @param se A \code{SummarizedExperiment} object.
 #' @param filters A character vector. All values must be one of
-#'     \code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"}
-#'     and \code{"all.na"}. Filters are applied in the order specified by
-#'     this vector.
+#'     \code{"sequenceContext"}, \code{"coverage"}, \code{"repeated.positions"},
+#'     \code{"regions"} and \code{"all.na"}. Filters are applied in the order
+#'     specified by this vector.
 #' @param sequenceContext A character vector with sequence contexts to
 #'     retain. To apply this filter, the \code{"sequenceContext"} column must
 #'     be present in \code{rowData(se)} (see \code{addSeqContext}).
@@ -159,6 +172,17 @@
 #'     coverage across all samples) is used for the coverage filtering. If
 #'     not \code{NULL}, a position is required to have at least \code{minCov}
 #'     coverage in at least \code{minNbrSamples} to be retained.
+#' @param regions A \code{\link[GenomicRanges]{GRanges}} object specifying the
+#'     genomic regions to restrict the output to. Alternatively, regions can be
+#'     specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+#'     "chrM") that will be coerced into a \code{GRanges} object. If the end
+#'     coordinate is not provided (for example in "chr1:10-", which means "to
+#'     the end of chr1"), it will be obtained from \code{seqinfo} or default
+#'     to a large value if \code{seqinfo} is not provided.
+#' @param seqinfo \code{NULL} or a \code{\link[GenomeInfoDb]{Seqinfo}} object
+#'     containing information about the set of genomic sequences (chromosomes).
+#'     Alternatively, a named numeric vector with genomic sequence names and
+#'     lengths.
 #' @param assayNameAmbig A character scalar indicating the assay to use to
 #'     decide which row to retain if multiple rows represent the same
 #'     genomic position (on different strands). The row with the largest row
@@ -194,12 +218,15 @@ filterPositions <- function(se,
                             assayNameCov = "Nvalid",
                             minCov = 1,
                             minNbrSamples = NULL,
+                            regions = NULL,
+                            seqinfo = NULL,
                             assayNameAmbig = "Nvalid",
                             assayNameNA = "mod_prob") {
     .assertVector(x = se, type = "SummarizedExperiment")
     .assertVector(x = filters, type = "character",
                   validValues = c("sequenceContext", "coverage",
-                                  "repeated.positions", "all.na"))
+                                  "repeated.positions", "all.na",
+                                  "regions"))
     .assertScalar(x = assayNameNA, type = "character",
                   validValues = .getReadLevelAssayNames(se),
                   allowNULL = TRUE)
@@ -221,6 +248,10 @@ filterPositions <- function(se,
         } else if (f == "all.na") {
             se <- .removeAllNAPositions(
                 se, assayName = assayNameNA
+            )
+        } else if (f == "regions") {
+            se <- .keepPositionsInRegions(
+                se, regions = regions, seqinfo = seqinfo
             )
         }
     }

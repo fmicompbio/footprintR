@@ -344,7 +344,7 @@ Rcpp::NumericVector filter_modbam_cpp(std::string infile,
         // ... maxEntropy
         if (maxEntropy >= 0) {
             // calculate sample entropy
-            if (mod_probs.size() == 0 || sampleEntropy(mod_probs, 2, 0.2) > maxEntropy) {
+            if (mod_probs.size() == 0 || sampleEntropy(mod_probs, 2, 0.2, 1000, nThreads) > maxEntropy) {
                 nMaxEntropy++;
                 continue;
             }

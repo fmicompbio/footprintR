@@ -106,13 +106,14 @@ sdModProb <- function(probList, useReads, ...) {
 
 #' @noRd
 #' @keywords internal
-SEntrModProb <- function(probList, useReads, ...) {
-    statsRes <- rep(NA, length(probList))
+SEntrModProb <- function(probList, useReads,
+                         sampen_m=2, sampen_r=0.2, sampen_maxStarts=1000, sampen_nThreads=1, ...) {
+    statsRes <- rep(NA_real_, length(probList))
     statsRes[useReads] <- vapply(useReads, function(r) {
         if (length(probList[[r]]) > 64) {
-            sampleEntropy(probList[[r]], 2L, 0.2)
+            sampleEntropy(probList[[r]], sampen_m, sampen_r, sampen_maxStarts, sampen_nThreads)
         } else {
-            NA
+            NA_real_
         }
     }, numeric(1))
     statsRes
@@ -339,6 +340,10 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #' @param LagRange A numeric vector of two values (minimum and maximum) defining
 #'     the range of lags for the calculation of autocorrelation and partial
 #'     autocorrelation (see details section).
+#' @param EntrControl Optional named list with elements
+#'   \code{m}, \code{r}, \code{maxStarts}, \code{nThreads} to control
+#'   Sample Entropy calculation. Missing elements use defaults: m=2L, r=0.2,
+#'   maxStarts=1000, nThreads=1L. See also \code{\link{sampleEntropy}}
 #' @param name For \code{addReadStats} only: A character scalar specifying the
 #'     name to be used to store the result in the
 #'     \code{\link[SummarizedExperiment]{colData}} of the output.
@@ -440,6 +445,7 @@ NoiseVar <- function(probList, idxList, useReads, ...) {
 #' @importFrom IRanges subsetByOverlaps
 #' @importFrom BiocGenerics colnames pos
 #' @importFrom BiocParallel bplapply MulticoreParam
+#' @importFrom utils modifyList
 #'
 #' @export
 calcReadStats <- function(se,
@@ -451,6 +457,7 @@ calcReadStats <- function(se,
                           minNobsPread = 0,
                           LowConf = 0.7,
                           LagRange = c(12, 64),
+                          EntrControl = NULL,
                           BPPARAM = MulticoreParam(4L, RNGseed = 42L),
                           verbose = FALSE) {
     # digest arguments
@@ -471,6 +478,24 @@ calcReadStats <- function(se,
     LagRangeValues <- seq(LagRange[1], LagRange[2])
     .assertVector(x = BPPARAM, type = "BiocParallelParam")
     .assertScalar(x = verbose, type = "logical")
+
+    if (is.null(EntrControl)) {
+        EntrControl <- list()
+    }
+    .assertVector(x = EntrControl, type = "list")
+
+    EntrControl <- modifyList(
+        list(m = 2L, r = 0.2, maxStarts = 1000, nThreads = 1L),
+        EntrControl
+    )
+
+
+    # Assert SE ctrl arguments
+    .assertScalar(EntrControl$m, type = "numeric", rngIncl = c(1, Inf))
+    .assertScalar(EntrControl$r, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(EntrControl$maxStarts, type = "numeric",  rngIncl = c(-1, Inf))
+    .assertScalar(EntrControl$nThreads, type = "numeric", rngIncl = c(1, Inf))
+
 
     # Subset se by region
     if (!is.null(regions)) {
@@ -555,7 +580,12 @@ calcReadStats <- function(se,
                                                 idxList = idxPos_byCol,
                                                 useReads = useReads,
                                                 lowConf = LowConf,
-                                                xrange = LagRangeValues)
+                                                xrange = LagRangeValues,
+                                                # SampEn controls
+                                                sampen_m = EntrControl$m,
+                                                sampen_r = EntrControl$r,
+                                                sampen_maxStarts = EntrControl$maxStarts,
+                                                sampen_nThreads = EntrControl$nThreads)
                             vec[names(NNAvals_byCol)] <- do.call(param, helper_args)
                         }
 

@@ -100,7 +100,7 @@ test_that("filterReadsBam works", {
     res0 <- filterReadsBam(infiles = modbamfiles, outfiles = filtbamfiles,
                            modbase = "a", indexOutfiles = FALSE,
                            overwriteOutfiles = TRUE, minReadLength = 6746,
-                           minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR=-0.768,
+                           minAlignedLength = 6896, minAlignedFraction = 0.56, minSNR = -0.768,
                            minQscore = 9.7, maxFracLowConf = 0.11, maxEntropy = 0.29,
                            BPPARAM = BiocParallel::SerialParam(), verbose = FALSE)
     expect_identical(res, res0)
@@ -133,11 +133,11 @@ test_that("filterReadsBam works", {
                      unname(tools::md5sum(filtbamfiles)))
     unlink(filtbamfiles)
 
-    
-    
-    
-    
-    
+
+
+
+
+
     # non-primary alignments
     inbam <- system.file("extdata", "6mA_nonPrimary.bam", package = "footprintR")
     outbam <- tempfile(fileext = ".bam")
@@ -163,8 +163,8 @@ test_that("filterReadsBam works", {
     tmp4 <- Rsamtools::scanBam(file = outbam)
     expect_length(tmp4[[1]]$qname, 0L)
     unlink(outbam)
-    
-    
+
+
     # expected results (passing precalculated noiseCoefs that result in stricter filtering)
     suppressMessages(
         expect_message(
@@ -187,15 +187,15 @@ test_that("filterReadsBam works", {
 
 
 test_that("estimateNoise and estimateSNR work", {
-    # Case 1: n < 2  
+    # Case 1: n < 2
     v1 <- estimateNoise(
-        c(0.5),       
+        c(0.5),
         as.integer(5),
         2L,
         -1L
     )
     expect_true(all(is.na(v1)))
-    
+
     # Case 2: mismatched lengths
     v2 <- estimateNoise(
         c(0.2, 0.3, 0.4),
@@ -203,23 +203,23 @@ test_that("estimateNoise and estimateSNR work", {
         2L, -1L
     )
     expect_true(all(is.na(v1)))
-    
+
     # valid small input (does not use floor)
-    nest <- estimateNoise( 
-        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7), 
+    nest <- estimateNoise(
+        c(0.1, 0.25, 0.3, 0.45, 0.5, 0.7, 0.7),
         as.integer(c(1, 2, 3 ,4, 6, 8, 11)),
         2L, 1 )
     v_ok <- estimateSNR( nest[2], nest[3],1e-3,0,0,"raw" )
     expect_true(all(is.finite(v_ok[c("snr","signal","noise","raw")])))
     expect_true(is.na(v_ok["baseline"]))
     expect_equal(unname(v_ok["snr"]), 4.01636614, tolerance = 1e-8)
-    
+
     # valid small input with b0 that forces floor
     betas <- c(0.1,0)
     v2_ok <- estimateSNR( nest[2], nest[3],1e-3,betas,c(1,nest[1]) , "floor" )
     expect_true(all(is.finite(v2_ok)))
     expect_equal(unname(v2_ok["snr"]), -6.64385619, tolerance = 1e-8)
-    
+
     # betas, features length mismatch
     expect_error(
         estimateSNR(1, 0.1, 1e-3,
@@ -234,13 +234,13 @@ test_that("estimateNoise and estimateSNR work", {
                     noise_mode = "floor"),
         "same non-zero length"
     )
-    
+
     # NA feature makes baseline non-finite -> function returns all NA
     res1 <- estimateSNR(1, 0.05, 1e-3,
                         betas = c(0.01, 0.5), features = c(1, NA_real_),
                         noise_mode = "model")
     expect_true(all(is.na(res1)))
-    
+
     # Baseline needed but not finite betas:
     expect_error(
         estimateSNR(1, 0.05, 1e-3,
@@ -248,7 +248,7 @@ test_that("estimateNoise and estimateSNR work", {
                         noise_mode = "floor"),
         "Non-finite value"
     )
-  
+
     #Invalid noise mode
     expect_error(
         estimateSNR(1, 0.1, 1e-3,
