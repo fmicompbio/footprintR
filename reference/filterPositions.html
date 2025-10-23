@@ -13,7 +13,7 @@ argument. Any filter type can be repeated an arbitrary number of times."></head>
 
     <a class="navbar-brand me-2" href="../index.html">footprintR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,8 @@ argument. Any filter type can be repeated an arbitrary number of times.</p>
 <span>  assayNameCov <span class="op">=</span> <span class="st">"Nvalid"</span>,</span>
 <span>  minCov <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  minNbrSamples <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  regions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seqinfo <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  assayNameAmbig <span class="op">=</span> <span class="st">"Nvalid"</span>,</span>
 <span>  assayNameNA <span class="op">=</span> <span class="st">"mod_prob"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -75,9 +77,9 @@ argument. Any filter type can be repeated an arbitrary number of times.</p>
 
 <dt id="arg-filters">filters<a class="anchor" aria-label="anchor" href="#arg-filters"></a></dt>
 <dd><p>A character vector. All values must be one of
-<code>"sequenceContext"</code>, <code>"coverage"</code>, <code>"repeated.positions"</code>
-and <code>"all.na"</code>. Filters are applied in the order specified by
-this vector.</p></dd>
+<code>"sequenceContext"</code>, <code>"coverage"</code>, <code>"repeated.positions"</code>,
+<code>"regions"</code> and <code>"all.na"</code>. Filters are applied in the order
+specified by this vector.</p></dd>
 
 
 <dt id="arg-sequencecontext">sequenceContext<a class="anchor" aria-label="anchor" href="#arg-sequencecontext"></a></dt>
@@ -103,6 +105,23 @@ coverage in order to keep a position.</p></dd>
 coverage across all samples) is used for the coverage filtering. If
 not <code>NULL</code>, a position is required to have at least <code>minCov</code>
 coverage in at least <code>minNbrSamples</code> to be retained.</p></dd>
+
+
+<dt id="arg-regions">regions<a class="anchor" aria-label="anchor" href="#arg-regions"></a></dt>
+<dd><p>A <code><a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GRanges</a></code> object specifying the
+genomic regions to restrict the output to. Alternatively, regions can be
+specified as a character vector (e.g. "chr1:1200-1300", "chr2:-6000" or
+"chrM") that will be coerced into a <code>GRanges</code> object. If the end
+coordinate is not provided (for example in "chr1:10-", which means "to
+the end of chr1"), it will be obtained from <code>seqinfo</code> or default
+to a large value if <code>seqinfo</code> is not provided.</p></dd>
+
+
+<dt id="arg-seqinfo">seqinfo<a class="anchor" aria-label="anchor" href="#arg-seqinfo"></a></dt>
+<dd><p><code>NULL</code> or a <code><a href="https://rdrr.io/pkg/Seqinfo/man/Seqinfo-class.html" class="external-link">Seqinfo</a></code> object
+containing information about the set of genomic sequences (chromosomes).
+Alternatively, a named numeric vector with genomic sequence names and
+lengths.</p></dd>
 
 
 <dt id="arg-assaynameambig">assayNameAmbig<a class="anchor" aria-label="anchor" href="#arg-assaynameambig"></a></dt>
