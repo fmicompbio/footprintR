@@ -1,3 +1,8 @@
+# footprintR 0.3.9
+
+* Add `regions` argument to `filterPositions`
+* Speed up sample entropy calculations, allow entropy calculations to be based on a subset of start positions
+
 # footprintR 0.3.8
 
 * Add Signal to Noise Ratio read-level statistics and filtering options to `calcReadStats`, `filterReads` and `filterReadsBam` 
