@@ -26,6 +26,7 @@ reference:
 - title: Calculating on data in R
   contents:
   - addReadStats
+  - sampleEntropy
   - addSeqContext
   - flattenReadLevelAssay
   - filterPositions
