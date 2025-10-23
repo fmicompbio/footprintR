@@ -66,7 +66,6 @@ double sampleEntropy(NumericVector data,
     // Number of possible Starting positions.
     // Each subsequence is of length m, so the last possible start is at index N - m.
     const unsigned int S = N - m;
-    if (S <= 1) return 0.0;
 
     // Determine how many starting positions to use.
     // If maxStarts is Inf or <=0, use all starts.
@@ -74,7 +73,7 @@ double sampleEntropy(NumericVector data,
     if (!std::isfinite(maxStarts) || maxStarts <= 0) {
         maxI = S;  // use all starts
     } else {
-        maxI = std::min(S, static_cast<unsigned int>(maxStarts));
+        maxI = std::min(S, (unsigned int) maxStarts);
     }
 
     // Build list of all start indices [0..S-1]
@@ -85,9 +84,9 @@ double sampleEntropy(NumericVector data,
     if (maxI < S) {
         std::vector<unsigned int> subset;
         subset.reserve(maxI);
-        for (size_t t = 0; t < static_cast<size_t>(maxI); ++t) {
-            size_t idx = (t * static_cast<size_t>(S)) / static_cast<size_t>(maxI);
-            subset.push_back(static_cast<unsigned int>(idx));
+        for (size_t t = 0; t < (size_t) maxI; t++) {
+            size_t idx = (t * (size_t) S) / (size_t) maxI;
+            subset.push_back((unsigned int) idx);
         }
         starts.swap(subset);
     }
@@ -96,7 +95,7 @@ double sampleEntropy(NumericVector data,
     // where value = first value of the subsequence.
     std::vector<std::pair<double, unsigned int>> vals;
     vals.reserve(S);
-    for (unsigned int i = 0; i < S; ++i) {
+    for (unsigned int i = 0; i < S; i++) {
         vals.emplace_back(data[i], i);
     }
     // Sort this array (by value) so later we can quickly find all subsequences
@@ -105,7 +104,7 @@ double sampleEntropy(NumericVector data,
               [](const auto& a, const auto& b){ return a.first < b.first; });
     // Keep in a separe array (sorted_values) just the  sorted *values*
     std::vector<double> sorted_values(S);
-    for (unsigned int p = 0; p < S; ++p) {
+    for (unsigned int p = 0; p < S; p++) {
         sorted_values[p] = vals[p].first;
     }
 
@@ -126,13 +125,13 @@ double sampleEntropy(NumericVector data,
 
         // Find the index (lo) in sorted_values whose start value is >= (data[i] - err).
         auto lo_it = std::lower_bound(sorted_values.begin(), sorted_values.end(), lo_val);
-        const unsigned int lo = static_cast<unsigned int>(lo_it - sorted_values.begin());
+        const unsigned int lo = (unsigned int) (lo_it - sorted_values.begin());
         // Find the index (hi) in sorted_values whose start value is <= (data[i] + err).
         auto hi_it = std::upper_bound(sorted_values.begin(), sorted_values.end(), hi_val);
-        const unsigned int hi = static_cast<unsigned int>(hi_it - sorted_values.begin());
+        const unsigned int hi = (unsigned int) (hi_it - sorted_values.begin());
 
         // Scan ONLY the j indices with values in range that are also > i
-        for (unsigned int p = lo; p < hi; ++p) {
+        for (unsigned int p = lo; p < hi; p++) {
             const unsigned int j = vals[p].second;
             if (j <= i || j >= S) continue; // need j > i
 
@@ -158,7 +157,7 @@ double sampleEntropy(NumericVector data,
     }
 
     if (Cm > 0 && Cm1 > 0) {
-        return std::log(static_cast<double>(Cm) / Cm1);
+        return std::log((double) Cm / Cm1);
     } else {
         return 0.0;
     }

@@ -225,6 +225,40 @@ test_that(".pruneAmbiguousStrandPositions works", {
     )
 })
 
+test_that(".keepPositionsInRegions works", {
+    modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
+                               package = "footprintR")
+    se <- readModBam(bamfiles = modbamfiles, regions = "chr1:6920000-6940000",
+                     modbase = "a", verbose = FALSE,
+                     BPPARAM = BiocParallel::SerialParam())
+    se <- flattenReadLevelAssay(se, keepReads = TRUE)
+
+    expect_error(.keepPositionsInRegions(se = se, regions = TRUE, seqinfo = NULL),
+                 ".regions. must be of class .GRanges.")
+    expect_error(.keepPositionsInRegions(se = se, regions = NULL, seqinfo = NULL),
+                 ".regions. must not be .NULL.")
+    expect_error(.keepPositionsInRegions(se = se, regions = "chr1:6930000-6935000",
+                                         seqinfo = 1),
+                 ".seqinfo. must be .NULL.")
+    out <- .keepPositionsInRegions(se = se, regions = "chr1", seqinfo = NULL)
+    expect_identical(se, out)
+    outp <- .keepPositionsInRegions(se = se,
+                                    regions = as("chr1:6930000-6935000:+", "GRanges"),
+                                    seqinfo = NULL)
+    expect_identical(as.character(unique(BiocGenerics::strand(outp))), "+")
+    outm <- .keepPositionsInRegions(se = se,
+                                    regions = as("chr1:6930000-6935000:-", "GRanges"),
+                                    seqinfo = NULL)
+    expect_identical(as.character(unique(BiocGenerics::strand(outm))), "-")
+    outb <- .keepPositionsInRegions(se = se,
+                                    regions = "chr1:6930000-6935000",
+                                    seqinfo = NULL)
+    expect_identical(as.character(unique(BiocGenerics::strand(outb))), c("-", "+"))
+    expect_identical(nrow(outp) + nrow(outm), nrow(outb))
+    expect_gte(min(BiocGenerics::start(outb)), 6930000)
+    expect_lte(max(BiocGenerics::start(outb)), 6935000)
+})
+
 test_that("filterPositions works", {
     modbamfiles <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                                package = "footprintR")
@@ -247,6 +281,17 @@ test_that("filterPositions works", {
                               minCov = 5, sequenceContext = "TAG")
     expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
     expect_equal(nrow(sefilt), 251L)
+    expect_true(all(as.character(rowData(sefilt)$sequenceContext) %in% c("TAG")))
+    expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
+                                       pos(rowRanges(sefilt))))))
+
+    # Add region filter
+    sefilt <- filterPositions(se, c("sequenceContext", "coverage",
+                                    "repeated.positions", "all.na", "regions"),
+                              minCov = 5, sequenceContext = "TAG",
+                              regions = "chr1:6930000-6935000")
+    expect_gte(min(rowSums(assay(sefilt, "Nvalid"))), 5L)
+    expect_equal(nrow(sefilt), 141L)
     expect_true(all(as.character(rowData(sefilt)$sequenceContext) %in% c("TAG")))
     expect_false(any(duplicated(paste0(seqnames(rowRanges(sefilt)), ":",
                                        pos(rowRanges(sefilt))))))

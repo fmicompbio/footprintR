@@ -482,18 +482,19 @@ calcReadStats <- function(se,
     if (is.null(EntrControl)) {
         EntrControl <- list()
     }
+    .assertVector(x = EntrControl, type = "list")
 
-    SEctrl <- modifyList(
+    EntrControl <- modifyList(
         list(m = 2L, r = 0.2, maxStarts = 1000, nThreads = 1L),
         EntrControl
     )
 
 
     # Assert SE ctrl arguments
-    .assertScalar(SEctrl$m, type = "numeric", rngIncl = c(1, Inf))
-    .assertScalar(SEctrl$r, type = "numeric", rngIncl = c(0, Inf))
-    .assertScalar(SEctrl$maxStarts, type = "numeric",  rngIncl = c(-1, Inf))
-    .assertScalar(SEctrl$nThreads, type = "numeric", rngIncl = c(1, Inf))
+    .assertScalar(EntrControl$m, type = "numeric", rngIncl = c(1, Inf))
+    .assertScalar(EntrControl$r, type = "numeric", rngIncl = c(0, Inf))
+    .assertScalar(EntrControl$maxStarts, type = "numeric",  rngIncl = c(-1, Inf))
+    .assertScalar(EntrControl$nThreads, type = "numeric", rngIncl = c(1, Inf))
 
 
     # Subset se by region
@@ -581,10 +582,10 @@ calcReadStats <- function(se,
                                                 lowConf = LowConf,
                                                 xrange = LagRangeValues,
                                                 # SampEn controls
-                                                sampen_m = SEctrl$m,
-                                                sampen_r = SEctrl$r,
-                                                sampen_maxStarts = SEctrl$maxStarts,
-                                                sampen_nThreads = SEctrl$nThreads)
+                                                sampen_m = EntrControl$m,
+                                                sampen_r = EntrControl$r,
+                                                sampen_maxStarts = EntrControl$maxStarts,
+                                                sampen_nThreads = EntrControl$nThreads)
                             vec[names(NNAvals_byCol)] <- do.call(param, helper_args)
                         }
 
