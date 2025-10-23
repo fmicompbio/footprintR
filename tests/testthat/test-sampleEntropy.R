@@ -32,9 +32,11 @@ test_that("sampleEntropy works", {
     out1 <- sampleEntropy(x, 2, 0.5, 50)
     out2 <- sampleEntropy(x, 2, 0.5, 50)
     expect_identical(out1, out2)
+    expect_equal(out1, 1.322499, tolerance = 1e-5)
 
     out3 <- sampleEntropy(x, 2, 0.5, 100)
     expect_false(identical(out1, out3))
+    expect_equal(out3, 1.288345, tolerance = 1e-5)
 
     out4 <- sampleEntropy(x, 2, 0.5, 1000)
     out5 <- sampleEntropy(x, 2, 0.5, -1)

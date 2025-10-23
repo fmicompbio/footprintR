@@ -76,19 +76,17 @@ double sampleEntropy(NumericVector data,
         maxI = std::min(S, (unsigned int) maxStarts);
     }
 
-    // Build list of all start indices [0..S-1]
-    std::vector<unsigned int> starts(S);
-    std::iota(starts.begin(), starts.end(), 0);
+    // Build list of all start indices ([0..S-1] or evenly sampled)
+    std::vector<unsigned int> starts(maxI);
 
     // If maxStarts capped pick evenly spaced start positions:
     if (maxI < S) {
-        std::vector<unsigned int> subset;
-        subset.reserve(maxI);
         for (size_t t = 0; t < (size_t) maxI; t++) {
             size_t idx = (t * (size_t) S) / (size_t) maxI;
-            subset.push_back((unsigned int) idx);
+            starts[t] = (unsigned int) idx;
         }
-        starts.swap(subset);
+    } else{
+        std::iota(starts.begin(), starts.end(), 0);
     }
 
     // Build an array of (data[index], index) pairs (vals),
