@@ -141,10 +141,13 @@ test_that("plotRegion works", {
                                                  trackType = "Smooth",
                                                  smoothMethod = "smoothSpline")))
     p4 <- plotRegion(se = se, sequenceContext = c("GCH"), modbaseSpace = TRUE)
-    p5 <- plotRegion(se = se, sequenceContext = c("GCA", "GCC", "GCT"), modbaseSpace = TRUE)
+    p5 <- plotRegion(se = se, sequenceContext = c("GCA", "GCC", "GCT"),
+                     modbaseSpace = TRUE)
     p6 <- plotRegion(se = seR,
                      tracks = list(list(trackData = "mod_prob",
-                                        trackType = "Lollipop"),
+                                        trackType = "Lollipop",
+                                        fillColors = "cividis",
+                                        fillRange = c(0, 0.25)),
                                    list(trackData = "mod_prob",
                                         trackType = "Heatmap",
                                         highlightRegions = GenomicRanges::GRanges(
@@ -940,13 +943,13 @@ test_that(".createBaseplotReads works", {
     expect_error(.createFillScale(NULL), "must not be .NULL.")
     expect_error(.createFillScale(1L), "must be of class .character.")
 
-    expect_warning(scl1 <- .createFillScale("error"), "Option .error. does not exist")
+    expect_warning(scl1 <- .createFillScale("error", c(0, 1)), "Option .error. does not exist")
     expect_s3_class(scl1, "ScaleContinuous")
 
-    scl2 <- .createFillScale("-cividis")
-    scl3 <- .createFillScale("cividis")
-    scl4 <- .createFillScale("F")
-    scl5 <- .createFillScale(c("red", "yellow", "blue"))
+    scl2 <- .createFillScale("-cividis", c(0, 1))
+    scl3 <- .createFillScale("cividis", c(0, 1))
+    scl4 <- .createFillScale("F", c(0, 1))
+    scl5 <- .createFillScale(c("red", "yellow", "blue"), NULL)
 
     expect_s3_class(scl2, "ScaleContinuous")
     expect_s3_class(scl3, "ScaleContinuous")
