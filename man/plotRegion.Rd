@@ -59,7 +59,8 @@ plotReadsLollipop(
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  fillColors = "-cividis"
+  fillColors = "-cividis",
+  fillRange = NULL
 )
 
 plotReadsHeatmap(
@@ -86,7 +87,8 @@ plotReadsHeatmap(
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  fillColors = "-cividis"
+  fillColors = "-cividis",
+  fillRange = NULL
 )
 
 plotSummaryPointSmooth(
@@ -301,6 +303,10 @@ optionally prefixed with a minus sign to in addition set
 \code{direction = -1}). If \code{fillColors} has more than one element,
 it is assumed to be a vector of colors to pass to the \code{colors}
 argument of \code{\link[ggplot2]{scale_colour_gradientn}}.}
+
+\item{fillRange}{A numeric vector of length 2 defining the limits for the
+continuous fill values. Any values outside these limits will be
+squished to the nearest limit.}
 
 \item{linewidthTiles}{A numeric scalar, the line width of the border drawn
 around each measured base.}

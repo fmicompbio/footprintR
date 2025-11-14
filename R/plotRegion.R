@@ -624,6 +624,9 @@ plotBigWig <- function(bwFiles,
 #'     \code{direction = -1}). If \code{fillColors} has more than one element,
 #'     it is assumed to be a vector of colors to pass to the \code{colors}
 #'     argument of \code{\link[ggplot2]{scale_colour_gradientn}}.
+#' @param fillRange A numeric vector of length 2 defining the limits for the
+#'     continuous fill values. Any values outside these limits will be
+#'     squished to the nearest limit.
 #'
 #' @export
 #' @rdname plotRegion
@@ -668,7 +671,8 @@ plotReadsLollipop <- function(se,
                               adjustFacetHeight = TRUE,
                               referenceCoordinate = NULL,
                               labelAccuracy = NULL,
-                              fillColors = "-cividis") {
+                              fillColors = "-cividis",
+                              fillRange = NULL) {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
@@ -681,7 +685,8 @@ plotReadsLollipop <- function(se,
         footprintColumns = footprintColumns, arglistFootprints = arglistFootprints,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
         referenceCoordinate = referenceCoordinate,
-        labelAccuracy = labelAccuracy, size = size, stroke = stroke)
+        labelAccuracy = labelAccuracy, size = size, stroke = stroke,
+        fillRange = fillRange)
 
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
@@ -707,7 +712,8 @@ plotReadsLollipop <- function(se,
                               adjustFacetHeight = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
                               labelAccuracy = labelAccuracy,
-                              fillColors = fillColors)
+                              fillColors = fillColors,
+                              fillRange = fillRange)
 
     # add segments (round 1) - need to keep this before the footprints to
     # make sure that the read ordering is respected
@@ -820,7 +826,8 @@ plotReadsHeatmap <- function(se,
                              adjustFacetHeight = TRUE,
                              referenceCoordinate = NULL,
                              labelAccuracy = NULL,
-                             fillColors = "-cividis") {
+                             fillColors = "-cividis",
+                             fillRange = NULL) {
 
     argL <- .checkArgsReadLevelPlots(
         se = se, region = region, assayName = assayName, drawRead = drawRead,
@@ -834,7 +841,7 @@ plotReadsHeatmap <- function(se,
         facetBy = facetBy, adjustFacetHeight = adjustFacetHeight,
         referenceCoordinate = referenceCoordinate,
         labelAccuracy = labelAccuracy, linewidthTiles = linewidthTiles,
-        interpolate = interpolate)
+        interpolate = interpolate, fillRange = fillRange)
 
     # prepare plot data
     df <- .preparePlotdataReads(x = se, assayName = assayName,
@@ -861,7 +868,8 @@ plotReadsHeatmap <- function(se,
                               adjustFacetHeight  = adjustFacetHeight,
                               referenceCoordinate = argL$referenceCoordinate,
                               labelAccuracy = labelAccuracy,
-                              fillColors = fillColors)
+                              fillColors = fillColors,
+                              fillRange = fillRange)
 
     # add segments
     if (drawRead) {
@@ -1343,9 +1351,10 @@ plotGenomicRegions <- function(grl,
 #' Create a ggplot2 fill scale based on \code{fillColors} argument
 #'
 #' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn
+#' @importFrom scales squish
 #' @keywords internal
 #' @noRd
-.createFillScale <- function(fillColors) {
+.createFillScale <- function(fillColors, fillRange = NULL) {
     # check arguments
     .assertVector(x = fillColors, type = "character", rngLen = c(1, Inf))
 
@@ -1363,10 +1372,14 @@ plotGenomicRegions <- function(grl,
         scl <- scale_fill_viridis_c(begin = 0, end = 1,
                                     option = fillColors,
                                     direction = direction,
-                                    na.value = "beige")
+                                    na.value = "beige",
+                                    limits = fillRange,
+                                    oob = squish)
     } else {
         # scale_fill_gradientn
-        scl <- scale_fill_gradientn(colors = fillColors)
+        scl <- scale_fill_gradientn(colors = fillColors,
+                                    limits = fillRange,
+                                    oob = squish)
     }
 
     return(scl)
@@ -1392,7 +1405,8 @@ plotGenomicRegions <- function(grl,
                                      facetBy, adjustFacetHeight,
                                      referenceCoordinate, labelAccuracy,
                                      size = 0, stroke = 0,
-                                     linewidthTiles = 0, interpolate = FALSE) {
+                                     linewidthTiles = 0, interpolate = FALSE,
+                                     fillRange = NULL) {
     # check arguments
     # ... shared arguments
     .assertVector(x = se, type = "SummarizedExperiment")
@@ -1423,6 +1437,8 @@ plotGenomicRegions <- function(grl,
     .assertScalar(x = adjustFacetHeight, type = "logical")
     .assertScalar(x = referenceCoordinate, type = "numeric", allowNULL = TRUE)
     .assertScalar(x = labelAccuracy, type = "numeric", allowNULL = TRUE)
+    .assertVector(x = fillRange, type = "numeric", allowNULL = TRUE,
+                  len = 2)
 
     # ... lollipop-specific arguments
     .assertScalar(x = size, type = "numeric", rngIncl = c(0, Inf))
@@ -1848,6 +1864,9 @@ plotGenomicRegions <- function(grl,
 #'     \code{direction = -1}). If \code{fillColors} has more than one element,
 #'     it is assumed to be a vector of colors to pass to the \code{colors}
 #'     argument of \code{\link[ggplot2]{scale_fill_gradientn}}.
+#' @param fillRange A numeric vector of length 2 defining the limits for the
+#'     continuous fill values. Any values outside these limits will be
+#'     squished to the nearest limit.
 #'
 #' @importFrom ggplot2 ggplot aes labs theme_bw theme element_blank
 #'     element_text facet_wrap geom_rect margin
@@ -1867,13 +1886,14 @@ plotGenomicRegions <- function(grl,
                                  adjustFacetHeight,
                                  referenceCoordinate,
                                  labelAccuracy,
-                                 fillColors = "-cividis") {
+                                 fillColors = "-cividis",
+                                 fillRange = NULL) {
     p0 <- ggplot(
         data = df,
         mapping = aes(x = .data[["position"]],
                       y = .data[["plotRow"]],
                       fill = .data[["value"]])) +
-        .createFillScale(fillColors) +
+        .createFillScale(fillColors, fillRange) +
         labs(x = ifelse(is.numeric(df$position),
                         ifelse(is.null(referenceCoordinate),
                                paste0("Position on ",
