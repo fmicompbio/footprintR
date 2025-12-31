@@ -1,3 +1,7 @@
+# footprintR 0.3.10
+
+* Add `plotValsBySeqContext` function
+
 # footprintR 0.3.9
 
 * Add `regions` argument to `filterPositions`
