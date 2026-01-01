@@ -46,6 +46,7 @@ Imports:
     SummarizedExperiment,
     tibble,
     tidyr,
+    tidytext,
     utils,
     zoo
 Suggests:

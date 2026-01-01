@@ -8,6 +8,8 @@ plotValsBySeqContext(
   se,
   seqContextColumn = "sequenceContext",
   assayName = "mod_prob",
+  aggregation = "mean",
+  facetBy = NULL,
   plotType = "violin",
   topN = 10,
   bottomN = 10,
@@ -17,47 +19,63 @@ plotValsBySeqContext(
 }
 \arguments{
 \item{se}{\code{\link[SummarizedExperiment]{SummarizedExperiment}} object
-with footprinting data. Rows should correspond to positions
+with read-level footprinting data. Rows should correspond to positions
 and columns to samples.}
 
 \item{seqContextColumn}{Character scalar indicating which column of
 \code{rowData(se)} contains the sequence context.}
 
-\item{assayName}{Character scalar indicating from which assay the values
-to plot will be extracted. The assay can be a read-level or summary-level
-assay. In both cases, the function will calculate the row means for
-each position across all (reads and) samples in \code{se}.}
+\item{assayName}{Character scalar indicating from which read-level assay the
+values to plot should be extracted.}
+
+\item{aggregation}{Character scalar indicating if/how to aggregate values
+across (samples and) reads before plotting. Must be one of "none" (no
+aggregation, individual values from the assay are plotted) and "mean"
+(calculate average value for each position before plotting).}
+
+\item{facetBy}{Character scalar indicating how to facet values in the plot.
+Must be either \code{NULL} (in which case no facetting is done, and
+values are aggregated across all samples in \code{se}) or \code{"sample"}
+(in which case values are aggregated within each sample, and plots are
+facetted accordingly).}
 
 \item{plotType}{Character scalar indicating what type of plot to create.
 Should be one of \code{"violin"}, \code{"bar"} and \code{"errorbar"}.}
 
 \item{topN, bottomN}{Numeric scalars determining the number of sequence
 contexts to include in the plot. The \code{topN} contexts with the
-highest average values, and the \code{bottomN} contexts with the lowest
-average values will be displayed.}
+highest average values and the \code{bottomN} contexts with the lowest
+average values will be displayed. If \code{facetBy = "sample"}, the
+selection of contexts to show is performed separately within each sample.}
 
 \item{flipCoord}{Logical scalar indicating whether the plot axes should be
 flipped (to display sequence contexts on the y-axis and values on the
 x-axis) or not.}
 
 \item{yAxisLabel}{Character scalar providing the label to display on the
-y-axis (corresponding to the values).}
+value axis.}
+}
+\value{
+A \code{ggplot} object.
 }
 \description{
 Plot assay values stratified by sequence context
 }
 \examples{
-modbamfile <- system.file("extdata", "6mA_1_10reads.bam",
+modbamfile <- system.file("extdata", c("6mA_1_10reads.bam", "6mA_2_10reads.bam"),
                           package = "footprintR")
 ref <- Biostrings::readDNAStringSet(system.file("extdata", "reference.fa.gz",
                                                 package = "footprintR"))
-se <- readModBam(bamfiles = modbamfile, regions = "chr1", modbase = "a")
+se <- readModBam(bamfiles = modbamfile, regions = "chr1", modbase = "a",
+                 BPPARAM = BiocParallel::SerialParam())
 se <- addSeqContext(se, sequenceContextWidth = 3, sequenceReference = ref)
 se <- filterPositions(se, filters = "sequenceContext", sequenceContext = "NAN")
 plotValsBySeqContext(se, assayName = "mod_prob", plotType = "violin",
                      topN = 3, bottomN = 3)
 plotValsBySeqContext(se, assayName = "mod_prob", plotType = "bar",
                      topN = 3, bottomN = 3)
+plotValsBySeqContext(se, assayName = "mod_prob", plotType = "bar",
+                     topN = 3, bottomN = 3, facetBy = "sample")
 
 }
 \author{
