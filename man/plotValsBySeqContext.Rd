@@ -9,6 +9,7 @@ plotValsBySeqContext(
   seqContextColumn = "sequenceContext",
   assayName = "mod_prob",
   aggregation = "mean",
+  selectContextsBy = "sample_union",
   facetBy = NULL,
   plotType = "violin",
   topN = 10,
@@ -33,6 +34,21 @@ across (samples and) reads before plotting. Must be one of "none" (no
 aggregation, individual values from the assay are plotted) and "mean"
 (calculate average value for each position before plotting).}
 
+\item{selectContextsBy}{Character scalar indicating how to select and order
+the contexts to show in the plot. Should be one of \code{"sample"} (in
+which case the selection of sequence contexts will be done independently
+for each sample, and only the ones selected for a given sample will
+be displayed in the plot panel for that sample; in this case
+\code{facetBy} must be \code{"sample"}), \code{"sample_union"} (
+in which case the selection of sequence contexts will be done for each
+sample, and the union of all selected contexts will be shown in the
+plot) or \code{"overall"} (in which case the selection of sequence
+contexts will be made without considering the sample information). Note
+that for \code{"sample_union"}, the plots may contain more than
+\code{topN + bottomN} contexts. For \code{"sample_union"} and
+\code{"overall"}, the order of the contexts in the plots will be
+determined by the average value across samples).}
+
 \item{facetBy}{Character scalar indicating how to facet values in the plot.
 Must be either \code{NULL} (in which case no facetting is done, and
 values are aggregated across all samples in \code{se}) or \code{"sample"}
@@ -40,7 +56,8 @@ values are aggregated across all samples in \code{se}) or \code{"sample"}
 facetted accordingly).}
 
 \item{plotType}{Character scalar indicating what type of plot to create.
-Should be one of \code{"violin"}, \code{"bar"} and \code{"errorbar"}.}
+Should be one of \code{"violin"} (note that the violins will be plotted
+with \code{scale="width"}), \code{"bar"} and \code{"errorbar"}.}
 
 \item{topN, bottomN}{Numeric scalars determining the number of sequence
 contexts to include in the plot. The \code{topN} contexts with the
