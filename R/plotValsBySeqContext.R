@@ -30,6 +30,14 @@
 #'     values are aggregated across all samples in \code{se}) or \code{"sample"}
 #'     (in which case values are aggregated within each sample, and plots are
 #'     facetted accordingly).
+#' @param fillBy Character scalar indicating how to fill the bars or violins.
+#'     Must be either \code{NULL} (in which case a single value should be
+#'     specified to \code{"fillColors"} and used for all bars/violins) or
+#'     \code{"sample"} (in which case bars or violins will be split and filled
+#'     by sample).
+#' @param fillColors Either a (preferably named) character vector defining the
+#'     color to use for each sample if \code{fillBy = "sample"}, or a single
+#'     color to use for all violins/bars.
 #' @param plotType Character scalar indicating what type of plot to create.
 #'     Should be one of \code{"violin"} (note that the violins will be plotted
 #'     with \code{scale="width"}), \code{"bar"} and \code{"errorbar"}.
@@ -70,11 +78,12 @@
 #'     bind_rows slice_max slice_min filter summarize inner_join
 #' @importFrom SummarizedExperiment rowData assay colnames assayNames
 #' @importFrom ggplot2 ggplot aes geom_violin theme_bw geom_col geom_linerange
-#'     geom_errorbar coord_flip
+#'     geom_errorbar coord_flip position_dodge scale_fill_manual
 #' @importFrom SparseArray rowSums is_nonna
 #' @importFrom tidytext reorder_within scale_x_reordered
 #' @importFrom stats sd
 #' @importFrom rlang .data
+#' @importFrom cli cli_warn
 #'
 plotValsBySeqContext <- function(se,
                                  seqContextColumn = "sequenceContext",
@@ -82,6 +91,8 @@ plotValsBySeqContext <- function(se,
                                  aggregation = "mean",
                                  selectContextsBy = "sample_union",
                                  facetBy = NULL,
+                                 fillBy = NULL,
+                                 fillColors = "grey",
                                  plotType = "violin",
                                  topN = 10,
                                  bottomN = 10,
@@ -102,6 +113,9 @@ plotValsBySeqContext <- function(se,
         .assertScalar(x = selectContextsBy, type = "character",
                       validValues = c("sample", "sample_union", "overall"))
     }
+    .assertScalar(x = fillBy, type = "character", validValues = "sample",
+                  allowNULL = TRUE)
+    .assertVector(x = fillColors, type = "character", rngLen = c(1, Inf))
     .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
     .assertScalar(x = plotType, type = "character",
@@ -135,6 +149,7 @@ plotValsBySeqContext <- function(se,
     # ... sample-wise ones (required if either facetBy = "sample" or
     #     selectContextsBy = "sample" or "sample_union")
     if ((!is.null(facetBy) && facetBy == "sample") ||
+        (!is.null(fillBy) && fillBy == "sample") ||
         selectContextsBy %in% c("sample", "sample_union")) {
         if (aggregation == "mean") {
             dfSample <- do.call(bind_rows, lapply(colnames(se), function(cn) {
@@ -163,7 +178,7 @@ plotValsBySeqContext <- function(se,
         dfSel <- dfGlobal
     }
 
-    if (is.null(facetBy)) {
+    if (is.null(facetBy) && is.null(fillBy)) {
         dfPlot <- dfGlobal
     } else {
         dfPlot <- dfSample
@@ -207,8 +222,20 @@ plotValsBySeqContext <- function(se,
             mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
                 .data$flipCoord, .data$vals, -.data$vals),
                 within = orderCol, fun = mean))
-        gg <- ggplot(dfPlot, aes(x = .data$seqContext, y = .data$vals))  +
-            geom_violin(scale = "width")
+        gg <- ggplot(dfPlot, aes(x = .data$seqContext, y = .data$vals))
+        if (is.null(fillBy)) {
+            gg <- gg +
+                geom_violin(scale = "width", fill = fillColors[1])
+        } else {
+            gg <- gg +
+                geom_violin(scale = "width", aes(fill = .data[[fillBy]]))
+            if (length(fillColors) >= length(unique(dfPlot[[fillBy]]))) {
+                gg <- gg +
+                    scale_fill_manual(values = fillColors)
+            } else {
+                cli_warn("Not enough colors - using defaults")
+            }
+        }
     } else if (plotType %in% c("bar", "errorbar")) {
         dfPlot <- dfPlot |>
             group_by(.data$seqContext, .data$sample, .data$orderCol,
@@ -220,19 +247,49 @@ plotValsBySeqContext <- function(se,
                 .data$flipCoord, .data$valsMean, -.data$valsMean),
                 within = orderCol, fun = mean))
         gg <- ggplot(dfPlot,
-                     aes(x = .data$seqContext, y = .data$valsMean)) +
-            geom_col()
-        if (plotType == "errorbar") {
+                     aes(x = .data$seqContext, y = .data$valsMean))
+        if (is.null(fillBy)) {
             gg <- gg +
-                geom_linerange(
-                    aes(ymin = .data$valsMean,
-                        ymax = .data$valsMean + .data$valsSd)
-                ) +
-                geom_errorbar(
-                    aes(ymin = .data$valsMean + .data$valsSd,
-                        ymax = .data$valsMean + .data$valsSd),
-                    width = 0.2
-                )
+                geom_col(fill = fillColors[1])
+        } else {
+            gg <- gg +
+                geom_col(aes(fill = .data[[fillBy]]),
+                         position = position_dodge())
+            if (length(fillColors) >= length(unique(dfPlot[[fillBy]]))) {
+                gg <- gg +
+                    scale_fill_manual(values = fillColors)
+            } else {
+                cli_warn("Not enough colors - using defaults")
+            }
+        }
+        if (plotType == "errorbar") {
+            if (is.null(fillBy)) {
+                gg <- gg +
+                    geom_linerange(
+                        aes(ymin = .data$valsMean,
+                            ymax = .data$valsMean + .data$valsSd)
+                    ) +
+                    geom_errorbar(
+                        aes(ymin = .data$valsMean + .data$valsSd,
+                            ymax = .data$valsMean + .data$valsSd),
+                        width = 0.2
+                    )
+            } else {
+                gg <- gg +
+                    geom_linerange(
+                        aes(group = .data[[fillBy]],
+                            ymin = .data$valsMean,
+                            ymax = .data$valsMean + .data$valsSd),
+                        position = position_dodge(width = 0.9)
+                    ) +
+                    geom_errorbar(
+                        aes(group = .data[[fillBy]],
+                            ymin = .data$valsMean + .data$valsSd,
+                            ymax = .data$valsMean + .data$valsSd),
+                        width = 0.2,
+                        position = position_dodge(width = 0.9)
+                    )
+            }
         }
     }
     gg <- gg +

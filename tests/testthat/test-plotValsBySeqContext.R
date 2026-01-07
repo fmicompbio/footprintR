@@ -142,6 +142,38 @@ test_that("plotValsBySeqContext works", {
     expect_identical(sum(g@data$seqContext == "GAT___overall"), 355L)
     expect_equal(mean(g@data$vals[g@data$seqContext == "GAT___overall"]), 0.160786660)
 
+    # ... violin, all contexts, select by overall, mean aggregation, no facet,
+    #     fill by sample
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              plotType = "violin", selectContextsBy = "overall",
+                              topN = Inf, bottomN = Inf, flipCoord = TRUE,
+                              aggregation = "mean", facetBy = NULL,
+                              fillBy = "sample", fillColors = c("blue", "orange"))
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "data.frame")
+    # ... ... all rows with observed data should be part of the plot
+    expect_identical(dim(g@data), c(7975L + 6949L, 5L))
+    expect_identical(sum(g@data$seqContext == "GAT___overall" &
+                             g@data$sample == "s1"), 351L)
+    expect_equal(mean(g@data$vals[g@data$seqContext == "GAT___overall" &
+                                      g@data$sample == "s1"]), 0.14200813948)
+    # ... ... same but provide too few colors
+    expect_warning(
+        g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                                  plotType = "violin", selectContextsBy = "overall",
+                                  topN = Inf, bottomN = Inf, flipCoord = TRUE,
+                                  aggregation = "mean", facetBy = NULL,
+                                  fillBy = "sample", fillColors = c("blue")),
+        "Not enough colors")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "data.frame")
+    # ... ... all rows with observed data should be part of the plot
+    expect_identical(dim(g@data), c(7975L + 6949L, 5L))
+    expect_identical(sum(g@data$seqContext == "GAT___overall" &
+                             g@data$sample == "s1"), 351L)
+    expect_equal(mean(g@data$vals[g@data$seqContext == "GAT___overall" &
+                                      g@data$sample == "s1"]), 0.14200813948)
+
     # ... check that subsetting to first sample gives identical values to
     #     facetting within function
     g1 <- plotValsBySeqContext(se = se[, 1], assayName = "mod_prob",
@@ -178,6 +210,32 @@ test_that("plotValsBySeqContext works", {
     expect_s3_class(g@data, "tbl_df")
     expect_equal(dim(g@data), c(8L, 6L))
     expect_equal(g@data$valsMean[g@data$seqContext == "GAT___overall"], 0.160786660)
+
+    # ... errorbar, top/bottom 4 contexts, select by overall, mean aggregation,
+    #     no facet, fill by sample
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              plotType = "errorbar", aggregation = "mean",
+                              topN = 4, bottomN = 4, flipCoord = FALSE,
+                              selectContextsBy = "overall", facetBy = NULL,
+                              fillBy = "sample")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "tbl_df")
+    expect_equal(dim(g@data), c(16L, 6L))
+    expect_equal(g@data$valsMean[g@data$seqContext == "GAT___overall" &
+                                     g@data$sample == "s1"], 0.14200813948)
+    # ... ... same but provide too few colors
+    expect_warning(
+        g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                                  plotType = "errorbar", aggregation = "mean",
+                                  topN = 4, bottomN = 4, flipCoord = FALSE,
+                                  selectContextsBy = "overall", facetBy = NULL,
+                                  fillBy = "sample", fillColors = "red"),
+        "Not enough colors")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "tbl_df")
+    expect_equal(dim(g@data), c(16L, 6L))
+    expect_equal(g@data$valsMean[g@data$seqContext == "GAT___overall" &
+                                     g@data$sample == "s1"], 0.14200813948)
 
     # ... errorbar, top/bottom 4 contexts, select by overall, no aggregation, facet by sample
     g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
@@ -219,12 +277,57 @@ test_that("plotValsBySeqContext works", {
     expect_equal(dim(g@data), c(8L, 6L))
     expect_equal(g@data$valsMean[g@data$seqContext == "GAG___overall"], 0.180227711)
 
-    # ... bar, top/bottom 2 contexts, select by sample_union, mean aggregation, facet by sample
+    # ... bar, top/bottom 4 contexts, select by overall, no aggregation, no facet,
+    #     fill by sample
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              plotType = "bar", aggregation = "none",
+                              topN = 4, bottomN = 4, flipCoord = FALSE,
+                              selectContextsBy = "overall", facetBy = NULL,
+                              fillBy = "sample")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "tbl_df")
+    expect_equal(dim(g@data), c(16L, 6L))
+    expect_equal(g@data$valsMean[g@data$seqContext == "GAG___overall" &
+                                     g@data$sample == "s1"], 0.158524954)
+
+    # ... bar, top/bottom 2 contexts, select by sample_union, mean aggregation,
+    #     facet by sample
     g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
                               yAxisLabel = "New title",
                               plotType = "bar", aggregation = "mean",
                               topN = 2, bottomN = 2, flipCoord = FALSE,
                               selectContextsBy = "sample_union", facetBy = "sample")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "tbl_df")
+    expect_equal(dim(g@data), c(12L, 6L))
+    expect_identical(levels(g@data$seqContext),
+                     c("GAG___overall", "GAT___overall", "CAG___overall",
+                       "TAT___overall", "CAA___overall", "TAA___overall"))
+
+    # ... bar, top/bottom 2 contexts, select by sample_union, mean aggregation,
+    #     facet by sample, change default color
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              yAxisLabel = "New title",
+                              plotType = "bar", aggregation = "mean",
+                              topN = 2, bottomN = 2, flipCoord = FALSE,
+                              selectContextsBy = "sample_union",
+                              facetBy = "sample", fillColors = "forestgreen")
+    expect_true(ggplot2::is_ggplot(g))
+    expect_s3_class(g@data, "tbl_df")
+    expect_equal(dim(g@data), c(12L, 6L))
+    expect_identical(levels(g@data$seqContext),
+                     c("GAG___overall", "GAT___overall", "CAG___overall",
+                       "TAT___overall", "CAA___overall", "TAA___overall"))
+
+    # ... bar, top/bottom 2 contexts, select by sample_union, mean aggregation,
+    #     facet by sample, change default color by sample
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              yAxisLabel = "New title",
+                              plotType = "bar", aggregation = "mean",
+                              topN = 2, bottomN = 2, flipCoord = FALSE,
+                              selectContextsBy = "sample_union",
+                              facetBy = "sample", fillBy = "sample",
+                              fillColors = c("forestgreen", "orange"))
     expect_true(ggplot2::is_ggplot(g))
     expect_s3_class(g@data, "tbl_df")
     expect_equal(dim(g@data), c(12L, 6L))
