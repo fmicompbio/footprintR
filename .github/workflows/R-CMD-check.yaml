@@ -73,24 +73,13 @@ jobs:
           extra-packages: any::rcmdcheck
           pak-version: devel
 
-      # - name: Install Linux system dependencies
-      #   if: runner.os == 'Linux'
-      #   env:
-      #     RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
-      #   run: |
-      #     sudo apt-get update && sudo apt-get -y install libharfbuzz-dev libfribidi-dev
-      #     Rscript -e "remotes::install_github('r-hub/sysreqs')"
-      #     sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
-      #     sudo -s eval "$sysreqs"
-      #
-      # - name: Install macOS system dependencies
-      #   if: runner.os == 'macOS'
-      #   run: |
-      #     brew install harfbuzz
-      #     brew install fribidi
-      #     Rscript -e 'BiocManager::install(c("GenomeInfoDbData"), type = "source")'
-      #     Rscript -e 'BiocManager::install(c("GenomicFeatures"), type = "source")'
-
+      - name: Install data.table manually
+        if: runner.os == 'macOS'
+        run: |
+          brew install gettext
+          export PKG_CPPFLAGS="-I$(brew --prefix gettext)/include"
+          export PKG_LIBS="-L$(brew --prefix gettext)/lib -lintl"
+          R -e 'install.packages("data.table", type="source")'
 
       - name: Install R package dependencies
         run: |
