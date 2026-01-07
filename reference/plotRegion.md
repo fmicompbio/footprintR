@@ -64,7 +64,8 @@ plotReadsLollipop(
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  fillColors = "-cividis"
+  fillColors = "-cividis",
+  fillRange = NULL
 )
 
 plotReadsHeatmap(
@@ -91,7 +92,8 @@ plotReadsHeatmap(
   adjustFacetHeight = TRUE,
   referenceCoordinate = NULL,
   labelAccuracy = NULL,
-  fillColors = "-cividis"
+  fillColors = "-cividis",
+  fillRange = NULL
 )
 
 plotSummaryPointSmooth(
@@ -381,6 +383,12 @@ plotGenomicRegions(
   `direction = -1`). If `fillColors` has more than one element, it is
   assumed to be a vector of colors to pass to the `colors` argument of
   [`scale_colour_gradientn`](https://ggplot2.tidyverse.org/reference/scale_gradient.html).
+
+- fillRange:
+
+  A numeric vector of length 2 defining the limits for the continuous
+  fill values. Any values outside these limits will be squished to the
+  nearest limit.
 
 - linewidthTiles:
 

@@ -22,14 +22,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/fmicompbio/footprintR/blob/devel/DESCRIPTION)
 
-Stadler M, Soneson C, Papasaikas P, Smallwood S (2025). *footprintR:
+Stadler M, Soneson C, Papasaikas P, Smallwood S (2026). *footprintR:
 Tools for working with single-molecule footprinting data*. R package
-version 0.3.9, <https://github.com/fmicompbio/footprintR>.
+version 0.3.10, <https://github.com/fmicompbio/footprintR>.
 
     @Manual{,
       title = {footprintR: Tools for working with single-molecule footprinting data},
       author = {Michael Stadler and Charlotte Soneson and Panagiotis Papasaikas and Sebastien Smallwood},
-      year = {2025},
-      note = {R package version 0.3.9},
+      year = {2026},
+      note = {R package version 0.3.10},
       url = {https://github.com/fmicompbio/footprintR},
     }

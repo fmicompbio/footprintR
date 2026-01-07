@@ -62,5 +62,5 @@ signals](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.71.021906)
 ``` r
 ts <- runif(100, 0, 1)
 sampleEntropy(ts, m = 2L, r = 0.2)
-#> [1] 1.974081
+#> [1] 1.919593
 ```

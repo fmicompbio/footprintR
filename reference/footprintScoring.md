@@ -183,11 +183,11 @@ se <- readModBam(bamfiles = modbamfile, regions = "chr1:6935400-6936300",
 wgt <- rep(c(0.5, -0.5, 0.5) * c(140/170, 30/170, 140/170), c(15, 140, 15))
 se <- addFootprints(se, wgt, thresh = 0.03, name = "nucl")
 #> ℹ calculating footprint scores
-#> ✔ calculating footprint scores [85ms]
+#> ✔ calculating footprint scores [115ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 #> ℹ segmenting footprint scores
-#> ✔ segmenting footprint scores [120ms]
+#> ✔ segmenting footprint scores [168ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 se$nucl
@@ -232,7 +232,7 @@ plotRegion(se, region = "chr1:6935400-6936300",
 # only calculate score
 scoresList <- calcFootprintScores(se, wgt)
 #> ℹ calculating footprint scores
-#> ✔ calculating footprint scores [85ms]
+#> ✔ calculating footprint scores [71ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 lapply(scoresList, nrow)
@@ -253,7 +253,7 @@ lapply(scoresList, head)
 # segment calculated scores
 irl <- segmentFootprintScores(scoresList, thresh = 0.05)
 #> ℹ segmenting footprint scores
-#> ✔ segmenting footprint scores [141ms]
+#> ✔ segmenting footprint scores [165ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 irl$s1

@@ -115,6 +115,8 @@
   [`plotSummaryPointSmooth()`](https://fmicompbio.github.io/footprintR/reference/plotRegion.md)
   [`plotGenomicRegions()`](https://fmicompbio.github.io/footprintR/reference/plotRegion.md)
   : Plot single-molecule footprinting data for a single genomic region
+- [`plotValsBySeqContext()`](https://fmicompbio.github.io/footprintR/reference/plotValsBySeqContext.md)
+  : Plot assay values stratified by sequence context
 
 ## Helper functions
 
