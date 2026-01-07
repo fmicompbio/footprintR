@@ -58,6 +58,7 @@ reference:
   - plotReadStats
   - plotNoisePars
   - plotRegion
+  - plotValsBySeqContext
 - title: Helper functions
   contents:
   - extractSeqContext
