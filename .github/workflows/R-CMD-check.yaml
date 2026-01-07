@@ -157,6 +157,12 @@ jobs:
           covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")
         shell: Rscript {0}
 
+      - name: Install fansi
+        if: github.event_name == 'push' && github.ref == 'refs/heads/devel' && matrix.config.deploy == 'yes'
+        run: |
+          BiocManager::install("fansi", type = "source", force = TRUE)
+        shell: Rscript {0}
+
       - name: Deploy
         if: github.event_name == 'push' && github.ref == 'refs/heads/devel' && matrix.config.deploy == 'yes'
         run: |
