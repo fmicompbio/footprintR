@@ -55,13 +55,13 @@ determined by the average value across samples).}
 Must be either \code{NULL} (in which case no facetting is done, and
 values are aggregated across all samples in \code{se}) or \code{"sample"}
 (in which case values are aggregated within each sample, and plots are
-facetted accordingly).}
+facetted accordingly). Ignored if \code{plotType = "pairs"}.}
 
 \item{fillBy}{Character scalar indicating how to fill the bars or violins.
 Must be either \code{NULL} (in which case a single value should be
 specified to \code{"fillColors"} and used for all bars/violins) or
 \code{"sample"} (in which case bars or violins will be split and filled
-by sample).}
+by sample). Ignored if \code{plotType = "pairs"}.}
 
 \item{fillColors}{Either a (preferably named) character vector defining the
 color to use for each sample if \code{fillBy = "sample"}, or a single
@@ -69,7 +69,8 @@ color to use for all violins/bars.}
 
 \item{plotType}{Character scalar indicating what type of plot to create.
 Should be one of \code{"violin"} (note that the violins will be plotted
-with \code{scale="width"}), \code{"bar"} and \code{"errorbar"}.}
+with \code{scale="width"}), \code{"bar"}, \code{"errorbar"} or
+code{"pairs"}.}
 
 \item{topN, bottomN}{Numeric scalars determining the number of sequence
 contexts to include in the plot. The \code{topN} contexts with the

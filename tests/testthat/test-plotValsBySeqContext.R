@@ -52,6 +52,9 @@ test_that("plotValsBySeqContext works", {
     expect_error(plotValsBySeqContext(se = se, seqContextColumn = "sequenceContext",
                                       assayName = "mod_prob", plotType = "error"),
                  ".plotType. must be one of")
+    expect_error(plotValsBySeqContext(se = se[, 1], seqContextColumn = "sequenceContext",
+                                      assayName = "mod_prob", plotType = "pairs"),
+                 "must have at least two samples for a pairs plot")
     expect_error(plotValsBySeqContext(se = se, seqContextColumn = "sequenceContext",
                                       assayName = "mod_prob", plotType = "violin",
                                       topN = "x"),
@@ -213,11 +216,13 @@ test_that("plotValsBySeqContext works", {
 
     # ... errorbar, top/bottom 4 contexts, select by overall, mean aggregation,
     #     no facet, fill by sample
-    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
-                              plotType = "errorbar", aggregation = "mean",
-                              topN = 4, bottomN = 4, flipCoord = FALSE,
-                              selectContextsBy = "overall", facetBy = NULL,
-                              fillBy = "sample")
+    expect_warning(
+        g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                                  plotType = "errorbar", aggregation = "mean",
+                                  topN = 4, bottomN = 4, flipCoord = FALSE,
+                                  selectContextsBy = "overall", facetBy = NULL,
+                                  fillBy = "sample"),
+        "Not enough colors")
     expect_true(ggplot2::is_ggplot(g))
     expect_s3_class(g@data, "tbl_df")
     expect_equal(dim(g@data), c(16L, 6L))
@@ -279,11 +284,13 @@ test_that("plotValsBySeqContext works", {
 
     # ... bar, top/bottom 4 contexts, select by overall, no aggregation, no facet,
     #     fill by sample
-    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
-                              plotType = "bar", aggregation = "none",
-                              topN = 4, bottomN = 4, flipCoord = FALSE,
-                              selectContextsBy = "overall", facetBy = NULL,
-                              fillBy = "sample")
+    expect_warning(
+        g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                                  plotType = "bar", aggregation = "none",
+                                  topN = 4, bottomN = 4, flipCoord = FALSE,
+                                  selectContextsBy = "overall", facetBy = NULL,
+                                  fillBy = "sample"),
+        "Not enough colors")
     expect_true(ggplot2::is_ggplot(g))
     expect_s3_class(g@data, "tbl_df")
     expect_equal(dim(g@data), c(16L, 6L))
@@ -334,5 +341,18 @@ test_that("plotValsBySeqContext works", {
     expect_identical(levels(g@data$seqContext),
                      c("GAG___overall", "GAT___overall", "CAG___overall",
                        "TAT___overall", "CAA___overall", "TAA___overall"))
+
+    # ... pairs, no selection
+    g <- plotValsBySeqContext(se = se, assayName = "mod_prob",
+                              yAxisLabel = "New title",
+                              plotType = "pairs", aggregation = "mean",
+                              topN = Inf, bottomN = 0, flipCoord = FALSE,
+                              selectContextsBy = "sample_union",
+                              facetBy = "sample", fillBy = "sample",
+                              fillColors = c("forestgreen", "orange"))
+    expect_s7_class(g, GGally::ggmatrix)
+    expect_s3_class(g@data, "data.frame")
+    expect_equal(dim(g@data), c(length(unique(rowData(se)$sequenceContext)), 3L))
+    expect_equal(g@data[g@data$seqContext == "GAT", "s1"], 0.14200813948)
 
 })
