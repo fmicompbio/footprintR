@@ -268,17 +268,15 @@ plotValsBySeqContext <- function(se,
                     within = orderCol,
                     fun = mean
                 ))
-            # dfPlot <- dfPlot |>
-            #     mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
-            #         .data$flipCoord, .data$vals, -.data$vals),
-            #         within = orderCol, fun = mean))
             gg <- ggplot(dfPlot, aes(x = .data$seqContext, y = .data$vals))
             if (is.null(fillBy)) {
                 gg <- gg +
-                    geom_violin(scale = "width", fill = fillColors[1])
+                    geom_violin(scale = "width", fill = fillColors[1],
+                                quantiles = 0.5, quantiles_linewidth = 1)
             } else {
                 gg <- gg +
-                    geom_violin(scale = "width", aes(fill = .data[[fillBy]]))
+                    geom_violin(scale = "width", aes(fill = .data[[fillBy]]),
+                                quantiles = 0.5, quantiles_linewidth = 1)
                 if (length(fillColors) >= length(unique(dfPlot[[fillBy]]))) {
                     gg <- gg +
                         scale_fill_manual(values = fillColors)
@@ -302,9 +300,6 @@ plotValsBySeqContext <- function(se,
                     within = orderCol,
                     fun = mean
                 ))
-                # mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
-                #     .data$flipCoord, .data$valsMean, -.data$valsMean),
-                #     within = orderCol, fun = mean))
             gg <- ggplot(dfPlot,
                          aes(x = .data$seqContext, y = .data$valsMean))
             if (is.null(fillBy)) {
