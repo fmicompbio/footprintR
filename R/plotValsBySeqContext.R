@@ -239,7 +239,8 @@ plotValsBySeqContext <- function(se,
         if (selectContextsBy == "sample_var") {
             dfPlot <- dfPlot |>
                 left_join(dfSelSum |>
-                              dplyr::select(c("seqContext", "valsMeanVar")),
+                              dplyr::select(c("seqContext", "valsMeanVar")) |>
+                              distinct(),
                           by = "seqContext")
         }
     }
@@ -287,8 +288,9 @@ plotValsBySeqContext <- function(se,
             }
         } else if (plotType %in% c("bar", "errorbar")) {
             dfPlot <- dfPlot |>
-                group_by(.data$seqContext, .data$sample, .data$orderCol,
-                         .data$flipCoord, .data$valsMeanVar) |>
+                group_by(across(any_of(c("seqContext", "sample", "orderCol",
+                                         "flipCoord", "valsMeanVar",
+                                         "selectContextsBy")))) |>
                 summarize(valsMean = mean(.data$vals),
                           valsSd = sd(.data$vals),
                           .groups = "drop") |>
