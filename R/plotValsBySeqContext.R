@@ -78,11 +78,11 @@
 #'                      topN = 3, bottomN = 3, facetBy = "sample")
 #'
 #' @importFrom dplyr group_by mutate ungroup arrange desc select distinct
-#'     bind_rows slice_max slice_min filter summarize inner_join
+#'     bind_rows slice_max slice_min filter summarize inner_join any_of across
 #' @importFrom SummarizedExperiment rowData assay colnames assayNames
 #' @importFrom ggplot2 ggplot aes geom_violin theme_bw geom_col geom_linerange
 #'     geom_errorbar coord_flip position_dodge scale_fill_manual
-#' @importFrom SparseArray rowSums is_nonna
+#' @importFrom SparseArray rowSums is_nonna nnawhich nnavals
 #' @importFrom tidytext reorder_within scale_x_reordered
 #' @importFrom stats sd
 #' @importFrom rlang .data
