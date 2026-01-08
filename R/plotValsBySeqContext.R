@@ -272,11 +272,11 @@ plotValsBySeqContext <- function(se,
             if (is.null(fillBy)) {
                 gg <- gg +
                     geom_violin(scale = "width", fill = fillColors[1],
-                                quantiles = 0.5, quantiles_linewidth = 1)
+                                quantiles = 0.5, quantile.linetype = "solid")
             } else {
                 gg <- gg +
                     geom_violin(scale = "width", aes(fill = .data[[fillBy]]),
-                                quantiles = 0.5, quantiles_linewidth = 1)
+                                quantiles = 0.5, quantile.linetype = "solid")
                 if (length(fillColors) >= length(unique(dfPlot[[fillBy]]))) {
                     gg <- gg +
                         scale_fill_manual(values = fillColors)
