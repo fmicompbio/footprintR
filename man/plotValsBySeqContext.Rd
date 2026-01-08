@@ -44,8 +44,10 @@ be displayed in the plot panel for that sample; in this case
 \code{facetBy} must be \code{"sample"}), \code{"sample_union"} (
 in which case the selection of sequence contexts will be done for each
 sample, and the union of all selected contexts will be shown in the
-plot) or \code{"overall"} (in which case the selection of sequence
-contexts will be made without considering the sample information). Note
+plot), \code{"overall"} (in which case the selection of sequence
+contexts will be made without considering the sample information) or
+\code{"sample_var"} (in which case the variance across samples will be
+used to select/order contexts). Note
 that for \code{"sample_union"}, the plots may contain more than
 \code{topN + bottomN} contexts. For \code{"sample_union"} and
 \code{"overall"}, the order of the contexts in the plots will be

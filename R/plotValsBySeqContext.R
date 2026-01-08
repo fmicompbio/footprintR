@@ -19,8 +19,10 @@
 #'     \code{facetBy} must be \code{"sample"}), \code{"sample_union"} (
 #'     in which case the selection of sequence contexts will be done for each
 #'     sample, and the union of all selected contexts will be shown in the
-#'     plot) or \code{"overall"} (in which case the selection of sequence
-#'     contexts will be made without considering the sample information). Note
+#'     plot), \code{"overall"} (in which case the selection of sequence
+#'     contexts will be made without considering the sample information) or
+#'     \code{"sample_var"} (in which case the variance across samples will be
+#'     used to select/order contexts). Note
 #'     that for \code{"sample_union"}, the plots may contain more than
 #'     \code{topN + bottomN} contexts. For \code{"sample_union"} and
 #'     \code{"overall"}, the order of the contexts in the plots will be
@@ -114,10 +116,11 @@ plotValsBySeqContext <- function(se,
     }
     if (is.null(facetBy) || plotType == "pairs") {
         .assertScalar(x = selectContextsBy, type = "character",
-                      validValues = c("sample_union", "overall"))
+                      validValues = c("sample_union", "overall", "sample_var"))
     } else {
         .assertScalar(x = selectContextsBy, type = "character",
-                      validValues = c("sample", "sample_union", "overall"))
+                      validValues = c("sample", "sample_union", "overall",
+                                      "sample_var"))
     }
     if (plotType == "pairs" && ncol(se) < 2) {
         cli_abort("{.arg se} must have at least two samples for a pairs plot")
@@ -127,6 +130,9 @@ plotValsBySeqContext <- function(se,
     .assertVector(x = fillColors, type = "character", rngLen = c(1, Inf))
     .assertScalar(x = assayName, type = "character",
                   validValues = .getReadLevelAssayNames(se))
+    if (selectContextsBy %in% c("sample_var") && ncol(se) < 2) {
+        cli_abort("{.arg se} must have at least two samples if {.arg selectContextsBy} is {.val {selectContextsBy}}")
+    }
     .assertScalar(x = topN, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = bottomN, type = "numeric", rngIncl = c(0, Inf))
     .assertScalar(x = flipCoord, type = "logical")
@@ -154,10 +160,10 @@ plotValsBySeqContext <- function(se,
     }
 
     # ... sample-wise ones (required if either facetBy = "sample" or
-    #     selectContextsBy = "sample" or "sample_union")
+    #     selectContextsBy = "sample", "sample_union" or "sample_var")
     if ((!is.null(facetBy) && facetBy == "sample") ||
         (!is.null(fillBy) && fillBy == "sample") ||
-        selectContextsBy %in% c("sample", "sample_union")) {
+        selectContextsBy %in% c("sample", "sample_union", "sample_var")) {
         if (aggregation == "mean") {
             dfSample <- do.call(bind_rows, lapply(colnames(se), function(cn) {
                 a <- assay(se, assayName)[[cn]]
@@ -179,7 +185,7 @@ plotValsBySeqContext <- function(se,
     }
 
     # choose data frames to use for selection/plotting
-    if (selectContextsBy %in% c("sample", "sample_union")) {
+    if (selectContextsBy %in% c("sample", "sample_union", "sample_var")) {
         dfSel <- dfSample
     } else {
         dfSel <- dfGlobal
@@ -192,17 +198,26 @@ plotValsBySeqContext <- function(se,
     }
 
     dfPlot$flipCoord <- flipCoord
+    dfPlot$selectContextsBy <- selectContextsBy
 
     # calculate mean/sd for each context and select top/bottom ones to include
     dfSelSum <- dfSel |>
         group_by(.data$seqContext, .data$sample) |>
         summarize(valsMean = mean(.data$vals),
                   .groups = "drop")
+    if (selectContextsBy == "sample_var") {
+        dfSelSum <- dfSelSum |>
+            group_by(.data$seqContext) |>
+            mutate(valsMeanVar = var(.data$valsMean))
+        selCol <- "valsMeanVar"
+    } else {
+        selCol <- "valsMean"
+    }
     dfSelSum <- bind_rows(
         dfSelSum |> group_by(sample) |>
-            slice_max(.data$valsMean, n = topN, with_ties = FALSE),
+            slice_max(.data[[selCol]], n = topN, with_ties = FALSE),
         dfSelSum |> group_by(sample) |>
-            slice_min(.data$valsMean, n = bottomN, with_ties = FALSE)
+            slice_min(.data[[selCol]], n = bottomN, with_ties = FALSE)
     ) |>
         ungroup() |>
         distinct()
@@ -221,6 +236,12 @@ plotValsBySeqContext <- function(se,
         dfPlot <- dfPlot |>
             dplyr::filter(seqContext %in% contextsToKeep) |>
             mutate(orderCol = "overall")
+        if (selectContextsBy == "sample_var") {
+            dfPlot <- dfPlot |>
+                left_join(dfSelSum |>
+                              dplyr::select(c("seqContext", "valsMeanVar")),
+                          by = "seqContext")
+        }
     }
 
     # plot
@@ -238,9 +259,18 @@ plotValsBySeqContext <- function(se,
     } else {
         if (plotType == "violin") {
             dfPlot <- dfPlot |>
-                mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
-                    .data$flipCoord, .data$vals, -.data$vals),
-                    within = orderCol, fun = mean))
+                mutate(seqContext = reorder_within(
+                    .data$seqContext,
+                    by = ifelse(flipCoord, 1, -1) *
+                        ifelse(.data$selectContextsBy == "sample_var",
+                               .data$valsMeanVar, .data$vals),
+                    within = orderCol,
+                    fun = mean
+                ))
+            # dfPlot <- dfPlot |>
+            #     mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
+            #         .data$flipCoord, .data$vals, -.data$vals),
+            #         within = orderCol, fun = mean))
             gg <- ggplot(dfPlot, aes(x = .data$seqContext, y = .data$vals))
             if (is.null(fillBy)) {
                 gg <- gg +
@@ -258,13 +288,21 @@ plotValsBySeqContext <- function(se,
         } else if (plotType %in% c("bar", "errorbar")) {
             dfPlot <- dfPlot |>
                 group_by(.data$seqContext, .data$sample, .data$orderCol,
-                         .data$flipCoord) |>
+                         .data$flipCoord, .data$valsMeanVar) |>
                 summarize(valsMean = mean(.data$vals),
                           valsSd = sd(.data$vals),
                           .groups = "drop") |>
-                mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
-                    .data$flipCoord, .data$valsMean, -.data$valsMean),
-                    within = orderCol, fun = mean))
+                mutate(seqContext = reorder_within(
+                    .data$seqContext,
+                    by = ifelse(flipCoord, 1, -1) *
+                        ifelse(.data$selectContextsBy == "sample_var",
+                               .data$valsMeanVar, .data$valsMean),
+                    within = orderCol,
+                    fun = mean
+                ))
+                # mutate(seqContext = reorder_within(.data$seqContext, by = ifelse(
+                #     .data$flipCoord, .data$valsMean, -.data$valsMean),
+                #     within = orderCol, fun = mean))
             gg <- ggplot(dfPlot,
                          aes(x = .data$seqContext, y = .data$valsMean))
             if (is.null(fillBy)) {
