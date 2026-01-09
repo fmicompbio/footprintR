@@ -47,10 +47,10 @@ se <- readModBam(bamfiles = modbamfiles,
                  BPPARAM = BiocParallel::SerialParam())
 #> ℹ extracting base modifications from modBAM files
 #> ℹ finding unique genomic positions...
-#> ✔ finding unique genomic positions... [47ms]
+#> ✔ finding unique genomic positions... [103ms]
 #> 
 #> ℹ collapsed 17739 positions to 7967 unique ones
-#> ✔ collapsed 17739 positions to 7967 unique ones [267ms]
+#> ✔ collapsed 17739 positions to 7967 unique ones [410ms]
 #> 
 se
 #> class: RangedSummarizedExperiment 
@@ -529,15 +529,15 @@ estimated.](read-level-data_files/figure-html/plot-nrl-detailed-1.png)
 sessioninfo::session_info()
 #> ─ Session info ───────────────────────────────────────────────────────────────
 #>  setting  value
-#>  version  R Under development (unstable) (2026-01-06 r89281)
-#>  os       macOS Sequoia 15.7.2
+#>  version  R Under development (unstable) (2026-01-07 r89288)
+#>  os       macOS Sequoia 15.7.3
 #>  system   aarch64, darwin20
 #>  ui       X11
 #>  language en
 #>  collate  en_US.UTF-8
 #>  ctype    en_US.UTF-8
 #>  tz       UTC
-#>  date     2026-01-07
+#>  date     2026-01-09
 #>  pandoc   3.1.11 @ /usr/local/bin/ (via rmarkdown)
 #>  quarto   NA
 #> 
@@ -548,7 +548,7 @@ sessioninfo::session_info()
 #>  BiocGenerics         * 0.57.0     2025-11-13 [1] Bioconductor 3.23 (R 4.6.0)
 #>  BiocIO                 1.21.0     2025-11-12 [1] Bioconductor 3.23 (R 4.6.0)
 #>  BiocParallel           1.45.0     2025-11-12 [1] Bioconductor 3.23 (R 4.6.0)
-#>  Biostrings             2.79.3     2025-12-17 [1] Bioconductor 3.23 (R 4.6.0)
+#>  Biostrings             2.79.4     2026-01-07 [1] Bioconductor 3.23 (R 4.6.0)
 #>  bitops                 1.0-9      2024-10-03 [1] CRAN (R 4.6.0)
 #>  BSgenome               1.79.1     2025-12-10 [1] Bioconductor 3.23 (R 4.6.0)
 #>  bslib                  0.9.0      2025-01-30 [1] CRAN (R 4.6.0)
@@ -566,7 +566,7 @@ sessioninfo::session_info()
 #>  evaluate               1.0.5      2025-08-27 [1] CRAN (R 4.6.0)
 #>  farver                 2.1.2      2024-05-13 [1] CRAN (R 4.6.0)
 #>  fastmap                1.2.0      2024-05-15 [1] CRAN (R 4.6.0)
-#>  footprintR           * 0.3.10     2026-01-07 [1] Bioconductor
+#>  footprintR           * 0.3.10     2026-01-09 [1] Bioconductor
 #>  fs                     1.6.6      2025-04-12 [1] CRAN (R 4.6.0)
 #>  generics             * 0.1.4      2025-05-09 [1] CRAN (R 4.6.0)
 #>  GenomeInfoDb           1.47.2     2025-12-04 [1] Bioconductor 3.23 (R 4.6.0)
@@ -600,7 +600,7 @@ sessioninfo::session_info()
 #>  R6                     2.6.1      2025-02-15 [1] CRAN (R 4.6.0)
 #>  ragg                   1.5.0      2025-09-02 [1] CRAN (R 4.6.0)
 #>  RColorBrewer           1.1-3      2022-04-03 [1] CRAN (R 4.6.0)
-#>  Rcpp                   1.1.0.8.1  2025-12-08 [1] CRAN (R 4.6.0)
+#>  Rcpp                   1.1.0      2025-07-02 [1] CRAN (R 4.6.0)
 #>  RCurl                  1.98-1.17  2025-03-22 [1] CRAN (R 4.6.0)
 #>  restfulr               0.0.16     2025-06-27 [1] CRAN (R 4.6.0)
 #>  rjson                  0.2.23     2024-09-16 [1] CRAN (R 4.6.0)

@@ -51,6 +51,8 @@
 <span>  aggregation <span class="op">=</span> <span class="st">"mean"</span>,</span>
 <span>  selectContextsBy <span class="op">=</span> <span class="st">"sample_union"</span>,</span>
 <span>  facetBy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fillBy <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fillColors <span class="op">=</span> <span class="st">"grey"</span>,</span>
 <span>  plotType <span class="op">=</span> <span class="st">"violin"</span>,</span>
 <span>  topN <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  bottomN <span class="op">=</span> <span class="fl">10</span>,</span>
@@ -95,8 +97,10 @@ be displayed in the plot panel for that sample; in this case
 <code>facetBy</code> must be <code>"sample"</code>), <code>"sample_union"</code> (
 in which case the selection of sequence contexts will be done for each
 sample, and the union of all selected contexts will be shown in the
-plot) or <code>"overall"</code> (in which case the selection of sequence
-contexts will be made without considering the sample information). Note
+plot), <code>"overall"</code> (in which case the selection of sequence
+contexts will be made without considering the sample information) or
+<code>"sample_var"</code> (in which case the variance across samples will be
+used to select/order contexts). Note
 that for <code>"sample_union"</code>, the plots may contain more than
 <code>topN + bottomN</code> contexts. For <code>"sample_union"</code> and
 <code>"overall"</code>, the order of the contexts in the plots will be
@@ -108,13 +112,28 @@ determined by the average value across samples).</p></dd>
 Must be either <code>NULL</code> (in which case no facetting is done, and
 values are aggregated across all samples in <code>se</code>) or <code>"sample"</code>
 (in which case values are aggregated within each sample, and plots are
-facetted accordingly).</p></dd>
+facetted accordingly). Ignored if <code>plotType = "pairs"</code>.</p></dd>
+
+
+<dt id="arg-fillby">fillBy<a class="anchor" aria-label="anchor" href="#arg-fillby"></a></dt>
+<dd><p>Character scalar indicating how to fill the bars or violins.
+Must be either <code>NULL</code> (in which case a single value should be
+specified to <code>"fillColors"</code> and used for all bars/violins) or
+<code>"sample"</code> (in which case bars or violins will be split and filled
+by sample). Ignored if <code>plotType = "pairs"</code>.</p></dd>
+
+
+<dt id="arg-fillcolors">fillColors<a class="anchor" aria-label="anchor" href="#arg-fillcolors"></a></dt>
+<dd><p>Either a (preferably named) character vector defining the
+color to use for each sample if <code>fillBy = "sample"</code>, or a single
+color to use for all violins/bars.</p></dd>
 
 
 <dt id="arg-plottype">plotType<a class="anchor" aria-label="anchor" href="#arg-plottype"></a></dt>
 <dd><p>Character scalar indicating what type of plot to create.
 Should be one of <code>"violin"</code> (note that the violins will be plotted
-with <code>scale="width"</code>), <code>"bar"</code> and <code>"errorbar"</code>.</p></dd>
+with <code>scale="width"</code>), <code>"bar"</code>, <code>"errorbar"</code> or
+<code>"pairs"</code>.</p></dd>
 
 
 <dt id="arg-topn-bottomn">topN, bottomN<a class="anchor" aria-label="anchor" href="#arg-topn-bottomn"></a></dt>

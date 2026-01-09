@@ -106,10 +106,10 @@ from <code>modBam</code> files using <a href="https://nanoporetech.github.io/mod
 <span>                 BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">SerialParam</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> extracting base modifications from modBAM files</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> finding unique genomic positions...</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[47ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> finding unique genomic positions... <span style="color: #B2B2B2;">[103ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> collapsed 17739 positions to 7967 unique ones</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[267ms]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> collapsed 17739 positions to 7967 unique ones <span style="color: #B2B2B2;">[410ms]</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="va">se</span></span>
 <span><span class="co">#&gt; class: RangedSummarizedExperiment </span></span>
@@ -507,15 +507,15 @@ accurate estimates from a handful of reads:</p>
 <code class="sourceCode R"><span><span class="fu">sessioninfo</span><span class="fu">::</span><span class="fu"><a href="https://sessioninfo.r-lib.org/reference/session_info.html" class="external-link">session_info</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB; font-weight: bold;">─ Session info ───────────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt;  <span style="color: #555555; font-style: italic;">setting </span> <span style="color: #555555; font-style: italic;">value</span></span></span>
-<span><span class="co">#&gt;  version  R Under development (unstable) (2026-01-06 r89281)</span></span>
-<span><span class="co">#&gt;  os       macOS Sequoia 15.7.2</span></span>
+<span><span class="co">#&gt;  version  R Under development (unstable) (2026-01-07 r89288)</span></span>
+<span><span class="co">#&gt;  os       macOS Sequoia 15.7.3</span></span>
 <span><span class="co">#&gt;  system   aarch64, darwin20</span></span>
 <span><span class="co">#&gt;  ui       X11</span></span>
 <span><span class="co">#&gt;  language en</span></span>
 <span><span class="co">#&gt;  collate  en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  ctype    en_US.UTF-8</span></span>
 <span><span class="co">#&gt;  tz       UTC</span></span>
-<span><span class="co">#&gt;  date     2026-01-07</span></span>
+<span><span class="co">#&gt;  date     2026-01-09</span></span>
 <span><span class="co">#&gt;  pandoc   3.1.11 @ /usr/local/bin/ (via rmarkdown)</span></span>
 <span><span class="co">#&gt;  quarto   NA</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -526,7 +526,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  BiocGenerics         * 0.57.0     <span style="color: #555555;">2025-11-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  BiocIO                 1.21.0     <span style="color: #555555;">2025-11-12</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  BiocParallel           1.45.0     <span style="color: #555555;">2025-11-12</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
-<span><span class="co">#&gt;  Biostrings             2.79.3     <span style="color: #555555;">2025-12-17</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
+<span><span class="co">#&gt;  Biostrings             2.79.4     <span style="color: #555555;">2026-01-07</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  bitops                 1.0-9      <span style="color: #555555;">2024-10-03</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  BSgenome               1.79.1     <span style="color: #555555;">2025-12-10</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  bslib                  0.9.0      <span style="color: #555555;">2025-01-30</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
@@ -544,7 +544,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  evaluate               1.0.5      <span style="color: #555555;">2025-08-27</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  farver                 2.1.2      <span style="color: #555555;">2024-05-13</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  fastmap                1.2.0      <span style="color: #555555;">2024-05-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
-<span><span class="co">#&gt;  footprintR           * 0.3.10     <span style="color: #555555;">2026-01-07</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
+<span><span class="co">#&gt;  footprintR           * 0.3.10     <span style="color: #555555;">2026-01-09</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor</span></span></span>
 <span><span class="co">#&gt;  fs                     1.6.6      <span style="color: #555555;">2025-04-12</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  generics             * 0.1.4      <span style="color: #555555;">2025-05-09</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  GenomeInfoDb           1.47.2     <span style="color: #555555;">2025-12-04</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">Bioconductor 3.23 (R 4.6.0)</span></span></span>
@@ -578,7 +578,7 @@ accurate estimates from a handful of reads:</p>
 <span><span class="co">#&gt;  R6                     2.6.1      <span style="color: #555555;">2025-02-15</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  ragg                   1.5.0      <span style="color: #555555;">2025-09-02</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  RColorBrewer           1.1-3      <span style="color: #555555;">2022-04-03</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
-<span><span class="co">#&gt;  Rcpp                   1.1.0.8.1  <span style="color: #555555;">2025-12-08</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
+<span><span class="co">#&gt;  Rcpp                   1.1.0      <span style="color: #555555;">2025-07-02</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  RCurl                  1.98-1.17  <span style="color: #555555;">2025-03-22</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  restfulr               0.0.16     <span style="color: #555555;">2025-06-27</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>
 <span><span class="co">#&gt;  rjson                  0.2.23     <span style="color: #555555;">2024-09-16</span> <span style="color: #555555;">[1]</span> <span style="color: #555555;">CRAN (R 4.6.0)</span></span></span>

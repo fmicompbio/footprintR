@@ -67,15 +67,15 @@ se <- readModBam(bamfile = modbamfiles, regions = "chr1:6940000-6955000",
                  BPPARAM = BiocParallel::SerialParam())
 #> ℹ extracting base modifications from modBAM files
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
-#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
+#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]
 #> ℹ finding unique genomic positions...
-#> ✔ finding unique genomic positions... [35ms]
+#> ✔ finding unique genomic positions... [31ms]
 #> 
-#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
+#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]
 #> ℹ collapsed 17739 positions to 7967 unique ones
-#> ✔ collapsed 17739 positions to 7967 unique ones [266ms]
+#> ✔ collapsed 17739 positions to 7967 unique ones [325ms]
 #> 
-#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
+#> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [1ms]
 se <- addReadStats(se, BPPARAM = BiocParallel::SerialParam())
 #> Warning: Too few points to estimate noise floor (1); raw noise variances are used.
 #> Warning: Too few points to estimate noise floor (0); raw noise variances are used.

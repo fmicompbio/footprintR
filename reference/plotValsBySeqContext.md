@@ -12,6 +12,8 @@ plotValsBySeqContext(
   aggregation = "mean",
   selectContextsBy = "sample_union",
   facetBy = NULL,
+  fillBy = NULL,
+  fillColors = "grey",
   plotType = "violin",
   topN = 10,
   bottomN = 10,
@@ -54,12 +56,14 @@ plotValsBySeqContext(
   displayed in the plot panel for that sample; in this case `facetBy`
   must be `"sample"`), `"sample_union"` ( in which case the selection of
   sequence contexts will be done for each sample, and the union of all
-  selected contexts will be shown in the plot) or `"overall"` (in which
+  selected contexts will be shown in the plot), `"overall"` (in which
   case the selection of sequence contexts will be made without
-  considering the sample information). Note that for `"sample_union"`,
-  the plots may contain more than `topN + bottomN` contexts. For
-  `"sample_union"` and `"overall"`, the order of the contexts in the
-  plots will be determined by the average value across samples).
+  considering the sample information) or `"sample_var"` (in which case
+  the variance across samples will be used to select/order contexts).
+  Note that for `"sample_union"`, the plots may contain more than
+  `topN + bottomN` contexts. For `"sample_union"` and `"overall"`, the
+  order of the contexts in the plots will be determined by the average
+  value across samples).
 
 - facetBy:
 
@@ -67,13 +71,27 @@ plotValsBySeqContext(
   either `NULL` (in which case no facetting is done, and values are
   aggregated across all samples in `se`) or `"sample"` (in which case
   values are aggregated within each sample, and plots are facetted
-  accordingly).
+  accordingly). Ignored if `plotType = "pairs"`.
+
+- fillBy:
+
+  Character scalar indicating how to fill the bars or violins. Must be
+  either `NULL` (in which case a single value should be specified to
+  `"fillColors"` and used for all bars/violins) or `"sample"` (in which
+  case bars or violins will be split and filled by sample). Ignored if
+  `plotType = "pairs"`.
+
+- fillColors:
+
+  Either a (preferably named) character vector defining the color to use
+  for each sample if `fillBy = "sample"`, or a single color to use for
+  all violins/bars.
 
 - plotType:
 
   Character scalar indicating what type of plot to create. Should be one
   of `"violin"` (note that the violins will be plotted with
-  `scale="width"`), `"bar"` and `"errorbar"`.
+  `scale="width"`), `"bar"`, `"errorbar"` or `"pairs"`.
 
 - topN, bottomN:
 

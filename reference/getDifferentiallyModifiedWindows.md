@@ -70,15 +70,15 @@ se <- quantifyWindowsInRegion(bamfiles = modbamfiles,
 se$group <- c("group1", "group1", "group2", "group2")
 gr <- getDifferentiallyModifiedWindows(se, groupCol = "group", verbose = TRUE)
 #> ℹ calculating library sizes and normalization factors
-#> ✔ calculating library sizes and normalization factors [23ms]
+#> ✔ calculating library sizes and normalization factors [24ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 #> ℹ creating design matrix
-#> ✔ creating design matrix [13ms]
+#> ✔ creating design matrix [15ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 #> ℹ testing for differential modifications (group2 - group1)
-#> ✔ testing for differential modifications (group2 - group1) [88ms]
+#> ✔ testing for differential modifications (group2 - group1) [124ms]
 #> 
 #> ⠙ 0.000 Mio. genomic positions processed (0.001 Mio./s) [2ms]
 class(gr)

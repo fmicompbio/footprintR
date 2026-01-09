@@ -179,8 +179,8 @@ res
 #> 1     s1 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_1_10reads.bam
 #> 2     s2 /Users/runner/work/_temp/Library/footprintR/extdata/6mA_2_10reads.bam
 #>                                                                             outfile
-#> 1 /var/folders/bp/kmfmhnl95kx1c8x321z7twbw0000gn/T//Rtmp5ldjEk/file522e2f8d91b1.bam
-#> 2 /var/folders/bp/kmfmhnl95kx1c8x321z7twbw0000gn/T//Rtmp5ldjEk/file522e775813da.bam
+#> 1 /var/folders/03/bcr7nd0x5lz0x5lkgq6vrh5w0000gn/T//Rtmpp9u5Ji/file4a0d76ae745f.bam
+#> 2 /var/folders/03/bcr7nd0x5lz0x5lkgq6vrh5w0000gn/T//Rtmpp9u5Ji/file4a0d375a45d8.bam
 #>   total retained filtered_unmapped filtered_secondary filtered_supplementary
 #> 1    10        6                 0                  0                      0
 #> 2    10        7                 0                  0                      0
