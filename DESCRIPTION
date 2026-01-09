@@ -55,6 +55,7 @@ Suggests:
     ComplexUpset,
     e1071,
     edgeR,
+    GGally,
     knitr,
     limma,
     MatrixGenerics,
