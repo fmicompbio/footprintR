@@ -72,7 +72,7 @@ color to use for all violins/bars.}
 \item{plotType}{Character scalar indicating what type of plot to create.
 Should be one of \code{"violin"} (note that the violins will be plotted
 with \code{scale="width"}), \code{"bar"}, \code{"errorbar"} or
-code{"pairs"}.}
+\code{"pairs"}.}
 
 \item{topN, bottomN}{Numeric scalars determining the number of sequence
 contexts to include in the plot. The \code{topN} contexts with the

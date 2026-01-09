@@ -43,7 +43,7 @@
 #' @param plotType Character scalar indicating what type of plot to create.
 #'     Should be one of \code{"violin"} (note that the violins will be plotted
 #'     with \code{scale="width"}), \code{"bar"}, \code{"errorbar"} or
-#'     code{"pairs"}.
+#'     \code{"pairs"}.
 #' @param topN,bottomN Numeric scalars determining the number of sequence
 #'     contexts to include in the plot. The \code{topN} contexts with the
 #'     highest average values and the \code{bottomN} contexts with the lowest
@@ -234,7 +234,7 @@ plotValsBySeqContext <- function(se,
     } else {
         contextsToKeep <- unique(dfSelSum$seqContext)
         dfPlot <- dfPlot |>
-            dplyr::filter(seqContext %in% contextsToKeep) |>
+            dplyr::filter(.data$seqContext %in% contextsToKeep) |>
             mutate(orderCol = "overall")
         if (selectContextsBy == "sample_var") {
             dfPlot <- dfPlot |>
@@ -265,7 +265,7 @@ plotValsBySeqContext <- function(se,
                     by = ifelse(flipCoord, 1, -1) *
                         ifelse(.data$selectContextsBy == "sample_var",
                                .data$valsMeanVar, .data$vals),
-                    within = orderCol,
+                    within = .data$orderCol,
                     fun = mean
                 ))
             gg <- ggplot(dfPlot, aes(x = .data$seqContext, y = .data$vals))
@@ -297,7 +297,7 @@ plotValsBySeqContext <- function(se,
                     by = ifelse(flipCoord, 1, -1) *
                         ifelse(.data$selectContextsBy == "sample_var",
                                .data$valsMeanVar, .data$valsMean),
-                    within = orderCol,
+                    within = .data$orderCol,
                     fun = mean
                 ))
             gg <- ggplot(dfPlot,
